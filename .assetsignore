@@ -1,0 +1,11 @@
+.git
+.git/**
+.claude
+src
+wrangler.jsonc
+.assetsignore
+README.md
+.wrangler
+.wrangler/**
+node_modules
+.gitignore

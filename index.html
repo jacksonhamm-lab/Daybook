@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Daybook">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -484,8 +484,8 @@ input[type=number]{-moz-appearance:textfield}
 <script>
 /* ============================================================
    Daybook — work hours, tasks, training, job applications.
-   Training data comes from Jackson-Workout-Plan (same origin on
-   GitHub Pages, so its localStorage keys are shared).
+   Training data comes from Jackson-Workout-Plan, served at /workout/
+   on the same origin, so its localStorage keys are shared.
    ============================================================ */
 const KEY = 'daybook_v1';
 const CATS = {
@@ -540,7 +540,7 @@ const TABS = [
 const defaults = () => ({
   tasks: [], shifts: {}, workouts: {}, jobs: [], clock: null,
   template: ['D1','D2','REST','D3','D4','HIIT','REST'],
-  settings: { name: 'Jackson', rate: 0, hoursGoal: 0, appGoal: 5, workoutUrl: 'https://jacksonhamm-lab.github.io/Jackson-Workout-Plan/' },
+  settings: { name: 'Jackson', rate: 0, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/' },
   ui: { tab: 'today', jobFilter: 'All', weekMode: innerWidth > 900 ? 'board' : 'focus', selDay: null },
 });
 function load() {
@@ -615,7 +615,7 @@ let PROGRAM = null, PROGRAM_AT = 0, PROGRAM_LIVE = false;
 (() => { const c = readLS('daybook_program', null); if (c && c.p) { PROGRAM = c.p; PROGRAM_AT = c.t; } })();
 async function loadProgram() {
   const urls = [];
-  if (location.protocol.startsWith('http')) urls.push(new URL('../Jackson-Workout-Plan/index.html', location.href).href);
+  if (location.protocol.startsWith('http')) urls.push(new URL('/workout/index.html', location.origin).href, new URL('../Jackson-Workout-Plan/index.html', location.href).href);
   urls.push('https://raw.githubusercontent.com/jacksonhamm-lab/Jackson-Workout-Plan/main/index.html');
   for (const u of urls) {
     try {
