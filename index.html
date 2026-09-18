@@ -239,6 +239,7 @@ input[type=number]{-moz-appearance:textfield}
 .nitem span{font-size:13px;color:var(--text2)}
 
 /* week */
+.strip,.wtiles,.board{position:relative}
 .strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin-bottom:18px}
 .dtile{position:relative;height:156px;padding:14px;border-radius:22px;text-align:left;background:var(--glass);border:1px solid var(--stroke);display:flex;flex-direction:column;gap:3px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
 .dtile.sel{background:rgba(255,255,255,.13)}
@@ -1256,13 +1257,28 @@ function render() {
   $$('#nav > button, #tabbar > button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   $$('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + t));
   const root = $('#v-' + t), enter = FX.enter;
+  const kept = {};
+  root.querySelectorAll('.strip,.wtiles,.board').forEach(el => kept[el.classList[0]] = el.scrollLeft);
   root.innerHTML = VIEWS[t]();
+  centerRails(root, kept);
   if (enter && !REDUCED) { root.classList.remove('enter', 'enter-l', 'enter-r'); void root.offsetWidth; root.classList.add(enter); clearTimeout(root._t); root._t = setTimeout(() => root.classList.remove(enter), 1100); }
   $$('.seg').forEach(s => placeInd(s, !FX.seg));
   animateValues(root);
   $('#avatar').textContent = (S.settings.name || 'J')[0].toUpperCase();
   island.live(); tick();
   FX = {};
+}
+// Horizontal rails (phone day strip, training tiles, narrow board) get rebuilt on every render,
+// which resets their scroll. Restore it, then glide the selected day (or today) to the center.
+function centerRails(root, kept) {
+  root.querySelectorAll('.strip,.wtiles,.board').forEach(el => {
+    if (el.scrollWidth <= el.clientWidth) return;
+    const k = el.classList[0], had = k in kept;
+    if (had) el.scrollLeft = kept[k];
+    const today = el.querySelector('.today'), target = el.querySelector('.sel') || (today && today.closest('.dtile,.wtile,.col'));
+    if (!target) return;
+    el.scrollTo({ left: target.offsetLeft - (el.clientWidth - target.offsetWidth) / 2, behavior: had && !REDUCED ? 'smooth' : 'auto' });
+  });
 }
 function switchTab(k, sel) {
   if (sel) S.ui.selDay = sel;
