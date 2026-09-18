@@ -34,6 +34,8 @@ body{margin:0;min-height:100dvh;background:var(--bg);color:var(--text);font:15px
 body.locked{overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 button{cursor:pointer;background:none;border:0;padding:0}
+html,body,button,a,input,select,textarea,label,[data-act],[data-tab]{touch-action:manipulation}
+button,.set,.chip,.pill,.mini,.dtile,.wtile,.jrow,.nitem,.ck,.tb,.eb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button:disabled{cursor:default}
 a{color:inherit}
 input,select,textarea{background:var(--fill);border:1px solid transparent;border-radius:11px;padding:9px 12px;outline:none;min-width:0;transition:border-color .2s,background .2s}
@@ -179,7 +181,7 @@ input[type=number]{-moz-appearance:textfield}
 .art{position:relative;min-height:250px;padding:22px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;color:#fff;overflow:hidden;border-radius:inherit;isolation:isolate}
 .art::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(120% 90% at 100% 0%,rgba(255,255,255,.28),transparent 45%),linear-gradient(180deg,transparent 30%,rgba(0,0,0,.55))}
 .art::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.18) 50%,transparent 60%);transform:translateX(-100%);transition:transform 1.1s var(--ease)}
-.art:hover::after{transform:translateX(100%)}
+@media(hover:hover){.art:hover::after{transform:translateX(100%)}}
 .wm{position:absolute;z-index:-1;right:-6px;top:-34px;font-size:170px;font-weight:800;letter-spacing:-.07em;opacity:.16;line-height:1}
 .art .code{font-size:13px;font-weight:700;letter-spacing:.08em;opacity:.85;text-transform:uppercase}
 .art .nm{font-size:30px;font-weight:800;letter-spacing:-.035em;line-height:1.05}
@@ -192,7 +194,8 @@ input[type=number]{-moz-appearance:textfield}
 
 /* PS5 focus ring */
 .focusable{transition:transform .5s var(--spring),box-shadow .35s ease,background .25s}
-.focusable:hover,.focusable.sel{transform:scale(1.035);box-shadow:0 0 0 2.5px #fff,0 0 30px 2px rgba(255,255,255,.22),0 24px 50px -16px rgba(0,0,0,.9);z-index:2}
+.focusable.sel{transform:scale(1.035);box-shadow:0 0 0 2.5px #fff,0 0 30px 2px rgba(255,255,255,.22),0 24px 50px -16px rgba(0,0,0,.9);z-index:2}
+@media(hover:hover){.focusable:hover{transform:scale(1.035);box-shadow:0 0 0 2.5px #fff,0 0 30px 2px rgba(255,255,255,.22),0 24px 50px -16px rgba(0,0,0,.9);z-index:2}}
 .focusable:active{transform:scale(1.01)}
 
 /* tasks */
@@ -436,6 +439,7 @@ input[type=number]{-moz-appearance:textfield}
 @media(min-width:761px){#island{top:76px}}
 .confetti{position:fixed;z-index:95;width:9px;height:9px;border-radius:2px;pointer-events:none}
 
+@media(pointer:coarse){input,select,textarea,.qadd input,.add input,.sheet .field input{font-size:16px!important}}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
