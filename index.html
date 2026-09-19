@@ -242,17 +242,23 @@ input[type=number]{-moz-appearance:textfield}
 
 /* week */
 .strip,.wtiles,.board{position:relative}
-.strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin-bottom:18px}
-.dtile{position:relative;height:156px;padding:14px;border-radius:22px;text-align:left;background:var(--glass);border:1px solid var(--stroke);display:flex;flex-direction:column;gap:3px}
-.dtile.sel{background:rgba(255,255,255,.13)}
-.dtile .dw{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+/* Week row (phones/tablets): all 7 days always fit, like the iOS Calendar week bar. No sideways scrolling. */
+.strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;margin-bottom:16px;padding:6px;border-radius:24px;background:var(--glass);border:1px solid var(--stroke)}
+.dtile{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 0 10px;border-radius:18px;transition:background .25s}
+.dtile .dw{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.dtile .dn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;transition:background .25s,color .25s,transform .4s var(--spring)}
+.dtile.past .dn{color:var(--text3)}
+.dtile.today .dn,.dtile.today .dw{color:var(--red)}
+.dtile.sel .dn{background:#fff;color:#000}
+.dtile.sel.today .dn{background:var(--red);color:#fff}
+.dtile:active .dn{transform:scale(.88)}
+.dtile .dots{display:flex;gap:3px;height:6px}
+.dtile .dots i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+.dtile .dots i.o{background:transparent;box-shadow:inset 0 0 0 1.5px var(--c)}
 .dnum{font-size:30px;font-weight:700;letter-spacing:-.04em;line-height:1.15;width:max-content}
 .dnum.today{background:var(--red);color:#fff;border-radius:999px;padding:0 10px;margin-left:-4px}
-.dtile .dm{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);font-weight:600}
-.dtile .dm i{width:8px;height:8px;border-radius:50%;background:var(--c)}
-.dtile .pbar{margin-top:auto;height:4px}
-.dtile.past:not(.sel){opacity:.6}
-@media(max-width:900px){.strip{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 4px 10px;margin:0 -16px 12px;padding-left:16px;scrollbar-width:none}.strip::-webkit-scrollbar{display:none}.dtile{flex:0 0 96px;height:130px;scroll-snap-align:start}}
+@keyframes swapIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.swap{animation:swapIn .35s var(--ios) both}
 .board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;align-items:start}
 @media(max-width:1180px){.board{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px}.board .col{flex:0 0 250px;scroll-snap-align:start}}
 .col{padding:14px 12px 10px;border-radius:22px;min-height:330px;display:flex;flex-direction:column}
@@ -320,7 +326,7 @@ input[type=number]{-moz-appearance:textfield}
 .wtile .dnum{font-size:13px;font-weight:700;position:absolute;top:12px;left:14px;opacity:.9}
 .wtile .dnum.today{padding:1px 8px;margin:0}
 .wtile .badge{top:10px;right:10px;padding:3px 8px;font-size:11px}
-@media(max-width:900px){.wtiles{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:6px 16px 12px;scrollbar-width:none}.wtiles::-webkit-scrollbar{display:none}.wtile{flex:0 0 150px;scroll-snap-align:start}}
+@media(max-width:900px){.wtiles{display:flex;overflow-x:auto;scroll-snap-type:x proximity;margin:0 -16px;padding:6px 16px 12px;scrollbar-width:none}.wtiles::-webkit-scrollbar{display:none}.wtile{flex:0 0 150px;scroll-snap-align:start}}
 .bms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 @media(max-width:560px){.bms{grid-template-columns:1fr}}
 .bm{padding:14px;border-radius:18px;background:rgba(255,255,255,.04)}
@@ -1033,23 +1039,14 @@ function renderWeek() {
         ${shiftBtn}${woBtn}<ul class="tasks drop" data-drop="${d}">${list.map(t => taskLi(t, d, { showCat: false })).join('')}</ul>${addForm(d, 'Add')}</div>`;
     }).join('')}</div>`;
   } else {
-    const sd = S.ui.selDay, list = tasksOn(sd), sh = S.shifts[sd];
-    body = `<div class="strip">${dates.map((d, i) => {
-      const w = wo(d), l = tasksOn(d), dn = l.filter(t => isDone(t, d)).length, h = shiftHours(S.shifts[d]);
-      return `<button class="dtile focusable anim drop ${d === sd ? 'sel' : ''} ${d < td ? 'past' : ''}" data-drop="${d}" data-act="sel-day" data-date="${d}" style="--i:${i + 1}">
-        <span class="dw">${DOW[i]}</span><span class="dnum ${d === td ? 'today' : ''}">${parse(d).getDate()}</span>
-        <span class="dm" style="--c:${SESS[w.s].color}"><i></i>${w.s === 'REST' ? 'Rest' : w.s}${w.done ? ' ✓' : ''}</span>
-        <span class="dm">${h ? fh(h) + 'h shift' : 'No shift'}</span>
-        ${l.length ? pbar('dt-' + d, dn / l.length, 'var(--glow)') : '<span class="dm muted">No tasks</span>'}</button>`;
+    const sd = S.ui.selDay;
+    body = `<div class="strip anim" style="--i:1">${dates.map((d, i) => {
+      const w = wo(d), open = tasksOn(d).some(t => !isDone(t, d)), h = shiftHours(S.shifts[d]);
+      const dots = [w.s !== 'REST' ? `<i class="${w.done ? '' : 'o'}" style="--c:${SESS[w.s].color}"></i>` : '', h ? '<i style="--c:var(--blue)"></i>' : '', open ? '<i style="--c:var(--text2)"></i>' : ''].join('');
+      return `<button class="dtile drop ${d === sd ? 'sel' : ''} ${d === td ? 'today' : d < td ? 'past' : ''}" data-drop="${d}" data-act="sel-day" data-date="${d}" aria-label="${longDate(d)}">
+        <span class="dw">${DOW[i]}</span><span class="dn">${parse(d).getDate()}</span><span class="dots">${dots}</span></button>`;
     }).join('')}</div>
-    <div class="grid">
-      <section class="card g7 anim" style="--i:8"><div class="ch"><h3>${rel(sd)}</h3><span class="sub">${longDate(sd)}</span></div>
-        <ul class="tasks drop" data-drop="${sd}">${list.map(t => taskLi(t, sd)).join('') || '<li class="empty">Nothing planned.</li>'}</ul>${addForm(sd, 'Add a task')}</section>
-      <div class="g5" style="display:flex;flex-direction:column;gap:16px">
-        <section class="card anim" style="--i:9"><div class="ch"><h3>Shift</h3><span class="sub" data-total-for="${sd}">${shiftHours(sh) ? fh(shiftHours(sh)) + ' hours' : ''}</span></div>${shiftEditor(sd)}</section>
-        <section class="card tilecard focusable anim" style="--i:10">${sessionArt(sd, { small: true })}</section>
-      </div>
-    </div>`;
+    <div class="grid" id="dayDetail">${dayDetail(sd)}</div>`;
   }
   const ib = inbox();
   body += `<section class="card anim" style="--i:12;margin-top:16px"><div class="ch"><h3>Inbox</h3><span class="sub">No date yet · drag onto a day</span></div>
@@ -1057,6 +1054,16 @@ function renderWeek() {
   return hero(`Week ${weekNo(weekStart)}${isCurWeek() ? ' · this week' : ''}`, weekLabel(weekStart), `${fh(hrs)} hours · ${sDone}/${plan.length} sessions · ${left} open task${left === 1 ? '' : 's'}`, right) + body;
 }
 
+// The selected day's cards under the week row. Picking a day swaps only this, so the row never redraws or moves.
+function dayDetail(sd) {
+  const list = tasksOn(sd), sh = S.shifts[sd];
+  return `<section class="card g7 anim" style="--i:2"><div class="ch"><h3>${rel(sd)}</h3><span class="sub">${longDate(sd)}</span></div>
+      <ul class="tasks drop" data-drop="${sd}">${list.map(t => taskLi(t, sd)).join('') || '<li class="empty">Nothing planned.</li>'}</ul>${addForm(sd, 'Add a task')}</section>
+    <div class="g5" style="display:flex;flex-direction:column;gap:16px">
+      <section class="card anim" style="--i:3"><div class="ch"><h3>Shift</h3><span class="sub" data-total-for="${sd}">${shiftHours(sh) ? fh(shiftHours(sh)) + ' hours' : ''}</span></div>${shiftEditor(sd)}</section>
+      <section class="card tilecard anim" style="--i:4">${sessionArt(sd, { small: true })}</section>
+    </div>`;
+}
 function shiftEditor(d) {
   const s = S.shifts[d] || {}, pr = presets();
   return `<div class="shift-ed" data-date="${d}">
@@ -1283,7 +1290,7 @@ function render() {
   clearTimeout(root._t); root.classList.remove('enter', 'enter-l', 'enter-r');
   root.innerHTML = VIEWS[t]();
   if (!enter) root.querySelectorAll('details').forEach((el, i) => { if (open.has(i)) el.open = true; });
-  centerRails(root, kept);
+  centerRails(root, enter ? {} : kept);
   if (enter && !REDUCED) { void root.offsetWidth; root.classList.add(enter); root._t = setTimeout(() => root.classList.remove(enter), 1100); }
   if (flip) flipPlay(root, flip);
   $$('.seg').forEach(s => placeInd(s, !FX.seg));
@@ -1309,13 +1316,12 @@ function flipPlay(root, m) {
 // Horizontal rails (phone day strip, training tiles, narrow board) get rebuilt on every render,
 // which resets their scroll. Restore it, then glide the selected day (or today) to the center.
 function centerRails(root, kept) {
-  root.querySelectorAll('.strip,.wtiles,.board').forEach(el => {
+  root.querySelectorAll('.wtiles,.board').forEach(el => {
     if (el.scrollWidth <= el.clientWidth) return;
-    const k = el.classList[0], had = k in kept;
-    if (had) el.scrollLeft = kept[k];
-    const today = el.querySelector('.today'), target = el.querySelector('.sel') || (today && today.closest('.dtile,.wtile,.col'));
-    if (!target) return;
-    el.scrollTo({ left: target.offsetLeft - (el.clientWidth - target.offsetWidth) / 2, behavior: had && !REDUCED ? 'smooth' : 'auto' });
+    const k = el.classList[0];
+    if (k in kept) { el.scrollLeft = kept[k]; return; } // same screen redrawing: stay exactly where you were
+    const today = el.querySelector('.today'), target = today && today.closest('.wtile,.col');
+    if (target) el.scrollLeft = target.offsetLeft - (el.clientWidth - target.offsetWidth) / 2; // fresh open: today in view
   });
 }
 // Every tab opens at the top on the current week (or on the day a link points to).
@@ -1422,7 +1428,15 @@ document.addEventListener('click', e => {
     case 'rest-add': if (REST) REST.end += 30000; return tick();
     case 'rest-skip': REST = null; island.key = null; return island.live();
     case 'cardio-type': cardioType = v; el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el)); return pop(el);
-    case 'sel-day': S.ui.selDay = el.dataset.date; save(); return render();
+    case 'sel-day': {
+      const d = el.dataset.date; if (d === S.ui.selDay) return;
+      S.ui.selDay = d; save(); haptic(6);
+      $$('.dtile').forEach(t => t.classList.toggle('sel', t === el));
+      const box = $('#dayDetail'); box.innerHTML = dayDetail(d);
+      box.classList.remove('swap'); void box.offsetWidth; box.classList.add('swap');
+      $$('#dayDetail .seg').forEach(s => placeInd(s, true)); animateValues(box);
+      return;
+    }
     case 'week-mode': S.ui.weekMode = v; FX.enter = 'enter'; save(); return render();
     case 'copy-summary': return copy(summary());
     case 'copy-last': {
