@@ -651,6 +651,7 @@ function mergeState(local, remote) {
   if (remote.since && (!out.since || remote.since < out.since)) out.since = remote.since;
   const cutoff = Date.now() - 30 * 864e5;
   Object.keys(out.tomb).forEach(k => { if (out.tomb[k] < cutoff) delete out.tomb[k]; });
+  out.tasks.forEach(t => { if (!t.date) t.date = today(); }); // never let a task arrive dateless and vanish
   return out;
 }
 const forServer = s => { const c = JSON.parse(JSON.stringify(s)); delete c.ui; delete c.clock; return c; };
