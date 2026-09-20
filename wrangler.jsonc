@@ -8,6 +8,8 @@
   "workers_dev": false,
   "preview_urls": false,
   "routes": [{ "pattern": "apps.jacksonhamm.ca", "custom_domain": true }],
+  // Cross-device sync store. SYNC_KEYS (allowed sync-code hashes) is a secret, set in the dashboard.
+  "kv_namespaces": [{ "binding": "SYNC", "id": "c331c9c1a4f8497ea216a83728fb2890" }],
   "assets": {
     "directory": "./",
     "binding": "ASSETS",

@@ -64,6 +64,12 @@ input[type=number]{-moz-appearance:textfield}
 .kbd{font-size:11px;color:var(--text3);border:1px solid var(--stroke2);border-radius:6px;padding:1px 6px;margin-left:4px}
 .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--glow),#1c1c22);display:grid;place-items:center;font-weight:700;font-size:14px;transition:transform .3s var(--spring)}
 .avatar:hover{transform:scale(1.08)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:background .3s,box-shadow .3s}
+.sync-dot.off{display:none}
+.sync-dot.ok{background:var(--green);box-shadow:0 0 8px var(--green)}
+.sync-dot.err{background:var(--red);box-shadow:0 0 8px var(--red)}
+.sync-dot.syncing{background:var(--teal);animation:pulseDot 1.2s infinite}
+@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.25}}
 
 /* segmented control */
 .seg{position:relative;display:inline-flex;background:var(--fill);border-radius:12px;padding:3px;isolation:isolate}
@@ -468,6 +474,7 @@ input[type=number]{-moz-appearance:textfield}
   <nav class="seg nav" id="nav"></nav>
   <div class="sp"></div>
   <button class="btn qa-btn" data-act="spot-open"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Quick add<span class="kbd" id="kbdHint">Ctrl K</span></button>
+  <span id="syncDot" class="sync-dot off" title="Sync status"></span>
   <button class="avatar" data-act="settings" title="Settings" id="avatar">J</button>
 </header>
 
@@ -543,7 +550,6 @@ const I = {
   trophy: '<svg class="ico" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8.5 20.5h7M9.5 17h5"/></svg>',
   link: '<svg class="ico" viewBox="0 0 24 24" style="width:17px;height:17px"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>',
   bell: '<svg class="ico" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16zM10 20.5a2 2 0 0 0 4 0"/></svg>',
-  inbox: '<svg class="ico" viewBox="0 0 24 24"><path d="M3.5 13.5 6 5h12l2.5 8.5V19a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19v-5.5zM3.5 13.5h5l1.5 2.5h4l1.5-2.5h5"/></svg>',
   arrow: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   task: '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.8-5"/></svg>',
 };
@@ -578,8 +584,119 @@ function load() {
 let S = load();
 // Days before you started using Daybook shouldn't count as missed workouts.
 if (!S.since) { const n = new Date(); S.since = [...Object.keys(S.workouts), ...Object.keys(S.shifts), `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`].sort()[0]; }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { island.toast('Storage is blocked — changes won’t persist'); } }
+S.tomb = S.tomb || {};
+{ // the Inbox is gone: anything without a day lands on today
+  const n = new Date(), td = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+  S.tasks.forEach(t => { if (!t.date) { t.date = td; t.u = Date.now(); } });
+}
+let LAST = JSON.parse(JSON.stringify(S)); // snapshot used to spot what changed
+function save() {
+  stampChanges();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { island.toast('Storage is blocked — changes won’t persist'); }
+  syncSoon();
+}
 function commit() { save(); render(); }
+
+/* ---------- cross-device sync ----------
+   Every task, job, shift and workout carries `u`, the time it last changed, and
+   deletions leave a tombstone. Two devices therefore merge item by item instead
+   of one overwriting the other. The sync code never leaves the device it's typed
+   on except as a header; the server stores data under a hash of it. */
+const SYNC = {
+  code: (() => { try { return localStorage.getItem('daybook_sync_code') || ''; } catch (e) { return ''; } })(),
+  at: (() => { try { return +localStorage.getItem('daybook_sync_at') || 0; } catch (e) { return 0; } })(),
+  state: 'off', err: '', busy: false, timer: null,
+};
+const stripU = o => { const c = { ...o }; delete c.u; return c; };
+const same = (a, b) => JSON.stringify(stripU(a || {})) === JSON.stringify(stripU(b || {}));
+function stampChanges() {
+  const now = Date.now(), prev = LAST || {};
+  ['tasks', 'jobs'].forEach(k => {
+    const was = new Map((prev[k] || []).map(x => [x.id, x]));
+    (S[k] || []).forEach(x => { const p = was.get(x.id); if (!p || !same(p, x)) x.u = now; was.delete(x.id); });
+    was.forEach((v, id) => { S.tomb[id] = now; });
+  });
+  ['shifts', 'workouts'].forEach(k => {
+    const p = prev[k] || {};
+    Object.keys(S[k] || {}).forEach(d => { if (!p[d] || !same(p[d], S[k][d])) S[k][d].u = now; });
+    Object.keys(p).forEach(d => { if (!S[k][d]) S.tomb[k + ':' + d] = now; });
+  });
+  if (!same(prev.settings, S.settings)) S.settingsU = now;
+  if (JSON.stringify(prev.template) !== JSON.stringify(S.template)) S.templateU = now;
+  LAST = JSON.parse(JSON.stringify(S));
+}
+function mergeState(local, remote) {
+  if (!remote) return local;
+  const out = JSON.parse(JSON.stringify(local));
+  out.tomb = { ...(remote.tomb || {}), ...(out.tomb || {}) };
+  ['tasks', 'jobs'].forEach(k => {
+    const m = new Map((out[k] || []).map(x => [x.id, x]));
+    (remote[k] || []).forEach(r => {
+      const l = m.get(r.id);
+      if (!l) { if (!(out.tomb[r.id] > (r.u || 0))) m.set(r.id, r); }
+      else if ((r.u || 0) > (l.u || 0)) m.set(r.id, r);
+    });
+    out[k] = [...m.values()].filter(x => !(out.tomb[x.id] > (x.u || 0)));
+  });
+  ['shifts', 'workouts'].forEach(k => {
+    Object.entries(remote[k] || {}).forEach(([d, r]) => {
+      const l = out[k][d];
+      if (!l) { if (!(out.tomb[k + ':' + d] > (r.u || 0))) out[k][d] = r; }
+      else if ((r.u || 0) > (l.u || 0)) out[k][d] = r;
+    });
+    Object.keys(out[k]).forEach(d => { if (out.tomb[k + ':' + d] > (out[k][d].u || 0)) delete out[k][d]; });
+  });
+  if ((remote.settingsU || 0) > (out.settingsU || 0)) { out.settings = { ...out.settings, ...remote.settings }; out.settingsU = remote.settingsU; }
+  if ((remote.templateU || 0) > (out.templateU || 0)) { out.template = remote.template; out.templateU = remote.templateU; }
+  if (remote.since && (!out.since || remote.since < out.since)) out.since = remote.since;
+  const cutoff = Date.now() - 30 * 864e5;
+  Object.keys(out.tomb).forEach(k => { if (out.tomb[k] < cutoff) delete out.tomb[k]; });
+  return out;
+}
+const forServer = s => { const c = JSON.parse(JSON.stringify(s)); delete c.ui; delete c.clock; return c; };
+function syncSoon() { if (!SYNC.code) return; clearTimeout(SYNC.timer); SYNC.timer = setTimeout(() => syncNow(), 2500); }
+async function syncNow(depth = 0) {
+  if (!SYNC.code || SYNC.busy || depth > 2) return;
+  SYNC.busy = true; SYNC.state = 'syncing'; paintSync();
+  try {
+    const head = { 'x-sync-key': SYNC.code };
+    const r = await fetch('api/state', { headers: head, cache: 'no-store' });
+    if (r.status === 401) throw new Error('Sync code not recognised');
+    if (!r.ok) throw new Error('Server said ' + r.status);
+    const remote = await r.json();
+    const before = JSON.stringify(forServer(S));
+    const merged = mergeState(S, remote.data);
+    const body = JSON.stringify(forServer(merged));
+    const put = await fetch('api/state', { method: 'PUT', headers: { ...head, 'content-type': 'application/json', 'if-match': String(remote.rev || 0) }, body });
+    if (put.status === 409) { SYNC.busy = false; return syncNow(depth + 1); }
+    if (put.status === 401) throw new Error('Sync code not recognised');
+    if (!put.ok) throw new Error('Server said ' + put.status);
+    S = { ...merged, ui: S.ui, clock: S.clock };
+    LAST = JSON.parse(JSON.stringify(S));
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+    SYNC.at = Date.now(); SYNC.state = 'ok'; SYNC.err = '';
+    try { localStorage.setItem('daybook_sync_at', String(SYNC.at)); } catch (e) {}
+    if (body !== before) render();
+  } catch (e) {
+    SYNC.state = 'err'; SYNC.err = e.message || 'Sync failed';
+  }
+  SYNC.busy = false; paintSync();
+}
+function setSyncCode(code) {
+  SYNC.code = (code || '').trim();
+  try { SYNC.code ? localStorage.setItem('daybook_sync_code', SYNC.code) : localStorage.removeItem('daybook_sync_code'); } catch (e) {}
+  SYNC.state = SYNC.code ? 'syncing' : 'off'; SYNC.err = '';
+  paintSync();
+  if (SYNC.code) syncNow();
+}
+const syncLabel = () => SYNC.state === 'off' ? 'Not syncing — this device only'
+  : SYNC.state === 'syncing' ? 'Syncing…'
+  : SYNC.state === 'err' ? SYNC.err
+  : SYNC.at ? 'Synced ' + ago(SYNC.at) : 'Synced';
+function paintSync() {
+  const el = $('#syncStatus'); if (el) { el.textContent = syncLabel(); el.style.color = SYNC.state === 'err' ? 'var(--red)' : ''; }
+  const dot = $('#syncDot'); if (dot) dot.className = 'sync-dot ' + SYNC.state;
+}
 
 /* ---------- dates ---------- */
 const pad = n => String(n).padStart(2, '0');
@@ -722,7 +839,6 @@ function occurs(t, d) {
 const isDone = (t, d) => t.repeat ? !!(t.doneOn && t.doneOn[d]) : !!t.done;
 const tasksOn = d => sortTasks(S.tasks.filter(t => occurs(t, d)), d);
 const sortTasks = (arr, d) => arr.slice().sort((a, b) => (isDone(a, d) - isDone(b, d)) || CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat) || (a.created || 0) - (b.created || 0));
-const inbox = () => sortTasks(S.tasks.filter(t => !t.repeat && !t.date && !t.done), null);
 const overdue = () => S.tasks.filter(t => !t.repeat && t.date && t.date < today() && !t.done);
 const repeatLabel = r => !r ? '' : r.t === 'daily' ? 'Daily' : r.t === 'weekdays' ? 'Weekdays' : `Every ${DOW[r.dow]}`;
 
@@ -786,7 +902,6 @@ function parseQuick(raw, base) {
     let d = new Date(td.getFullYear(), MON3.indexOf(m[1].toLowerCase()), +m[2]); if (d < addDays(td, -60)) d.setFullYear(d.getFullYear() + 1); setD(d);
   }
   else if ((m = cut(/\s(\d{1,2})\/(\d{1,2})(?=\s)/))) { let d = new Date(td.getFullYear(), +m[1] - 1, +m[2]); if (d < addDays(td, -60)) d.setFullYear(d.getFullYear() + 1); setD(d); }
-  if (cut(/\s(?:inbox|someday)(?=\s)/i)) { r.date = null; r.dateSet = true; }
   const rest = s.replace(/\s+/g, ' ').trim();
   if (!rest) return null;
 
@@ -829,7 +944,7 @@ function parseQuick(raw, base) {
 }
 function describe(r) {
   if (!r) return null;
-  const d = r.date ? rel(r.date) : 'Inbox';
+  const d = rel(r.date || today());
   if (r.kind === 'shift') { const h = shiftHours(r); return { c: 'var(--blue)', icon: I.hours, title: `Shift · ${t12(r.start)}–${t12(r.end)}`, chips: [d, r.brk ? `${r.brk}m break` : 'No break', `${fh(h)} hours`] }; }
   if (r.kind === 'job') return { c: 'var(--green)', icon: I.jobs, title: r.company, chips: [r.status, r.role || 'No role', r.link ? 'Link saved' : null, rel(r.date)].filter(Boolean) };
   if (r.kind === 'wo') { const w = wo(r.date); return { c: 'var(--orange)', icon: I.training, title: `Mark ${w.s} · ${sessName(w.s)} done`, chips: [d] }; }
@@ -840,9 +955,9 @@ function applyQuick(r) {
   if (r.kind === 'shift') { S.shifts[r.date] = { ...(S.shifts[r.date] || {}), start: r.start, end: r.end, brk: r.brk }; commit(); island.toast(`Shift logged · ${rel(r.date)} · ${fh(shiftHours(r))}h`, { icon: I.hours, color: '#64d2ff' }); return true; }
   if (r.kind === 'job') { S.jobs.push({ id: uid(), created: Date.now(), company: r.company, role: r.role || '', link: r.link || '', status: r.status, date: r.date, notes: '' }); commit(); island.toast(`${r.company} added to Jobs`, { icon: I.jobs, color: '#30d158' }); return true; }
   if (r.kind === 'wo') { const o = S.workouts[r.date] || {}; S.workouts[r.date] = { ...o, done: true, auto: false }; commit(); celebrate(`${wo(r.date).s} done`, '#ff9f0a'); return true; }
-  const t = { id: uid(), created: Date.now(), title: r.title, cat: r.cat, date: r.date, done: false, repeat: r.repeat, doneOn: {} };
+  const t = { id: uid(), created: Date.now(), title: r.title, cat: r.cat, date: r.date || today(), done: false, repeat: r.repeat, doneOn: {} };
   S.tasks.push(t); FX.added = t.id; commit();
-  island.toast(r.repeat ? `Repeats ${repeatLabel(r.repeat).toLowerCase()}` : `Added to ${r.date ? rel(r.date) : 'Inbox'}`, { icon: I.check, color: CATS[r.cat].color });
+  island.toast(r.repeat ? `Repeats ${repeatLabel(r.repeat).toLowerCase()}` : `Added to ${rel(t.date)}`, { icon: I.check, color: CATS[r.cat].color });
   return true;
 }
 
@@ -928,7 +1043,7 @@ const weekNav = () => `<div class="wnav"><button class="btn icon" data-act="prev
 
 function taskLi(t, d, opts = {}) {
   const c = (CATS[t.cat] || CATS.life).color, done = isDone(t, d);
-  const meta = [opts.showCat !== false ? `<span class="cd"></span>${CATS[t.cat].label}` : '', t.repeat ? `${I.repeat}${repeatLabel(t.repeat)}` : '', opts.when ? (t.date ? rel(t.date) : 'Inbox') : ''].filter(Boolean).join(' · ');
+  const meta = [opts.showCat !== false ? `<span class="cd"></span>${CATS[t.cat].label}` : '', t.repeat ? `${I.repeat}${repeatLabel(t.repeat)}` : '', opts.when ? rel(t.date) : ''].filter(Boolean).join(' · ');
   return `<li class="task ${done ? 'done' : ''} ${FX.added === t.id ? 'fx-in' : ''}" data-id="${t.id}" data-date="${d || ''}" style="--c:${c}" ${t.repeat ? '' : 'draggable="true"'}>
     <button class="ck" data-act="toggle-task" aria-label="Complete">${I.check}</button>
     <div class="tb" data-act="task-menu"><div class="tt">${esc(t.title)}</div>${meta ? `<div class="tm">${meta}</div>` : ''}</div></li>`;
@@ -996,7 +1111,6 @@ function renderToday() {
     `<div class="nitem" style="--c:var(--indigo)"><div class="ni">${I.week}</div><div class="nb"><b>Tomorrow</b><span>${[shiftHours(tsh) ? `${t12(tsh.start)}–${t12(tsh.end)}` : 'No shift', tw.s === 'REST' ? 'Rest' : sessName(tw.s), `${tTasks} task${tTasks === 1 ? '' : 's'}`].join(' · ')}</span></div><button class="btn sm" data-tab="week" data-sel="${tmr}">Open</button></div>`,
     ag && apps < ag ? `<div class="nitem" style="--c:var(--green)"><div class="ni">${I.jobs}</div><div class="nb"><b>${ag - apps} more application${ag - apps === 1 ? '' : 's'}</b><span>to hit ${ag} this week</span></div><button class="btn sm" data-tab="jobs">Log</button></div>` : '',
     goal && hrs < goal ? `<div class="nitem" style="--c:var(--teal)"><div class="ni">${I.hours}</div><div class="nb"><b>${fh(goal - hrs)}h to target</b><span>${fh(hrs)} of ${goal} hours this week</span></div></div>` : '',
-    inbox().length ? `<div class="nitem" style="--c:var(--purple)"><div class="ni">${I.inbox}</div><div class="nb"><b>${inbox().length} in inbox</b><span>Give them a day</span></div><button class="btn sm" data-tab="week">Sort</button></div>` : '',
   ].filter(Boolean).join('');
 
   return hero(longDate(d), `${greet}, ${esc(S.settings.name || 'there')}`, summary) + `<div class="grid">
@@ -1048,9 +1162,6 @@ function renderWeek() {
     }).join('')}</div>
     <div class="grid" id="dayDetail">${dayDetail(sd)}</div>`;
   }
-  const ib = inbox();
-  body += `<section class="card anim" style="--i:12;margin-top:16px"><div class="ch"><h3>Inbox</h3><span class="sub">No date yet · drag onto a day</span></div>
-    <ul class="tasks drop" data-drop="">${ib.map(t => taskLi(t, null)).join('') || '<li class="empty">Empty.</li>'}</ul>${addForm(null, 'Capture to inbox')}</section>`;
   return hero(`Week ${weekNo(weekStart)}${isCurWeek() ? ' · this week' : ''}`, weekLabel(weekStart), `${fh(hrs)} hours · ${sDone}/${plan.length} sessions · ${left} open task${left === 1 ? '' : 's'}`, right) + body;
 }
 
@@ -1180,10 +1291,10 @@ let SHEET = null;
 const SHEETS = {
   task({ id, d }) {
     const t = S.tasks.find(x => x.id === id); if (!t) return '';
-    const wk = !t.date ? 'inbox' : t.date === today() ? 'today' : t.date === iso(addDays(parse(today()), 1)) ? 'tomorrow' : '';
+    const wk = t.date === today() ? 'today' : t.date === iso(addDays(parse(today()), 1)) ? 'tomorrow' : '';
     const rp = t.repeat ? t.repeat.t : 'none';
     return `<div class="grab"></div><textarea data-tf="title" rows="2" maxlength="240">${esc(t.title)}</textarea>
-      <div class="lbl">${t.repeat ? 'Starts' : 'When'}</div><div class="chips">${[['today', 'Today'], ['tomorrow', 'Tomorrow'], ['weekend', 'Weekend'], ['nextweek', 'Next week'], ['inbox', 'Inbox']].filter(x => !(t.repeat && x[0] === 'inbox')).map(([k, l]) => `<button class="chip ${wk === k ? 'on' : ''}" data-act="tm-when" data-v="${k}">${l}</button>`).join('')}<input type="date" class="chip-date" data-tf="date" value="${t.date || ''}"></div>
+      <div class="lbl">${t.repeat ? 'Starts' : 'When'}</div><div class="chips">${[['today', 'Today'], ['tomorrow', 'Tomorrow'], ['weekend', 'Weekend'], ['nextweek', 'Next week']].map(([k, l]) => `<button class="chip ${wk === k ? 'on' : ''}" data-act="tm-when" data-v="${k}">${l}</button>`).join('')}<input type="date" class="chip-date" data-tf="date" value="${t.date || ''}"></div>
       <div class="lbl">Category</div><div class="chips">${CAT_ORDER.map(k => `<button class="chip ${t.cat === k ? 'on' : ''}" style="--c:${CATS[k].color};--on:#fff" data-act="tm-cat" data-v="${k}"><span class="dot"></span>${CATS[k].label}</button>`).join('')}</div>
       <div class="lbl">Repeat</div><div class="seg">${[['none', 'Never'], ['daily', 'Daily'], ['weekdays', 'Weekdays'], ['weekly', 'Weekly']].map(([k, l]) => `<button class="${rp === k ? 'on' : ''}" data-act="tm-rep" data-v="${k}">${l}</button>`).join('')}</div>
       <div class="row end"><button class="btn tint" style="--c:var(--red)" data-act="tm-del">Delete</button><button class="btn white" data-act="close-sheet">Done</button></div>`;
@@ -1240,7 +1351,12 @@ const SHEETS = {
       <label class="field"><span>Hourly rate (CAD)</span><input type="number" inputmode="decimal" step="0.25" data-sf="rate" value="${st.rate || ''}" placeholder="Hide pay"></label></div>
       <label class="field"><span>Weekly applications goal</span><input type="number" inputmode="numeric" data-sf="appGoal" value="${st.appGoal || ''}" placeholder="None"></label>
       <label class="field"><span>Workout app link</span><input data-sf="workoutUrl" value="${esc(st.workoutUrl)}"></label>
-      <div class="lbl">Backup</div><p class="sub" style="margin-top:0">Data lives in this browser. Export a backup now and then, and import it to move to a new device.</p>
+      <div class="lbl">Sync across devices</div>
+      <p class="sub" style="margin-top:0">Paste the same sync code on your laptop and phone and they keep each other up to date. Changes merge, so editing both offline is fine.</p>
+      <div class="row"><input id="syncCode" placeholder="Sync code" value="${esc(SYNC.code)}" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false">
+        ${SYNC.code ? `<button class="btn" data-act="sync-off">Turn off</button><button class="btn white" data-act="sync-now">Sync now</button>` : `<button class="btn white" data-act="sync-on">Connect</button>`}</div>
+      <p class="sub" id="syncStatus" style="margin:8px 0 0">${esc(syncLabel())}</p>
+      <div class="lbl">Backup</div><p class="sub" style="margin-top:0">A copy stays on each device. Export one now and then anyway.</p>
       <div class="row"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Import backup</button></div>
       <div class="lbl">Install</div><p class="sub" style="margin-top:0">iPhone: Share → Add to Home Screen. Android / Chrome: menu → Install app.</p>
       <div class="row end"><button class="btn white" data-act="close-sheet">Done</button></div>`;
@@ -1409,7 +1525,7 @@ document.addEventListener('click', e => {
     case 'thisweek': return shiftWeek(0);
     case 'toggle-task': return toggleTask(el.closest('.task'));
     case 'task-menu': { const li = el.closest('.task'); return openSheet('task', { id: li.dataset.id, d: li.dataset.date || null }); }
-    case 'tm-when': { const t = task(), td = parse(today()); t.date = { today: today(), tomorrow: iso(addDays(td, 1)), weekend: iso(addDays(td, (5 - dowIdx(today()) + 7) % 7)), nextweek: iso(addDays(mondayOf(td), 7)), inbox: null }[v]; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); save(); return refreshSheet(); }
+    case 'tm-when': { const t = task(), td = parse(today()); t.date = { today: today(), tomorrow: iso(addDays(td, 1)), weekend: iso(addDays(td, (5 - dowIdx(today()) + 7) % 7)), nextweek: iso(addDays(mondayOf(td), 7)) }[v]; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); save(); return refreshSheet(); }
     case 'tm-cat': task().cat = v; save(); return refreshSheet();
     case 'tm-rep': { const t = task(); t.repeat = v === 'none' ? null : { t: v, dow: dowIdx(t.date || today()) }; if (t.repeat && !t.date) t.date = today(); t.doneOn = t.doneOn || {}; save(); return refreshSheet(); }
     case 'tm-del': { const t = task(); closeSheet(); const li = $(`.task[data-id="${t.id}"]`); return collapse(li).then(() => withUndo('Task deleted', () => { S.tasks = S.tasks.filter(x => x !== t); })); }
@@ -1450,6 +1566,9 @@ document.addEventListener('click', e => {
     case 'job-status': { const j = job(); j.status = v; (j.history = j.history || []).push({ s: v, d: today() }); save(); refreshSheet(); return v === 'Offer' && celebrate(`Offer from ${j.company}`, '#30d158'); }
     case 'job-del': { const j = job(); closeSheet(); return withUndo(`${j.company} removed`, () => { S.jobs = S.jobs.filter(x => x !== j); }); }
     case 'followed': { e.stopPropagation(); const j = S.jobs.find(x => x.id === el.dataset.id); j.follow = [...(j.follow || []), today()]; j.nudge = iso(addDays(parse(today()), 7)); commit(); return island.toast(`Follow-up logged · next nudge in a week`, { icon: I.bell, color: '#ff9f0a' }); }
+    case 'sync-on': { const v = $('#syncCode').value.trim(); if (v.length < 16) return island.toast('That code looks too short'); setSyncCode(v); return refreshSheet(); }
+    case 'sync-off': setSyncCode(''); return refreshSheet();
+    case 'sync-now': return syncNow();
     case 'settings': return openSheet('settings');
     case 'export': { const blob = new Blob([JSON.stringify({ daybook: S, workout: { state: readLS(W_STATE, {}), cardio: cardioLogs(), pushups: benchLogs('pushups'), plank: benchLogs('plank'), row: benchLogs('row') } }, null, 2)], { type: 'application/json' }); const a2 = document.createElement('a'); a2.href = URL.createObjectURL(blob); a2.download = `daybook-backup-${today()}.json`; a2.click(); return URL.revokeObjectURL(a2.href); }
     case 'import': return $('#importFile').click();
@@ -1535,8 +1654,9 @@ document.addEventListener('dragover', e => { if (!dragId) return; const z = e.ta
 document.addEventListener('drop', e => {
   if (!dragId) return; const z = e.target.closest('.drop'); if (!z) return; e.preventDefault();
   const t = S.tasks.find(x => x.id === dragId); if (!t) return;
-  t.date = z.dataset.drop || null; FX.added = t.id; haptic(); commit();
-  island.toast(`Moved to ${t.date ? rel(t.date) : 'Inbox'}`, { icon: I.arrow, color: CATS[t.cat].color });
+  if (!z.dataset.drop) return;
+  t.date = z.dataset.drop; FX.added = t.id; haptic(); commit();
+  island.toast(`Moved to ${rel(t.date)}`, { icon: I.arrow, color: CATS[t.cat].color });
 });
 
 /* drag-to-dismiss sheets (touch). Swipe-to-change-week was removed: diagonal scrolls kept flipping weeks. */
@@ -1587,7 +1707,9 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   if (today() !== lastDay) { lastDay = today(); weekStart = mondayOf(new Date()); }
   render(); // picks up anything done in the workout app meanwhile
+  syncNow();
 });
+setInterval(() => { if (!document.hidden) syncNow(); }, 60000);
 addEventListener('storage', e => { if (e.key && (e.key.startsWith('workout_') || e.key.startsWith('log_'))) render(); });
 let lastMode = weekMode();
 addEventListener('resize', () => {
@@ -1603,6 +1725,7 @@ island.el = $('#island');
 FX.enter = 'enter';
 render();
 loadProgram();
+if (SYNC.code) syncNow();
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
