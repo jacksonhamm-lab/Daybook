@@ -16,7 +16,7 @@ async function sha256(text) {
 // Sync store: one JSON blob per sync code, keyed by the hash of the code so the
 // code itself is never written down. SYNC_KEYS (a secret) lists the allowed hashes.
 async function syncApi(request, env) {
-  const code = request.headers.get('x-sync-key') || '';
+  const code = (request.headers.get('x-sync-key') || '').trim().toLowerCase();
   if (!code || code.length < 16) return json({ error: 'missing code' }, 401);
   const hash = await sha256(code);
   const allowed = (env.SYNC_KEYS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -48,7 +48,7 @@ async function syncApi(request, env) {
    user's own timezone, and pushes it. A per-day "sent" list stops repeats. */
 
 async function auth(request, env) {
-  const code = request.headers.get('x-sync-key') || '';
+  const code = (request.headers.get('x-sync-key') || '').trim().toLowerCase();
   if (!code || code.length < 16) return null;
   const hash = await sha256(code);
   const allowed = (env.SYNC_KEYS || '').split(',').map(s => s.trim()).filter(Boolean);
