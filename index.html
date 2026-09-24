@@ -727,7 +727,7 @@ function stashCode(code) {
   } catch (e) {}
 }
 function setSyncCode(code) {
-  SYNC.code = (code || '').trim().replace(/s+/g, '').toLowerCase();
+  SYNC.code = (code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   try { SYNC.code ? localStorage.setItem('daybook_sync_code', SYNC.code) : localStorage.removeItem('daybook_sync_code'); } catch (e) {}
   stashCode(SYNC.code);
   SYNC.state = SYNC.code ? 'syncing' : 'off'; SYNC.err = '';
