@@ -143,7 +143,8 @@ input[type=number]{-moz-appearance:textfield}
 
 /* bottom tab bar (mobile) */
 .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:rgba(18,18,22,.72);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-top:1px solid var(--sep)}
-.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;font-size:10px;font-weight:600;color:var(--text3);transition:color .25s}
+.tb-ind{position:absolute;top:4px;height:calc(100% - 10px - env(safe-area-inset-bottom));border-radius:16px;background:color-mix(in srgb,var(--glow) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--glow) 25%,transparent);transition:left .45s var(--spring),width .45s var(--spring);pointer-events:none}
+.tabbar button{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;font-size:10px;font-weight:600;color:var(--text3);transition:color .25s}
 .tabbar button svg{width:25px;height:25px;transition:transform .4s var(--spring)}
 .tabbar button.on{color:var(--glow)}
 .tabbar button.on svg{transform:translateY(-1px) scale(1.08)}
@@ -186,7 +187,8 @@ input[type=number]{-moz-appearance:textfield}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .row.end{justify-content:flex-end;margin-top:22px}
 .row.fill>*{flex:1}
-.empty{color:var(--text3);font-size:14px;padding:14px 4px}
+.empty{color:var(--text3);font-size:14px;padding:22px 4px;text-align:center;animation:cardIn .6s var(--ios) both}
+.empty b{display:block;color:var(--text2);font-size:15px;margin-bottom:3px}
 
 /* enter animations */
 @keyframes cardIn{from{opacity:0;transform:translateY(22px) scale(.975)}to{opacity:1;transform:none}}
@@ -220,7 +222,10 @@ input[type=number]{-moz-appearance:textfield}
 .chip-date{height:34px;padding:0 10px;border-radius:999px;font-size:13px}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;background:color-mix(in srgb,var(--c) 18%,transparent);color:color-mix(in srgb,var(--c) 85%,#fff);white-space:nowrap}
 .pbar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
-.pbar i{display:block;height:100%;width:calc(var(--p)*100%);border-radius:3px;background:var(--c,var(--glow));transition:--p 1.1s var(--ease)}
+.pbar i{position:relative;display:block;height:100%;width:calc(var(--p)*100%);border-radius:3px;background:var(--c,var(--glow));transition:--p 1.1s var(--ease);overflow:hidden}
+.pbar.live i::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.5) 50%,transparent 70%);transform:translateX(-100%);animation:barShine 2.6s var(--ease) infinite}
+.pbar.full i{box-shadow:0 0 10px -1px var(--c,var(--glow))}
+@keyframes barShine{0%{transform:translateX(-100%)}60%,100%{transform:translateX(200%)}}
 
 /* rings */
 .rings-wrap{display:flex;align-items:center;gap:26px}
@@ -352,6 +357,9 @@ input[type=number]{-moz-appearance:textfield}
 /* hours */
 .srow{display:grid;grid-template-columns:90px minmax(0,1fr) 84px 200px;align-items:center;gap:14px;padding:12px 8px;border-radius:16px;transition:background .2s}
 .srow+.srow{box-shadow:0 -1px 0 var(--sep)}
+.srow{transition:background .2s,transform .25s var(--spring)}
+.srow:active{transform:scale(.995)}
+.srow.today{box-shadow:inset 2px 0 0 var(--red)}
 .srow:hover{background:rgba(255,255,255,.035)}
 .srow.today .sd b{color:var(--red)}
 .sd b{display:block;font-size:17px;font-weight:700}
@@ -369,6 +377,7 @@ input[type=number]{-moz-appearance:textfield}
 @media(max-width:760px){.srow{grid-template-columns:1fr auto;row-gap:10px}.sin{grid-column:1/-1;order:3}.sx{grid-column:1/-1;order:4;justify-content:flex-start}.sh{order:2}}
 .bars{display:flex;align-items:flex-end;gap:10px;height:170px;position:relative;margin-top:26px}
 .bars .bc{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px}
+.bars .bc{animation:cardIn .6s var(--ios) both;animation-delay:calc(var(--i,0)*45ms)}
 .bars .b{width:100%;max-width:38px;border-radius:9px 9px 5px 5px;background:color-mix(in srgb,var(--teal) 32%,transparent);height:calc(var(--p)*100%);min-height:4px;transition:--p 1.1s var(--ease);position:relative}
 .bars .bc.cur .b{background:linear-gradient(180deg,var(--teal),var(--blue));box-shadow:0 0 24px -4px var(--teal)}
 .bars .b span{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap}
@@ -415,11 +424,13 @@ input[type=number]{-moz-appearance:textfield}
 .bm .v small{font-size:13px;color:var(--text3);margin-left:3px;font-weight:600}
 .bm .s{font-size:12px;color:var(--text3)}
 .bm svg{width:100%;height:30px;margin-top:6px;overflow:visible}
+.spark-line{stroke-dasharray:300;stroke-dashoffset:300;animation:draw 1.1s var(--ease) .15s forwards}
 .bm form{display:flex;gap:6px;margin-top:10px}
 .bm form input{flex:1;width:0;padding:7px 10px;font-size:13px}
 .heatwrap{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px}
 .heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,15px);gap:4px}
-.heat i{width:15px;height:15px;border-radius:4px;background:rgba(255,255,255,.06)}
+.heat i{width:15px;height:15px;border-radius:4px;background:rgba(255,255,255,.06);animation:cellIn .5s var(--ios) both;animation-delay:calc(var(--i,0)*3.5ms)}
+@keyframes cellIn{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
 .heat i.rest{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
 .heat i.miss{background:color-mix(in srgb,var(--red) 30%,transparent)}
 .heat i.hit{background:var(--c);box-shadow:0 0 8px -1px var(--c)}
@@ -447,6 +458,8 @@ input[type=number]{-moz-appearance:textfield}
 .jrow{display:flex;align-items:center;gap:14px;padding:12px 10px;border-radius:16px;cursor:pointer;transition:background .2s,transform .35s var(--spring)}
 .jrow+.jrow{box-shadow:0 -1px 0 var(--sep)}
 .jrow:hover{background:rgba(255,255,255,.05)}
+.jrow:active{transform:scale(.99)}
+.jrow .jav{box-shadow:0 6px 18px -8px hsl(var(--h) 70% 45%)}
 .jav{width:44px;height:44px;flex:none;border-radius:13px;display:grid;place-items:center;font-size:18px;font-weight:800;color:#fff;background:linear-gradient(135deg,hsl(var(--h) 70% 45%),hsl(calc(var(--h) + 40) 70% 30%))}
 .jb{flex:1;min-width:0}
 .jb b{display:block;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -591,7 +604,7 @@ input[type=number]{-moz-appearance:textfield}
   <section class="view" id="v-jobs"></section>
 </main>
 
-<nav class="tabbar" id="tabbar"></nav>
+<nav class="tabbar" id="tabbar"><span class="tb-ind" id="tbInd"></span></nav>
 <button class="fab" data-act="spot-open" aria-label="Quick add"><svg class="ico" viewBox="0 0 24 24" style="stroke-width:2.4"><path d="M12 5v14M5 12h14"/></svg></button>
 
 <div class="ov" id="ov" data-act="close-all"></div>
@@ -1242,7 +1255,7 @@ function animateValues(root = document) {
   });
 }
 const nk = (k, v, dec) => `<span class="num" data-nk="${k}" data-to="${v}"${dec ? ' data-dec="1"' : ''}>${dec ? fh(v) : v}</span>`;
-const pbar = (k, p, c) => `<div class="pbar"${c ? ` style="--c:${c}"` : ''}><i data-pk="${k}" data-to="${clamp01(p)}"></i></div>`;
+const pbar = (k, p, c) => `<div class="pbar ${clamp01(p) >= 1 ? 'full' : 'live'}"${c ? ` style="--c:${c}"` : ''}><i data-pk="${k}" data-to="${clamp01(p)}"></i></div>`;
 function placeInd(seg, instant) {
   let ind = seg.querySelector(':scope > .ind');
   if (!ind) { ind = document.createElement('span'); ind.className = 'ind'; seg.prepend(ind); }
@@ -1483,7 +1496,7 @@ function renderToday() {
     <section class="card g7 anim tasks-card" style="--i:4">
       <div class="ch"><h3>Today</h3><span class="sub">${list.length ? `${list.length - left} of ${list.length} done` : ''}</span></div>
       ${ov.length ? `<div class="banner"><span>${ov.length} overdue from earlier</span><button class="btn sm tint" style="--c:var(--red)" data-act="rollover">Move to today</button></div>` : ''}
-      <ul class="tasks drop" data-drop="${d}">${list.map(t => taskLi(t, d)).join('') || '<li class="empty">Nothing yet. Add something below or press Ctrl K.</li>'}</ul>
+      <ul class="tasks drop" data-drop="${d}">${list.map(t => taskLi(t, d)).join('') || '<li class="empty"><b>Clear for today</b>Add something below, or press Ctrl K</li>'}</ul>
       ${addForm(d, 'Add a task… try “call Tim fri #work”')}
     </section>
     ${slip.length ? `<section class="card g12 anim slip-card" style="--i:4.5;border-color:rgba(255,159,10,.35)"><div class="ch"><h3>Needs a decision</h3><span class="sub">Reminder went by, still open</span></div>
@@ -1491,7 +1504,7 @@ function renderToday() {
         <button class="btn sm tint" style="--c:var(--green)" data-act="rm-done" data-id="${t.id}">Done</button>
         <button class="btn sm" data-act="rm-later" data-id="${t.id}">+2h</button>
         <button class="btn sm" data-act="rm-tomorrow" data-id="${t.id}">Tomorrow</button></div>`).join('')}</section>` : ''}
-    <section class="card g5 anim next-card" style="--i:5"><div class="ch"><h3>Up next</h3></div><div class="nlist">${nexts || '<div class="empty">All clear.</div>'}</div></section>
+    <section class="card g5 anim next-card" style="--i:5"><div class="ch"><h3>Up next</h3></div><div class="nlist">${nexts || '<div class="empty"><b>All clear</b>Nothing waiting on you</div>'}</div></section>
   </div>`;
 }
 
@@ -1528,7 +1541,7 @@ function renderWeek() {
 function dayDetail(sd) {
   const list = tasksOn(sd), sh = S.shifts[sd];
   return `<section class="card g7 anim" style="--i:2"><div class="ch"><h3>${rel(sd)}</h3><span class="sub">${longDate(sd)}</span></div>
-      <ul class="tasks drop" data-drop="${sd}">${list.map(t => taskLi(t, sd)).join('') || '<li class="empty">Nothing planned.</li>'}</ul>${addForm(sd, 'Add a task')}</section>
+      <ul class="tasks drop" data-drop="${sd}">${list.map(t => taskLi(t, sd)).join('') || '<li class="empty"><b>Nothing planned</b>A free day, unless you say otherwise</li>'}</ul>${addForm(sd, 'Add a task')}</section>
     <div class="g5" style="display:flex;flex-direction:column;gap:16px">
       <section class="card anim" style="--i:3"><div class="ch"><h3>Shift</h3><span class="sub" data-total-for="${sd}">${shiftHours(sh) ? fh(shiftHours(sh)) + ' hours' : ''}</span></div>${shiftEditor(sd)}</section>
       <section class="card tilecard anim" style="--i:4">${sessionArt(sd, { small: true })}</section>
@@ -1566,7 +1579,7 @@ function renderHours() {
       <section class="card anim" style="--i:2">${payCard()}</section>
       <section class="card anim" style="--i:3">${clockCard(td)}</section>
       <section class="card anim" style="--i:4"><div class="ch"><h3>Last 8 weeks</h3><span class="sub">${avg ? `avg ${fh(Math.round(avg * 10) / 10)}h` : ''}</span></div>
-        <div class="bars">${avg ? `<div class="avg" style="bottom:calc(${avg / top * 82}% + 27px)"><span>avg</span></div>` : ''}${weeks.map((w, i) => `<div class="bc ${i === 7 ? 'cur' : ''}"><div class="b" data-pk="bar-${iso(w)}" data-to="${vals[i] / top * .82}">${vals[i] ? `<span>${fh(vals[i])}</span>` : ''}</div><span class="bl">${short(iso(w)).replace(' ', ' ')}</span></div>`).join('')}</div></section>
+        <div class="bars">${avg ? `<div class="avg" style="bottom:calc(${avg / top * 82}% + 27px)"><span>avg</span></div>` : ''}${weeks.map((w, i) => `<div class="bc ${i === 7 ? 'cur' : ''}" style="--i:${i}"><div class="b" data-pk="bar-${iso(w)}" data-to="${vals[i] / top * .82}">${vals[i] ? `<span>${fh(vals[i])}</span>` : ''}</div><span class="bl">${short(iso(w)).replace(' ', ' ')}</span></div>`).join('')}</div></section>
     </div></div>`;
 }
 
@@ -1622,7 +1635,7 @@ function renderTraining() {
   for (let w = 0; w < 16; w++) for (let i = 0; i < 7; i++) {
     const d = iso(addDays(start, w * 7 + i)), x = wo(d);
     const cls = d > td || (d < S.since && !x.done) ? '' : x.done ? 'hit' : x.s === 'REST' ? 'rest' : 'miss';
-    cells += `<i class="${cls} ${d === td ? 'now' : ''}" style="--c:${SESS[x.s].color}" title="${short(d)} · ${x.s === 'REST' ? 'Rest' : x.s + ' ' + sessName(x.s)}${x.done ? ' ✓' : ''}"></i>`;
+    cells += `<i class="${cls} ${d === td ? 'now' : ''}" style="--c:${SESS[x.s].color};--i:${w * 7 + i}" title="${short(d)} · ${x.s === 'REST' ? 'Rest' : x.s + ' ' + sessName(x.s)}${x.done ? ' ✓' : ''}"></i>`;
   }
   let streak = 0; for (let wk = addDays(mondayOf(new Date()), -7), n = 0; n < 104; n++, wk = addDays(wk, -7)) { const p = datesOf(wk).filter(d => wo(d).s !== 'REST'); if (p.length && p.every(d => wo(d).done)) streak++; else break; }
   const lib = ['D1', 'D2', 'D3', 'D4'].map((k, i) => `<button class="focusable anim" data-act="open-session" data-s="${k}" style="--i:${i + 12}"><div class="art" style="background:${SESS[k].art}"><span class="wm">${k}</span><span class="code">${k} · ${flatEx(k.toLowerCase()).length} exercises</span><div class="nm">${esc(sessName(k))}</div><div class="ds">${esc(sessSub(k))}</div></div></button>`).join('');
@@ -1645,7 +1658,7 @@ function spark(v) {
   if (v.length < 2) return '<svg></svg>';
   const s = v.slice(-10), mx = Math.max(...s), mn = Math.min(...s), rg = mx - mn || 1;
   const pts = s.map((x, i) => `${(i / (s.length - 1) * 100).toFixed(1)},${(26 - (x - mn) / rg * 22).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 100 28" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#ff9f0a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+  return `<svg viewBox="0 0 100 28" preserveAspectRatio="none"><polyline class="spark-line" points="${pts}" fill="none" stroke="#ff9f0a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
 }
 let cardioType = 'HIIT';
 const cardioForm = d => `<form class="cardio-f" data-cdate="${d || ''}" style="margin-top:14px"><div class="cardio-types">${CARDIO_TYPES.map(t => `<button type="button" class="chip ${t === cardioType ? 'on' : ''}" style="--c:var(--pink);--on:#fff" data-act="cardio-type" data-v="${t}">${t}</button>`).join('')}</div>
@@ -1673,7 +1686,7 @@ function renderJobs() {
       </form></section>
     <section class="card g12 anim" style="--i:2">
       <div class="segwrap"><div class="seg" data-seg="jf">${Object.keys(counts).map(s => `<button class="${f === s ? 'on' : ''}" data-act="jfilter" data-v="${s}">${s}<b>${counts[s]}</b></button>`).join('')}</div></div>
-      ${rows || `<div class="empty">${S.jobs.length ? 'Nothing here.' : 'No applications yet. Try Ctrl K → “applied Patagonia - Campaigns Associate”.'}</div>`}</section>
+      ${rows || `<div class="empty">${S.jobs.length ? '<b>Nothing in this stage</b>Try another filter' : '<b>No applications yet</b>Try Ctrl K → “applied Patagonia - Campaigns Associate”'}</div>`}</section>
   </div>`;
 }
 
@@ -1888,6 +1901,7 @@ function render() {
   animateValues(root);
   $('#avatar').textContent = (S.settings.name || 'J')[0].toUpperCase();
   paintLevel();
+  { const on = $('#tabbar button.on'), ind = $('#tbInd'); if (on && ind) { ind.style.left = on.offsetLeft + 'px'; ind.style.width = on.offsetWidth + 'px'; } }
   island.live(); tick();
   FX = {};
 }
@@ -2238,7 +2252,7 @@ addEventListener('resize', () => {
 
 /* ---------- boot ---------- */
 $('#nav').innerHTML = TABS.map(t => `<button data-tab="${t.k}">${t.label}</button>`).join('');
-$('#tabbar').innerHTML = TABS.map(t => `<button data-tab="${t.k}">${I[t.k]}<span>${t.label}</span></button>`).join('');
+$('#tabbar').insertAdjacentHTML('beforeend', TABS.map(t => `<button data-tab="${t.k}">${I[t.k]}<span>${t.label}</span></button>`).join(''));
 $('#kbdHint').textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 island.el = $('#island');
 // A short boot sequence on a cold open; tapping skips it.
