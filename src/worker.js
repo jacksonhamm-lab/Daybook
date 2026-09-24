@@ -189,6 +189,19 @@ async function runReminders(hash, env) {
     outgoing.push({ key: 'brief', payload: { title: 'Today', body: bits.join(' · '), tag: 'brief', url: '/' } });
   }
 
+  // Hours go to Len on the Monday of payday week.
+  if (st.remindSubmit !== false && dueNow(now.hm, st.remindAt || '08:00') && !already('submit')) {
+    const cyc = Math.max(1, +st.payCycle || 14);
+    const anchorMs = Date.parse((st.payAnchor || '2026-09-25') + 'T12:00:00Z');
+    const todayMs = Date.parse(now.date + 'T12:00:00Z');
+    const gapDays = Math.round((todayMs - anchorMs) / 864e5);
+    const send = +st.paySubmitDays ?? 4;
+    const untilPayday = ((-gapDays % cyc) + cyc) % cyc; // days from today to the next payday
+    if (untilPayday === send) {
+      outgoing.push({ key: 'submit', payload: { title: 'Send your hours', body: 'Payday Friday — Len enters them tomorrow', tag: 'submit', url: '/' } });
+    }
+  }
+
   // Per-task reminders
   (S.tasks || []).forEach(t => {
     if (!t.remind || !occursOn(t, now.date) || isDone(t, now.date)) return;
