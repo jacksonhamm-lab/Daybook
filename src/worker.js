@@ -84,6 +84,49 @@ async function pushApi(request, env, url) {
   return json({ error: 'not found' }, 404);
 }
 
+// KV has no compare-and-set, so re-read and retry a couple of times.
+async function mutateState(hash, env, fn) {
+  for (let i = 0; i < 3; i++) {
+    const cur = (await env.SYNC.get('state:' + hash, 'json')) || { rev: 0, data: null };
+    if (!cur.data) return false;
+    const next = fn(JSON.parse(JSON.stringify(cur.data)));
+    if (!next) return false;
+    const again = (await env.SYNC.get('state:' + hash, 'json')) || { rev: 0 };
+    if ((again.rev || 0) !== (cur.rev || 0)) continue;
+    await env.SYNC.put('state:' + hash, JSON.stringify({ rev: (cur.rev || 0) + 1, at: Date.now(), data: next }));
+    return true;
+  }
+  return false;
+}
+
+async function reminderApi(request, env) {
+  const hash = await auth(request, env);
+  if (!hash) return json({ error: 'unknown code' }, 401);
+  const { id, action, date } = await request.json();
+  const day = date || localNow('UTC').date;
+  const ok = await mutateState(hash, env, S => {
+    const t = (S.tasks || []).find(x => x.id === id);
+    if (!t) return null;
+    t.u = Date.now();
+    if (action === 'done') {
+      if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[day] = true; } else t.done = true;
+    } else if (action === 'snooze') {
+      const d = new Date(day + 'T12:00:00Z');
+      d.setUTCDate(d.getUTCDate() + 1);
+      t.date = d.toISOString().slice(0, 10);
+      if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[day] = true; } // today's run is handled
+    }
+    return S;
+  });
+  // Let it fire again tomorrow.
+  if (ok && action === 'snooze') {
+    const sent = (await env.SYNC.get('sent:' + hash, 'json')) || { keys: [] };
+    sent.keys = (sent.keys || []).filter(k => k !== 't:' + id);
+    await env.SYNC.put('sent:' + hash, JSON.stringify(sent), { expirationTtl: 172800 });
+  }
+  return json({ ok });
+}
+
 async function deliver(hash, subs, payload, env) {
   const dead = await Promise.all(subs.map(s => sendPush(s, payload, env)));
   const alive = subs.filter((s, i) => !dead[i]);
@@ -150,7 +193,7 @@ async function runReminders(hash, env) {
   (S.tasks || []).forEach(t => {
     if (!t.remind || !occursOn(t, now.date) || isDone(t, now.date)) return;
     if (!dueNow(now.hm, t.remind) || already('t:' + t.id)) return;
-    outgoing.push({ key: 't:' + t.id, payload: { title: t.title, body: 'Due now', tag: 't:' + t.id, url: '/' } });
+    outgoing.push({ key: 't:' + t.id, payload: { title: t.title, body: 'Due now · swipe for Done or Tomorrow', tag: 't:' + t.id, url: '/', id: t.id, date: now.date } });
   });
 
   if (!outgoing.length) return;
@@ -173,6 +216,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/state') return syncApi(request, env);
     if (url.pathname.startsWith('/api/push/')) return pushApi(request, env, url);
+    if (url.pathname === '/api/reminder' && request.method === 'POST') return reminderApi(request, env);
     if (url.pathname === '/api/vapid') return json({ key: env.VAPID_PUBLIC || '' });
     if (url.pathname === '/workout') return Response.redirect(`${url.origin}/workout/`, 301);
     if (!url.pathname.startsWith('/workout/')) return env.ASSETS.fetch(request);

@@ -22,6 +22,22 @@ self.addEventListener('fetch', e => {
 });
 
 // Push notifications. iOS requires a visible notification for every push event.
+// The sync code, stashed by the page so the worker can act on notification buttons.
+function readCode() {
+  return new Promise(resolve => {
+    const req = indexedDB.open('daybook', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onsuccess = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('kv')) return resolve('');
+      const get = db.transaction('kv', 'readonly').objectStore('kv').get('code');
+      get.onsuccess = () => resolve(get.result || '');
+      get.onerror = () => resolve('');
+    };
+    req.onerror = () => resolve('');
+  });
+}
+
 self.addEventListener('push', e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { title: 'Daybook', body: e.data ? e.data.text() : 'Reminder' }; }
@@ -30,13 +46,30 @@ self.addEventListener('push', e => {
     tag: d.tag || 'daybook',
     icon: './icons/icon-192.png',
     badge: './icons/icon-192.png',
-    data: { url: d.url || './' },
+    data: { url: d.url || './', id: d.id || '', date: d.date || '' },
     renotify: true,
+    actions: d.id ? [{ action: 'done', title: 'Done' }, { action: 'snooze', title: 'Tomorrow' }] : [],
   }));
 });
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+  const info = e.notification.data || {};
+  // "Done" and "Tomorrow" act straight from the notification and update the app.
+  if ((e.action === 'done' || e.action === 'snooze') && info.id) {
+    e.waitUntil((async () => {
+      const code = await readCode();
+      if (!code) return;
+      await fetch('./api/reminder', {
+        method: 'POST',
+        headers: { 'x-sync-key': code, 'content-type': 'application/json' },
+        body: JSON.stringify({ id: info.id, date: info.date, action: e.action }),
+      }).catch(() => {});
+      const list = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+      list.forEach(c => c.postMessage({ type: 'reminder-acted' }));
+    })());
+    return;
+  }
   const target = new URL((e.notification.data && e.notification.data.url) || './', self.location.href).href;
   e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
     for (const c of list) if (c.url.startsWith(self.registration.scope) && 'focus' in c) return c.focus();

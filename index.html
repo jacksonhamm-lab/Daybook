@@ -410,6 +410,11 @@ input[type=number]{-moz-appearance:textfield}
 .sheet .shp{margin:0;color:var(--text2)}
 .sheet textarea{width:100%;resize:none;font-size:20px;font-weight:600;background:none;padding:6px 0;border:0;border-radius:0}
 .sheet textarea:focus{background:none}
+.sheet.compose textarea{background:var(--fill);border-radius:16px;padding:14px 16px;font-size:18px;font-weight:600;line-height:1.3;min-height:64px}
+.sheet.compose .chips{gap:8px}
+.sheet.compose .chip{height:40px;padding:0 16px;font-size:14px}
+.sheet.compose .chip-date{height:40px}
+.qline{font-size:17px;font-weight:600;letter-spacing:-.02em;margin:18px 0 10px}
 .sheet .field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--text2)}
 .sheet .field input,.sheet .field textarea{font-size:16px;font-weight:400;color:var(--text);background:var(--fill);padding:11px 13px;border-radius:12px}
 .sheet .field textarea{min-height:80px;resize:vertical}
@@ -694,9 +699,18 @@ async function syncNow(depth = 0) {
   }
   SYNC.busy = false; paintSync();
 }
+// The service worker can't read localStorage, so mirror the code into IndexedDB.
+function stashCode(code) {
+  try {
+    const req = indexedDB.open('daybook', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onsuccess = () => { try { req.result.transaction('kv', 'readwrite').objectStore('kv').put(code, 'code'); } catch (e) {} };
+  } catch (e) {}
+}
 function setSyncCode(code) {
   SYNC.code = (code || '').trim();
   try { SYNC.code ? localStorage.setItem('daybook_sync_code', SYNC.code) : localStorage.removeItem('daybook_sync_code'); } catch (e) {}
+  stashCode(SYNC.code);
   SYNC.state = SYNC.code ? 'syncing' : 'off'; SYNC.err = '';
   paintSync();
   { // keep the server pointed at this device's timezone
@@ -906,6 +920,8 @@ function occurs(t, d) {
 const isDone = (t, d) => t.repeat ? !!(t.doneOn && t.doneOn[d]) : !!t.done;
 const tasksOn = d => sortTasks(S.tasks.filter(t => occurs(t, d)), d);
 const sortTasks = (arr, d) => arr.slice().sort((a, b) => (isDone(a, d) - isDone(b, d)) || CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat) || (a.created || 0) - (b.created || 0));
+const nowHM = () => { const n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); };
+const slipped = () => S.tasks.filter(t => t.remind && occurs(t, today()) && !isDone(t, today()) && t.remind <= nowHM());
 const overdue = () => S.tasks.filter(t => !t.repeat && t.date && t.date < today() && !t.done);
 const repeatLabel = r => !r ? '' : r.t === 'daily' ? 'Daily' : r.t === 'weekdays' ? 'Weekdays' : `Every ${DOW[r.dow]}`;
 
@@ -977,7 +993,7 @@ function parseQuick(raw, base) {
   const setD = d => { r.date = iso(d); r.dateSet = true; };
   let m;
   if ((m = cut(/\s#(w|work|g|gym|train|training|j|job|jobs|p|life|personal)(?=\s)/i)))
-    r.cat = { w:'work', work:'work', g:'gym', gym:'gym', train:'gym', training:'gym', j:'jobs', job:'jobs', jobs:'jobs', p:'life', life:'life', personal:'life' }[m[1].toLowerCase()];
+    r.tagged = true, r.cat = { w:'work', work:'work', g:'gym', gym:'gym', train:'gym', training:'gym', j:'jobs', job:'jobs', jobs:'jobs', p:'life', life:'life', personal:'life' }[m[1].toLowerCase()];
   if (cut(/\s(?:every ?day|daily)(?=\s)/i)) r.repeat = { t: 'daily' };
   else if (cut(/\s(?:every ?weekday|weekdays)(?=\s)/i)) r.repeat = { t: 'weekdays' };
   else if ((m = cut(/\severy (mon|tue|wed|thu|fri|sat|sun)[a-z]*(?=\s)/i))) { const w = DOW3.indexOf(m[1].toLowerCase()); r.repeat = { t: 'weekly', dow: w }; setD(addDays(td, (w - tw + 7) % 7)); }
@@ -1198,6 +1214,7 @@ function renderToday() {
   const summary = [left ? `${left} task${left === 1 ? '' : 's'} left` : list.length ? 'All tasks done' : 'No tasks yet', w.s === 'REST' ? 'Rest day' : `${sessName(w.s)}${w.done ? ' ✓' : ''}`, S.clock ? 'On the clock' : shiftHours(sh) ? `${t12(sh.start)}–${t12(sh.end)} shift` : null].filter(Boolean).join(' · ');
 
   const follow = S.jobs.filter(needsFollow).slice(0, 3);
+  const slip = slipped();
   const tmr = iso(addDays(parse(d), 1)), tw = wo(tmr), tsh = S.shifts[tmr], tTasks = tasksOn(tmr).length;
   const nexts = [
     ...follow.map(j => `<div class="nitem" style="--c:var(--green)"><div class="ni">${esc(j.company[0] || '?')}</div><div class="nb"><b>Follow up · ${esc(j.company)}</b><span>Applied ${daysBetween(j.date, d)} days ago</span></div><button class="btn tint sm" style="--c:var(--green)" data-act="followed" data-id="${j.id}">Done</button></div>`),
@@ -1227,6 +1244,11 @@ function renderToday() {
       <ul class="tasks drop" data-drop="${d}">${list.map(t => taskLi(t, d)).join('') || '<li class="empty">Nothing yet. Add something below or press Ctrl K.</li>'}</ul>
       ${addForm(d, 'Add a task… try “call Tim fri #work”')}
     </section>
+    ${slip.length ? `<section class="card g12 anim" style="--i:4.5;border-color:rgba(255,159,10,.35)"><div class="ch"><h3>Needs a decision</h3><span class="sub">Reminder went by, still open</span></div>
+      ${slip.map(t => `<div class="nitem" style="--c:${CATS[t.cat].color}"><div class="ni">${I.bell}</div><div class="nb"><b>${esc(t.title)}</b><span>Was due ${t12(t.remind)}</span></div>
+        <button class="btn sm tint" style="--c:var(--green)" data-act="rm-done" data-id="${t.id}">Done</button>
+        <button class="btn sm" data-act="rm-later" data-id="${t.id}">+2h</button>
+        <button class="btn sm" data-act="rm-tomorrow" data-id="${t.id}">Tomorrow</button></div>`).join('')}</section>` : ''}
     <section class="card g5 anim" style="--i:5"><div class="ch"><h3>Up next</h3></div><div class="nlist">${nexts || '<div class="empty">All clear.</div>'}</div></section>
   </div>`;
 }
@@ -1404,7 +1426,30 @@ function renderJobs() {
 
 /* ---------- sheets ---------- */
 let SHEET = null;
+let DRAFT = null;
+// Asks the three things a task needs, in one tap-through card, instead of
+// making him dig through the edit sheet afterwards.
+function openCompose(title, date) {
+  DRAFT = { title, cat: guessCat(title), date: date || today(), remind: null, asked: date ? 'when' : '' };
+  openSheet('compose');
+}
+const WHENS = () => { const td = parse(today()); return [['today', 'Today', today()], ['tomorrow', 'Tomorrow', iso(addDays(td, 1))], ['weekend', 'Weekend', iso(addDays(td, (5 - dowIdx(today()) + 7) % 7))], ['nextweek', 'Next week', iso(addDays(mondayOf(td), 7))]]; };
+const REMINDS = [['', 'No reminder'], ['08:00', 'Morning'], ['12:00', 'Noon'], ['17:00', '5:00'], ['20:00', 'Evening']];
+
 const SHEETS = {
+  compose() {
+    const d = DRAFT; if (!d) return '';
+    return `<div class="grab"></div>
+      <div class="lbl" style="margin-top:0">New task</div>
+      <textarea data-df="title" rows="2" maxlength="240" placeholder="What needs doing?">${esc(d.title)}</textarea>
+      <div class="qline">What's it for?</div>
+      <div class="chips">${CAT_ORDER.map(k => `<button class="chip ${d.cat === k ? 'on' : ''}" style="--c:${CATS[k].color};--on:#fff" data-act="df-cat" data-v="${k}"><span class="dot"></span>${CATS[k].label}</button>`).join('')}</div>
+      <div class="qline">When?</div>
+      <div class="chips">${WHENS().map(([k, l, val]) => `<button class="chip ${d.date === val ? 'on' : ''}" data-act="df-when" data-v="${val}">${l}</button>`).join('')}<input type="date" class="chip-date" data-df="date" value="${d.date}"></div>
+      <div class="qline">Remind you?</div>
+      <div class="chips">${REMINDS.map(([k, l]) => `<button class="chip ${(d.remind || '') === k ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="df-remind" data-v="${k}">${l}</button>`).join('')}<input type="time" class="chip-date" data-df="remind" value="${d.remind || ''}"></div>
+      <div class="row end"><button class="btn" data-act="close-sheet">Cancel</button><button class="btn white" data-act="df-add">Add task</button></div>`;
+  },
   task({ id, d }) {
     const t = S.tasks.find(x => x.id === id); if (!t) return '';
     const wk = t.date === today() ? 'today' : t.date === iso(addDays(parse(today()), 1)) ? 'tomorrow' : '';
@@ -1711,6 +1756,18 @@ document.addEventListener('click', e => {
     }
     case 'toggle-brief': S.settings.remindDaily = !S.settings.remindDaily; commit(); return refreshSheet();
     case 'tm-remind': { const t = task(); t.remind = v || null; save(); return refreshSheet(); }
+    case 'rm-done': { const t = S.tasks.find(x => x.id === el.dataset.id); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } else t.done = true; commit(); return island.toast('Done', { icon: I.check, color: '#30d158' }); }
+    case 'rm-later': { const t = S.tasks.find(x => x.id === el.dataset.id); const n = new Date(Date.now() + 2 * 3600e3); t.remind = pad(n.getHours()) + ':' + pad(n.getMinutes()); commit(); return island.toast('Back at ' + t12(t.remind), { icon: I.bell, color: '#ff9f0a' }); }
+    case 'rm-tomorrow': { const t = S.tasks.find(x => x.id === el.dataset.id); t.date = iso(addDays(parse(today()), 1)); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } commit(); return island.toast('Moved to tomorrow', { icon: I.arrow, color: '#0a84ff' }); }
+    case 'df-cat': DRAFT.cat = v; return refreshSheet();
+    case 'df-when': DRAFT.date = v; return refreshSheet();
+    case 'df-remind': DRAFT.remind = v || null; return refreshSheet();
+    case 'df-add': {
+      const d = DRAFT; if (!d || !d.title.trim()) return closeSheet();
+      const t = { id: uid(), created: Date.now(), title: d.title.trim(), cat: d.cat, date: d.date, done: false, repeat: null, doneOn: {}, remind: d.remind || null };
+      S.tasks.push(t); FX.added = t.id; DRAFT = null; closeSheet();
+      return island.toast(`Added to ${rel(t.date)}${t.remind ? ' · reminder ' + t12(t.remind) : ''}`, { icon: I.check, color: CATS[t.cat].color });
+    }
     case 'sync-on': { const v = $('#syncCode').value.trim(); if (v.length < 16) return island.toast('That code looks too short'); setSyncCode(v); return refreshSheet(); }
     case 'sync-off': setSyncCode(''); return refreshSheet();
     case 'sync-now': return syncNow();
@@ -1728,7 +1785,9 @@ document.addEventListener('submit', e => {
   const f = e.target; e.preventDefault();
   if (f.id === 'spotForm') {
     const v = $('#spotInput').value; if (!v.trim()) return closeSpot();
-    if (applyQuick(parseQuick(v))) { $('#spotInput').value = ''; spotPreview(); const p = $('#spotPrev'); p.classList.remove('spot-flash'); void p.offsetWidth; p.classList.add('spot-flash'); }
+    const r = parseQuick(v);
+    if (r && r.kind === 'task' && !r.dateSet && !r.tagged && !r.repeat) { closeSpot(); return openCompose(r.title); }
+    if (applyQuick(r)) { $('#spotInput').value = ''; spotPreview(); const p = $('#spotPrev'); p.classList.remove('spot-flash'); void p.offsetWidth; p.classList.add('spot-flash'); }
     return;
   }
   if (f.classList.contains('qadd')) {
@@ -1757,6 +1816,7 @@ document.addEventListener('input', e => {
   const el = e.target;
   if (el.id === 'spotInput') return spotPreview();
   if (el.name === 'link' && el.form && el.form.id === 'jadd' && !el.form.company.value.trim()) { const c = companyFromUrl(el.value.trim()); if (c) { el.form.company.value = c; pop(el.form.company); } }
+  if (el.dataset.df) { DRAFT[el.dataset.df] = el.value; if (el.dataset.df !== 'title') refreshSheet(); return; }
   if (el.dataset.tf === 'title') { const t = S.tasks.find(x => x.id === SHEET.arg.id); t.title = el.value.replace(/\n/g, ' '); return save(); }
   if (el.dataset.jf) { const j = S.jobs.find(x => x.id === SHEET.arg); j[el.dataset.jf] = el.value; return save(); }
   if (el.dataset.sf) { if (el.dataset.sf === 'rate') S.settings.rateSet = true; const n = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours'].includes(el.dataset.sf); S.settings[el.dataset.sf] = n ? (+el.value || 0) : el.value; return save(); }
@@ -1857,6 +1917,7 @@ document.addEventListener('visibilitychange', () => {
   syncNow();
 });
 setInterval(() => { if (!document.hidden) syncNow(); }, 60000);
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'reminder-acted') syncNow(); });
 addEventListener('storage', e => { if (e.key && (e.key.startsWith('workout_') || e.key.startsWith('log_'))) render(); });
 let lastMode = weekMode();
 addEventListener('resize', () => {
@@ -1872,7 +1933,7 @@ island.el = $('#island');
 FX.enter = 'enter';
 render();
 loadProgram();
-if (SYNC.code) syncNow();
+if (SYNC.code) { stashCode(SYNC.code); syncNow(); }
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
