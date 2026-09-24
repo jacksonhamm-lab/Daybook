@@ -1802,12 +1802,6 @@ document.addEventListener('click', e => {
     case 'df-skip': return composeStep((DRAFT.step || 0) + 1);
     case 'df-back': return composeStep((DRAFT.step || 0) - 1, 'back');
     case 'df-add': return addDraft();
-    case 'df-add-old': {
-      const d = DRAFT; if (!d || !d.title.trim()) return closeSheet();
-      const t = { id: uid(), created: Date.now(), title: d.title.trim(), cat: d.cat, date: d.date, done: false, repeat: null, doneOn: {}, remind: d.remind || null };
-      S.tasks.push(t); FX.added = t.id; DRAFT = null; closeSheet();
-      return island.toast(`Added to ${rel(t.date)}${t.remind ? ' · reminder ' + t12(t.remind) : ''}`, { icon: I.check, color: CATS[t.cat].color });
-    }
     case 'sync-on': { const v = $('#syncCode').value.trim(); if (v.length < 16) return island.toast('That code looks too short'); setSyncCode(v); return refreshSheet(); }
     case 'sync-off': setSyncCode(''); return refreshSheet();
     case 'sync-now': return syncNow();
