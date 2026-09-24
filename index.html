@@ -146,6 +146,11 @@ input[type=number]{-moz-appearance:textfield}
 .gitem .g-n{font-size:15px}
 .gitem .g-n em{display:block;font-style:normal;font-size:12.5px;color:var(--text3)}
 .gitem.done .g-n{color:var(--text3);text-decoration:line-through}
+.snk .snk-p{margin-left:auto;flex:none;align-self:center;font-size:13px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums}
+.snk.done .snk-p{opacity:.5}
+.snk.done .g-n{color:var(--text);text-decoration:none}
+.snk.done .g-n em{color:var(--text3);text-decoration:none}
+.seg.sm button{padding:7px 10px;font-size:13px}
 .bk-table{width:100%;border-collapse:collapse;font-size:14px}
 .bk-table td{padding:8px 4px;border-bottom:1px solid var(--sep);color:var(--text2)}
 .bk-table td.n{text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
@@ -749,6 +754,7 @@ S.extra = S.extra || {};
 S.shakes = S.shakes || {};
 S.meals = S.meals || {};
 S.grocery = S.grocery || {};
+S.snacks = S.snacks || {};
 // Thomas Jeffery work pays $20/h; only overwrite while he hasn't set a rate himself.
 if (!S.settings.rateSet && !+S.settings.rate) S.settings.rate = 20;
 { // the Inbox is gone: anything without a day lands on today
@@ -782,7 +788,7 @@ function stampChanges() {
     (S[k] || []).forEach(x => { const p = was.get(x.id); if (!p || !same(p, x)) x.u = now; was.delete(x.id); });
     was.forEach((v, id) => { S.tomb[id] = now; });
   });
-  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery'].forEach(k => {
+  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks'].forEach(k => {
     const p = prev[k] || {};
     Object.keys(S[k] || {}).forEach(d => { if (!p[d] || !same(p[d], S[k][d])) S[k][d].u = now; });
     Object.keys(p).forEach(d => { if (!S[k][d]) S.tomb[k + ':' + d] = now; });
@@ -804,7 +810,7 @@ function mergeState(local, remote) {
     });
     out[k] = [...m.values()].filter(x => !(out.tomb[x.id] > (x.u || 0)));
   });
-  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery'].forEach(k => {
+  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks'].forEach(k => {
     Object.entries(remote[k] || {}).forEach(([d, r]) => {
       const l = out[k][d];
       if (!l) { if (!(out.tomb[k + ':' + d] > (r.u || 0))) out[k][d] = r; }
@@ -1356,7 +1362,7 @@ const island = {
 /* ---------- fuel ----------
    The recipes live in the Protein Prep Book; Daybook tracks what you picked
    for the week and how much protein you've actually eaten. */
-let BOOK = null, BOOK_TAB = 'recipes', BOOK_CAT = 'All', BOOK_OPEN = '';
+let BOOK = null, BOOK_TAB = 'recipes', BOOK_CAT = 'All', BOOK_OPEN = '', BOOK_GROC = 'picks', BOOK_GROC_SET = false;
 try { BOOK = JSON.parse(localStorage.getItem('daybook_book') || 'null'); } catch (e) {}
 async function loadBook() {
   if (BOOK) return BOOK;
@@ -1379,7 +1385,28 @@ const MEALS = [
 // Grocery ticks sync like everything else.
 const groceryOn = id => !!(S.grocery[id] || {}).c;
 function toggleGrocery(id) { S.grocery[id] = { c: !groceryOn(id) }; save(); }
-const groceryCount = () => { let done = 0, all = 0; const g = (BOOK && BOOK.grocery) || {}; Object.entries(g).forEach(([sec, items]) => items.forEach(([n]) => { all++; if (groceryOn(sec + '|' + n)) done++; })); return { done, all }; };
+const snackOn = n => !!(S.snacks[n] || {}).c;
+function toggleSnack(n) { S.snacks[n] = { c: !snackOn(n) }; save(); }
+const snacksChosen = () => ((BOOK && BOOK.snacks) || []).filter(x => snackOn(x.n));
+// Every recipe carries the aisle items it needs, so the list can shrink to this week's meals.
+function grocerySections(mode) {
+  const out = [], g = (BOOK && BOOK.grocery) || {};
+  let keep = null;
+  if (mode === 'picks' && BOOK) {
+    keep = new Set();
+    BOOK.recipes.filter(r => picks().m.includes(r.n)).forEach(r => (r.g || []).forEach(id => keep.add(id)));
+  }
+  Object.entries(g).forEach(([sec, items]) => {
+    const rows = items.filter(([n]) => !keep || keep.has(sec + '|' + n));
+    if (rows.length) out.push([sec, rows]);
+  });
+  const sn = snacksChosen();
+  if (sn.length) out.push(['Snacks', sn.map(x => [x.n, x.p + ' g protein'])]);
+  return out;
+}
+// Until you choose, the list shows your picks when you have some and everything when you don't.
+const grocMode = () => BOOK_GROC_SET ? BOOK_GROC : (picks().m.length ? 'picks' : 'full');
+const groceryCount = mode => { let done = 0, all = 0; grocerySections(mode).forEach(([sec, items]) => items.forEach(([n]) => { all++; if (groceryOn(sec + '|' + n)) done++; })); return { done, all }; };
 const mealWeek = () => iso(mondayOf(new Date()));
 const picks = () => (S.meals || {})[mealWeek()] || { m: [] };
 function togglePick(name) {
@@ -1740,7 +1767,7 @@ function renderTraining() {
         <div class="shakes">${SHAKES.map(([k, label]) => `<button class="shake ${sh[k] ? 'on' : ''}" data-act="shake" data-v="${k}"><span class="sk-box">${I.check}</span>${label}</button>`).join('')}</div>
         <div class="lbl">This week's meals</div>
         <div class="chips">${mealList().map(m => `<button class="chip ${pk.m.includes(m.n) ? 'on' : ''}" style="--c:var(--green);--on:#fff" data-act="pick-meal" data-v="${esc(m.n)}">${esc(m.n)} · ${m.p}g</button>`).join('')}</div>
-        <div class="row" style="margin-top:14px"><button class="btn sm white" data-act="open-book">Prep book</button>
+        <div class="row" style="margin-top:14px"><button class="btn sm white" data-act="open-book">Prep book</button><button class="btn sm white" data-act="open-book" data-v="grocery">Grocery list</button>
           ${pk.m.length ? `<button class="btn sm tint" style="--c:var(--green)" data-act="copy-meals">Copy shopping picks</button>` : ''}</div></section>
       <section class="card g5 anim" style="--i:9"><div class="ch"><h3>Cardio</h3><span class="sub">${wkC.length} this week</span></div>
         <div class="big">${nk('cardio', wkC.reduce((a, l) => a + l.min, 0))}<small>min this week</small></div>${cardioForm(null)}
@@ -1897,7 +1924,7 @@ const SHEETS = {
   },
   book() {
     if (!BOOK) return '<div class="grab"></div><div class="empty"><b>Opening the book</b>One moment</div>';
-    const tabs = [['recipes', 'Recipes'], ['grocery', 'Grocery'], ['plan', 'Prep plan']];
+    const tabs = [['recipes', 'Recipes'], ['snacks', 'Snacks'], ['grocery', 'Grocery'], ['plan', 'Plan']];
     const head = `<div class="grab"></div><div class="bk-head"><h2 style="margin:0">${esc(BOOK.title)}</h2><p class="shp">${esc(BOOK.blurb)}</p></div>
       <div class="segwrap"><div class="seg">${tabs.map(([k, l]) => `<button class="${BOOK_TAB === k ? 'on' : ''}" data-act="book-tab" data-v="${k}">${l}</button>`).join('')}</div></div>`;
     if (BOOK_TAB === 'recipes') {
@@ -1918,12 +1945,22 @@ const SHEETS = {
             </div>` : ''}</div>`;
         }).join('')}`;
     }
+    if (BOOK_TAB === 'snacks') {
+      const chosen = snacksChosen().length;
+      return head + `<div class="ch" style="margin:14px 0 8px"><span class="sub">${chosen ? chosen + ' on the list' : 'Tap anything to put it on the grocery list'}</span>${chosen ? '<button class="btn sm" data-act="snack-clear">Clear</button>' : ''}</div>
+        ${['Salty', 'Sweet'].map(t => `<div class="lbl">${t}</div>${BOOK.snacks.filter(x => x.t === t).map(x => `
+          <button class="gitem snk ${snackOn(x.n) ? 'done' : ''}" data-act="snack" data-v="${esc(x.n)}"><span class="g-box">${I.check}</span><span class="g-n">${esc(x.n)}<em>${esc(x.note)}</em></span><span class="snk-p">${x.p}g</span></button>`).join('')}`).join('')}`;
+    }
     if (BOOK_TAB === 'grocery') {
-      const counts = groceryCount();
-      return head + `<div class="ch" style="margin:14px 0 6px"><span class="sub">${counts.done} of ${counts.all} in the cart</span><button class="btn sm" data-act="book-clear">Clear ticks</button></div>
+      const mode = grocMode(), counts = groceryCount(mode), pk = picks().m, sn = snacksChosen().length;
+      return head + `<div class="segwrap" style="margin-top:12px"><div class="seg sm">${[['picks', 'Your picks'], ['full', 'Full list']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-act="groc-mode" data-v="${k}">${l}</button>`).join('')}</div></div>
+        <div class="ch" style="margin:12px 0 6px"><span class="sub">${counts.done} of ${counts.all} in the cart</span><button class="btn sm" data-act="book-clear">Clear ticks</button></div>
         ${pbar('groc', counts.all ? counts.done / counts.all : 0, 'var(--green)')}
-        <p class="sub" style="margin-top:10px">Quantities cover every recipe once. Most weeks, pick three or four recipes and grab only their items.</p>
-        ${Object.entries(BOOK.grocery).map(([sec, items]) => `<div class="lbl">${esc(sec)}</div>${items.map(([n, q]) => {
+        <p class="sub" style="margin-top:10px">${mode === 'picks'
+          ? !pk.length ? 'Nothing picked yet, so there is nothing to shop for.' : `Everything the ${pk.length} meal${pk.length === 1 ? '' : 's'} you picked this week need${sn ? ', plus your snacks' : ''}. Pick more in Recipes and they show up here.`
+          : pk.length ? 'Quantities cover every recipe once. Switch to Your picks to shop only this week\'s meals.' : 'Quantities cover every recipe once. Pick meals in Recipes and this list narrows to them.'}</p>
+        ${counts.all ? '' : '<div class="empty"><b>Nothing on the list yet</b>Pick a few meals or add snacks</div>'}
+        ${grocerySections(mode).map(([sec, items]) => `<div class="lbl">${esc(sec)}</div>${items.map(([n, q]) => {
           const id = sec + '|' + n;
           return `<button class="gitem ${groceryOn(id) ? 'done' : ''}" data-act="groc" data-v="${esc(id)}"><span class="g-box">${I.check}</span><span class="g-n">${esc(n)}<em>${esc(q)}</em></span></button>`;
         }).join('')}`).join('')}`;
@@ -2183,8 +2220,11 @@ document.addEventListener('click', e => {
     case 'rest-add': if (REST) REST.end += 30000; return tick();
     case 'rest-skip': REST = null; island.key = null; return island.live();
     case 'shake': return toggleShake(v);
-    case 'open-book': { openSheet('book'); return loadBook().then(refreshSheet).catch(() => island.toast('Could not open the book')); }
+    case 'open-book': { if (v) BOOK_TAB = v; openSheet('book'); return loadBook().then(refreshSheet).catch(() => island.toast('Could not open the book')); }
     case 'book-tab': BOOK_TAB = v; return refreshSheet();
+    case 'groc-mode': BOOK_GROC = v; BOOK_GROC_SET = true; return refreshSheet();
+    case 'snack': toggleSnack(v); haptic(); return refreshSheet();
+    case 'snack-clear': S.snacks = {}; save(); return refreshSheet();
     case 'book-cat': BOOK_CAT = v; return refreshSheet();
     case 'book-open': BOOK_OPEN = BOOK_OPEN === v ? '' : v; return refreshSheet();
     case 'groc': toggleGrocery(v); return refreshSheet();
