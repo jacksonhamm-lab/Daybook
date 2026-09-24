@@ -47,6 +47,23 @@ input[type=number]{-moz-appearance:textfield}
 .num,.tab-num{font-variant-numeric:tabular-nums}
 
 /* ambient PS5-style backdrop */
+#boot{position:fixed;inset:0;z-index:120;display:grid;place-items:center;background:radial-gradient(60% 60% at 50% 45%,#0b1626 0%,#05060a 70%);opacity:1;transition:opacity .45s ease}
+#boot.gone{opacity:0;pointer-events:none}
+.boot-core{position:relative;display:grid;place-items:center;text-align:center}
+.boot-rings{width:min(46vw,210px);height:min(46vw,210px);fill:none}
+.br{stroke-linecap:round;transform-origin:100px 100px;stroke-width:3}
+.b1{stroke:#0a84ff;stroke-dasharray:503;stroke-dashoffset:503;animation:draw .85s var(--ios) forwards,spin 7s linear infinite}
+.b2{stroke:#ff9f0a;stroke-dasharray:364;stroke-dashoffset:364;animation:draw .85s var(--ios) .12s forwards,spin 5s linear infinite reverse}
+.b3{stroke:#30d158;stroke-dasharray:226;stroke-dashoffset:226;animation:draw .85s var(--ios) .24s forwards,spin 4s linear infinite}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.boot-word{position:absolute;font-size:clamp(20px,5vw,26px);font-weight:800;letter-spacing:.34em;text-indent:.34em;opacity:0;animation:bootWord .7s var(--ios) .35s forwards}
+@keyframes bootWord{from{opacity:0;filter:blur(8px);transform:scale(.92)}to{opacity:1;filter:none;transform:none}}
+.boot-line{position:absolute;bottom:-46px;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--text3);opacity:0;animation:fadeUp .5s ease .75s forwards;white-space:nowrap}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:.9;transform:none}}
+.boot-sweep{position:absolute;inset:0;background:linear-gradient(100deg,transparent 42%,rgba(255,255,255,.09) 50%,transparent 58%);transform:translateX(-60%);animation:sweep 1.1s var(--ios) .2s}
+@keyframes sweep{to{transform:translateX(60%)}}
+@media (prefers-reduced-motion:reduce){#boot{display:none}}
 .ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .ambient::before{content:"";position:absolute;inset:-20%;background:
   radial-gradient(40% 35% at 18% 8%,color-mix(in srgb,var(--glow) 42%,transparent),transparent 70%),
@@ -62,6 +79,49 @@ input[type=number]{-moz-appearance:textfield}
 .brand img{width:30px;height:30px;border-radius:8px}
 .top .sp{flex:1}
 .kbd{font-size:11px;color:var(--text3);border:1px solid var(--stroke2);border-radius:6px;padding:1px 6px;margin-left:4px}
+.lvl{position:relative;width:38px;height:38px;display:grid;place-items:center;flex:none}
+.lvl svg{position:absolute;inset:0;width:38px;height:38px;fill:none}
+.lvl .lv-t{stroke:rgba(255,255,255,.14);stroke-width:3}
+.lvl .lv-p{stroke:var(--yellow);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(255,214,10,.6));transition:stroke-dashoffset .8s var(--ease)}
+.lvl b{font-size:14px;font-weight:800;letter-spacing:-.02em}
+.lvl:hover{transform:scale(1.06)}
+.lvl-head{display:flex;align-items:center;gap:14px;margin:6px 0 14px}
+.lvl-big{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:24px;font-weight:800;background:linear-gradient(140deg,#3d2f00,#c79a00 60%,#fff08a);color:#231a00}
+.stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.sg{padding:12px;border-radius:14px;background:rgba(255,255,255,.04)}
+.sg b{display:block;font-size:22px;font-weight:700;letter-spacing:-.03em}
+.sg span{font-size:11.5px;color:var(--text2)}
+.troph{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto}
+.tr{display:flex;align-items:center;gap:12px;padding:10px;border-radius:14px;background:rgba(255,255,255,.03);opacity:.45}
+.tr.got{opacity:1;background:color-mix(in srgb,var(--yellow) 10%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--yellow) 25%,transparent)}
+.tr-i{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.06);color:var(--text3)}
+.tr.got .tr-i{background:color-mix(in srgb,var(--yellow) 22%,transparent);color:var(--yellow)}
+.tr b{display:block;font-size:14px}
+.tr span{font-size:12px;color:var(--text2)}
+.rail{display:contents}
+.quests-card .ch{margin-bottom:10px}
+@media(max-width:760px){
+  #v-today .grid{display:flex;flex-direction:column}
+  #v-today .slip-card{order:1}
+  #v-today .quests-card{order:2}
+  #v-today .tasks-card{order:3}
+  #v-today .rail{order:4}
+  #v-today .next-card{order:5}
+  #v-today .hero{padding:16px 0 12px}
+  #v-today .hero h1{font-size:30px}
+  #v-today .hero p{font-size:14px;margin-top:6px}
+  .rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:2px 16px 4px;scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .rail>section{flex:0 0 86%;scroll-snap-align:center;margin:0}
+  .rail .rings{width:130px}
+  .rail .art{min-height:200px}
+}
+.quests{display:flex;flex-direction:column;gap:10px}
+.qt{display:flex;align-items:center;gap:12px}
+.qt .qt-b{flex:1;min-width:0}
+.qt .qt-l{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px}
+.qt .qt-l span{color:var(--text2);font-weight:500}
+.qt.done .qt-l{color:var(--text3);text-decoration:line-through}
 .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--glow),#1c1c22);display:grid;place-items:center;font-weight:700;font-size:14px;transition:transform .3s var(--spring)}
 .avatar:hover{transform:scale(1.08)}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:background .3s,box-shadow .3s}
@@ -499,6 +559,18 @@ input[type=number]{-moz-appearance:textfield}
 </head>
 <body>
 <div class="ambient"></div>
+<div id="boot" aria-hidden="true">
+  <div class="boot-core">
+    <svg class="boot-rings" viewBox="0 0 200 200">
+      <circle cx="100" cy="100" r="80" class="br b1"/>
+      <circle cx="100" cy="100" r="58" class="br b2"/>
+      <circle cx="100" cy="100" r="36" class="br b3"/>
+    </svg>
+    <div class="boot-word">DAYBOOK</div>
+    <div class="boot-line" id="bootLine"></div>
+  </div>
+  <div class="boot-sweep"></div>
+</div>
 
 <header class="top">
   <div class="brand"><img src="icons/favicon.png" alt="">Daybook</div>
@@ -506,6 +578,7 @@ input[type=number]{-moz-appearance:textfield}
   <div class="sp"></div>
   <button class="btn qa-btn" data-act="spot-open"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Quick add<span class="kbd" id="kbdHint">Ctrl K</span></button>
   <span id="syncDot" class="sync-dot off" title="Sync status"></span>
+  <button class="lvl" data-act="progress" title="Progress" id="lvlBadge"></button>
   <button class="avatar" data-act="settings" title="Settings" id="avatar">J</button>
 </header>
 
@@ -801,6 +874,12 @@ const syncLabel = () => SYNC.state === 'off' ? 'Not syncing — this device only
   : SYNC.state === 'syncing' ? 'Syncing…'
   : SYNC.state === 'err' ? SYNC.err
   : SYNC.at ? 'Synced ' + ago(SYNC.at) : 'Synced';
+function paintLevel() {
+  const el = $('#lvlBadge'); if (!el) return;
+  const { lvl, into, need } = levelFor(xpTotal()), p = clamp01(into / need), C = 2 * Math.PI * 15;
+  el.innerHTML = `<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="lv-t"/><circle cx="18" cy="18" r="15" class="lv-p" transform="rotate(-90 18 18)" style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${(C * (1 - p)).toFixed(1)}"/></svg><b>${lvl}</b>`;
+  el.title = `Level ${lvl} · ${into} of ${need} XP`;
+}
 function paintSync() {
   const el = $('#syncStatus'); if (el) { el.textContent = syncLabel(); el.style.color = SYNC.state === 'err' ? 'var(--red)' : ''; }
   const dot = $('#syncDot'); if (dot) dot.className = 'sync-dot ' + SYNC.state;
@@ -1216,6 +1295,89 @@ const island = {
   },
 };
 
+/* ---------- the game layer ----------
+   XP and trophies are worked out from what's already in the data rather than
+   counted up separately, so two devices can never disagree about your score. */
+const XP = { task: 10, session: 50, cardio: 20, shiftDay: 15, applied: 30, interview: 60, offer: 200, clearDay: 25 };
+function xpTotal() {
+  let n = 0;
+  S.tasks.forEach(t => { n += t.repeat ? Object.keys(t.doneOn || {}).length * XP.task : (t.done ? XP.task : 0); });
+  Object.values(S.workouts).forEach(w => { if (w.done) n += XP.session; });
+  n += cardioLogs().length * XP.cardio;
+  n += Object.keys(S.shifts).filter(d => shiftHours(S.shifts[d]) > 0).length * XP.shiftDay;
+  S.jobs.forEach(j => { n += XP.applied; if (j.status === 'Interview') n += XP.interview; if (j.status === 'Offer') n += XP.offer; });
+  n += (S.clearDays || []).length * XP.clearDay;
+  return n;
+}
+// Levels get gently longer: 300, 700, 1200, 1800 …
+function xpToday() {
+  const d = today();
+  let n = S.tasks.reduce((a, t) => a + (t.repeat ? (t.doneOn && t.doneOn[d] ? XP.task : 0) : (t.done && t.date === d ? XP.task : 0)), 0);
+  if ((S.workouts[d] || {}).done) n += XP.session;
+  if (shiftHours(S.shifts[d]) > 0) n += XP.shiftDay;
+  n += cardioOn(d).length * XP.cardio;
+  n += S.jobs.filter(j => j.date === d && j.status !== 'Wishlist').length * XP.applied;
+  if ((S.clearDays || []).includes(d)) n += XP.clearDay;
+  return n;
+}
+const levelFor = xp => { let lvl = 1, need = 300, used = 0; while (xp >= used + need) { used += need; lvl++; need += 100 * lvl; } return { lvl, into: xp - used, need }; };
+
+const TROPHIES = [
+  { id: 'first-step', name: 'First Step', hint: 'Tick your first task', test: () => doneTaskCount() >= 1 },
+  { id: 'ten-down', name: 'Ten Down', hint: 'Finish 10 tasks', test: () => doneTaskCount() >= 10 },
+  { id: 'century', name: 'Century', hint: 'Finish 100 tasks', test: () => doneTaskCount() >= 100 },
+  { id: 'clean-week', name: 'Clean Week', hint: 'Every planned session in a week', test: () => weekStreak() >= 1 },
+  { id: 'three-peat', name: 'Three-Peat', hint: 'Three clean training weeks in a row', test: () => weekStreak() >= 3 },
+  { id: 'iron-month', name: 'Iron Month', hint: 'Four clean training weeks in a row', test: () => weekStreak() >= 4 },
+  { id: 'clocked', name: 'On the Clock', hint: 'Log 100 hours', test: () => totalHours() >= 100 },
+  { id: 'grinder', name: 'Grinder', hint: 'Log 500 hours', test: () => totalHours() >= 500 },
+  { id: 'applicant', name: 'In the Running', hint: 'Send 5 applications', test: () => S.jobs.filter(j => j.status !== 'Wishlist').length >= 5 },
+  { id: 'shortlist', name: 'Shortlisted', hint: 'Land an interview', test: () => S.jobs.some(j => j.status === 'Interview' || j.status === 'Offer') },
+  { id: 'offer', name: 'Offer In Hand', hint: 'Get an offer', test: () => S.jobs.some(j => j.status === 'Offer') },
+  { id: 'all-clear', name: 'All Clear', hint: 'Finish everything in a day', test: () => (S.clearDays || []).length >= 1 },
+  { id: 'perfect-five', name: 'Five in a Row', hint: 'Five all-clear days', test: () => (S.clearDays || []).length >= 5 },
+];
+const doneTaskCount = () => S.tasks.reduce((n, t) => n + (t.repeat ? Object.keys(t.doneOn || {}).length : (t.done ? 1 : 0)), 0);
+const totalHours = () => Object.keys(S.shifts).reduce((n, d) => n + shiftHours(S.shifts[d]), 0);
+function weekStreak() {
+  let n = 0;
+  for (let wk = addDays(mondayOf(new Date()), -7), i = 0; i < 104; i++, wk = addDays(wk, -7)) {
+    const plan = datesOf(wk).filter(d => wo(d).s !== 'REST');
+    if (plan.length && plan.every(d => wo(d).done)) n++; else break;
+  }
+  return n;
+}
+const earnedTrophies = () => TROPHIES.filter(t => { try { return t.test(); } catch (e) { return false; } });
+// Anything newly earned pops once, then is remembered.
+function checkTrophies() {
+  S.seen = S.seen || [];
+  const fresh = earnedTrophies().filter(t => !S.seen.includes(t.id));
+  if (!fresh.length) return;
+  S.seen.push(...fresh.map(t => t.id)); save();
+  fresh.slice(0, 1).forEach(t => celebrate(t.name + ' unlocked', '#ffd60a'));
+}
+// A clear day is recorded once, so the reward can't be farmed by re-ticking.
+function noteClearDay() {
+  const d = today(), list = tasksOn(d);
+  if (!list.length || !list.every(t => isDone(t, d))) return false;
+  S.clearDays = S.clearDays || [];
+  if (S.clearDays.includes(d)) return false;
+  S.clearDays.push(d); save();
+  return true;
+}
+// Today's objectives, drawn from what you've actually set up.
+function quests() {
+  const d = today(), list = tasksOn(d), w = wo(d), wk = curWeek();
+  const out = [
+    { k: 'tasks', label: list.length ? `Clear ${list.length} task${list.length === 1 ? '' : 's'}` : 'Add a task', now: list.filter(t => isDone(t, d)).length, goal: Math.max(1, list.length), c: 'var(--blue)' },
+  ];
+  if (w.s !== 'REST') out.push({ k: 'train', label: `${w.s} · ${sessName(w.s)}`, now: w.done ? 1 : (w.prog && w.prog.total ? w.prog.done / w.prog.total : 0), goal: 1, c: 'var(--orange)', frac: true });
+  if (shiftHours(S.shifts[d]) || S.clock) out.push({ k: 'hours', label: 'Hours logged', now: shiftHours(S.shifts[d]) ? 1 : 0, goal: 1, c: 'var(--teal)' });
+  const ag = +S.settings.appGoal || 0;
+  if (ag) out.push({ k: 'jobs', label: `${appsIn(wk)} of ${ag} applications`, now: appsIn(wk), goal: ag, c: 'var(--green)' });
+  return out;
+}
+
 /* ---------- views ---------- */
 function hero(kicker, title, sub, right = '') {
   return `<div class="hero anim" style="--i:0"><div><div class="kicker">${kicker}</div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${right ? `<div class="hero-r">${right}</div>` : ''}</div>`;
@@ -1286,6 +1448,7 @@ function renderToday() {
   const summary = [left ? `${left} task${left === 1 ? '' : 's'} left` : list.length ? 'All tasks done' : 'No tasks yet', w.s === 'REST' ? 'Rest day' : `${sessName(w.s)}${w.done ? ' ✓' : ''}`, S.clock ? 'On the clock' : shiftHours(sh) ? `${t12(sh.start)}–${t12(sh.end)} shift` : null].filter(Boolean).join(' · ');
 
   const follow = S.jobs.filter(needsFollow).slice(0, 3);
+  const qs = quests(), qd = qs.filter(q => (q.frac ? q.now : q.now / q.goal) >= 1).length;
   const slip = slipped();
   const tmr = iso(addDays(parse(d), 1)), tw = wo(tmr), tsh = S.shifts[tmr], tTasks = tasksOn(tmr).length;
   const nexts = [
@@ -1300,6 +1463,9 @@ function renderToday() {
   ].filter(Boolean).join('');
 
   return hero(longDate(d), `${greet}, ${esc(S.settings.name || 'there')}`, summary) + `<div class="grid">
+    <section class="card g12 anim quests-card" style="--i:0"><div class="ch"><h3>Today's run</h3><span class="sub">${qd} of ${qs.length} done · ${xpToday()} XP today</span></div>
+      <div class="quests">${qs.map((q, i) => { const p = clamp01(q.frac ? q.now : q.now / q.goal); return `<div class="qt ${p >= 1 ? 'done' : ''}" style="--c:${q.c}"><div class="qt-b"><div class="qt-l"><b>${esc(q.label)}</b><span>${q.frac ? Math.round(p * 100) + '%' : q.now + '/' + q.goal}</span></div>${pbar('q' + i, p, q.c)}</div></div>`; }).join('')}</div></section>
+    <div class="rail g12">
     <section class="card g5 anim" style="--i:1"><div class="ch"><h3>This week</h3><span class="sub">${weekLabel(mondayOf(new Date()))}</span></div>
       <div class="rings-wrap">${ringsSVG([
         { k: 'h', p: hrs / (goal || 40), c1: '#0a84ff', c2: '#64d2ff' },
@@ -1312,18 +1478,19 @@ function renderToday() {
         </div></div></section>
     <section class="card g3 anim" style="--i:2">${clockCard(d)}</section>
     <section class="card g4 gm12 tilecard focusable anim" style="--i:3">${sessionArt(d, { kicker: w.s === 'REST' ? 'Recovery' : `Today · ${w.s}` })}</section>
-    <section class="card g7 anim" style="--i:4">
+    </div>
+    <section class="card g7 anim tasks-card" style="--i:4">
       <div class="ch"><h3>Today</h3><span class="sub">${list.length ? `${list.length - left} of ${list.length} done` : ''}</span></div>
       ${ov.length ? `<div class="banner"><span>${ov.length} overdue from earlier</span><button class="btn sm tint" style="--c:var(--red)" data-act="rollover">Move to today</button></div>` : ''}
       <ul class="tasks drop" data-drop="${d}">${list.map(t => taskLi(t, d)).join('') || '<li class="empty">Nothing yet. Add something below or press Ctrl K.</li>'}</ul>
       ${addForm(d, 'Add a task… try “call Tim fri #work”')}
     </section>
-    ${slip.length ? `<section class="card g12 anim" style="--i:4.5;border-color:rgba(255,159,10,.35)"><div class="ch"><h3>Needs a decision</h3><span class="sub">Reminder went by, still open</span></div>
+    ${slip.length ? `<section class="card g12 anim slip-card" style="--i:4.5;border-color:rgba(255,159,10,.35)"><div class="ch"><h3>Needs a decision</h3><span class="sub">Reminder went by, still open</span></div>
       ${slip.map(t => `<div class="nitem" style="--c:${CATS[t.cat].color}"><div class="ni">${I.bell}</div><div class="nb"><b>${esc(t.title)}</b><span>Was due ${t12(t.remind)}</span></div>
         <button class="btn sm tint" style="--c:var(--green)" data-act="rm-done" data-id="${t.id}">Done</button>
         <button class="btn sm" data-act="rm-later" data-id="${t.id}">+2h</button>
         <button class="btn sm" data-act="rm-tomorrow" data-id="${t.id}">Tomorrow</button></div>`).join('')}</section>` : ''}
-    <section class="card g5 anim" style="--i:5"><div class="ch"><h3>Up next</h3></div><div class="nlist">${nexts || '<div class="empty">All clear.</div>'}</div></section>
+    <section class="card g5 anim next-card" style="--i:5"><div class="ch"><h3>Up next</h3></div><div class="nlist">${nexts || '<div class="empty">All clear.</div>'}</div></section>
   </div>`;
 }
 
@@ -1615,6 +1782,25 @@ const SHEETS = {
       ${(j.follow || []).length ? `<p class="sub">Followed up ${j.follow.map(short).join(', ')}</p>` : ''}
       <div class="row end"><button class="btn tint" style="--c:var(--red)" data-act="job-del">Delete</button>${j.link ? `<a class="btn" href="${esc(/^https?:/i.test(j.link) ? j.link : 'https://' + j.link)}" target="_blank" rel="noopener">Open posting ${I.link}</a>` : ''}<button class="btn white" data-act="close-sheet">Done</button></div>`;
   },
+  progress() {
+    const xp = xpTotal(), { lvl, into, need } = levelFor(xp), got = earnedTrophies().map(t => t.id);
+    const stats = [
+      ['Tasks finished', doneTaskCount()],
+      ['Sessions done', Object.values(S.workouts).filter(w => w.done).length],
+      ['Hours logged', fh(totalHours())],
+      ['Applications', S.jobs.filter(j => j.status !== 'Wishlist').length],
+      ['Clean weeks in a row', weekStreak()],
+      ['Days cleared', (S.clearDays || []).length],
+    ];
+    return `<div class="grab"></div>
+      <div class="lvl-head"><div class="lvl-big">${lvl}</div><div><h2 style="margin:0">Level ${lvl}</h2><p class="shp">${xp.toLocaleString()} XP · ${need - into} to next</p></div></div>
+      ${pbar('xp', into / need, 'var(--yellow)')}
+      <div class="lbl">Record</div>
+      <div class="stat-grid">${stats.map(([k, v]) => `<div class="sg"><b>${v}</b><span>${k}</span></div>`).join('')}</div>
+      <div class="lbl">Trophies · ${got.length} of ${TROPHIES.length}</div>
+      <div class="troph">${TROPHIES.map(t => `<div class="tr ${got.includes(t.id) ? 'got' : ''}"><div class="tr-i">${I.trophy}</div><div><b>${t.name}</b><span>${t.hint}</span></div></div>`).join('')}</div>
+      <div class="row end"><button class="btn white" data-act="close-sheet">Done</button></div>`;
+  },
   settings() {
     const st = S.settings;
     return `<div class="grab"></div><h2>Settings</h2><p class="shp" style="margin-bottom:18px">Saved on this device.</p>
@@ -1700,6 +1886,7 @@ function render() {
   $$('.seg').forEach(s => placeInd(s, !FX.seg));
   animateValues(root);
   $('#avatar').textContent = (S.settings.name || 'J')[0].toUpperCase();
+  paintLevel();
   island.live(); tick();
   FX = {};
 }
@@ -1754,7 +1941,14 @@ function toggleTask(li) {
   if (now) { haptic(); pop(li.querySelector('.ck')); }
   clearTimeout(toggleTask.t);
   toggleTask.t = setTimeout(() => { if (!SHEET) render(); }, 700);
-  if (now && d === today()) { const l = tasksOn(d); if (l.length > 1 && l.every(x => isDone(x, d))) { clearTimeout(toggleTask.c); toggleTask.c = setTimeout(() => celebrate('Everything done today', '#30d158'), 350); } }
+  if (now && d === today()) {
+    const l = tasksOn(d);
+    if (l.length > 1 && l.every(x => isDone(x, d))) {
+      clearTimeout(toggleTask.c);
+      toggleTask.c = setTimeout(() => { if (noteClearDay()) celebrate('Day cleared · +' + XP.clearDay + ' XP', '#30d158'); }, 350);
+    }
+  }
+  clearTimeout(toggleTask.tr); toggleTask.tr = setTimeout(checkTrophies, 600);
 }
 function toggleSet(btn) {
   const s = btn.dataset.s, id = s.toLowerCase(), i = +btn.dataset.ex, j = +btn.dataset.set, e = flatEx(id)[i]; if (!e) return;
@@ -1881,6 +2075,7 @@ document.addEventListener('click', e => {
     case 'sync-on': { const v = $('#syncCode').value.trim(); if (v.length < 16) return island.toast('That code looks too short'); setSyncCode(v); return refreshSheet(); }
     case 'sync-off': setSyncCode(''); return refreshSheet();
     case 'sync-now': return syncNow();
+    case 'progress': return openSheet('progress');
     case 'settings': return openSheet('settings');
     case 'export': { const blob = new Blob([JSON.stringify({ daybook: S, workout: { state: readLS(W_STATE, {}), cardio: cardioLogs(), pushups: benchLogs('pushups'), plank: benchLogs('plank'), row: benchLogs('row') } }, null, 2)], { type: 'application/json' }); const a2 = document.createElement('a'); a2.href = URL.createObjectURL(blob); a2.download = `daybook-backup-${today()}.json`; a2.click(); return URL.revokeObjectURL(a2.href); }
     case 'import': return $('#importFile').click();
@@ -2045,6 +2240,20 @@ $('#nav').innerHTML = TABS.map(t => `<button data-tab="${t.k}">${t.label}</butto
 $('#tabbar').innerHTML = TABS.map(t => `<button data-tab="${t.k}">${I[t.k]}<span>${t.label}</span></button>`).join('');
 $('#kbdHint').textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 island.el = $('#island');
+// A short boot sequence on a cold open; tapping skips it.
+(function boot() {
+  const el = $('#boot');
+  if (!el) return;
+  if (REDUCED || sessionStorage.getItem('daybook_booted')) { el.remove(); return; }
+  try { sessionStorage.setItem('daybook_booted', '1'); } catch (e) {}
+  const { lvl } = levelFor(xpTotal());
+  const n = new Date();
+  $('#bootLine').textContent = `Level ${lvl} · ${DOW_LONG[(n.getDay() + 6) % 7]}`;
+  const end = () => { el.classList.add('gone'); setTimeout(() => el.remove(), 500); };
+  el.addEventListener('click', end);
+  setTimeout(end, 1500);
+})();
+
 FX.enter = 'enter';
 render();
 loadProgram();
