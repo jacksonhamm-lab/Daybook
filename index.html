@@ -117,6 +117,47 @@ input[type=number]{-moz-appearance:textfield}
   .rail .rings{width:130px}
   .rail .art{min-height:200px}
 }
+.bk-head{margin:6px 0 12px}
+.rcp{border-radius:18px;background:rgba(255,255,255,.035);margin-bottom:8px;overflow:hidden}
+.rcp.open{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--stroke)}
+.rcp-h{display:flex;width:100%;align-items:center;gap:12px;padding:14px;text-align:left}
+.rcp-h b{display:block;font-size:16px;font-weight:700;letter-spacing:-.02em}
+.rcp-h span{font-size:13px;color:var(--text2)}
+.rcp-p{margin-left:auto;text-align:right;flex:none}
+.rcp-p b{font-size:22px;color:var(--green);letter-spacing:-.03em}
+.rcp-p span{display:block;font-size:11px;color:var(--text3)}
+.rcp-b{padding:0 14px 16px;animation:cardIn .4s var(--ios) both}
+.macros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:12px}
+.macros div{padding:8px;border-radius:12px;background:rgba(255,255,255,.05);text-align:center}
+.macros b{display:block;font-size:16px;font-weight:700}
+.macros span{font-size:10.5px;color:var(--text2)}
+.rcp-meta{color:var(--text2);font-size:13px;margin:0 0 6px}
+.rcp-i{margin:0;padding-left:18px;font-size:14px;color:var(--text2)}
+.rcp-i li{margin-bottom:4px}
+.rcp-s{counter-reset:st;list-style:none;margin:0;padding:0}
+.rcp-s li{counter-increment:st;display:grid;grid-template-columns:30px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--sep);font-size:14px;color:var(--text2)}
+.rcp-s li::before{content:counter(st);font-size:18px;font-weight:800;color:var(--green);line-height:1.2}
+.rcp-s b{display:block;color:var(--text);margin-bottom:2px}
+.gitem{display:flex;width:100%;align-items:flex-start;gap:12px;padding:11px 4px;border-bottom:1px solid var(--sep);text-align:left}
+.gitem .g-box{width:22px;height:22px;flex:none;margin-top:1px;border-radius:7px;border:2px solid rgba(255,255,255,.22);display:grid;place-items:center}
+.gitem .g-box svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22;transition:stroke-dashoffset .3s var(--ease)}
+.gitem.done .g-box{background:var(--green);border-color:var(--green)}
+.gitem.done .g-box svg{stroke-dashoffset:0}
+.gitem .g-n{font-size:15px}
+.gitem .g-n em{display:block;font-style:normal;font-size:12.5px;color:var(--text3)}
+.gitem.done .g-n{color:var(--text3);text-decoration:line-through}
+.bk-table{width:100%;border-collapse:collapse;font-size:14px}
+.bk-table td{padding:8px 4px;border-bottom:1px solid var(--sep);color:var(--text2)}
+.bk-table td.n{text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
+.bk-table tr.tot td{border-bottom:0;color:var(--text)}
+.shakes{display:flex;gap:10px;flex-wrap:wrap}
+.shake{flex:1;min-width:150px;display:flex;align-items:center;gap:10px;padding:14px;border-radius:16px;background:rgba(255,255,255,.04);font-size:15px;font-weight:600;text-align:left;transition:background .25s,transform .3s var(--spring)}
+.shake:active{transform:scale(.97)}
+.shake .sk-box{width:26px;height:26px;flex:none;border-radius:9px;border:2px solid rgba(255,255,255,.25);display:grid;place-items:center;transition:background .25s,border-color .25s}
+.shake .sk-box svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22;transition:stroke-dashoffset .35s var(--ease) .05s}
+.shake.on{background:color-mix(in srgb,var(--green) 16%,transparent)}
+.shake.on .sk-box{background:var(--green);border-color:var(--green)}
+.shake.on .sk-box svg{stroke-dashoffset:0}
 .quests{display:flex;flex-direction:column;gap:10px}
 .qt{display:flex;align-items:center;gap:12px}
 .qt .qt-b{flex:1;min-width:0}
@@ -684,7 +725,7 @@ const defaults = () => ({
   tasks: [], shifts: {}, workouts: {}, jobs: [], clock: null,
   template: ['D1','D2','REST','D3','D4','HIIT','REST'],
   extra: {},
-  settings: { name: 'Jackson', rate: 20, extraHours: 0, payCutoff: 1, proteinGoal: 170, prepBook: 'https://claude.ai/artifact/HDHNuecPrNv8QT6jCHAsnR', paySubmitDays: 4, remindSubmit: true, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
+  settings: { name: 'Jackson', rate: 20, extraHours: 0, payCutoff: 1, prepBook: 'https://claude.ai/artifact/HDHNuecPrNv8QT6jCHAsnR', paySubmitDays: 4, remindSubmit: true, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
   ui: { tab: 'today', jobFilter: 'All', weekMode: innerWidth > 900 ? 'board' : 'focus', selDay: null },
 });
 function load() {
@@ -705,8 +746,9 @@ let S = load();
 if (!S.since) { const n = new Date(); S.since = [...Object.keys(S.workouts), ...Object.keys(S.shifts), `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`].sort()[0]; }
 S.tomb = S.tomb || {};
 S.extra = S.extra || {};
-S.protein = S.protein || {};
+S.shakes = S.shakes || {};
 S.meals = S.meals || {};
+S.grocery = S.grocery || {};
 // Thomas Jeffery work pays $20/h; only overwrite while he hasn't set a rate himself.
 if (!S.settings.rateSet && !+S.settings.rate) S.settings.rate = 20;
 { // the Inbox is gone: anything without a day lands on today
@@ -740,7 +782,7 @@ function stampChanges() {
     (S[k] || []).forEach(x => { const p = was.get(x.id); if (!p || !same(p, x)) x.u = now; was.delete(x.id); });
     was.forEach((v, id) => { S.tomb[id] = now; });
   });
-  ['shifts', 'workouts', 'extra', 'protein', 'meals'].forEach(k => {
+  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery'].forEach(k => {
     const p = prev[k] || {};
     Object.keys(S[k] || {}).forEach(d => { if (!p[d] || !same(p[d], S[k][d])) S[k][d].u = now; });
     Object.keys(p).forEach(d => { if (!S[k][d]) S.tomb[k + ':' + d] = now; });
@@ -762,7 +804,7 @@ function mergeState(local, remote) {
     });
     out[k] = [...m.values()].filter(x => !(out.tomb[x.id] > (x.u || 0)));
   });
-  ['shifts', 'workouts', 'extra', 'protein', 'meals'].forEach(k => {
+  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery'].forEach(k => {
     Object.entries(remote[k] || {}).forEach(([d, r]) => {
       const l = out[k][d];
       if (!l) { if (!(out.tomb[k + ':' + d] > (r.u || 0))) out[k][d] = r; }
@@ -1314,6 +1356,16 @@ const island = {
 /* ---------- fuel ----------
    The recipes live in the Protein Prep Book; Daybook tracks what you picked
    for the week and how much protein you've actually eaten. */
+let BOOK = null, BOOK_TAB = 'recipes', BOOK_CAT = 'All', BOOK_OPEN = '';
+try { BOOK = JSON.parse(localStorage.getItem('daybook_book') || 'null'); } catch (e) {}
+async function loadBook() {
+  if (BOOK) return BOOK;
+  const r = await fetch('meals.json', { cache: 'no-cache' });
+  BOOK = await r.json();
+  try { localStorage.setItem('daybook_book', JSON.stringify(BOOK)); } catch (e) {}
+  return BOOK;
+}
+const mealList = () => (BOOK && BOOK.recipes) ? BOOK.recipes.map(r => ({ n: r.n, c: r.c, p: r.m[1] })) : MEALS;
 const MEALS = [
   { n: 'Butter chicken bowls', c: 'Bowls', p: 56 }, { n: 'Chipotle burrito bowls', c: 'Bowls', p: 52 },
   { n: 'Smash burger bowls', c: 'Bowls', p: 54 }, { n: 'Honey garlic chicken', c: 'Bowls', p: 55 },
@@ -1324,6 +1376,10 @@ const MEALS = [
   { n: 'Overnight protein oats', c: 'Breakfast', p: 42 }, { n: 'Freezer breakfast burritos', c: 'Breakfast', p: 55 },
   { n: 'Chicken Caesar wraps', c: 'Wraps', p: 52 }, { n: 'Chocolate protein pudding', c: 'Wraps', p: 30 },
 ];
+// Grocery ticks sync like everything else.
+const groceryOn = id => !!(S.grocery[id] || {}).c;
+function toggleGrocery(id) { S.grocery[id] = { c: !groceryOn(id) }; save(); }
+const groceryCount = () => { let done = 0, all = 0; const g = (BOOK && BOOK.grocery) || {}; Object.entries(g).forEach(([sec, items]) => items.forEach(([n]) => { all++; if (groceryOn(sec + '|' + n)) done++; })); return { done, all }; };
 const mealWeek = () => iso(mondayOf(new Date()));
 const picks = () => (S.meals || {})[mealWeek()] || { m: [] };
 function togglePick(name) {
@@ -1332,13 +1388,15 @@ function togglePick(name) {
   S.meals[wk] = { m: cur.includes(name) ? cur.filter(x => x !== name) : [...cur, name] };
   commit();
 }
-const proteinToday = () => ((S.protein || {})[today()] || {}).g || 0;
-function logProtein(g) {
-  S.protein = S.protein || {};
-  const d = today(), now = Math.max(0, proteinToday() + g);
-  S.protein[d] = { g: now };
+const SHAKES = [['p', 'Protein shake'], ['g', 'Mass gainer']];
+const shakesToday = () => (S.shakes || {})[today()] || {};
+function toggleShake(k) {
+  S.shakes = S.shakes || {};
+  const d = today(), cur = { ...shakesToday() };
+  cur[k] = !cur[k];
+  S.shakes[d] = cur;
   commit();
-  island.toast(now + 'g protein today', { icon: I.check, color: '#30d158' });
+  haptic();
 }
 
 /* ---------- the game layer ----------
@@ -1419,8 +1477,8 @@ function quests() {
   ];
   if (w.s !== 'REST') out.push({ k: 'train', label: `${w.s} · ${sessName(w.s)}`, now: w.done ? 1 : (w.prog && w.prog.total ? w.prog.done / w.prog.total : 0), goal: 1, c: 'var(--orange)', frac: true });
   if (shiftHours(S.shifts[d]) || S.clock) out.push({ k: 'hours', label: 'Hours logged', now: shiftHours(S.shifts[d]) ? 1 : 0, goal: 1, c: 'var(--teal)' });
-  const pg = +S.settings.proteinGoal || 0;
-  if (pg) out.push({ k: 'protein', label: `${proteinToday()}g of ${pg}g protein`, now: proteinToday(), goal: pg, c: 'var(--green)' });
+  const sk = shakesToday(), skDone = SHAKES.filter(([k]) => sk[k]).length;
+  out.push({ k: 'shakes', label: 'Shakes', now: skDone, goal: SHAKES.length, c: 'var(--green)' });
   const ag = +S.settings.appGoal || 0;
   if (ag) out.push({ k: 'jobs', label: `${appsIn(wk)} of ${ag} applications`, now: appsIn(wk), goal: ag, c: 'var(--green)' });
   return out;
@@ -1664,7 +1722,7 @@ function renderTraining() {
       <form data-bench="${k}"><input type="number" inputmode="numeric" min="1" placeholder="${u}"><button class="btn sm tint" style="--c:var(--orange)">Log</button></form></div>`;
   }).join('');
   const cl = cardioLogs(), wkStart = mondayOf(new Date()).getTime(), wkC = cl.filter(l => l.ts >= wkStart);
-  const pk = picks(), pro = proteinToday(), pg = +S.settings.proteinGoal || 0;
+  const pk = picks(), sh = shakesToday();
   // heatmap + streak
   const start = addDays(mondayOf(new Date()), -7 * 15); let cells = '';
   for (let w = 0; w < 16; w++) for (let i = 0; i < 7; i++) {
@@ -1679,13 +1737,10 @@ function renderTraining() {
     <div class="grid" style="margin-top:16px">
       <section class="card g7 anim" style="--i:8"><div class="ch"><h3>Benchmarks</h3><span class="sub">Shared with the workout app</span></div><div class="bms">${bms}</div></section>
       <section class="card g5 anim" style="--i:8.5"><div class="ch"><h3>Fuel</h3><span class="sub">${pk.m.length} meal${pk.m.length === 1 ? '' : 's'} picked</span></div>
-        <div class="big">${nk('prot', pro)}<small>of ${pg}g protein</small></div>
-        ${pbar('protein', pg ? pro / pg : 0, 'var(--green)')}
-        <div class="chips" style="margin-top:12px">${[30, 45, 55].map(g => `<button class="chip" style="--c:var(--green);--on:#fff" data-act="protein-add" data-v="${g}">+${g}g</button>`).join('')}
-          <button class="chip" data-act="protein-add" data-v="-25">−25g</button></div>
+        <div class="shakes">${SHAKES.map(([k, label]) => `<button class="shake ${sh[k] ? 'on' : ''}" data-act="shake" data-v="${k}"><span class="sk-box">${I.check}</span>${label}</button>`).join('')}</div>
         <div class="lbl">This week's meals</div>
-        <div class="chips">${MEALS.map(m => `<button class="chip ${pk.m.includes(m.n) ? 'on' : ''}" style="--c:var(--green);--on:#fff" data-act="pick-meal" data-v="${esc(m.n)}">${esc(m.n)} · ${m.p}g</button>`).join('')}</div>
-        <div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(S.settings.prepBook)}" target="_blank" rel="noopener">Prep book ${I.link}</a>
+        <div class="chips">${mealList().map(m => `<button class="chip ${pk.m.includes(m.n) ? 'on' : ''}" style="--c:var(--green);--on:#fff" data-act="pick-meal" data-v="${esc(m.n)}">${esc(m.n)} · ${m.p}g</button>`).join('')}</div>
+        <div class="row" style="margin-top:14px"><button class="btn sm white" data-act="open-book">Prep book</button>
           ${pk.m.length ? `<button class="btn sm tint" style="--c:var(--green)" data-act="copy-meals">Copy shopping picks</button>` : ''}</div></section>
       <section class="card g5 anim" style="--i:9"><div class="ch"><h3>Cardio</h3><span class="sub">${wkC.length} this week</span></div>
         <div class="big">${nk('cardio', wkC.reduce((a, l) => a + l.min, 0))}<small>min this week</small></div>${cardioForm(null)}
@@ -1840,6 +1895,47 @@ const SHEETS = {
       ${(j.follow || []).length ? `<p class="sub">Followed up ${j.follow.map(short).join(', ')}</p>` : ''}
       <div class="row end"><button class="btn tint" style="--c:var(--red)" data-act="job-del">Delete</button>${j.link ? `<a class="btn" href="${esc(/^https?:/i.test(j.link) ? j.link : 'https://' + j.link)}" target="_blank" rel="noopener">Open posting ${I.link}</a>` : ''}<button class="btn white" data-act="close-sheet">Done</button></div>`;
   },
+  book() {
+    if (!BOOK) return '<div class="grab"></div><div class="empty"><b>Opening the book</b>One moment</div>';
+    const tabs = [['recipes', 'Recipes'], ['grocery', 'Grocery'], ['plan', 'Prep plan']];
+    const head = `<div class="grab"></div><div class="bk-head"><h2 style="margin:0">${esc(BOOK.title)}</h2><p class="shp">${esc(BOOK.blurb)}</p></div>
+      <div class="segwrap"><div class="seg">${tabs.map(([k, l]) => `<button class="${BOOK_TAB === k ? 'on' : ''}" data-act="book-tab" data-v="${k}">${l}</button>`).join('')}</div></div>`;
+    if (BOOK_TAB === 'recipes') {
+      const list = BOOK.recipes.filter(r => BOOK_CAT === 'All' || r.c === BOOK_CAT);
+      return head + `<div class="chips" style="margin:14px 0">${BOOK.cats.map(c => `<button class="chip ${BOOK_CAT === c ? 'on' : ''}" style="--c:var(--green);--on:#fff" data-act="book-cat" data-v="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+        ${list.map(r => {
+          const open = BOOK_OPEN === r.n, picked = picks().m.includes(r.n);
+          return `<div class="rcp ${open ? 'open' : ''}">
+            <button class="rcp-h" data-act="book-open" data-v="${esc(r.n)}"><div><b>${esc(r.n)}</b><span>${esc(r.t)}</span></div><div class="rcp-p"><b>${r.m[1]}g</b><span>protein</span></div></button>
+            ${open ? `<div class="rcp-b">
+              <div class="macros">${[['Calories', r.m[0]], ['Protein', r.m[1] + ' g'], ['Carbs', r.m[2] + ' g'], ['Fat', r.m[3] + ' g']].map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>
+              <p class="rcp-meta">${esc(r.time)}<br>${esc(r.eq)}</p>
+              <div class="lbl">Ingredients</div><ul class="rcp-i">${r.i.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+              <div class="lbl">Method</div><ol class="rcp-s">${r.s.map(x => { const parts = x.split('|'); return `<li><div><b>${esc(parts[0])}</b>${esc(parts[1])}</div></li>`; }).join('')}</ol>
+              <div class="lbl">Reheat</div><p class="sub">${esc(r.rh)}</p>
+              ${r.x ? `<p class="note">${esc(r.x)}</p>` : ''}
+              <div class="row" style="margin-top:14px"><button class="btn sm ${picked ? 'tint' : 'white'}" style="--c:var(--green)" data-act="pick-meal" data-v="${esc(r.n)}">${picked ? 'Picked this week' : 'Pick for this week'}</button></div>
+            </div>` : ''}</div>`;
+        }).join('')}`;
+    }
+    if (BOOK_TAB === 'grocery') {
+      const counts = groceryCount();
+      return head + `<div class="ch" style="margin:14px 0 6px"><span class="sub">${counts.done} of ${counts.all} in the cart</span><button class="btn sm" data-act="book-clear">Clear ticks</button></div>
+        ${pbar('groc', counts.all ? counts.done / counts.all : 0, 'var(--green)')}
+        <p class="sub" style="margin-top:10px">Quantities cover every recipe once. Most weeks, pick three or four recipes and grab only their items.</p>
+        ${Object.entries(BOOK.grocery).map(([sec, items]) => `<div class="lbl">${esc(sec)}</div>${items.map(([n, q]) => {
+          const id = sec + '|' + n;
+          return `<button class="gitem ${groceryOn(id) ? 'done' : ''}" data-act="groc" data-v="${esc(id)}"><span class="g-box">${I.check}</span><span class="g-n">${esc(n)}<em>${esc(q)}</em></span></button>`;
+        }).join('')}`).join('')}`;
+    }
+    return head + `<ol class="rcp-s" style="margin-top:16px">${BOOK.plan.map(([t, d]) => `<li><div><b>${esc(t)}</b>${esc(d)}</div></li>`).join('')}</ol>
+      <div class="lbl">A sample prep day</div>
+      <table class="bk-table">${BOOK.sample.rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td class="n">${esc(r[2])}</td></tr>`).join('')}
+        <tr class="tot"><td><b>${esc(BOOK.sample.total[0])}</b></td><td>${esc(BOOK.sample.total[1])}</td><td class="n"><b>${esc(BOOK.sample.total[2])}</b></td></tr></table>
+      <p class="sub">${esc(BOOK.sample.note)}</p>
+      <div class="lbl">Containers</div><p class="sub">${esc(BOOK.containers)}</p>
+      <p class="sub" style="margin-top:18px;opacity:.7">${esc(BOOK.fine)}</p>`;
+  },
   progress() {
     const xp = xpTotal(), { lvl, into, need } = levelFor(xp), got = earnedTrophies().map(t => t.id);
     const stats = [
@@ -1872,7 +1968,6 @@ const SHEETS = {
       <p class="sub" style="margin:-4px 0 14px">With a Friday payday and a one-day cut-off, a period runs Friday to Thursday and work on payday counts toward the next one.</p>
       <label class="field"><span>Subscription hours each period</span><input type="number" inputmode="decimal" step="0.5" min="0" data-sf="extraHours" value="${st.extraHours || ''}" placeholder="0"></label>
       <p class="sub" style="margin:-4px 0 14px">Added to every period to cover the tools you pay for. You can nudge it per period on the Hours tab.</p>
-      <label class="field"><span>Daily protein target (g)</span><input type="number" inputmode="numeric" min="0" data-sf="proteinGoal" value="${st.proteinGoal || ''}" placeholder="None"></label>
       <label class="field"><span>Weekly applications goal</span><input type="number" inputmode="numeric" data-sf="appGoal" value="${st.appGoal || ''}" placeholder="None"></label>
       <label class="field"><span>Workout app link</span><input data-sf="workoutUrl" value="${esc(st.workoutUrl)}"></label>
       <div class="lbl">Reminders</div>
@@ -2087,9 +2182,15 @@ document.addEventListener('click', e => {
     case 'ex-detail': return el.closest('.ex').classList.toggle('open');
     case 'rest-add': if (REST) REST.end += 30000; return tick();
     case 'rest-skip': REST = null; island.key = null; return island.live();
-    case 'protein-add': return logProtein(+v);
+    case 'shake': return toggleShake(v);
+    case 'open-book': { openSheet('book'); return loadBook().then(refreshSheet).catch(() => island.toast('Could not open the book')); }
+    case 'book-tab': BOOK_TAB = v; return refreshSheet();
+    case 'book-cat': BOOK_CAT = v; return refreshSheet();
+    case 'book-open': BOOK_OPEN = BOOK_OPEN === v ? '' : v; return refreshSheet();
+    case 'groc': toggleGrocery(v); return refreshSheet();
+    case 'book-clear': S.grocery = {}; save(); return refreshSheet();
     case 'pick-meal': return togglePick(v);
-    case 'copy-meals': { const chosen = MEALS.filter(m => picks().m.includes(m.n)); return copy(['Meals this week', '', ...chosen.map(m => `${m.n} · ${m.p}g protein`), '', 'Recipes and grocery list: ' + S.settings.prepBook].join('\n')); }
+    case 'copy-meals': { const chosen = mealList().filter(m => picks().m.includes(m.n)); return copy(['Meals this week', '', ...chosen.map(m => `${m.n} · ${m.p}g protein`), '', 'Recipes and grocery list: ' + S.settings.prepBook].join('\n')); }
     case 'cardio-type': cardioType = v; el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el)); return pop(el);
     case 'sel-day': {
       const d = el.dataset.date; if (d === S.ui.selDay) return;
@@ -2194,7 +2295,7 @@ document.addEventListener('input', e => {
   }
   if (el.dataset.tf === 'title') { const t = S.tasks.find(x => x.id === SHEET.arg.id); t.title = el.value.replace(/\n/g, ' '); return save(); }
   if (el.dataset.jf) { const j = S.jobs.find(x => x.id === SHEET.arg); j[el.dataset.jf] = el.value; return save(); }
-  if (el.dataset.sf) { if (el.dataset.sf === 'rate') S.settings.rateSet = true; const n = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours', 'payCutoff', 'paySubmitDays', 'proteinGoal'].includes(el.dataset.sf); S.settings[el.dataset.sf] = n ? (+el.value || 0) : el.value; return save(); }
+  if (el.dataset.sf) { if (el.dataset.sf === 'rate') S.settings.rateSet = true; const n = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours', 'payCutoff', 'paySubmitDays'].includes(el.dataset.sf); S.settings[el.dataset.sf] = n ? (+el.value || 0) : el.value; return save(); }
 });
 document.addEventListener('change', e => {
   const el = e.target;
