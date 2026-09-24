@@ -1641,7 +1641,7 @@ const SHEETS = {
       </div>
       <div class="lbl">Sync across devices</div>
       <p class="sub" style="margin-top:0">Paste the same sync code on your laptop and phone and they keep each other up to date. Changes merge, so editing both offline is fine.</p>
-      <div class="row"><input id="syncCode" placeholder="Sync code" value="${esc(SYNC.code)}" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" inputmode="text">
+      <div class="row"><input id="syncCode" placeholder="Sync code" value="${esc(SYNC.code)}" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" inputmode="text" onfocus="this.select()">
         ${SYNC.code ? `<button class="btn" data-act="sync-off">Turn off</button><button class="btn white" data-act="sync-now">Sync now</button>` : `<button class="btn white" data-act="sync-on">Connect</button>`}</div>
       <p class="sub" id="syncStatus" style="margin:8px 0 0">${esc(syncLabel())}</p>
       <div class="lbl">Backup</div><p class="sub" style="margin-top:0">A copy stays on each device. Export one now and then anyway.</p>
