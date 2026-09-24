@@ -414,6 +414,19 @@ input[type=number]{-moz-appearance:textfield}
 .sheet.compose .chips{gap:8px}
 .sheet.compose .chip{height:40px;padding:0 16px;font-size:14px}
 .sheet.compose .chip-date{height:40px}
+.cmp{min-height:268px;display:flex;flex-direction:column}
+.cmp .row.end{margin-top:auto}
+.cmp-head{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.cmp-back{width:30px;height:30px;border-radius:50%;background:var(--fill);font-size:20px;line-height:1;display:grid;place-items:center}
+.cmp-task{flex:1;min-width:0;font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmp-dots{display:flex;gap:5px}
+.cmp-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);transition:background .3s,transform .3s}
+.cmp-dots i.on{background:#fff;transform:scale(1.25)}
+.cmp-hint{font-size:13px;color:var(--text3);margin-top:12px}
+@keyframes stepIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@keyframes stepBack{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+.step-in{animation:stepIn .32s var(--ios)}
+.step-back{animation:stepBack .32s var(--ios)}
 .qline{font-size:17px;font-weight:600;letter-spacing:-.02em;margin:18px 0 10px}
 .sheet .field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--text2)}
 .sheet .field input,.sheet .field textarea{font-size:16px;font-weight:400;color:var(--text);background:var(--fill);padding:11px 13px;border-radius:12px}
@@ -1433,22 +1446,46 @@ function openCompose(title, date) {
   DRAFT = { title, cat: guessCat(title), date: date || today(), remind: null, asked: date ? 'when' : '' };
   openSheet('compose');
 }
+function composeStep(step, dir) {
+  if (!DRAFT) return;
+  if (step > 2) return addDraft();
+  DRAFT.step = Math.max(0, step); DRAFT.dir = dir || 'fwd';
+  refreshSheet();
+}
+function addDraft() {
+  const d = DRAFT; if (!d || !d.title.trim()) return closeSheet();
+  const t = { id: uid(), created: Date.now(), title: d.title.trim(), cat: d.cat, date: d.date, done: false, repeat: null, doneOn: {}, remind: d.remind || null };
+  S.tasks.push(t); FX.added = t.id; DRAFT = null; closeSheet();
+  island.toast(`Added to ${rel(t.date)}${t.remind ? ' · ' + t12(t.remind) : ''}`, { icon: I.check, color: CATS[t.cat].color });
+}
 const WHENS = () => { const td = parse(today()); return [['today', 'Today', today()], ['tomorrow', 'Tomorrow', iso(addDays(td, 1))], ['weekend', 'Weekend', iso(addDays(td, (5 - dowIdx(today()) + 7) % 7))], ['nextweek', 'Next week', iso(addDays(mondayOf(td), 7))]]; };
 const REMINDS = [['', 'No reminder'], ['08:00', 'Morning'], ['12:00', 'Noon'], ['17:00', '5:00'], ['20:00', 'Evening']];
 
 const SHEETS = {
+  // One question per screen. Answering slides you to the next; the last answer files it.
   compose() {
     const d = DRAFT; if (!d) return '';
+    const step = d.step || 0;
+    const q = [
+      { q: "What's it for?", hint: 'Pick a colour for it', body: `<div class="chips">${CAT_ORDER.map(k => `<button class="chip ${d.cat === k ? 'on' : ''}" style="--c:${CATS[k].color};--on:#fff" data-act="df-cat" data-v="${k}"><span class="dot"></span>${CATS[k].label}</button>`).join('')}</div>` },
+      { q: 'When?', hint: 'Or pick a date', body: `<div class="chips">${WHENS().map(([k, l, val]) => `<button class="chip ${d.date === val ? 'on' : ''}" data-act="df-when" data-v="${val}">${l}</button>`).join('')}<input type="date" class="chip-date" data-df="date" value="${d.date}"></div>` },
+      { q: 'Remind you?', hint: 'A notification on the day', body: `<div class="chips">${REMINDS.map(([k, l]) => `<button class="chip ${(d.remind || '') === k ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="df-remind" data-v="${k}">${l}</button>`).join('')}<input type="time" class="chip-date" data-df="remind" value="${d.remind || ''}"></div>` },
+    ][step];
+    const dots = [0, 1, 2].map(i => `<i class="${i === step ? 'on' : ''}"></i>`).join('');
     return `<div class="grab"></div>
-      <div class="lbl" style="margin-top:0">New task</div>
-      <textarea data-df="title" rows="2" maxlength="240" placeholder="What needs doing?">${esc(d.title)}</textarea>
-      <div class="qline">What's it for?</div>
-      <div class="chips">${CAT_ORDER.map(k => `<button class="chip ${d.cat === k ? 'on' : ''}" style="--c:${CATS[k].color};--on:#fff" data-act="df-cat" data-v="${k}"><span class="dot"></span>${CATS[k].label}</button>`).join('')}</div>
-      <div class="qline">When?</div>
-      <div class="chips">${WHENS().map(([k, l, val]) => `<button class="chip ${d.date === val ? 'on' : ''}" data-act="df-when" data-v="${val}">${l}</button>`).join('')}<input type="date" class="chip-date" data-df="date" value="${d.date}"></div>
-      <div class="qline">Remind you?</div>
-      <div class="chips">${REMINDS.map(([k, l]) => `<button class="chip ${(d.remind || '') === k ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="df-remind" data-v="${k}">${l}</button>`).join('')}<input type="time" class="chip-date" data-df="remind" value="${d.remind || ''}"></div>
-      <div class="row end"><button class="btn" data-act="close-sheet">Cancel</button><button class="btn white" data-act="df-add">Add task</button></div>`;
+      <div class="cmp ${d.dir === 'back' ? 'step-back' : 'step-in'}">
+        <div class="cmp-head">
+          ${step ? `<button class="cmp-back" data-act="df-back" aria-label="Back">‹</button>` : '<span style="width:30px"></span>'}
+          <div class="cmp-task">${esc(d.title)}</div>
+          <div class="cmp-dots">${dots}</div>
+        </div>
+        <div class="qline">${q.q}</div>
+        ${q.body}
+        <div class="cmp-hint">${q.hint}</div>
+        <div class="row end"><button class="btn" data-act="close-sheet">Cancel</button>${step === 2
+          ? `<button class="btn white" data-act="df-add">Add task</button>`
+          : `<button class="btn" data-act="df-skip">Skip</button>`}</div>
+      </div>`;
   },
   task({ id, d }) {
     const t = S.tasks.find(x => x.id === id); if (!t) return '';
@@ -1759,10 +1796,13 @@ document.addEventListener('click', e => {
     case 'rm-done': { const t = S.tasks.find(x => x.id === el.dataset.id); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } else t.done = true; commit(); return island.toast('Done', { icon: I.check, color: '#30d158' }); }
     case 'rm-later': { const t = S.tasks.find(x => x.id === el.dataset.id); const n = new Date(Date.now() + 2 * 3600e3); t.remind = pad(n.getHours()) + ':' + pad(n.getMinutes()); commit(); return island.toast('Back at ' + t12(t.remind), { icon: I.bell, color: '#ff9f0a' }); }
     case 'rm-tomorrow': { const t = S.tasks.find(x => x.id === el.dataset.id); t.date = iso(addDays(parse(today()), 1)); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } commit(); return island.toast('Moved to tomorrow', { icon: I.arrow, color: '#0a84ff' }); }
-    case 'df-cat': DRAFT.cat = v; return refreshSheet();
-    case 'df-when': DRAFT.date = v; return refreshSheet();
-    case 'df-remind': DRAFT.remind = v || null; return refreshSheet();
-    case 'df-add': {
+    case 'df-cat': DRAFT.cat = v; return composeStep(1);
+    case 'df-when': DRAFT.date = v; return composeStep(2);
+    case 'df-remind': DRAFT.remind = v || null; return addDraft();
+    case 'df-skip': return composeStep((DRAFT.step || 0) + 1);
+    case 'df-back': return composeStep((DRAFT.step || 0) - 1, 'back');
+    case 'df-add': return addDraft();
+    case 'df-add-old': {
       const d = DRAFT; if (!d || !d.title.trim()) return closeSheet();
       const t = { id: uid(), created: Date.now(), title: d.title.trim(), cat: d.cat, date: d.date, done: false, repeat: null, doneOn: {}, remind: d.remind || null };
       S.tasks.push(t); FX.added = t.id; DRAFT = null; closeSheet();
@@ -1816,7 +1856,12 @@ document.addEventListener('input', e => {
   const el = e.target;
   if (el.id === 'spotInput') return spotPreview();
   if (el.name === 'link' && el.form && el.form.id === 'jadd' && !el.form.company.value.trim()) { const c = companyFromUrl(el.value.trim()); if (c) { el.form.company.value = c; pop(el.form.company); } }
-  if (el.dataset.df) { DRAFT[el.dataset.df] = el.value; if (el.dataset.df !== 'title') refreshSheet(); return; }
+  if (el.dataset.df) {
+    DRAFT[el.dataset.df] = el.value || (el.dataset.df === 'remind' ? null : DRAFT[el.dataset.df]);
+    if (el.dataset.df === 'date') return composeStep(2);
+    if (el.dataset.df === 'remind') return addDraft();
+    return;
+  }
   if (el.dataset.tf === 'title') { const t = S.tasks.find(x => x.id === SHEET.arg.id); t.title = el.value.replace(/\n/g, ' '); return save(); }
   if (el.dataset.jf) { const j = S.jobs.find(x => x.id === SHEET.arg); j[el.dataset.jf] = el.value; return save(); }
   if (el.dataset.sf) { if (el.dataset.sf === 'rate') S.settings.rateSet = true; const n = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours'].includes(el.dataset.sf); S.settings[el.dataset.sf] = n ? (+el.value || 0) : el.value; return save(); }
