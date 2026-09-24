@@ -573,7 +573,7 @@ const defaults = () => ({
   tasks: [], shifts: {}, workouts: {}, jobs: [], clock: null,
   template: ['D1','D2','REST','D3','D4','HIIT','REST'],
   extra: {},
-  settings: { name: 'Jackson', rate: 0, extraHours: 0, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
+  settings: { name: 'Jackson', rate: 20, extraHours: 0, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
   ui: { tab: 'today', jobFilter: 'All', weekMode: innerWidth > 900 ? 'board' : 'focus', selDay: null },
 });
 function load() {
@@ -594,6 +594,8 @@ let S = load();
 if (!S.since) { const n = new Date(); S.since = [...Object.keys(S.workouts), ...Object.keys(S.shifts), `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`].sort()[0]; }
 S.tomb = S.tomb || {};
 S.extra = S.extra || {};
+// Thomas Jeffery work pays $20/h; only overwrite while he hasn't set a rate himself.
+if (!S.settings.rateSet && !+S.settings.rate) S.settings.rate = 20;
 { // the Inbox is gone: anything without a day lands on today
   const n = new Date(), td = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
   S.tasks.forEach(t => { if (!t.date) { t.date = td; t.u = Date.now(); } });
@@ -1757,7 +1759,7 @@ document.addEventListener('input', e => {
   if (el.name === 'link' && el.form && el.form.id === 'jadd' && !el.form.company.value.trim()) { const c = companyFromUrl(el.value.trim()); if (c) { el.form.company.value = c; pop(el.form.company); } }
   if (el.dataset.tf === 'title') { const t = S.tasks.find(x => x.id === SHEET.arg.id); t.title = el.value.replace(/\n/g, ' '); return save(); }
   if (el.dataset.jf) { const j = S.jobs.find(x => x.id === SHEET.arg); j[el.dataset.jf] = el.value; return save(); }
-  if (el.dataset.sf) { const n = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours'].includes(el.dataset.sf); S.settings[el.dataset.sf] = n ? (+el.value || 0) : el.value; return save(); }
+  if (el.dataset.sf) { if (el.dataset.sf === 'rate') S.settings.rateSet = true; const n = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours'].includes(el.dataset.sf); S.settings[el.dataset.sf] = n ? (+el.value || 0) : el.value; return save(); }
 });
 document.addEventListener('change', e => {
   const el = e.target;
