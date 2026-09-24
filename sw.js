@@ -20,3 +20,26 @@ self.addEventListener('fetch', e => {
     }).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
   );
 });
+
+// Push notifications. iOS requires a visible notification for every push event.
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = { title: 'Daybook', body: e.data ? e.data.text() : 'Reminder' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Daybook', {
+    body: d.body || '',
+    tag: d.tag || 'daybook',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
+    data: { url: d.url || './' },
+    renotify: true,
+  }));
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const target = new URL((e.notification.data && e.notification.data.url) || './', self.location.href).href;
+  e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    for (const c of list) if (c.url.startsWith(self.registration.scope) && 'focus' in c) return c.focus();
+    return clients.openWindow(target);
+  }));
+});

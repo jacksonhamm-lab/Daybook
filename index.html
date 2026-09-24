@@ -688,8 +688,63 @@ function setSyncCode(code) {
   try { SYNC.code ? localStorage.setItem('daybook_sync_code', SYNC.code) : localStorage.removeItem('daybook_sync_code'); } catch (e) {}
   SYNC.state = SYNC.code ? 'syncing' : 'off'; SYNC.err = '';
   paintSync();
-  if (SYNC.code) syncNow();
+  { // keep the server pointed at this device's timezone
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  if (tz && S.settings.tz !== tz) { S.settings.tz = tz; save(); }
 }
+if (SYNC.code) syncNow();
+}
+/* ---------- notifications ----------
+   iOS only allows this for an app added to the Home Screen, and only when the
+   permission prompt comes from a real tap. Subscriptions are stored per sync code. */
+const PUSH = { perm: (typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'), on: false, busy: false };
+try { PUSH.on = localStorage.getItem('daybook_push') === '1'; } catch (e) {}
+const canPush = () => typeof Notification !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
+const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent);
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+async function enablePush() {
+  if (PUSH.busy) return;
+  if (!SYNC.code) return island.toast('Connect sync first — reminders ride on your sync code');
+  if (!canPush()) return island.toast(isIOS() && !standalone() ? 'Add Daybook to your Home Screen first' : 'This browser can’t do notifications');
+  PUSH.busy = true; paintPush();
+  try {
+    const perm = await Notification.requestPermission();
+    PUSH.perm = perm;
+    if (perm !== 'granted') throw new Error(perm === 'denied' ? 'Notifications are blocked in settings' : 'Permission not granted');
+    const reg = await navigator.serviceWorker.ready;
+    const { key } = await (await fetch('api/vapid')).json();
+    if (!key) throw new Error('Server is missing its signing key');
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: unb64(key) });
+    const res = await fetch('api/push/subscribe', { method: 'POST', headers: { 'x-sync-key': SYNC.code, 'content-type': 'application/json' }, body: JSON.stringify(sub.toJSON ? sub.toJSON() : sub) });
+    if (!res.ok) throw new Error('Server said ' + res.status);
+    PUSH.on = true; try { localStorage.setItem('daybook_push', '1'); } catch (e) {}
+    if (!S.settings.remindDaily) { S.settings.remindDaily = true; S.settings.remindAt = S.settings.remindAt || '08:00'; commit(); }
+    island.toast('Reminders on for this device', { icon: I.bell, color: '#30d158' });
+  } catch (e) {
+    island.toast(e.message || 'Could not turn on reminders');
+  }
+  PUSH.busy = false; paintPush(); refreshSheet();
+}
+async function disablePush() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      await fetch('api/push/unsubscribe', { method: 'POST', headers: { 'x-sync-key': SYNC.code, 'content-type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+      await sub.unsubscribe();
+    }
+  } catch (e) {}
+  PUSH.on = false; try { localStorage.removeItem('daybook_push'); } catch (e) {}
+  paintPush(); refreshSheet();
+}
+const unb64 = s => { const p = s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4); return Uint8Array.from(atob(p), c => c.charCodeAt(0)); };
+const pushLabel = () => !canPush() ? (isIOS() && !standalone() ? 'Add Daybook to your Home Screen, then turn these on' : 'Not supported in this browser')
+  : PUSH.busy ? 'Setting up…'
+  : PUSH.perm === 'denied' ? 'Blocked — allow notifications for Daybook in your device settings'
+  : PUSH.on ? 'On for this device' : 'Off on this device';
+function paintPush() { const el = $('#pushStatus'); if (el) el.textContent = pushLabel(); }
+
 const syncLabel = () => SYNC.state === 'off' ? 'Not syncing — this device only'
   : SYNC.state === 'syncing' ? 'Syncing…'
   : SYNC.state === 'err' ? SYNC.err
@@ -1044,7 +1099,7 @@ const weekNav = () => `<div class="wnav"><button class="btn icon" data-act="prev
 
 function taskLi(t, d, opts = {}) {
   const c = (CATS[t.cat] || CATS.life).color, done = isDone(t, d);
-  const meta = [opts.showCat !== false ? `<span class="cd"></span>${CATS[t.cat].label}` : '', t.repeat ? `${I.repeat}${repeatLabel(t.repeat)}` : '', opts.when ? rel(t.date) : ''].filter(Boolean).join(' · ');
+  const meta = [opts.showCat !== false ? `<span class="cd"></span>${CATS[t.cat].label}` : '', t.remind ? `${I.bell}${t12(t.remind)}` : '', t.repeat ? `${I.repeat}${repeatLabel(t.repeat)}` : '', opts.when ? rel(t.date) : ''].filter(Boolean).join(' · ');
   return `<li class="task ${done ? 'done' : ''} ${FX.added === t.id ? 'fx-in' : ''}" data-id="${t.id}" data-date="${d || ''}" style="--c:${c}" ${t.repeat ? '' : 'draggable="true"'}>
     <button class="ck" data-act="toggle-task" aria-label="Complete">${I.check}</button>
     <div class="tb" data-act="task-menu"><div class="tt">${esc(t.title)}</div>${meta ? `<div class="tm">${meta}</div>` : ''}</div></li>`;
@@ -1298,6 +1353,8 @@ const SHEETS = {
       <div class="lbl">${t.repeat ? 'Starts' : 'When'}</div><div class="chips">${[['today', 'Today'], ['tomorrow', 'Tomorrow'], ['weekend', 'Weekend'], ['nextweek', 'Next week']].map(([k, l]) => `<button class="chip ${wk === k ? 'on' : ''}" data-act="tm-when" data-v="${k}">${l}</button>`).join('')}<input type="date" class="chip-date" data-tf="date" value="${t.date || ''}"></div>
       <div class="lbl">Category</div><div class="chips">${CAT_ORDER.map(k => `<button class="chip ${t.cat === k ? 'on' : ''}" style="--c:${CATS[k].color};--on:#fff" data-act="tm-cat" data-v="${k}"><span class="dot"></span>${CATS[k].label}</button>`).join('')}</div>
       <div class="lbl">Repeat</div><div class="seg">${[['none', 'Never'], ['daily', 'Daily'], ['weekdays', 'Weekdays'], ['weekly', 'Weekly']].map(([k, l]) => `<button class="${rp === k ? 'on' : ''}" data-act="tm-rep" data-v="${k}">${l}</button>`).join('')}</div>
+      <div class="lbl">Remind me</div><div class="chips">${[['', 'Never'], ['08:00', '8:00'], ['12:00', 'Noon'], ['17:00', '5:00'], ['20:00', '8:00pm']].map(([k, l]) => `<button class="chip ${(t.remind || '') === k ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="tm-remind" data-v="${k}">${l}</button>`).join('')}<input type="time" class="chip-date" data-tf="remind" value="${esc(t.remind || '')}"></div>
+      ${t.remind && !PUSH.on ? '<p class="sub" style="color:var(--orange)">Turn on notifications in Settings to actually get pinged.</p>' : ''}
       <div class="row end"><button class="btn tint" style="--c:var(--red)" data-act="tm-del">Delete</button><button class="btn white" data-act="close-sheet">Done</button></div>`;
   },
   shift(d) {
@@ -1352,6 +1409,15 @@ const SHEETS = {
       <label class="field"><span>Hourly rate (CAD)</span><input type="number" inputmode="decimal" step="0.25" data-sf="rate" value="${st.rate || ''}" placeholder="Hide pay"></label></div>
       <label class="field"><span>Weekly applications goal</span><input type="number" inputmode="numeric" data-sf="appGoal" value="${st.appGoal || ''}" placeholder="None"></label>
       <label class="field"><span>Workout app link</span><input data-sf="workoutUrl" value="${esc(st.workoutUrl)}"></label>
+      <div class="lbl">Reminders</div>
+      <p class="sub" style="margin-top:0">Push notifications for tasks you give a time, plus a morning rundown. Turn them on once per device.</p>
+      <div class="row">${PUSH.on ? `<button class="btn" data-act="push-off">Turn off</button><button class="btn white" data-act="push-test">Send a test</button>`
+        : `<button class="btn white" data-act="push-on">Turn on notifications</button>`}</div>
+      <p class="sub" id="pushStatus" style="margin:8px 0 0">${esc(pushLabel())}</p>
+      <div class="row" style="margin-top:12px;align-items:center">
+        <button class="chip ${st.remindDaily ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="toggle-brief">Morning rundown</button>
+        <input type="time" data-sf="remindAt" value="${esc(st.remindAt || '08:00')}" style="width:130px">
+      </div>
       <div class="lbl">Sync across devices</div>
       <p class="sub" style="margin-top:0">Paste the same sync code on your laptop and phone and they keep each other up to date. Changes merge, so editing both offline is fine.</p>
       <div class="row"><input id="syncCode" placeholder="Sync code" value="${esc(SYNC.code)}" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false">
@@ -1567,6 +1633,17 @@ document.addEventListener('click', e => {
     case 'job-status': { const j = job(); j.status = v; (j.history = j.history || []).push({ s: v, d: today() }); save(); refreshSheet(); return v === 'Offer' && celebrate(`Offer from ${j.company}`, '#30d158'); }
     case 'job-del': { const j = job(); closeSheet(); return withUndo(`${j.company} removed`, () => { S.jobs = S.jobs.filter(x => x !== j); }); }
     case 'followed': { e.stopPropagation(); const j = S.jobs.find(x => x.id === el.dataset.id); j.follow = [...(j.follow || []), today()]; j.nudge = iso(addDays(parse(today()), 7)); commit(); return island.toast(`Follow-up logged · next nudge in a week`, { icon: I.bell, color: '#ff9f0a' }); }
+    case 'push-on': return enablePush();
+    case 'push-off': return disablePush();
+    case 'push-test': {
+      if (!SYNC.code) return island.toast('Connect sync first');
+      return fetch('api/push/test', { headers: { 'x-sync-key': SYNC.code } })
+        .then(r => r.json())
+        .then(d => island.toast(d.ok ? 'Test sent — check your notifications' : (d.error || 'Test failed')))
+        .catch(() => island.toast('Test failed'));
+    }
+    case 'toggle-brief': S.settings.remindDaily = !S.settings.remindDaily; commit(); return refreshSheet();
+    case 'tm-remind': { const t = task(); t.remind = v || null; save(); return refreshSheet(); }
     case 'sync-on': { const v = $('#syncCode').value.trim(); if (v.length < 16) return island.toast('That code looks too short'); setSyncCode(v); return refreshSheet(); }
     case 'sync-off': setSyncCode(''); return refreshSheet();
     case 'sync-now': return syncNow();
@@ -1625,6 +1702,7 @@ document.addEventListener('change', e => {
     if (!s.start && !s.end && !s.note && !s.brk) delete S.shifts[d];
     save(); return updateShiftDisplays(d);
   }
+  if (el.dataset.tf === 'remind') { const t = S.tasks.find(x => x.id === SHEET.arg.id); t.remind = el.value || null; save(); return refreshSheet(); }
   if (el.dataset.tf === 'date') { const t = S.tasks.find(x => x.id === SHEET.arg.id); t.date = el.value || null; if (t.repeat && t.repeat.t === 'weekly' && t.date) t.repeat.dow = dowIdx(t.date); save(); return refreshSheet(); }
   if (el.dataset.act === 'set-tpl') { S.template[+el.dataset.i] = el.value; commit(); return island.toast(`${DOW[+el.dataset.i]} → ${el.value === 'REST' ? 'Rest' : el.value}`, { icon: I.training, color: '#ff9f0a' }); }
 });

@@ -10,6 +10,10 @@
   "routes": [{ "pattern": "apps.jacksonhamm.ca", "custom_domain": true }],
   // Cross-device sync store. SYNC_KEYS (allowed sync-code hashes) is a secret, set in the dashboard.
   "kv_namespaces": [{ "binding": "SYNC", "id": "c331c9c1a4f8497ea216a83728fb2890" }],
+  // Reminder checks run every minute; the Worker decides what is due in the user's timezone.
+  // Public half of the push signing key (safe to publish); the private JWK is a secret.
+  "vars": { "VAPID_PUBLIC": "BJc22OTUACjlb4f8EFB7-xMdNNsfFIE3aRUrQTeyWR1_3ryMEfyhYT2ovAPI9KOjMD9Nfani9iSgJJMPHx4PEEI", "VAPID_SUBJECT": "mailto:jackson.hamm@icloud.com" },
+  "triggers": { "crons": ["* * * * *"] },
   "assets": {
     "directory": "./",
     "binding": "ASSETS",
