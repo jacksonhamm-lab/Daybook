@@ -146,11 +146,11 @@ input[type=number]{-moz-appearance:textfield}
 .gitem .g-n{font-size:15px}
 .gitem .g-n em{display:block;font-style:normal;font-size:12.5px;color:var(--text3)}
 .gitem.done .g-n{color:var(--text3);text-decoration:line-through}
+.snkfold{margin-top:18px}
 .snk .snk-p{margin-left:auto;flex:none;align-self:center;font-size:13px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums}
 .snk.done .snk-p{opacity:.5}
 .snk.done .g-n{color:var(--text);text-decoration:none}
 .snk.done .g-n em{color:var(--text3);text-decoration:none}
-.seg.sm button{padding:7px 10px;font-size:13px}
 .bk-table{width:100%;border-collapse:collapse;font-size:14px}
 .bk-table td{padding:8px 4px;border-bottom:1px solid var(--sep);color:var(--text2)}
 .bk-table td.n{text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
@@ -730,8 +730,8 @@ const defaults = () => ({
   tasks: [], shifts: {}, workouts: {}, jobs: [], clock: null,
   template: ['D1','D2','REST','D3','D4','HIIT','REST'],
   extra: {},
-  settings: { name: 'Jackson', rate: 20, extraHours: 0, payCutoff: 1, prepBook: 'https://claude.ai/artifact/HDHNuecPrNv8QT6jCHAsnR', paySubmitDays: 4, remindSubmit: true, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
-  ui: { tab: 'today', jobFilter: 'All', weekMode: innerWidth > 900 ? 'board' : 'focus', selDay: null },
+  settings: { name: 'Jackson', rate: 20, extraHours: 0, payCutoff: 1, paySubmitDays: 4, remindSubmit: true, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
+  ui: { tab: 'today', jobFilter: 'All', selDay: null },
 });
 function load() {
   for (const k of [KEY, 'planner_v1']) {
@@ -811,6 +811,7 @@ function mergeState(local, remote) {
     out[k] = [...m.values()].filter(x => !(out.tomb[x.id] > (x.u || 0)));
   });
   ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks'].forEach(k => {
+    out[k] = out[k] || {};
     Object.entries(remote[k] || {}).forEach(([d, r]) => {
       const l = out[k][d];
       if (!l) { if (!(out.tomb[k + ':' + d] > (r.u || 0))) out[k][d] = r; }
@@ -1362,26 +1363,27 @@ const island = {
 /* ---------- fuel ----------
    The recipes live in the Protein Prep Book; Daybook tracks what you picked
    for the week and how much protein you've actually eaten. */
-let BOOK = null, BOOK_TAB = 'recipes', BOOK_CAT = 'All', BOOK_OPEN = '', BOOK_GROC = 'picks', BOOK_GROC_SET = false;
-try { BOOK = JSON.parse(localStorage.getItem('daybook_book') || 'null'); } catch (e) {}
-async function loadBook() {
-  if (BOOK) return BOOK;
-  const r = await fetch('meals.json', { cache: 'no-cache' });
-  BOOK = await r.json();
-  try { localStorage.setItem('daybook_book', JSON.stringify(BOOK)); } catch (e) {}
-  return BOOK;
+let BOOK = null, BOOK_TAB = 'recipes', BOOK_CAT = 'All', BOOK_OPEN = '';
+// A book cached by an older version of the app is missing pieces this one needs,
+// so check its shape before trusting it and always refetch in the background.
+const bookOk = b => !!(b && b.recipes && b.recipes.length && b.recipes[0].g && b.snacks && b.grocery);
+try { const c = JSON.parse(localStorage.getItem('daybook_book') || 'null'); if (bookOk(c)) BOOK = c; } catch (e) {}
+function fetchBook() {
+  return fetch('meals.json', { cache: 'no-cache' }).then(r => r.json()).then(b => {
+    if (!bookOk(b)) throw new Error('bad book');
+    BOOK = b;
+    try { localStorage.setItem('daybook_book', JSON.stringify(b)); } catch (e) {}
+    if (SHEET && SHEET.type === 'book') refreshSheet();
+    return b;
+  });
 }
-const mealList = () => (BOOK && BOOK.recipes) ? BOOK.recipes.map(r => ({ n: r.n, c: r.c, p: r.m[1] })) : MEALS;
-const MEALS = [
-  { n: 'Butter chicken bowls', c: 'Bowls', p: 56 }, { n: 'Chipotle burrito bowls', c: 'Bowls', p: 52 },
-  { n: 'Smash burger bowls', c: 'Bowls', p: 54 }, { n: 'Honey garlic chicken', c: 'Bowls', p: 55 },
-  { n: 'Broccoli cheddar chicken', c: 'Bowls', p: 65 }, { n: 'Chicken pesto pasta', c: 'Bowls', p: 62 },
-  { n: 'Greek chicken gyro bowls', c: 'Bowls', p: 50 }, { n: 'Teriyaki salmon bowls', c: 'Bowls', p: 45 },
-  { n: 'Cod à la française', c: 'Bistro', p: 52 }, { n: 'Pink peppercorn haddock', c: 'Bistro', p: 57 },
-  { n: 'Steak frites', c: 'Bistro', p: 58 }, { n: 'Creamy Dijon pork tenderloin', c: 'Bistro', p: 62 },
-  { n: 'Overnight protein oats', c: 'Breakfast', p: 42 }, { n: 'Freezer breakfast burritos', c: 'Breakfast', p: 55 },
-  { n: 'Chicken Caesar wraps', c: 'Wraps', p: 52 }, { n: 'Chocolate protein pudding', c: 'Wraps', p: 30 },
-];
+let BOOK_FRESH = false;
+function loadBook() {
+  if (BOOK && BOOK_FRESH) return Promise.resolve(BOOK);
+  const fresh = fetchBook().then(b => { BOOK_FRESH = true; return b; }).catch(e => { if (BOOK) return BOOK; throw e; });
+  return BOOK ? Promise.resolve(BOOK) : fresh;
+}
+const recipeFor = n => ((BOOK && BOOK.recipes) || []).find(r => r.n === n);
 // Grocery ticks sync like everything else.
 const groceryOn = id => !!(S.grocery[id] || {}).c;
 function toggleGrocery(id) { S.grocery[id] = { c: !groceryOn(id) }; save(); }
@@ -1389,10 +1391,11 @@ const snackOn = n => !!(S.snacks[n] || {}).c;
 function toggleSnack(n) { S.snacks[n] = { c: !snackOn(n) }; save(); }
 const snacksChosen = () => ((BOOK && BOOK.snacks) || []).filter(x => snackOn(x.n));
 // Every recipe carries the aisle items it needs, so the list can shrink to this week's meals.
-function grocerySections(mode) {
+function grocerySections() {
   const out = [], g = (BOOK && BOOK.grocery) || {};
+  // Nothing picked yet? Show the whole book; otherwise only what the picks need.
   let keep = null;
-  if (mode === 'picks' && BOOK) {
+  if (BOOK && picks().m.length) {
     keep = new Set();
     BOOK.recipes.filter(r => picks().m.includes(r.n)).forEach(r => (r.g || []).forEach(id => keep.add(id)));
   }
@@ -1405,8 +1408,8 @@ function grocerySections(mode) {
   return out;
 }
 // Until you choose, the list shows your picks when you have some and everything when you don't.
-const grocMode = () => BOOK_GROC_SET ? BOOK_GROC : (picks().m.length ? 'picks' : 'full');
-const groceryCount = mode => { let done = 0, all = 0; grocerySections(mode).forEach(([sec, items]) => items.forEach(([n]) => { all++; if (groceryOn(sec + '|' + n)) done++; })); return { done, all }; };
+
+const groceryCount = () => { let done = 0, all = 0; grocerySections().forEach(([sec, items]) => items.forEach(([n]) => { all++; if (groceryOn(sec + '|' + n)) done++; })); return { done, all }; };
 const mealWeek = () => iso(mondayOf(new Date()));
 const picks = () => (S.meals || {})[mealWeek()] || { m: [] };
 function togglePick(name) {
@@ -1750,6 +1753,7 @@ function renderTraining() {
   }).join('');
   const cl = cardioLogs(), wkStart = mondayOf(new Date()).getTime(), wkC = cl.filter(l => l.ts >= wkStart);
   const pk = picks(), sh = shakesToday();
+  if (!BOOK) loadBook().then(() => { if (S.ui.tab === 'training') render(); }).catch(() => {});
   // heatmap + streak
   const start = addDays(mondayOf(new Date()), -7 * 15); let cells = '';
   for (let w = 0; w < 16; w++) for (let i = 0; i < 7; i++) {
@@ -1763,12 +1767,11 @@ function renderTraining() {
     <div class="wtiles">${tiles}</div>
     <div class="grid" style="margin-top:16px">
       <section class="card g7 anim" style="--i:8"><div class="ch"><h3>Benchmarks</h3><span class="sub">Shared with the workout app</span></div><div class="bms">${bms}</div></section>
-      <section class="card g5 anim" style="--i:8.5"><div class="ch"><h3>Fuel</h3><span class="sub">${pk.m.length} meal${pk.m.length === 1 ? '' : 's'} picked</span></div>
+      <section class="card g5 anim" style="--i:8.5"><div class="ch"><h3>Fuel</h3><span class="sub">${pk.m.length ? `${pk.m.length} meal${pk.m.length === 1 ? '' : 's'} this week` : 'Nothing picked yet'}</span></div>
         <div class="shakes">${SHAKES.map(([k, label]) => `<button class="shake ${sh[k] ? 'on' : ''}" data-act="shake" data-v="${k}"><span class="sk-box">${I.check}</span>${label}</button>`).join('')}</div>
-        <div class="lbl">This week's meals</div>
-        <div class="chips">${mealList().map(m => `<button class="chip ${pk.m.includes(m.n) ? 'on' : ''}" style="--c:var(--green);--on:#fff" data-act="pick-meal" data-v="${esc(m.n)}">${esc(m.n)} · ${m.p}g</button>`).join('')}</div>
-        <div class="row" style="margin-top:14px"><button class="btn sm white" data-act="open-book">Prep book</button><button class="btn sm white" data-act="open-book" data-v="grocery">Grocery list</button>
-          ${pk.m.length ? `<button class="btn sm tint" style="--c:var(--green)" data-act="copy-meals">Copy shopping picks</button>` : ''}</div></section>
+        ${pk.m.length ? `<div class="lbl">This week's meals · tap to drop one</div>
+        <div class="chips">${pk.m.map(n => { const r = recipeFor(n); return `<button class="chip on" style="--c:var(--green);--on:#fff" data-act="pick-meal" data-v="${esc(n)}">${esc(n)}${r ? ` · ${r.m[1]}g` : ''}</button>`; }).join('')}</div>` : ''}
+        <div class="row" style="margin-top:14px"><button class="btn sm white" data-act="open-book">${pk.m.length ? 'Prep book' : 'Pick this week\'s meals'}</button></div></section>
       <section class="card g5 anim" style="--i:9"><div class="ch"><h3>Cardio</h3><span class="sub">${wkC.length} this week</span></div>
         <div class="big">${nk('cardio', wkC.reduce((a, l) => a + l.min, 0))}<small>min this week</small></div>${cardioForm(null)}
         <div class="nlist" style="margin-top:14px">${cl.slice(-3).reverse().map(l => `<div class="nitem" style="--c:var(--pink)"><div class="ni">${l.type[0]}</div><div class="nb"><b>${esc(l.type)} · ${l.min} min${l.dist ? ` · ${l.dist} km` : ''}</b><span>${rel(iso(new Date(l.ts)))}</span></div></div>`).join('')}</div></section>
@@ -1924,7 +1927,7 @@ const SHEETS = {
   },
   book() {
     if (!BOOK) return '<div class="grab"></div><div class="empty"><b>Opening the book</b>One moment</div>';
-    const tabs = [['recipes', 'Recipes'], ['snacks', 'Snacks'], ['grocery', 'Grocery'], ['plan', 'Plan']];
+    const tabs = [['recipes', 'Recipes'], ['list', 'List'], ['plan', 'Plan']];
     const head = `<div class="grab"></div><div class="bk-head"><h2 style="margin:0">${esc(BOOK.title)}</h2><p class="shp">${esc(BOOK.blurb)}</p></div>
       <div class="segwrap"><div class="seg">${tabs.map(([k, l]) => `<button class="${BOOK_TAB === k ? 'on' : ''}" data-act="book-tab" data-v="${k}">${l}</button>`).join('')}</div></div>`;
     if (BOOK_TAB === 'recipes') {
@@ -1945,25 +1948,21 @@ const SHEETS = {
             </div>` : ''}</div>`;
         }).join('')}`;
     }
-    if (BOOK_TAB === 'snacks') {
-      const chosen = snacksChosen().length;
-      return head + `<div class="ch" style="margin:14px 0 8px"><span class="sub">${chosen ? chosen + ' on the list' : 'Tap anything to put it on the grocery list'}</span>${chosen ? '<button class="btn sm" data-act="snack-clear">Clear</button>' : ''}</div>
-        ${['Salty', 'Sweet'].map(t => `<div class="lbl">${t}</div>${BOOK.snacks.filter(x => x.t === t).map(x => `
-          <button class="gitem snk ${snackOn(x.n) ? 'done' : ''}" data-act="snack" data-v="${esc(x.n)}"><span class="g-box">${I.check}</span><span class="g-n">${esc(x.n)}<em>${esc(x.note)}</em></span><span class="snk-p">${x.p}g</span></button>`).join('')}`).join('')}`;
-    }
-    if (BOOK_TAB === 'grocery') {
-      const mode = grocMode(), counts = groceryCount(mode), pk = picks().m, sn = snacksChosen().length;
-      return head + `<div class="segwrap" style="margin-top:12px"><div class="seg sm">${[['picks', 'Your picks'], ['full', 'Full list']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-act="groc-mode" data-v="${k}">${l}</button>`).join('')}</div></div>
-        <div class="ch" style="margin:12px 0 6px"><span class="sub">${counts.done} of ${counts.all} in the cart</span><button class="btn sm" data-act="book-clear">Clear ticks</button></div>
+    if (BOOK_TAB === 'list') {
+      const pkm = picks().m, counts = groceryCount();
+      return head + `<div class="ch" style="margin:14px 0 6px"><span class="sub">${counts.done} of ${counts.all} in the cart</span>${counts.done ? '<button class="btn sm" data-act="book-clear">Clear ticks</button>' : ''}</div>
         ${pbar('groc', counts.all ? counts.done / counts.all : 0, 'var(--green)')}
-        <p class="sub" style="margin-top:10px">${mode === 'picks'
-          ? !pk.length ? 'Nothing picked yet, so there is nothing to shop for.' : `Everything the ${pk.length} meal${pk.length === 1 ? '' : 's'} you picked this week need${sn ? ', plus your snacks' : ''}. Pick more in Recipes and they show up here.`
-          : pk.length ? 'Quantities cover every recipe once. Switch to Your picks to shop only this week\'s meals.' : 'Quantities cover every recipe once. Pick meals in Recipes and this list narrows to them.'}</p>
-        ${counts.all ? '' : '<div class="empty"><b>Nothing on the list yet</b>Pick a few meals or add snacks</div>'}
-        ${grocerySections(mode).map(([sec, items]) => `<div class="lbl">${esc(sec)}</div>${items.map(([n, q]) => {
+        <p class="sub" style="margin-top:10px">${pkm.length
+          ? `Everything your ${pkm.length} picked meal${pkm.length === 1 ? '' : 's'} need${pkm.length === 1 ? 's' : ''}, plus any snacks you add.`
+          : 'Nothing picked yet, so this is the whole book. Pick meals in Recipes and the list shrinks to them.'}</p>
+        ${grocerySections().map(([sec, items]) => `<div class="lbl">${esc(sec)}</div>${items.map(([n, q]) => {
           const id = sec + '|' + n;
           return `<button class="gitem ${groceryOn(id) ? 'done' : ''}" data-act="groc" data-v="${esc(id)}"><span class="g-box">${I.check}</span><span class="g-n">${esc(n)}<em>${esc(q)}</em></span></button>`;
-        }).join('')}`).join('')}`;
+        }).join('')}`).join('')}
+        <details class="fold snkfold"><summary><h3>Add a snack</h3><span class="sub">Grab-and-go protein</span></summary>
+          ${['Salty', 'Sweet'].map(t => `<div class="lbl">${t}</div>${BOOK.snacks.filter(x => x.t === t).map(x => `
+            <button class="gitem snk ${snackOn(x.n) ? 'done' : ''}" data-act="snack" data-v="${esc(x.n)}"><span class="g-box">${I.check}</span><span class="g-n">${esc(x.n)}<em>${esc(x.note)}</em></span><span class="snk-p">${x.p}g</span></button>`).join('')}`).join('')}
+        </details>`;
     }
     return head + `<ol class="rcp-s" style="margin-top:16px">${BOOK.plan.map(([t, d]) => `<li><div><b>${esc(t)}</b>${esc(d)}</div></li>`).join('')}</ol>
       <div class="lbl">A sample prep day</div>
@@ -2030,11 +2029,13 @@ const SHEETS = {
 function openSheet(type, arg) {
   SHEET = { type, arg };
   const sh = $('#sheet'); sh.innerHTML = SHEETS[type](arg); sh.scrollTop = 0; sh.style.transform = '';
-  $('#ov').classList.add('on'); requestAnimationFrame(() => sh.classList.add('on'));
+  // rAF never fires while the app is backgrounded, and a locked page with no
+  // sheet on it looks frozen, so make sure it opens either way.
+  $('#ov').classList.add('on'); requestAnimationFrame(() => sh.classList.add('on')); setTimeout(() => sh.classList.add('on'), 80);
   document.body.classList.add('locked'); afterSheet();
   if (type === 'task' && matchMedia('(hover:hover)').matches) { const ta = sh.querySelector('textarea'); ta && setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 250); }
 }
-function refreshSheet() { if (!SHEET) return; const sh = $('#sheet'), sc = sh.scrollTop; sh.innerHTML = SHEETS[SHEET.type](SHEET.arg); sh.scrollTop = sc; afterSheet(); }
+function refreshSheet() { if (!SHEET) return; const sh = $('#sheet'), sc = sh.scrollTop, open = [...sh.querySelectorAll('details')].map(d => d.open); sh.innerHTML = SHEETS[SHEET.type](SHEET.arg); sh.querySelectorAll('details').forEach((d, i) => { if (open[i]) d.open = true; }); sh.scrollTop = sc; afterSheet(); }
 function afterSheet() { $$('#sheet .seg').forEach(s => placeInd(s, true)); animateValues($('#sheet')); }
 function closeSheet() { if (!SHEET) return; SHEET = null; const sh = $('#sheet'); sh.classList.remove('on'); sh.style.transform = ''; $('#ov').classList.remove('on'); document.body.classList.remove('locked'); render(); }
 
@@ -2222,15 +2223,12 @@ document.addEventListener('click', e => {
     case 'shake': return toggleShake(v);
     case 'open-book': { if (v) BOOK_TAB = v; openSheet('book'); return loadBook().then(refreshSheet).catch(() => island.toast('Could not open the book')); }
     case 'book-tab': BOOK_TAB = v; return refreshSheet();
-    case 'groc-mode': BOOK_GROC = v; BOOK_GROC_SET = true; return refreshSheet();
     case 'snack': toggleSnack(v); haptic(); return refreshSheet();
-    case 'snack-clear': S.snacks = {}; save(); return refreshSheet();
     case 'book-cat': BOOK_CAT = v; return refreshSheet();
     case 'book-open': BOOK_OPEN = BOOK_OPEN === v ? '' : v; return refreshSheet();
     case 'groc': toggleGrocery(v); return refreshSheet();
     case 'book-clear': S.grocery = {}; save(); return refreshSheet();
-    case 'pick-meal': return togglePick(v);
-    case 'copy-meals': { const chosen = mealList().filter(m => picks().m.includes(m.n)); return copy(['Meals this week', '', ...chosen.map(m => `${m.n} · ${m.p}g protein`), '', 'Recipes and grocery list: ' + S.settings.prepBook].join('\n')); }
+    case 'pick-meal': togglePick(v); return refreshSheet();
     case 'cardio-type': cardioType = v; el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el)); return pop(el);
     case 'sel-day': {
       const d = el.dataset.date; if (d === S.ui.selDay) return;
@@ -2241,7 +2239,6 @@ document.addEventListener('click', e => {
       $$('#dayDetail .seg').forEach(s => placeInd(s, true)); animateValues(box);
       return;
     }
-    case 'week-mode': S.ui.weekMode = v; FX.enter = 'enter'; save(); return render();
     case 'copy-summary': return copy(summary());
     case 'copy-submit': { const p = periodFor(iso(weekStart)); S.submitted = S.submitted || {}; S.submitted[p.payday] = { at: Date.now(), total: periodHours(p) + estimateHours(p) + extraHours(p) }; save(); return copy(submitSummary(p)); }
     case 'fill-estimates': { const p = periodFor(iso(weekStart)); const pend = pendingDays(p); if (!pend.length) return island.toast('Nothing left to estimate'); return withUndo(`Filled ${pend.length} day${pend.length === 1 ? '' : 's'}`, () => pend.forEach(x => { S.shifts[x.date] = { ...x.est, note: 'estimated' }; })); }
