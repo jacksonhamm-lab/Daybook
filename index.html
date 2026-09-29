@@ -14,7 +14,9 @@
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+<script type="module" src="buddy.js"></script>
 <style>
 @property --glow{syntax:'<color>';inherits:true;initial-value:#0a84ff}
 @property --p{syntax:'<number>';inherits:false;initial-value:0}
@@ -617,72 +619,6 @@ input[type=number]{-moz-appearance:textfield}
 .ambient .beam{position:absolute;left:-30%;top:-10%;width:160%;height:46%;transform:rotate(-24deg);background:linear-gradient(90deg,transparent 0,rgba(90,160,255,.10) 30%,rgba(255,140,190,.08) 60%,transparent 100%);filter:blur(40px);animation:beam 18s ease-in-out infinite alternate}
 @keyframes beam{0%{transform:rotate(-24deg) translate3d(-4%,0,0)}100%{transform:rotate(-20deg) translate3d(5%,6%,0)}}
 
-.stage{margin:26px 0 16px;padding:0;overflow:hidden;border-radius:32px;background:radial-gradient(120% 90% at 50% 58%,rgba(40,70,140,.34) 0,rgba(12,16,32,.7) 45%,rgba(6,8,14,.92) 100%);border-color:rgba(140,180,255,.14)}
-.stage::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(40% 30% at 50% 94%,color-mix(in srgb,var(--glow) 30%,transparent),transparent 70%)}
-.st-top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:22px 24px 0}
-.st-id{display:flex;align-items:center;gap:14px;text-align:left;min-width:0}
-.st-lv{flex:none;width:58px;height:58px;border-radius:18px;display:grid;place-items:center;align-content:center;font-size:24px;font-weight:800;line-height:.9;letter-spacing:-.03em;color:#231a00;background:linear-gradient(140deg,#6b5200,#e8b800 55%,#fff3a3);box-shadow:0 10px 30px -8px rgba(255,214,10,.55),inset 0 1px 0 rgba(255,255,255,.5)}
-.st-lv small{font-size:10px;font-weight:800;letter-spacing:.14em;opacity:.7}
-.st-who{display:flex;flex-direction:column;gap:3px;min-width:0}
-.st-who b{font-size:clamp(20px,3vw,28px);font-weight:800;letter-spacing:-.035em;line-height:1.05}
-.st-who>span{font-size:13px;color:var(--text2)}
-.st-who .pbar{width:min(240px,48vw);height:5px;margin-top:5px}
-.st-who em{font-style:normal;font-size:11.5px;color:var(--text3);font-variant-numeric:tabular-nums}
-.st-body{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,380px) minmax(0,1fr);align-items:center;gap:8px;padding:0 20px}
-.st-col{display:flex;flex-direction:column;gap:12px;position:relative;z-index:2}
-.st-col:last-child{align-items:flex-end}
-.st-chip{width:min(210px,100%);display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.055);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);text-align:left;transition:transform .35s var(--spring),background .25s}
-.st-col:last-child .st-chip{align-items:flex-end;text-align:right}
-.st-chip:hover{background:rgba(255,255,255,.09)}
-.st-chip:active{transform:scale(.96)}
-.st-chip .k{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:color-mix(in srgb,var(--c) 85%,#fff)}
-.st-chip b{font-size:28px;font-weight:700;letter-spacing:-.04em;line-height:1.05;font-variant-numeric:tabular-nums}
-.st-chip b small{font-size:14px;color:var(--text2);font-weight:600;margin-left:2px;letter-spacing:0}
-.st-chip .s{font-size:11.5px;color:var(--text3);line-height:1.25}
-.st-chip::before{content:"";position:absolute;width:6px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c);top:14px;right:14px}
-.st-col:last-child .st-chip::before{right:auto;left:14px}
-.st-chip{position:relative}
-.st-fig{position:relative;height:clamp(380px,52vh,500px)}
-#pmSlot,.pm{position:absolute;inset:0}
-.pm canvas{width:100%;height:100%;display:block;touch-action:pan-y;cursor:grab}
-.pm canvas:active{cursor:grabbing}
-.pm-tip{position:absolute;z-index:3;transform:translate(-50%,-100%) scale(.9);opacity:0;pointer-events:none;padding:9px 13px;border-radius:14px;background:rgba(20,22,32,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 45%,transparent),0 12px 30px -10px rgba(0,0,0,.7);white-space:nowrap;transition:opacity .2s,transform .35s var(--spring)}
-.pm-tip.on{opacity:1;transform:translate(-50%,-100%) scale(1)}
-.pm-tip b{display:block;font-size:14px;color:color-mix(in srgb,var(--c) 70%,#fff)}
-.pm-tip span{font-size:12px;color:var(--text2)}
-.st-hint{position:absolute;left:50%;top:2px;transform:translateX(-50%);font-size:11.5px;font-weight:600;letter-spacing:.04em;color:var(--text3);white-space:nowrap;pointer-events:none;transition:opacity .5s;animation:hintPulse 2.4s ease-in-out infinite}
-.st-hint.gone{opacity:0;animation:none}
-@keyframes hintPulse{50%{opacity:.45}}
-.st-flip{position:absolute;right:6px;bottom:0;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);color:var(--text2);transition:transform .45s var(--spring),background .2s}
-.st-flip:hover{background:rgba(255,255,255,.12);color:var(--text)}
-.st-flip:active{transform:rotate(180deg) scale(.9)}
-.st-flip svg{width:18px;height:18px}
-.st-foot{position:relative;z-index:2;display:flex;align-items:center;gap:14px;padding:12px 20px 18px;border-top:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.18)}
-.st-run{flex:none;display:flex;align-items:baseline;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2)}
-.st-run b{font-size:15px;color:var(--text);letter-spacing:0}
-.st-run em{font-style:normal;color:var(--yellow);letter-spacing:0}
-.qps{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
-.qps::-webkit-scrollbar{display:none}
-.qp{flex:none;position:relative;display:flex;align-items:center;gap:8px;padding:7px 12px 7px 8px;border-radius:999px;background:rgba(255,255,255,.05);font-size:12.5px;font-weight:600;white-space:nowrap}
-.qp i{width:18px;height:18px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--q)*360deg),rgba(255,255,255,.12) 0);-webkit-mask:radial-gradient(circle,transparent 5px,#000 5.5px);mask:radial-gradient(circle,transparent 5px,#000 5.5px)}
-.qp.done{color:var(--text3)}
-.qp.done i{-webkit-mask:none;mask:none;background:var(--c);box-shadow:0 0 10px -1px var(--c)}
-@media(max-width:760px){
-  .stage{margin:14px -4px 14px;border-radius:28px}
-  .st-top{padding:16px 16px 0}
-  .st-lv{width:48px;height:48px;border-radius:15px;font-size:20px}
-  .st-who b{font-size:19px}
-  .st-body{grid-template-columns:92px minmax(0,1fr) 92px;gap:0;padding:0 10px}
-  .st-fig{height:410px}
-  .st-chip{padding:9px 10px;border-radius:15px}
-  .st-chip b{font-size:21px}
-  .st-chip b small{font-size:11.5px}
-  .st-chip .k{font-size:9px;letter-spacing:.1em}
-  .st-chip .s{font-size:10px}
-  .st-chip::before{display:none}
-  .st-col{gap:9px}
-  .st-foot{flex-direction:column;align-items:stretch;gap:10px;padding:12px 14px 16px}
-}
 .today-grid .rail>section{margin:0}
 .today-grid .rail{display:flex;flex-direction:column;gap:16px}
 @media(max-width:1100px){.today-grid .rail{grid-column:1/-1;flex-direction:row}.today-grid .rail>section{flex:1}}
@@ -781,10 +717,191 @@ input[type=number]{-moz-appearance:textfield}
 @keyframes noteIn{from{opacity:0;transform:translateY(-12px) scale(.94)}}
 .note-ed{width:100%;min-height:42vh;resize:vertical;font-size:16px;line-height:1.5;border-radius:16px;padding:14px 16px;margin:4px 0 14px}
 @media(max-width:760px){.notes{columns:2 150px;column-gap:10px}.note{margin-bottom:10px;padding:14px 13px 12px;border-radius:18px}.note b{font-size:15px}.note p{font-size:13px;-webkit-line-clamp:6}}
+
+/* ===== v4: studio stage, buddy, arc navigation, halos ===== */
+:root{--display:"Unbounded",var(--font);--mint1:#9ff5d6;--mint2:#18c29c}
+body{background:radial-gradient(120% 80% at 70% -10%,#1a2350 0%,#0a0e22 45%,#05060a 100%) fixed}
+.ambient .beam{height:60%;top:-18%;background:linear-gradient(90deg,transparent 0,rgba(80,150,255,.20) 28%,rgba(255,150,200,.16) 58%,transparent 100%);filter:blur(46px)}
+.ambient .beam+.beam{top:30%;left:-40%;transform:rotate(-24deg);opacity:.6;animation-duration:24s;animation-direction:alternate-reverse}
+.hero h1{font-weight:300;letter-spacing:-.045em}
+.hero .kicker{letter-spacing:.14em;font-size:12px}
+.card{border-radius:30px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.03) 60%);border-color:rgba(255,255,255,.07);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.btn{border-radius:999px}
+.timer,.big,.orb-v b,.stc b,.pn-score b,.dk-in b,.lvl b{font-family:var(--display);font-weight:600;letter-spacing:-.04em}
+.nitem,.jrow{border-radius:20px}
+.top .nav{display:none}
+
+/* ---- arc navigation ---- */
+.arc{position:fixed;z-index:45;left:0;right:0;bottom:0;height:calc(122px + env(safe-area-inset-bottom));touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+.arc-bed{position:absolute;left:50%;top:22px;width:760px;height:760px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(10,14,34,.0) 88%,rgba(255,255,255,.05) 88.3%,rgba(12,16,36,.86) 89%);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 -1px 0 rgba(255,255,255,.08)}
+.arc-bed{background:rgba(10,13,30,.78);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -20px 60px -20px color-mix(in srgb,var(--c,#0a84ff) 40%,transparent)}
+.arc-ring{position:absolute;left:50%;top:54px;width:84px;height:84px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.0) 58%,rgba(255,255,255,.14) 60%,rgba(255,255,255,.04) 72%,transparent 73%);box-shadow:0 0 30px -4px color-mix(in srgb,var(--c,#0a84ff) 70%,transparent),inset 0 0 0 1.5px rgba(255,255,255,.22);transition:box-shadow .4s}
+.arc-it{position:absolute;left:0;top:0;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--art);box-shadow:0 10px 24px -8px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -10px 20px rgba(0,0,0,.25);will-change:transform}
+.arc-it svg{width:26px;height:26px;stroke-width:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.arc-it::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(60% 40% at 35% 25%,rgba(255,255,255,.45),transparent 70%);pointer-events:none}
+.arc-lbl{position:absolute;left:50%;bottom:calc(6px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;line-height:1}
+.arc-lbl small{display:none}
+.arc-lbl b{font-family:var(--display);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:color-mix(in srgb,var(--c,#0a84ff) 55%,#fff)}
+.tabbar{display:none!important}
+.fab,.fab[class]{display:none!important}
+.lvl{display:none}
+@media(max-width:760px){.top .qa-btn{display:inline-flex!important;width:40px;height:40px;padding:0;justify-content:center;border-radius:50%}.top .qa-btn .kbd,.top .qa-btn .qa-t{display:none}}
+@media(max-width:900px){.main{padding-bottom:calc(150px + env(safe-area-inset-bottom))}}
+@media(min-width:901px){
+  .arc{top:0;bottom:0;left:0;right:auto;width:200px;height:auto}
+  .arc-bed{left:-640px;top:50%;transform:translateY(-50%);width:760px;height:760px}
+  .arc-ring{left:70px;top:50%}
+  .arc-lbl{left:118px;bottom:auto;top:50%;transform:translateY(-50%);align-items:flex-start;gap:4px}
+  .arc-lbl small{display:block;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3)}
+  .arc-lbl b{font-size:13px}
+  .main{padding-left:210px}
+  .top{padding-left:210px}
+  .fab{display:none}
+}
+
+/* ---- Today: studio stage + player card ---- */
+.dash{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:0;margin:22px 0 18px;border-radius:36px;overflow:hidden;background:#eef1f7;box-shadow:0 40px 80px -40px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.08)}
+.stg{position:relative;min-height:560px;border-radius:36px;overflow:hidden;background:radial-gradient(90% 70% at 50% 34%,#5f6a8c 0%,#3a4263 38%,#1c2138 78%,#141828 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.stg::before{content:"";position:absolute;left:50%;bottom:9%;width:70%;height:22%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.18),transparent);pointer-events:none}
+.stg::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(140,180,255,.10) 45%,rgba(255,160,200,.08) 55%,transparent 70%)}
+#buddySlot,.bd{position:absolute;inset:0}
+.bd canvas{display:block;width:100%!important;height:100%!important;touch-action:pan-y;cursor:pointer}
+#buddySlot.no3d::after{content:"Your buddy needs WebGL";position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.5);font-size:13px}
+.stg-top{position:absolute;z-index:3;left:18px;right:18px;top:18px;display:flex;align-items:center;gap:12px;pointer-events:none}
+.stg-top>*{pointer-events:auto}
+.stg-sq{width:48px;height:48px;flex:none;border-radius:16px;display:grid;place-items:center;align-content:center;background:#fff;color:#141828;box-shadow:0 10px 24px -10px rgba(0,0,0,.6);font-family:var(--display);line-height:.95;transition:transform .35s var(--spring)}
+.stg-sq small{font-size:8.5px;font-weight:700;letter-spacing:.14em;opacity:.55}
+.stg-sq b{font-size:19px;font-weight:700}
+.stg-sq.ghost{background:rgba(255,255,255,.14);color:#fff;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.stg-sq.ghost svg{width:22px;height:22px}
+.stg-sq:active{transform:scale(.92)}
+.stg-hi{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.1;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.stg-hi span{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
+.stg-hi b{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.stc{position:absolute;z-index:3;bottom:18px;width:150px;padding:14px 14px 12px;border-radius:22px;background:#fff;color:#141828;text-align:left;box-shadow:0 18px 36px -16px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:2px;transition:transform .35s var(--spring)}
+.stc:active{transform:scale(.95)}
+.stc.l{left:18px}.stc.r{right:18px}
+.stc b{font-size:26px;line-height:1.05;color:#141828}
+.stc b small{font-size:14px;opacity:.45;font-weight:600}
+.stc>span:not(.stc-i){font-size:11.5px;font-weight:600;color:rgba(20,24,40,.55);line-height:1.3}
+.stc-i{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#eef1f7;color:#141828}
+.stc-i svg{width:15px;height:15px;stroke-width:2.2}
+.bd-say{position:absolute;left:0;top:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .2s}
+.bd-say span{position:absolute;left:0;bottom:10px;transform:translateX(-50%) scale(.7);transform-origin:50% 100%;display:block;max-width:220px;width:max-content;padding:10px 14px;border-radius:18px;background:#fff;color:#141828;font-size:13.5px;font-weight:600;line-height:1.3;text-align:center;box-shadow:0 14px 30px -12px rgba(0,0,0,.6);transition:transform .45s var(--spring)}
+.bd-say span::after{content:"";position:absolute;left:50%;bottom:-6px;width:14px;height:14px;background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:3px}
+.bd-say.on{opacity:1}
+.bd-say.on span{transform:translateX(-50%) scale(1)}
+.bd-z{position:absolute;left:0;top:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .6s}
+.bd-z.on{opacity:1}
+.bd-z i{position:absolute;font-style:normal;font-family:var(--display);font-weight:700;color:rgba(200,220,255,.85);animation:zz 3s ease-in infinite}
+.bd-z i:nth-child(1){font-size:12px}.bd-z i:nth-child(2){font-size:16px;animation-delay:1s}.bd-z i:nth-child(3){font-size:22px;animation-delay:2s}
+@keyframes zz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(26px,-60px)}}
+
+.pnl{position:relative;padding:28px 26px 24px;color:#141828;display:flex;flex-direction:column;min-width:0;
+  --text:#141828;--text2:rgba(20,24,40,.6);--text3:rgba(20,24,40,.4);--sep:rgba(20,24,40,.07);--fill:rgba(20,24,40,.06);--glass:rgba(20,24,40,.04);--stroke:rgba(20,24,40,.08)}
+.pn-h{display:flex;justify-content:space-between;align-items:flex-start;text-align:center}
+.pn-h>div{flex:1}
+.pn-h h2{margin:0;font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:.02em;line-height:1.1}
+.pn-h span{font-size:12.5px;color:var(--text2)}
+.pn-score{display:grid;grid-template-columns:1fr 1px 1fr;align-items:center;margin:18px 0 8px;text-align:center}
+.pn-score i{height:44px;background:var(--sep)}
+.pn-score>div>span{display:block;font-size:12px;font-weight:600;color:var(--text2)}
+.pn-score b{font-size:42px;line-height:1.05;letter-spacing:-.05em}
+.pn-xp{display:flex;align-items:center;gap:10px;font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:12px}
+.pn-xp .pbar{flex:1;background:rgba(20,24,40,.08)}
+.pn-list{flex:1;display:flex;flex-direction:column;gap:8px;margin:4px 0 0;padding:0;max-height:340px;overflow:auto}
+.pnl .task{background:#fff;border-radius:18px;padding:10px 12px;box-shadow:0 0 0 1px rgba(20,24,40,.07),0 6px 16px -12px rgba(20,24,40,.5);border:0}
+.pnl .task .tt{color:#141828}
+.pnl .task.done .tt{color:rgba(20,24,40,.35)}
+.pnl .task .ck{border-color:color-mix(in srgb,var(--c) 70%,#fff)}
+.pnl .qadd{background:#fff;border-radius:16px;margin-top:10px;box-shadow:0 0 0 1px rgba(20,24,40,.07)}
+.pnl .qadd input{color:#141828}
+.pnl .empty{color:var(--text3)}
+.pnl .empty b{color:var(--text2)}
+.pnl .banner{background:rgba(255,69,58,.08);color:#b3261e}
+.pn-ctas{display:flex;gap:10px;margin-top:16px}
+.pn-cta{flex:1;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 22px;border-radius:999px;background:linear-gradient(90deg,var(--mint1),var(--mint2));color:#062a20;box-shadow:0 16px 30px -14px rgba(24,194,156,.8);text-align:left;transition:transform .35s var(--spring)}
+.pn-cta:active{transform:scale(.97)}
+.pn-cta span{font-weight:700;font-size:15.5px}
+.pn-cta em{font-style:normal;font-size:12px;font-weight:600;opacity:.65;margin-left:auto;font-variant-numeric:tabular-nums}
+.pn-cta i{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#062a20;color:#9ff5d6;flex:none}
+.pn-cta i svg{width:18px;height:18px}
+.pn-cta.out{background:linear-gradient(90deg,#ffc2b8,#ff6b5c);color:#3a0b06;box-shadow:0 16px 30px -14px rgba(255,91,79,.8)}
+.pn-cta.out i{background:#3a0b06;color:#ffc2b8}
+.pn-alt{width:60px;flex:none;border-radius:999px;display:grid;place-items:center;background:#fff;color:#141828;box-shadow:0 0 0 1px rgba(20,24,40,.08)}
+.pn-alt svg{width:22px;height:22px}
+@media(max-width:900px){
+  .dash{grid-template-columns:1fr;margin:12px -6px 16px;border-radius:32px}
+  .stg{min-height:0;height:min(540px,68vh);border-radius:32px}
+  .stc{width:128px;padding:12px;border-radius:20px;bottom:14px}
+  .stc.l{left:14px}.stc.r{right:14px}
+  .stc b{font-size:22px}
+  .pnl{padding:22px 18px 20px}
+  .pn-list{max-height:none}
+}
+.today-grid .rail{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.today-grid .rail>section{margin:0}
+@media(max-width:1100px){.today-grid .rail{grid-template-columns:1fr 1fr}.today-grid .next-card{grid-column:1/-1}}
+@media(max-width:760px){.today-grid .rail{display:flex!important;flex-direction:column}}
+
+/* ---- halo: a big number in a ring of particles ---- */
+.halo{position:relative;width:170px;aspect-ratio:1;display:grid;place-items:center;flex:none}
+.halo canvas{position:absolute;inset:-12%;width:124%;height:124%}
+.halo .orb-v b{font-size:42px}
+.halo .orb-v small{margin-top:6px}
+@media(max-width:760px){.halo{width:128px}.halo .orb-v b{font-size:32px}}
+
+/* ---- every tab: a studio stage up top ---- */
+.hero.hst{display:flex;flex-direction:column;align-items:stretch;gap:18px;margin:22px 0 18px;padding:28px;border-radius:36px;position:relative;overflow:hidden;background:radial-gradient(90% 90% at 70% 20%,#56618a 0%,#343c5c 40%,#191e33 85%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 40px 80px -40px rgba(0,0,0,.9)}
+.hero.hst::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 25%,rgba(140,180,255,.12) 42%,rgba(255,160,200,.09) 55%,transparent 70%)}
+.hero.hst>*{position:relative;z-index:1}
+.hst-main{display:flex;align-items:center;gap:26px}
+.hst-lead{flex:none}
+.hst .hero-main{flex:1;min-width:0}
+.hst h1{font-size:clamp(34px,5vw,56px);color:#fff}
+.hst .kicker{color:color-mix(in srgb,var(--glow) 55%,#fff)}
+.hst p{color:rgba(255,255,255,.7)}
+.hst-chips{display:flex;gap:12px;flex-wrap:wrap}
+.hchip{flex:1;min-width:120px;max-width:220px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:14px 16px;border-radius:22px;background:#fff;color:#141828;text-align:left;box-shadow:0 18px 36px -18px rgba(0,0,0,.75);transition:transform .35s var(--spring)}
+button.hchip:active{transform:scale(.95)}
+.hchip b{font-family:var(--display);font-size:24px;font-weight:600;letter-spacing:-.04em;line-height:1.05}
+.hchip b small{font-size:13px;opacity:.45;margin-left:2px}
+.hchip span{font-size:12px;font-weight:600;color:rgba(20,24,40,.55)}
+.hst .hero-r{justify-content:flex-start}
+.hst .hero-r .btn{background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.hst .hero-r .btn.fill{background:linear-gradient(90deg,var(--mint1),var(--mint2));color:#062a20;box-shadow:0 14px 28px -14px rgba(24,194,156,.8)}
+.hst .hero-r .btn.tint{background:#fff;color:#141828}
+.hst .wnav{margin-left:auto}
+@media(max-width:760px){
+  .hero.hst{margin:12px -6px 16px;padding:20px 18px;border-radius:30px;gap:14px}
+  .hst-main{gap:14px}
+  .hst h1{font-size:30px}
+  .hst-chips{gap:8px}
+  .hchip{min-width:0;padding:11px 12px;border-radius:18px}
+  .hchip b{font-size:19px}
+  .hchip span{font-size:10.5px}
+}
+/* light panels: the list-style content, like the player card */
+.card.lightp{background:#eef1f7;backdrop-filter:none;-webkit-backdrop-filter:none;border-color:transparent;color:#141828;box-shadow:0 30px 60px -36px rgba(0,0,0,.85);
+  --text:#141828;--text2:rgba(20,24,40,.6);--text3:rgba(20,24,40,.4);--sep:rgba(20,24,40,.07);--fill:rgba(20,24,40,.07);--glass:rgba(20,24,40,.04);--stroke:rgba(20,24,40,.08)}
+.lightp .seg{background:rgba(20,24,40,.07)}
+.lightp .seg>button{color:rgba(20,24,40,.55)}
+.lightp .seg>button.on{color:#141828}
+.lightp .seg .ind{background:#fff;box-shadow:0 4px 12px -4px rgba(20,24,40,.3)}
+.lightp .jrow{background:#fff;margin-top:8px;padding:12px 14px;box-shadow:0 0 0 1px rgba(20,24,40,.06),0 8px 18px -14px rgba(20,24,40,.5)}
+.lightp .jrow+.jrow{box-shadow:0 0 0 1px rgba(20,24,40,.06),0 8px 18px -14px rgba(20,24,40,.5)}
+.lightp .jrow:hover{background:#fff}
+.lightp .jb b{color:#141828}
+.lightp .pill{background:color-mix(in srgb,var(--c) 16%,#fff);color:color-mix(in srgb,var(--c) 75%,#000)}
+.lightp a{color:#141828}
+.lightp textarea,.lightp input{color-scheme:light;background:#fff;color:#141828;box-shadow:0 0 0 1px rgba(20,24,40,.08)}
+.lightp .chip{background:rgba(20,24,40,.06);color:#141828}
+.lightp .chip.on{background:var(--c);color:#fff}
+.lightp .btn.white{background:linear-gradient(90deg,var(--mint1),var(--mint2));color:#062a20}
 </style>
 </head>
 <body>
-<div class="ambient"><div class="beam"></div></div>
+<div class="ambient"><div class="beam"></div><div class="beam"></div></div>
 <div id="boot" aria-hidden="true">
   <div class="boot-core">
     <svg class="boot-rings" viewBox="0 0 200 200">
@@ -800,9 +917,8 @@ input[type=number]{-moz-appearance:textfield}
 
 <header class="top">
   <div class="brand"><img src="icons/favicon.png" alt="">Daybook</div>
-  <nav class="seg nav" id="nav"></nav>
   <div class="sp"></div>
-  <button class="btn qa-btn" data-act="spot-open"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Quick add<span class="kbd" id="kbdHint">Ctrl K</span></button>
+  <button class="btn qa-btn" data-act="spot-open"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="qa-t">Quick add</span><span class="kbd" id="kbdHint">Ctrl K</span></button>
   <span id="syncDot" class="sync-dot off" title="Sync status"></span>
   <button class="lvl" data-act="progress" title="Progress" id="lvlBadge"></button>
   <button class="avatar" data-act="settings" title="Settings" id="avatar">J</button>
@@ -817,7 +933,6 @@ input[type=number]{-moz-appearance:textfield}
   <section class="view" id="v-notes"></section>
 </main>
 
-<nav class="tabbar" id="tabbar"><span class="tb-ind" id="tbInd"></span></nav>
 <button class="fab" data-act="spot-open" aria-label="Quick add"><svg class="ico" viewBox="0 0 24 24" style="stroke-width:2.4"><path d="M12 5v14M5 12h14"/></svg></button>
 
 <div class="ov" id="ov" data-act="close-all"></div>
@@ -1354,7 +1469,7 @@ function periodSummary(p) {
 }
 function presets() {
   const cnt = {};
-  Object.values(S.shifts).forEach(s => { if (!s.start || !s.end) return; const k = `${s.start}|${s.end}|${+s.brk || 0}`; cnt[k] = (cnt[k] || 0) + 1; });
+  Object.values(S.shifts).forEach(s => { if (!s.start || !s.end || !shiftHours(s)) return; const k = `${s.start}|${s.end}|${+s.brk || 0}`; cnt[k] = (cnt[k] || 0) + 1; });
   return Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => { const [start, end, brk] = k.split('|'); return { start, end, brk: +brk }; });
 }
 const presetChip = (p, d) => `<button class="chip" style="--c:var(--blue);--on:#fff" data-act="apply-preset" data-date="${d}" data-p="${p.start}|${p.end}|${p.brk}">${t12(p.start)}–${t12(p.end)}</button>`;
@@ -1684,247 +1799,141 @@ function quests() {
   return out;
 }
 
-/* ---------- player model ----------
-   A particle figure of you. Muscles light up for what you trained in the last
-   seven days (brighter = more recent), the head fills as today's tasks get done
-   and the heart beats after cardio. Drag sideways to turn it, tap a muscle to
-   see when it last got work. */
-const MUSCLE = {
-  D1: ['chest', 'shoulders', 'triceps'],
-  D2: ['legs', 'core', 'glutes'],
-  D3: ['back', 'biceps', 'shoulders'],
-  D4: ['biceps', 'triceps', 'shoulders', 'chest', 'core'],
-  HIIT: ['heart', 'legs'],
+/* ---------- arc navigation ----------
+   The tabs sit on a curve like records on a shelf. Drag or scroll the curve and
+   they slide along it; whichever lands in the ring is the tab you're on.
+   Phone: along the bottom. Wide screens: down the left edge. */
+const TAB_ART = {
+  today: 'linear-gradient(140deg,#0a2f73 0%,#0a84ff 55%,#9fd6ff 100%)',
+  week: 'linear-gradient(140deg,#231760 0%,#5e5ce6 55%,#c3c1ff 100%)',
+  hours: 'linear-gradient(140deg,#043446 0%,#1597c0 55%,#a8ecff 100%)',
+  training: 'linear-gradient(140deg,#3d1402 0%,#e0620a 55%,#ffc46b 100%)',
+  jobs: 'linear-gradient(140deg,#032b16 0%,#159447 55%,#8ef0b0 100%)',
+  notes: 'linear-gradient(140deg,#330b52 0%,#9b3fd6 55%,#e6b8ff 100%)',
 };
-const MUSCLE_NAME = { head: 'Focus', chest: 'Chest', back: 'Back', shoulders: 'Shoulders', biceps: 'Biceps', triceps: 'Triceps', core: 'Core', glutes: 'Glutes', legs: 'Legs', heart: 'Heart' };
-// Drawn into a 200 × 400 mask; later parts win where they overlap.
-// f / b: the muscle on the front and back surface, d: depth as a share of width.
-const PM_PARTS = [
-  { n: 'head', f: 'head', b: 'head', d: .95, draw: x => x.ellipse(100, 34, 17, 21, 0, 0, 7) },
-  { n: 'neck', f: null, b: 'shoulders', d: .9, draw: x => { x.moveTo(90, 50); x.lineTo(110, 50); x.lineTo(114, 64); x.lineTo(134, 74); x.lineTo(66, 74); x.lineTo(86, 64); x.closePath(); } },
-  { n: 'chest', f: 'chest', b: 'back', d: .5, draw: x => { x.moveTo(66, 72); x.lineTo(134, 72); x.lineTo(129, 130); x.lineTo(71, 130); x.closePath(); } },
-  { n: 'core', f: 'core', b: 'back', d: .55, draw: x => { x.moveTo(71, 129); x.lineTo(129, 129); x.lineTo(121, 190); x.lineTo(79, 190); x.closePath(); } },
-  { n: 'hips', f: 'core', b: 'glutes', d: .6, draw: x => { x.moveTo(79, 189); x.lineTo(121, 189); x.lineTo(127, 216); x.lineTo(73, 216); x.closePath(); } },
-  { n: 'deltL', f: 'shoulders', b: 'shoulders', d: .9, draw: x => x.arc(63, 86, 15, 0, 7) },
-  { n: 'deltR', f: 'shoulders', b: 'shoulders', d: .9, draw: x => x.arc(137, 86, 15, 0, 7) },
-  { n: 'uarmL', f: 'biceps', b: 'triceps', d: .95, line: [58, 98, 45, 150, 19] },
-  { n: 'uarmR', f: 'biceps', b: 'triceps', d: .95, line: [142, 98, 155, 150, 19] },
-  { n: 'farmL', f: 'biceps', b: 'triceps', d: .95, line: [44, 156, 36, 204, 14] },
-  { n: 'farmR', f: 'biceps', b: 'triceps', d: .95, line: [156, 156, 164, 204, 14] },
-  { n: 'handL', f: null, b: null, d: .8, draw: x => x.ellipse(34, 215, 7, 10, .2, 0, 7) },
-  { n: 'handR', f: null, b: null, d: .8, draw: x => x.ellipse(166, 215, 7, 10, -.2, 0, 7) },
-  { n: 'thighL', f: 'legs', b: 'legs', d: .9, line: [88, 216, 84, 292, 25] },
-  { n: 'thighR', f: 'legs', b: 'legs', d: .9, line: [112, 216, 116, 292, 25] },
-  { n: 'calfL', f: 'legs', b: 'legs', d: .95, line: [84, 298, 82, 366, 17] },
-  { n: 'calfR', f: 'legs', b: 'legs', d: .95, line: [116, 298, 118, 366, 17] },
-  { n: 'footL', f: null, b: null, d: .8, draw: x => x.ellipse(79, 377, 10, 5, 0, 0, 7) },
-  { n: 'footR', f: null, b: null, d: .8, draw: x => x.ellipse(121, 377, 10, 5, 0, 0, 7) },
-  { n: 'heart', f: 'heart', b: 'back', d: .3, front: true, draw: x => x.ellipse(113, 100, 9, 10, .3, 0, 7) },
-];
-const PM = { pts: [], dust: [], ring: [], heat: {}, rot: 0, target: 0, vrot: 0, drag: null, ptr: null, raf: 0, w: 0, h: 0, dpr: 1, t0: performance.now(), inView: true, flash: null, tipT: 0 };
-
-// Which muscles got work in the last week, and when.
-function muscleHeat() {
-  const out = {}, td = today();
-  for (let i = 0; i < 7; i++) {
-    const d = iso(addDays(parse(td), -i)), w = wo(d), h = 1 - i / 7.5;
-    const hit = (keys, color, what, f = 1) => keys.forEach(m => { if (!out[m] || out[m].h < h * f) out[m] = { h: h * f, color, d, what }; });
-    const part = !w.done && w.prog && w.prog.done ? w.prog.p : 0;
-    if (MUSCLE[w.s] && (w.done || part)) hit(MUSCLE[w.s], SESS[w.s].color, sessName(w.s), w.done ? 1 : Math.max(.35, part));
-    const c = cardioOn(d);
-    if (c.length) hit(['heart'], '#ff375f', c.map(l => l.type).join(' + '));
-  }
-  const list = tasksOn(td), done = list.filter(t => isDone(t, td)).length;
-  if (list.length && done) out.head = { h: done / list.length, color: '#8e8cff', what: `${done} of ${list.length} tasks done` };
-  return out;
-}
-
-const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-const mixRgb = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
-const BASE_RGB = [150, 190, 255];
-
-function pmBuild() {
-  const W = 200, H = 400, c = document.createElement('canvas'); c.width = W; c.height = H;
-  const x = c.getContext('2d', { willReadFrequently: true });
-  x.lineCap = 'round';
-  PM_PARTS.forEach((p, i) => {
-    x.fillStyle = x.strokeStyle = `rgb(${i + 1},0,0)`; x.beginPath();
-    if (p.line) { const [x1, y1, x2, y2, lw] = p.line; x.lineWidth = lw; x.moveTo(x1, y1); x.lineTo(x2, y2); x.stroke(); }
-    else { p.draw(x); x.fill(); }
+const ARC = { pos: 0, target: 0, drag: null, raf: 0, el: null, items: [], wheelAcc: 0, wheelT: 0 };
+const arcVertical = () => innerWidth > 900;
+const arcIndex = () => Math.max(0, TABS.findIndex(t => t.k === S.ui.tab));
+function arcBuild() {
+  const el = ARC.el = document.createElement('nav');
+  el.className = 'arc'; el.setAttribute('aria-label', 'Tabs');
+  el.innerHTML = `<div class="arc-bed"></div><div class="arc-ring"></div><div class="arc-lbl"><small>Now</small><b id="arcLbl"></b></div>` +
+    TABS.map((t, i) => `<button class="arc-it" data-arc="${i}" style="--c:${t.color};--art:${TAB_ART[t.k]}" aria-label="${t.label}">${I[t.k]}</button>`).join('');
+  document.body.append(el);
+  ARC.items = [...el.querySelectorAll('.arc-it')];
+  ARC.pos = ARC.target = arcIndex();
+  const along = e => arcVertical() ? e.clientY : e.clientX;
+  el.addEventListener('pointerdown', e => {
+    ARC.drag = { p: along(e), pos: ARC.pos, moved: 0, id: e.pointerId, t: performance.now(), v: 0, lp: along(e), lt: performance.now() };
+    try { el.setPointerCapture(e.pointerId); } catch (x) {} el.classList.add('drag');
   });
-  const px = x.getImageData(0, 0, W, H).data;
-  const at = (a, b) => { if (a < 0 || b < 0 || a >= W || b >= H) return 0; const o = (b * W + a) * 4; return px[o + 3] === 255 && !px[o + 1] && !px[o + 2] ? px[o] : 0; };
-  const span = new Map();
-  for (let b = 0; b < H; b++) for (let a = 0; a < W; a++) { const id = at(a, b); if (!id) continue; const k = id * 1000 + b, s = span.get(k); if (!s) span.set(k, [a, a]); else { if (a < s[0]) s[0] = a; if (a > s[1]) s[1] = a; } }
-  const small = innerWidth < 700, dens = small ? .085 : .12, edgeP = small ? .5 : .65, pts = [];
-  for (let b = 0; b < H; b++) for (let a = 0; a < W; a++) {
-    const id = at(a, b); if (!id) continue;
-    const edge = !at(a - 1, b) || !at(a + 1, b) || !at(a, b - 1) || !at(a, b + 1);
-    if (Math.random() > (edge ? edgeP : dens)) continue;
-    const part = PM_PARTS[id - 1], s = span.get(id * 1000 + b), cx = (s[0] + s[1]) / 2, hw = (s[1] - s[0]) / 2 + .5;
-    const u = (a - cx) / hw, zm = Math.sqrt(Math.max(0, 1 - u * u)) * hw * part.d;
-    const back = !part.front && Math.random() < .5;
-    pts.push({ x: a + Math.random() - .5, y: b + Math.random() - .5, z: back ? -zm : zm * (part.front ? .7 : 1), m: back ? part.b : part.f, part: part.n, edge, ph: Math.random() * 6.283, ox: 0, oy: 0, sx: 0, sy: 0, dz: 0, col: '' });
-  }
-  PM.pts = pts;
-  PM.dust = Array.from({ length: small ? 70 : 110 }, () => ({ a: Math.random() * 6.283, r: 70 + Math.random() * 60, y: 20 + Math.random() * 360, sp: (.05 + Math.random() * .12) * (Math.random() < .5 ? -1 : 1), ph: Math.random() * 6.283 }));
-  const rn = small ? 110 : 160;
-  PM.ring = Array.from({ length: rn }, (_, i) => ({ a: i / rn * 6.283, r: 66 + (i % 3) * 7 }));
-}
-
-function pmPaint() {
-  PM.heat = muscleHeat();
-  const glow = hexRgb(TABS[0].color);
-  PM.pts.forEach(p => {
-    const h = p.m && PM.heat[p.m];
-    const rgb = h ? mixRgb(BASE_RGB, hexRgb(h.color), .45 + .55 * h.h) : p.m ? BASE_RGB : mixRgb(BASE_RGB, [120, 130, 160], .4);
-    p.col = `rgb(${rgb})`; p.lit = h ? h.h : 0;
+  el.addEventListener('pointermove', e => {
+    const d = ARC.drag; if (!d) return;
+    const dp = along(e) - d.p; d.moved = Math.max(d.moved, Math.abs(dp));
+    const step = arcStep().px, now = performance.now();
+    ARC.pos = clampPos(d.pos - dp / step);
+    d.v = -(along(e) - d.lp) / step / Math.max(1, now - d.lt) * 1000; d.lp = along(e); d.lt = now;
+    ARC.target = ARC.pos; arcLayout(); arcLabel(arcMod(ARC.pos));
   });
-  PM.pts.sort((a, b) => a.col < b.col ? -1 : a.col > b.col ? 1 : 0);
-  PM.glowCol = `rgb(${glow})`;
-}
-
-function pmMount() {
-  const slot = $('#pmSlot'); if (!slot) return;
-  if (!PM.wrap) {
-    pmBuild();
-    const wrap = PM.wrap = document.createElement('div'); wrap.className = 'pm';
-    wrap.innerHTML = '<canvas></canvas><div class="pm-tip" id="pmTip"></div>';
-    PM.cv = wrap.querySelector('canvas'); PM.ctx = PM.cv.getContext('2d'); PM.tip = wrap.querySelector('.pm-tip');
-    pmBind();
-    new ResizeObserver(pmSize).observe(wrap);
-    new IntersectionObserver(es => { PM.inView = es[0].isIntersecting; pmWake(); }).observe(wrap);
-  }
-  slot.appendChild(PM.wrap);
-  pmPaint(); pmSize(); pmWake();
-}
-function pmSize() {
-  if (!PM.wrap || !PM.wrap.isConnected) return;
-  const w = PM.wrap.clientWidth, h = PM.wrap.clientHeight, dpr = Math.min(2, devicePixelRatio || 1);
-  if (!w || !h) return;
-  if (w === PM.w && h === PM.h && dpr === PM.dpr) return;
-  Object.assign(PM, { w, h, dpr }); PM.cv.width = w * dpr; PM.cv.height = h * dpr;
-  if (!PM.raf) pmFrame(performance.now());
-}
-const pmLive = () => PM.wrap && PM.wrap.isConnected && S.ui.tab === 'today' && !document.hidden && PM.inView;
-function pmWake() { if (!PM.raf && pmLive()) { PM.last = 0; PM.raf = requestAnimationFrame(pmFrame); } }
-
-// A lub-dub, about 66 bpm.
-const heartbeat = t => { const f = t % .9; return Math.exp(-Math.pow((f - .08) / .045, 2)) + .6 * Math.exp(-Math.pow((f - .26) / .05, 2)); };
-
-function pmFrame(now) {
-  PM.raf = 0;
-  const { ctx, w, h, dpr } = PM; if (!ctx || !w) return;
-  const t = (now - PM.t0) / 1000, still = REDUCED;
-  const dt = Math.min(.1, (now - (PM.last || now)) / 1000); PM.last = now;
-  if (!PM.drag) PM.rot += (PM.target - PM.rot) * (1 - Math.exp(-dt * 5)); // same speed at any frame rate
-  const th = PM.rot + (still ? 0 : Math.sin(t * .42) * .2), cs = Math.cos(th), sn = Math.sin(th);
-  const sc = Math.min(w / 185, h / 400), ox = w / 2, oy = h / 2 + 2 * sc;
-  const breathe = still ? 0 : Math.sin(t * 1.5), beat = PM.heat.heart && !still ? heartbeat(t) : 0;
-  const scan = still ? -99 : 410 - ((t * 60) % 560), flash = PM.flash && t - PM.flash.t < 1.4 ? PM.flash : null;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
-  ctx.globalCompositeOperation = 'lighter';
-
-  // the platform: a ring of light under the feet that turns with you
-  ctx.fillStyle = PM.glowCol;
-  for (const r of PM.ring) {
-    const x = Math.cos(r.a) * r.r, z = Math.sin(r.a) * r.r, X = x * cs + z * sn, Z = -x * sn + z * cs;
-    ctx.globalAlpha = .1 + .28 * (Z / 90 + 1) / 2;
-    const s = 1.6 * sc; ctx.fillRect(ox + X * sc - s / 2, oy + (186 + Z * .2) * sc - s / 2, s, s);
-  }
-  // drifting dust
-  for (const p of PM.dust) {
-    const a = p.a + t * p.sp, x = Math.cos(a) * p.r, z = Math.sin(a) * p.r;
-    ctx.globalAlpha = (.08 + .22 * (z / 130 + 1) / 2) * (.6 + .4 * Math.sin(t * 1.3 + p.ph));
-    const s = 1.4 * sc; ctx.fillRect(ox + x * sc, oy + (p.y - 200 + Math.sin(t * .5 + p.ph) * 6) * sc, s, s);
-  }
-  // the body
-  const blooms = {};
-  let col = '';
-  for (const p of PM.pts) {
-    let x = p.x - 100, y = p.y - 200, z = p.z;
-    if (p.y < 135) y -= breathe * (p.y < 60 ? .6 : 1.1) * (p.y / 135);
-    if (p.m === 'heart' && beat) { const k = 1 + .16 * beat; x = 13 + (x - 13) * k; y = -100 + (y + 100) * k; }
-    const X = x * cs + z * sn, Z = -x * sn + z * cs, depth = Math.min(1, Math.max(0, (Z / 34 + 1) / 2));
-    let sx = ox + X * sc + p.ox, sy = oy + y * sc + p.oy;
-    if (PM.ptr) {
-      const dx = sx - PM.ptr.x, dy = sy - PM.ptr.y, d2 = dx * dx + dy * dy;
-      if (d2 < 1800) { const d = Math.sqrt(d2) || 1, f = (1 - d / 42.4) * 2.4; p.ox += dx / d * f; p.oy += dy / d * f; }
-    }
-    p.ox *= .9; p.oy *= .9; p.sx = sx; p.sy = sy; p.dz = depth;
-    let a = (p.lit ? .45 + .55 * p.lit : .3) * (.28 + .72 * depth) * (still ? 1 : .78 + .22 * Math.sin(t * 2.3 + p.ph));
-    if (p.edge) a *= 1.25;
-    if (Math.abs(p.y - scan) < 7) a *= 2.1;
-    if (flash && p.m === flash.m) a *= 1 + 1.6 * (1 - (t - flash.t) / 1.4);
-    if (p.col !== col) { col = p.col; ctx.fillStyle = col; }
-    ctx.globalAlpha = Math.min(1, a);
-    const s = (p.lit ? 1.75 : 1.3) * (.72 + .5 * depth) * Math.max(1, sc * .9);
-    ctx.fillRect(sx - s / 2, sy - s / 2, s, s);
-    if (p.lit && depth > .5) { const b = blooms[p.m] || (blooms[p.m] = { x: 0, y: 0, n: 0, col: p.col, h: p.lit }); b.x += sx; b.y += sy; b.n++; }
-  }
-  // a soft glow over each worked muscle
-  for (const m in blooms) {
-    const b = blooms[m]; if (b.n < 6) continue;
-    const bx = b.x / b.n, by = b.y / b.n, r = (m === 'heart' ? 20 + 10 * beat : 34) * sc;
-    const g = ctx.createRadialGradient(bx, by, 0, bx, by, r);
-    g.addColorStop(0, b.col.replace('rgb', 'rgba').replace(')', `,${.22 * b.h})`)); g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.fillRect(bx - r, by - r, r * 2, r * 2); col = '';
-  }
-  ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
-  if (PM.tipT && now > PM.tipT) { PM.tip.classList.remove('on'); PM.tipT = 0; }
-  const settling = Math.abs(PM.target - PM.rot) > .002 || PM.pts.some(p => Math.abs(p.ox) > .05);
-  if (pmLive() && (!still || PM.drag || settling || PM.ptr)) PM.raf = requestAnimationFrame(pmFrame);
-}
-
-function pmBind() {
-  const cv = PM.cv, pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  cv.addEventListener('pointerdown', e => { PM.drag = { x: e.clientX, y: e.clientY, r: PM.rot, lx: e.clientX, v: 0, moved: 0 }; PM.ptr = pos(e); pmWake(); });
-  cv.addEventListener('pointermove', e => {
-    if (e.pointerType === 'mouse' || PM.drag) PM.ptr = pos(e);
-    const d = PM.drag;
-    if (d) {
-      const dx = e.clientX - d.x; d.moved = Math.max(d.moved, Math.abs(dx), Math.abs(e.clientY - d.y));
-      if (d.moved > 6) { PM.rot = d.r + dx * .011; d.v = (e.clientX - d.lx) * .011; d.lx = e.clientX; PM.target = PM.rot; }
-    }
-    pmWake();
-  });
-  const end = (e, cancel) => {
-    const d = PM.drag; PM.drag = null; if (e.pointerType !== 'mouse') PM.ptr = null;
-    if (!d) return;
-    if (d.moved <= 6 && !cancel) pmTap(pos(e));
-    else PM.target = Math.round((PM.rot + d.v * 10) / Math.PI) * Math.PI; // come to rest facing front or back
-    try { localStorage.setItem('daybook_pm_hint', '1'); } catch (x) {}
-    $('.st-hint') && $('.st-hint').classList.add('gone');
-    pmWake();
+  const end = e => {
+    const d = ARC.drag; if (!d) return; ARC.drag = null; el.classList.remove('drag');
+    let i;
+    if (d.moved < 6) { const hit = document.elementFromPoint(e.clientX, e.clientY); const b = hit && hit.closest('.arc-it'); i = b ? Math.round(ARC.pos + arcWrap(+b.dataset.arc - ARC.pos)) : Math.round(ARC.pos); }
+    else i = Math.round(clampPos(ARC.pos + d.v * .07));
+    arcGo(i);
   };
-  cv.addEventListener('pointerup', e => end(e));
-  cv.addEventListener('pointercancel', e => end(e, true));
-  cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') PM.ptr = null; });
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  el.addEventListener('wheel', e => {
+    e.preventDefault();
+    ARC.wheelAcc += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    const now = performance.now();
+    if (Math.abs(ARC.wheelAcc) > 40 && now - ARC.wheelT > 260) { arcGo(Math.round(ARC.target) + Math.sign(ARC.wheelAcc)); ARC.wheelAcc = 0; ARC.wheelT = now; }
+  }, { passive: false });
+  arcLayout(); arcLabel(arcIndex());
+}
+// the wheel loops: past Notes comes Today again
+const clampPos = p => p, arcMod = i => ((Math.round(i) % TABS.length) + TABS.length) % TABS.length;
+const arcWrap = d => { const N = TABS.length; return ((d % N) + N * 1.5) % N - N / 2; };
+function arcStep() { return arcVertical() ? { ang: .3, px: 84 } : { ang: .27, px: 76 }; }
+function arcGo(i) {
+  const k = arcMod(i);
+  ARC.target = Math.round(i); arcAnimate(); arcLabel(k); haptic(6);
+  if (TABS[k].k !== S.ui.tab) { closeSheet(); switchTab(TABS[k].k); }
+}
+function arcSync() { if (!ARC.el || ARC.drag) return; const i = arcIndex(); if (arcMod(ARC.target) !== i) ARC.target = Math.round(ARC.pos + arcWrap(i - ARC.pos)); arcAnimate(); arcLabel(i); }
+function arcLabel(i) { const t = TABS[i]; const l = $('#arcLbl'); if (l && t) { l.textContent = t.label; ARC.el.style.setProperty('--c', t.color); } ARC.items.forEach((b, j) => b.classList.toggle('on', j === i)); }
+function arcAnimate() {
+  if (ARC.raf) return;
+  let last = 0;
+  const step = now => {
+    const dt = last ? Math.min(.05, (now - last) / 1000) : 1 / 60; last = now;
+    ARC.pos += (ARC.target - ARC.pos) * (1 - Math.exp(-dt * (REDUCED ? 60 : 11)));
+    if (Math.abs(ARC.target - ARC.pos) < .002) ARC.pos = ARC.target;
+    arcLayout();
+    ARC.raf = ARC.pos !== ARC.target ? requestAnimationFrame(step) : 0;
+  };
+  ARC.raf = requestAnimationFrame(step);
+}
+function arcLayout() {
+  if (!ARC.el) return;
+  const vert = arcVertical(), { ang } = arcStep(), R = vert ? 300 : 300;
+  const W = ARC.el.clientWidth, H = ARC.el.clientHeight;
+  // the ring sits at the anchor; the curve's centre is off-screen behind it
+  const ax = vert ? 70 : W / 2, ay = vert ? H / 2 : 54;
+  ARC.items.forEach((b, i) => {
+    const d = arcWrap(i - ARC.pos), ad = Math.abs(d), a = d * ang;
+    const x = vert ? ax - R * (1 - Math.cos(a)) : ax + R * Math.sin(a);
+    const y = vert ? ay + R * Math.sin(a) : ay + R * (1 - Math.cos(a));
+    const s = ad < 1 ? 1 - ad * .26 : Math.max(.46, .74 - (ad - 1) * .14);
+    b.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%) scale(${s.toFixed(3)})`;
+    b.style.opacity = (ad > 2.6 ? 0 : 1 - Math.max(0, ad - 1.7) * .9).toFixed(2);
+    b.style.zIndex = 10 - Math.round(ad);
+  });
 }
 
-function pmTap(p) {
-  let best = null, bd = 22 * 22;
-  for (const q of PM.pts) { if (!q.m || q.dz < .42) continue; const dx = q.sx - p.x, dy = q.sy - p.y, d2 = dx * dx + dy * dy; if (d2 < bd) { bd = d2; best = q; } }
-  if (!best) { PM.tip.classList.remove('on'); return; }
-  const m = best.m, h = PM.heat[m];
-  PM.flash = { m, t: (performance.now() - PM.t0) / 1000 };
-  let line;
-  if (m === 'head') line = h ? h.what : tasksOn(today()).length ? 'No tasks done yet today' : 'Nothing on today';
-  else if (h) line = `${esc(h.what)} · ${rel(h.d)}`;
-  else {
-    const next = [0, 1, 2, 3, 4, 5, 6].map(n => iso(addDays(parse(today()), n))).find(d => (MUSCLE[wo(d).s] || []).includes(m) && !wo(d).done);
-    line = m === 'heart' ? 'No cardio this week' : `Not trained this week${next ? ` · ${wo(next).s} ${rel(next).toLowerCase()}` : ''}`;
-  }
-  const tip = PM.tip;
-  tip.innerHTML = `<b>${MUSCLE_NAME[m]}</b><span>${line}</span>`;
-  tip.style.setProperty('--c', h ? h.color : 'rgba(255,255,255,.5)');
-  const x = Math.min(PM.w - 90, Math.max(90, p.x)), y = Math.max(40, p.y - 26);
-  tip.style.left = x + 'px'; tip.style.top = y + 'px';
-  tip.classList.remove('on'); void tip.offsetWidth; tip.classList.add('on');
-  PM.tipT = performance.now() + 3200;
-  haptic(8); pmWake();
+// One big number inside a living ring of particles. The lit share of the ring is the progress.
+function orb(k, val, unit, frac, color, dec) {
+  return `<div class="halo" style="--c:${color}"><canvas data-halo="${clamp01(frac)}" data-col="${color}"></canvas>
+    <div class="orb-v"><b>${nk('orb-' + k, val, dec)}</b><small>${unit}</small></div></div>`;
 }
-function pmFlip() { PM.target = Math.round(PM.rot / Math.PI) * Math.PI + Math.PI; pmWake(); }
+const HALO = { raf: 0, seeds: new WeakMap() };
+function haloWake() { if (!HALO.raf && !document.hidden) HALO.raf = requestAnimationFrame(haloFrame); }
+function haloFrame(now) {
+  HALO.raf = 0;
+  const cvs = $$(`#v-${S.ui.tab} canvas[data-halo]`); if (!cvs.length) return;
+  const t = now / 1000;
+  cvs.forEach(cv => {
+    const w = cv.clientWidth, h = cv.clientHeight; if (!w) return;
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    let sd = HALO.seeds.get(cv);
+    if (!sd) {
+      const [r, g, b] = hexRgb(cv.dataset.col), n = 520;
+      sd = { col: `rgb(${r},${g},${b})`, warm: `rgb(${Math.min(255, r + 90)},${Math.min(255, g + 70)},${Math.min(255, b + 40)})`, frac: 0, want: +cv.dataset.halo,
+        pts: Array.from({ length: n }, (_, i) => ({ a: i / n * 6.283 + Math.random() * .02, j: Math.random() * 2 - 1, s: Math.random(), ph: Math.random() * 6.283 })) };
+      HALO.seeds.set(cv, sd);
+    }
+    sd.frac += (sd.want - sd.frac) * .05;
+    const c = cv.getContext('2d'), cx = w / 2, cy = h / 2, R = Math.min(w, h) * .39;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+    c.globalCompositeOperation = 'lighter';
+    for (const p of sd.pts) {
+      const a = p.a + t * .06, n = Math.sin(a * 3 + t * 1.3) * .5 + Math.sin(a * 7 - t * .9) * .3 + Math.sin(a * 13 + t * 2.1) * .2;
+      const r = R + n * R * .09 + p.j * R * (.05 + .12 * p.s) + Math.sin(t * 2 + p.ph) * 1.5;
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      // progress runs clockwise from the top
+      const rel = ((p.a + Math.PI / 2) % 6.283 + 6.283) % 6.283 / 6.283, lit = rel <= sd.frac;
+      c.fillStyle = lit ? (p.s > .7 ? sd.warm : sd.col) : 'rgb(200,210,240)';
+      c.globalAlpha = (lit ? .6 + .4 * p.s : .2 + .22 * p.s) * (.7 + .3 * Math.sin(t * 3 + p.ph));
+      const z = (lit ? 1.4 : 1) * (.8 + p.s * 1.6);
+      c.fillRect(x - z / 2, y - z / 2, z, z);
+    }
+    c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+  });
+  if (!REDUCED) HALO.raf = requestAnimationFrame(haloFrame);
+}
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 
 /* ---------- notes ----------
    Plain text. The first line is the title. Notes sync like tasks. */
@@ -1950,7 +1959,7 @@ function renderNotes() {
   const pinned = all.filter(n => n.pin), rest = all.filter(n => !n.pin);
   const week = all.filter(n => (n.created || 0) >= mondayOf(new Date()).getTime()).length;
   return hero('Notes', all.length ? 'Your notes' : 'Notes', all.length ? `${all.length} note${all.length === 1 ? '' : 's'} · ${week} this week` : 'Ideas, lists, anything worth keeping', '', orb('notes', all.length, all.length === 1 ? 'note' : 'notes', Math.min(1, week / 7), '#bf5af2')) + `
-    <section class="card cap anim" style="--i:1">
+    <section class="card cap anim lightp" style="--i:1">
       <textarea id="capText" rows="3" placeholder="Write something down… the first line becomes the title">${esc(NOTE_DRAFT)}</textarea>
       <div class="cap-row"><div class="chips">${CAT_ORDER.map(k => `<button class="chip ${NOTE_CAT === k ? 'on' : ''}" style="--c:${CATS[k].color};--on:#fff" data-act="cap-cat" data-v="${k}">${CATS[k].label}</button>`).join('')}</div>
         <button class="btn white" data-act="note-save">Save</button></div>
@@ -1965,14 +1974,6 @@ function filterNotes(q) {
   $$('#v-notes .note').forEach(el => { const hit = !q || el.dataset.q.includes(q); el.hidden = !hit; if (hit) shown++; });
   $$('#v-notes .lbl').forEach(l => { const g = l.nextElementSibling; l.hidden = g && ![...g.children].some(c => !c.hidden); });
   const none = $('#v-notes .notes-none'); if (none) none.hidden = shown > 0;
-}
-
-// A ring of drifting dots around one big number, for the top of a tab.
-function orb(k, val, unit, frac, color, dec) {
-  const R = 47, C = +(2 * Math.PI * R).toFixed(2);
-  return `<div class="orb" style="--c:${color}"><svg viewBox="0 0 120 120"><circle class="orb-d1" cx="60" cy="60" r="57"/><circle class="orb-d2" cx="60" cy="60" r="52"/>
-    <circle class="orb-t" cx="60" cy="60" r="${R}"/><circle class="ring orb-p" cx="60" cy="60" r="${R}" transform="rotate(-90 60 60)" style="--C:${C}" data-pk="orb-${k}" data-to="${clamp01(frac)}"/></svg>
-    <div class="orb-v"><b>${nk('orb-' + k, val, dec)}</b><small>${unit}</small></div></div>`;
 }
 
 // Sessions per week: one bar per week, filled by how many planned sessions got done.
@@ -1993,8 +1994,12 @@ function weekBars() {
 }
 
 /* ---------- views ---------- */
-function hero(kicker, title, sub, right = '', lead = '') {
-  return `<div class="hero anim${lead ? ' has-orb' : ''}" style="--i:0">${lead}<div class="hero-main"><div class="kicker">${kicker}</div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div>${right ? `<div class="hero-r">${right}</div>` : ''}</div>`;
+function hero(kicker, title, sub, right = '', lead = '', chips = []) {
+  const cs = chips.filter(Boolean);
+  return `<section class="hero hst anim" style="--i:0">
+    <div class="hst-main">${lead ? `<div class="hst-lead">${lead}</div>` : ''}<div class="hero-main"><div class="kicker">${kicker}</div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div></div>
+    ${cs.length ? `<div class="hst-chips">${cs.map(([v, l, attr]) => `<${attr ? 'button' : 'div'} class="hchip" ${attr || ''}><b>${v}</b><span>${l}</span></${attr ? 'button' : 'div'}>`).join('')}</div>` : ''}
+    ${right ? `<div class="hero-r">${right}</div>` : ''}</section>`;
 }
 const weekNav = () => `<div class="wnav"><button class="btn icon" data-act="prev" aria-label="Previous week">‹</button><button class="btn" data-act="thisweek">${isCurWeek() ? 'This week' : 'Jump to today'}</button><button class="btn icon" data-act="next" aria-label="Next week">›</button></div>`;
 
@@ -2058,74 +2063,83 @@ function sessionArt(d, opts = {}) {
 }
 
 function renderToday() {
-  const d = today(), wk = curWeek(), hrs = weekHours(wk), goal = +S.settings.hoursGoal;
+  const d = today(), wk = curWeek();
   const plan = wk.filter(x => wo(x).s !== 'REST'), sDone = plan.filter(x => wo(x).done).length;
   const apps = appsIn(wk), ag = +S.settings.appGoal || 0;
-  const list = tasksOn(d), left = list.filter(t => !isDone(t, d)).length, ov = overdue();
+  const list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, left = list.length - done, ov = overdue();
   const hr = new Date().getHours(), greet = hr < 5 ? 'Late night' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-  const w = wo(d), sh = S.shifts[d];
-  const summary = [left ? `${left} task${left === 1 ? '' : 's'} left` : list.length ? 'All tasks done' : 'No tasks yet', w.s === 'REST' ? 'Rest day' : `${sessName(w.s)}${w.done ? ' ✓' : ''}`, S.clock ? 'On the clock' : shiftHours(sh) ? `${t12(sh.start)}–${t12(sh.end)} shift` : null].filter(Boolean).join(' · ');
-
-  const follow = S.jobs.filter(needsFollow).slice(0, 3);
-  const qs = quests(), qd = qs.filter(q => (q.frac ? q.now : q.now / q.goal) >= 1).length;
-  const slip = slipped();
+  const w = wo(d), pk = periodFor(d), pHours = periodHours(pk) + extraHours(pk), rate = +S.settings.rate;
+  const { lvl, into, need } = levelFor(xpTotal());
+  const follow = S.jobs.filter(needsFollow).slice(0, 3), slip = slipped();
   const tmr = iso(addDays(parse(d), 1)), tw = wo(tmr), tsh = S.shifts[tmr], tTasks = tasksOn(tmr).length;
   const nexts = [
     ...follow.map(j => `<div class="nitem" style="--c:var(--green)"><div class="ni">${esc(j.company[0] || '?')}</div><div class="nb"><b>Follow up · ${esc(j.company)}</b><span>Applied ${daysBetween(j.date, d)} days ago</span></div><button class="btn tint sm" style="--c:var(--green)" data-act="followed" data-id="${j.id}">Done</button></div>`),
     `<div class="nitem" style="--c:var(--indigo)"><div class="ni">${I.week}</div><div class="nb"><b>Tomorrow</b><span>${[shiftHours(tsh) ? `${t12(tsh.start)}–${t12(tsh.end)}` : 'No shift', tw.s === 'REST' ? 'Rest' : sessName(tw.s), `${tTasks} task${tTasks === 1 ? '' : 's'}`].join(' · ')}</span></div><button class="btn sm" data-tab="week" data-sel="${tmr}">Open</button></div>`,
-    (() => { const p = periodFor(today()), left = daysBetween(today(), p.end), rate = +S.settings.rate, h = periodHours(p);
-      const ex = extraHours(p), total = h + ex;
-      const head = left === 0 ? 'Last day to enter hours' : left === 1 ? 'Hours due tomorrow' : left < 0 ? 'Period closed' : `Hours due ${DOW_LONG[dowIdx(p.end)]}`;
-      return left <= 2 && left >= -1 ? `<div class="nitem" style="--c:var(--teal)"><div class="ni">${I.hours}</div><div class="nb"><b>${head}</b><span>${fh(total)} h logged${rate ? ' · ≈ ' + money(total * rate) : ''} · paid ${DOW_LONG[dowIdx(p.payday)]}</span></div><button class="btn sm" data-tab="hours">Hours</button></div>` : ''; })(),
+    (() => { const left = daysBetween(d, pk.end), h = periodHours(pk), total = h + extraHours(pk);
+      const head = left === 0 ? 'Last day to enter hours' : left === 1 ? 'Hours due tomorrow' : left < 0 ? 'Period closed' : `Hours due ${DOW_LONG[dowIdx(pk.end)]}`;
+      return left <= 2 && left >= -1 ? `<div class="nitem" style="--c:var(--teal)"><div class="ni">${I.hours}</div><div class="nb"><b>${head}</b><span>${fh(total)} h logged${rate ? ' · ≈ ' + money(total * rate) : ''} · paid ${DOW_LONG[dowIdx(pk.payday)]}</span></div><button class="btn sm" data-tab="hours">Hours</button></div>` : ''; })(),
     ag && apps < ag ? `<div class="nitem" style="--c:var(--green)"><div class="ni">${I.jobs}</div><div class="nb"><b>${ag - apps} more application${ag - apps === 1 ? '' : 's'}</b><span>to hit ${ag} this week</span></div><button class="btn sm" data-tab="jobs">Log</button></div>` : '',
-    goal && hrs < goal ? `<div class="nitem" style="--c:var(--teal)"><div class="ni">${I.hours}</div><div class="nb"><b>${fh(goal - hrs)}h to target</b><span>${fh(hrs)} of ${goal} hours this week</span></div></div>` : '',
   ].filter(Boolean).join('');
-
-  const td = d, pk = periodFor(td), pHours = periodHours(pk) + extraHours(pk), rate = +S.settings.rate;
-  const { lvl, into, need } = levelFor(xpTotal()), streakW = weekStreak();
-  const cardioMin = cardioLogs().filter(l => l.ts >= mondayOf(new Date()).getTime()).reduce((a, l) => a + l.min, 0);
-  const chip = (k, label, val, unit, sub, c, attr) => `<button class="st-chip" style="--c:${c}" ${attr}><span class="k">${label}</span><b>${val}<small>${unit}</small></b><span class="s">${sub}</span></button>`;
-  const hinted = (() => { try { return localStorage.getItem('daybook_pm_hint'); } catch (e) { return 1; } })();
-  const stage = `<section class="card g12 stage anim" style="--i:0">
-      <div class="st-top">
-        <button class="st-id" data-act="progress"><span class="st-lv"><small>LV</small>${lvl}</span><span class="st-who"><b>${greet}, ${esc(S.settings.name || 'there')}</b><span>${longDate(d)}</span>${pbar('xp', into / need, 'var(--yellow)')}<em>${into} / ${need} XP to level ${lvl + 1}</em></span></button>
+  // one big button for whatever matters most right now
+  let cta, alt = '';
+  if (S.clock) cta = `<button class="pn-cta out" data-act="clock-out"><span>Clock out</span><em data-clock>0:00:00</em><i>${I.hours}</i></button>`;
+  else if (w.s !== 'REST' && !w.done) { cta = `<button class="pn-cta" data-act="open-session" data-date="${d}"><span>Start ${esc(sessName(w.s))}</span><em>${w.s}${w.prog ? ` · ${w.prog.done}/${w.prog.total}` : ''}</em><i>${I.play}</i></button>`; alt = `<button class="pn-alt" data-act="clock-in" aria-label="Clock in">${I.hours}</button>`; }
+  else cta = `<button class="pn-cta" data-act="clock-in"><span>Clock in</span><em>${shiftHours(S.shifts[d]) ? `${fh(shiftHours(S.shifts[d]))} h today` : 'Start the timer'}</em><i>${I.play}</i></button>`;
+  const dash = `<section class="dash anim" style="--i:0">
+    <div class="stg">
+      <div class="stg-top">
+        <button class="stg-sq" data-act="progress" aria-label="Level ${lvl}"><small>LV</small><b>${lvl}</b></button>
+        <div class="stg-hi"><span>${greet}</span><b>${esc(S.settings.name || 'there')}</b></div>
       </div>
-      <div class="st-body">
-        <div class="st-col">
-          ${chip('str', 'Strength', `${nk('st-s', sDone)}`, `/${plan.length}`, 'sessions this week', 'var(--orange)', 'data-tab="training"')}
-          ${chip('card', 'Cardio', nk('st-c', cardioMin), 'min', 'this week', 'var(--pink)', 'data-tab="training"')}
-          ${chip('foc', 'Focus', nk('st-f', list.length - left), `/${list.length}`, list.length ? 'tasks today' : 'no tasks yet', 'var(--indigo)', 'data-act="goto-tasks"')}
-        </div>
-        <div class="st-fig"><div id="pmSlot"></div>
-          <div class="st-hint ${hinted ? 'gone' : ''}">Drag to turn · tap a muscle</div>
-          <button class="st-flip" data-act="pm-flip" aria-label="Turn around">${I.repeat}</button></div>
-        <div class="st-col">
-          ${chip('hrs', 'Hours', nk('st-h', pHours, 1), 'h', rate ? `≈ ${money(pHours * rate)} this period` : 'this pay period', 'var(--blue)', 'data-tab="hours"')}
-          ${chip('car', 'Career', nk('st-j', apps), ag ? `/${ag}` : '', 'applications this week', 'var(--green)', 'data-tab="jobs"')}
-          ${chip('stk', 'Streak', nk('st-k', streakW), 'wk', streakW ? 'of full training weeks' : 'finish a week to start', 'var(--yellow)', 'data-tab="training"')}
-        </div>
-      </div>
-      <div class="st-foot"><span class="st-run">Today's run<b>${qd}/${qs.length}</b>${xpToday() ? `<em>+${xpToday()} XP</em>` : ''}</span>
-        <div class="qps">${qs.map(q => { const p = clamp01(q.frac ? q.now : q.now / q.goal); return `<span class="qp ${p >= 1 ? 'done' : ''}" style="--c:${q.c};--q:${p}"><i></i>${esc(q.label)}</span>`; }).join('')}</div></div>
-    </section>`;
+      <div id="buddySlot"></div>
+      <button class="stc l" data-tab="hours"><span class="stc-i">${I.hours}</span><b>${nk('dh', pHours, 1)}</b><span>Hours this period${rate ? `<br>≈ ${money(pHours * rate)}` : ''}</span></button>
+      <button class="stc r" data-tab="training"><span class="stc-i">${I.training}</span><b>${nk('ds', sDone)}<small>/${plan.length}</small></b><span>Sessions<br>this week</span></button>
+    </div>
+    <div class="pnl">
+      <div class="pn-h"><div><h2>${esc((S.settings.name || 'Player').toUpperCase())} ${new Date().getFullYear()}</h2><span>${longDate(d)}</span></div></div>
+      <div class="pn-score"><div><span>Done</span><b>${nk('pd', done)}</b></div><i></i><div><span>Left</span><b>${nk('pl', left)}</b></div></div>
+      <div class="pn-xp"><span>Level ${lvl}</span>${pbar('xp', into / need, '#18c29c')}<span>${into}/${need} XP</span></div>
+      ${ov.length ? `<div class="banner"><span>${ov.length} overdue from earlier</span><button class="btn sm tint" style="--c:var(--red)" data-act="rollover">Move to today</button></div>` : ''}
+      <ul class="tasks drop pn-list" data-drop="${d}">${list.map(t => taskLi(t, d)).join('') || '<li class="empty"><b>Nothing on today</b>Add a task below</li>'}</ul>
+      ${addForm(d, 'Add a task… try “call Tim fri #work”')}
+      <div class="pn-ctas">${cta}${alt}</div>
+    </div>
+  </section>`;
   const decisions = slip.length ? `<section class="card g12 anim slip-card" style="--i:2"><div class="ch"><h3>Needs a decision</h3><span class="sub">Reminder passed</span></div>
       <div class="decs">${slip.map(t => `<div class="dec" style="--c:${CATS[t.cat].color}"><div class="dec-h"><span class="dec-i">${I.bell}</span><div class="dec-t"><b>${esc(t.title)}</b><span>Was due ${t12(t.remind)}</span></div></div>
         <div class="dec-b"><button class="btn sm tint" style="--c:var(--green)" data-act="rm-done" data-id="${t.id}">Done</button><button class="btn sm" data-act="rm-later" data-id="${t.id}">+2h</button><button class="btn sm" data-act="rm-tomorrow" data-id="${t.id}">Tomorrow</button></div></div>`).join('')}</div></section>` : '';
-  return stage + `<div class="grid today-grid">
+  return dash + `<div class="grid today-grid">
     ${decisions}
-    <section class="card g7 anim tasks-card" id="tasksCard" style="--i:3">
-      <div class="ch"><h3>Today</h3><span class="sub">${list.length ? `${list.length - left} of ${list.length} done` : ''}</span></div>
-      ${ov.length ? `<div class="banner"><span>${ov.length} overdue from earlier</span><button class="btn sm tint" style="--c:var(--red)" data-act="rollover">Move to today</button></div>` : ''}
-      <ul class="tasks drop" data-drop="${d}">${list.map(t => taskLi(t, d)).join('') || '<li class="empty"><b>Clear for today</b>Add something below, or press Ctrl K</li>'}</ul>
-      ${addForm(d, 'Add a task… try “call Tim fri #work”')}
-    </section>
-    <div class="rail g5">
-      <section class="card anim disc-card" style="--i:4">${clockCard(d)}</section>
-      <section class="card tilecard focusable anim" style="--i:5">${sessionArt(d, { kicker: w.s === 'REST' ? 'Recovery' : `Today · ${w.s}` })}</section>
+    <div class="rail g12">
+      <section class="card anim disc-card" style="--i:3">${clockCard(d)}</section>
+      <section class="card tilecard focusable anim" style="--i:4">${sessionArt(d, { kicker: w.s === 'REST' ? 'Recovery' : `Today · ${w.s}` })}</section>
+      <section class="card anim next-card" style="--i:5"><div class="ch"><h3>Up next</h3></div><div class="nlist">${nexts || '<div class="empty"><b>All clear</b>Nothing waiting on you</div>'}</div></section>
     </div>
-    <section class="card g12 anim next-card" style="--i:6"><div class="ch"><h3>Up next</h3></div><div class="nlist">${nexts || '<div class="empty"><b>All clear</b>Nothing waiting on you</div>'}</div></section>
   </div>`;
 }
+
+// What the buddy knows about your day: its mood, its lights, and what it can tell you.
+window.buddyContext = function () {
+  const d = today(), list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, left = list.length - done;
+  const w = wo(d), hr = new Date().getHours(), name = S.settings.name || 'there', wk = curWeek(), ag = +S.settings.appGoal || 0, apps = appsIn(wk);
+  const cut = s => s.length > 44 ? s.slice(0, 42).trim() + '…' : s;
+  const lines = [], slip = slipped(), p = periodFor(d), due = daysBetween(d, p.end), sk = shakesToday();
+  if (slip.length) lines.push(`Don’t forget: ${esc(cut(slip[0].title))}`);
+  if (S.clock) lines.push(`On the clock for ${fmtDur(clockElapsed()).replace(/:\d\d$/, '')}.`);
+  if (left) { const nx = list.find(t => !isDone(t, d)); lines.push(`${left} left today. Next: ${esc(cut(nx.title))}`); }
+  else lines.push(list.length ? 'Your list is clear. Nice.' : 'Nothing on the list yet. Add something?');
+  lines.push(w.s === 'REST' ? 'Rest day. Walk, stretch, eat well.' : w.done ? `${esc(sessName(w.s))} is done. Recover well.` : `${esc(sessName(w.s))} is on today.`);
+  if (due >= 0 && due <= 2) lines.push(due === 0 ? 'Last day to enter your hours.' : `Hours are due in ${due} day${due === 1 ? '' : 's'}.`);
+  if (ag && apps < ag) lines.push(`${ag - apps} more application${ag - apps === 1 ? '' : 's'} to hit ${ag} this week.`);
+  if (!sk.p && hr >= 10) lines.push('Protein shake yet?');
+  const greet = hr < 5 ? `Up late, ${esc(name)}?` : hr < 12 ? `Morning, ${esc(name)}!` : hr < 17 ? `Hey ${esc(name)}!` : `Evening, ${esc(name)}!`;
+  return {
+    mode: S.clock && !S.clock.breakTs ? 'work' : (hr >= 23 || hr < 6) ? 'sleep' : 'idle',
+    training: w.s !== 'REST' && w.s !== 'HIIT' && !w.done, sessionDone: !!w.done, allDone: list.length > 0 && !left, late: hr >= 22,
+    leds: [S.clock || shiftHours(S.shifts[d]) ? 1 : 0, w.done ? 1 : w.prog ? w.prog.p : 0, ag ? apps / ag : 0],
+    lines, greet: `${greet} ${lines[0] || ''}`,
+  };
+};
 
 function renderWeek() {
   const dates = weekDates(), td = today(), hrs = weekHours(dates);
@@ -2153,7 +2167,7 @@ function renderWeek() {
     }).join('')}</div>
     <div class="grid" id="dayDetail">${dayDetail(sd)}</div>`;
   }
-  return hero(`Week ${weekNo(weekStart)}${isCurWeek() ? ' · this week' : ''}`, weekLabel(weekStart), `${fh(hrs)} hours · ${sDone}/${plan.length} sessions · ${left} open task${left === 1 ? '' : 's'}`, right) + body;
+  return hero(`Week ${weekNo(weekStart)}${isCurWeek() ? ' · this week' : ''}`, weekLabel(weekStart), '', right, '', [[`${fh(hrs)}<small>h</small>`, 'Hours', 'data-tab="hours"'], [`${sDone}<small>/${plan.length}</small>`, 'Sessions', 'data-tab="training"'], [left, `Open task${left === 1 ? '' : 's'}`]]) + body;
 }
 
 // The selected day's cards under the week row. Picking a day swaps only this, so the row never redraws or moves.
@@ -2192,8 +2206,8 @@ function renderHours() {
   const vals = weeks.map(w => weekHours(datesOf(w))), top = Math.max(goal, ...vals, 1);
   const nz = vals.filter(v => v > 0), avg = nz.length ? nz.reduce((a, b) => a + b, 0) / nz.length : 0;
   const right = `<button class="btn tint" data-act="copy-last">Copy last week</button><button class="btn fill" data-act="copy-summary">Copy summary</button>${weekNav()}`;
-  return hero(`Hours · ${weekLabel(weekStart)}`, rate ? `≈ ${money(hrs * rate)}` : `${worked} day${worked === 1 ? '' : 's'} worked`, [rate ? `${worked} day${worked === 1 ? '' : 's'} worked` : '', worked ? `avg ${fh(hrs / worked)}h a shift` : '', goal ? `${Math.round(hrs / goal * 100)}% of ${goal}h target` : ''].filter(Boolean).join(' · '), right, orb('hh', hrs, 'hours', goal ? hrs / goal : hrs / 40, '#64d2ff', true)) + `<div class="grid">
-    <section class="card g8 anim" style="--i:1"><div class="ch"><h3>Shifts</h3><span class="sub">Type times or tap a usual shift</span></div>${rows}</section>
+  return hero(`Hours · ${weekLabel(weekStart)}`, rate ? `≈ ${money(hrs * rate)}` : 'Hours', '', right, orb('hh', hrs, 'hours', goal ? hrs / goal : hrs / 40, '#64d2ff', true), [[worked, `Day${worked === 1 ? '' : 's'} worked`], worked ? [`${fh(hrs / worked)}<small>h</small>`, 'Avg shift'] : null, goal ? [`${Math.round(hrs / goal * 100)}<small>%</small>`, `of ${goal}h target`] : null]) + `<div class="grid">
+    <section class="card g8 anim lightp" style="--i:1"><div class="ch"><h3>Shifts</h3><span class="sub">Type times or tap a usual shift</span></div>${rows}</section>
     <div class="g4" style="display:flex;flex-direction:column;gap:16px">
       <section class="card anim" style="--i:2">${payCard()}</section>
       <section class="card anim" style="--i:3">${clockCard(td)}</section>
@@ -2253,7 +2267,7 @@ function renderTraining() {
   if (!BOOK) loadBook().then(() => { if (S.ui.tab === 'training') render(); }).catch(() => {});
   const streak = weekStreak();
   const lib = ['D1', 'D2', 'D3', 'D4'].map((k, i) => `<button class="focusable anim" data-act="open-session" data-s="${k}" style="--i:${i + 12}"><div class="art" style="background:${SESS[k].art}"><span class="wm">${k}</span><span class="code">${k} · ${flatEx(k.toLowerCase()).length} exercises</span><div class="nm">${esc(sessName(k))}</div><div class="ds">${esc(sessSub(k))}</div></div></button>`).join('');
-  return hero(src, plan.length - sDone > 0 ? `${plan.length - sDone} session${plan.length - sDone === 1 ? '' : 's'} to go` : 'Week complete', `${weekLabel(weekStart)} · ${streak ? `${streak}-week streak of full weeks` : 'Finish every planned session to start a streak'}`, `<a class="btn" href="${esc(S.settings.workoutUrl)}" target="_blank" rel="noopener">Workout app ${I.link}</a>${weekNav()}`, orb('tr', sDone, `of ${plan.length}`, plan.length ? sDone / plan.length : 0, '#ff9f0a')) + `
+  return hero(src, plan.length - sDone > 0 ? `${plan.length - sDone} session${plan.length - sDone === 1 ? '' : 's'} to go` : 'Week complete', weekLabel(weekStart), `<a class="btn" href="${esc(S.settings.workoutUrl)}" target="_blank" rel="noopener">Workout app ${I.link}</a>${weekNav()}`, orb('tr', sDone, `of ${plan.length}`, plan.length ? sDone / plan.length : 0, '#ff9f0a'), [[`${streak}<small>wk</small>`, 'Full-week streak'], [`${wkC.reduce((a, l) => a + l.min, 0)}<small>min</small>`, 'Cardio this week']]) + `
     <div class="wtiles">${tiles}</div>
     <div class="grid" style="margin-top:16px">
       <section class="card g7 anim" style="--i:8"><div class="ch"><h3>Benchmarks</h3><span class="sub">Shared with the workout app</span></div><div class="bms">${bms}</div></section>
@@ -2293,7 +2307,7 @@ function renderJobs() {
       <div class="jb"><b>${esc(j.company)}</b><span>${esc(j.role) || 'No role noted'}${age !== null ? ` · ${age === 0 ? 'today' : age + 'd ago'}` : ''}</span></div>
       <div class="jr">${needsFollow(j) ? `<button class="pill" style="--c:var(--orange)" data-act="followed" data-id="${j.id}">Follow up</button>` : ''}<span class="pill" style="--c:${STATUSES[j.status]}">${j.status}</span>${j.link ? `<a href="${esc(/^https?:/i.test(j.link) ? j.link : 'https://' + j.link)}" target="_blank" rel="noopener" aria-label="Open posting">${I.link}</a>` : ''}</div></div>`;
   }).join('');
-  return hero('Job search', g ? (n >= g ? 'Goal hit this week' : `${g - n} more to hit ${g}`) : 'Applications this week', `${counts.Applied} waiting to hear back · ${counts.Interview} interviewing · ${S.jobs.filter(needsFollow).length} need a follow-up`, '', orb('apps', n, g ? `of ${g}` : 'sent', g ? n / g : Math.min(1, n / 5), '#30d158')) + `<div class="grid">
+  return hero('Job search', g ? (n >= g ? 'Goal hit this week' : `${g - n} more to hit ${g}`) : 'Applications this week', '', '', orb('apps', n, g ? `of ${g}` : 'sent', g ? n / g : Math.min(1, n / 5), '#30d158'), [[counts.Applied, 'Waiting to hear', 'data-act="jfilter" data-v="Applied"'], [counts.Interview, 'Interviewing', 'data-act="jfilter" data-v="Interview"'], [S.jobs.filter(needsFollow).length, 'Need a follow-up']]) + `<div class="grid">
     <section class="card g12 anim" style="--i:1"><div class="ch"><h3>Log an application</h3><span class="sub">Paste a link and the company fills itself</span></div>
       <form class="jadd" id="jadd" autocomplete="off">
         <input class="jl" name="link" placeholder="Job link (optional)" inputmode="url">
@@ -2302,7 +2316,7 @@ function renderJobs() {
         <div class="seg" data-seg="jstat"><button type="button" class="on" data-act="jadd-status" data-v="Applied">Applied</button><button type="button" data-act="jadd-status" data-v="Wishlist">Wishlist</button></div>
         <button class="btn fill" style="--c:var(--green)">Add</button>
       </form></section>
-    <section class="card g12 anim" style="--i:2">
+    <section class="card g12 anim lightp" style="--i:2">
       <div class="segwrap"><div class="seg" data-seg="jf">${Object.keys(counts).map(s => `<button class="${f === s ? 'on' : ''}" data-act="jfilter" data-v="${s}">${s}<b>${counts[s]}</b></button>`).join('')}</div></div>
       ${rows || `<div class="empty">${S.jobs.length ? '<b>Nothing in this stage</b>Try another filter' : '<b>No applications yet</b>Try Ctrl K → “applied Patagonia - Campaigns Associate”'}</div>`}</section>
   </div>`;
@@ -2558,7 +2572,6 @@ function render() {
   syncAuto();
   const t = S.ui.tab, tab = TABS.find(x => x.k === t);
   document.documentElement.style.setProperty('--glow', tab.color);
-  $$('#nav > button, #tabbar > button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   $$('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + t));
   const root = $('#v-' + t), enter = FX.enter;
   const kept = {}, open = new Set();
@@ -2568,7 +2581,9 @@ function render() {
   // Plain re-renders (a toggle, a save) must never replay the entrance animation.
   clearTimeout(root._t); root.classList.remove('enter', 'enter-l', 'enter-r');
   root.innerHTML = VIEWS[t]();
-  if (t === 'today') pmMount();
+  if (t === 'today' && window.Buddy) Buddy.mount($('#buddySlot'));
+  window.Buddy && Buddy.update(buddyContext());
+  haloWake();
   if (!enter) root.querySelectorAll('details').forEach((el, i) => { if (open.has(i)) el.open = true; });
   centerRails(root, enter ? {} : kept);
   if (enter && !REDUCED) { void root.offsetWidth; root.classList.add(enter); root._t = setTimeout(() => root.classList.remove(enter), 1100); }
@@ -2577,7 +2592,7 @@ function render() {
   animateValues(root);
   $('#avatar').textContent = (S.settings.name || 'J')[0].toUpperCase();
   paintLevel();
-  { const on = $('#tabbar button.on'), ind = $('#tbInd'); if (on && ind) { ind.style.left = on.offsetLeft + 'px'; ind.style.width = on.offsetWidth + 'px'; } }
+  arcSync();
   island.live(); tick();
   FX = {};
 }
@@ -2659,6 +2674,7 @@ function clockOut() {
   const c = S.clock; if (!c) return;
   if (c.breakTs) { c.brkMs += Date.now() - c.breakTs; c.breakTs = null; }
   const start = hm(new Date(c.startTs)), end = hm(new Date()), brk = Math.round(c.brkMs / 6e4);
+  if (clockElapsed() < 60000 || start === end) { S.clock = null; commit(); return island.toast('Under a minute, nothing logged'); }
   withUndo(`Clocked out · ${fh(shiftHours({ start, end, brk }))}h logged`, () => { S.shifts[c.date] = { ...(S.shifts[c.date] || {}), start, end, brk }; S.clock = null; });
 }
 function logCardio(form) {
@@ -2719,8 +2735,6 @@ document.addEventListener('click', e => {
     case 'rest-add': if (REST) REST.end += 30000; return tick();
     case 'rest-skip': REST = null; island.key = null; return island.live();
     case 'shake': return toggleShake(v);
-    case 'pm-flip': return pmFlip();
-    case 'goto-tasks': { const c = $('#tasksCard'); if (c) { c.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' }); const i = c.querySelector('.qadd input'); i && setTimeout(() => i.focus({ preventScroll: true }), 400); } return; }
     case 'note-save': return addNote();
     case 'cap-cat': NOTE_CAT = NOTE_CAT === v ? null : v; $$('#v-notes .cap .chip').forEach(c => c.classList.toggle('on', c.dataset.v === NOTE_CAT)); return pop(el);
     case 'open-note': return openSheet('note', el.dataset.id);
@@ -2936,7 +2950,7 @@ setInterval(() => { tick(); island.live(); }, 1000);
 let lastDay = today();
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
-  pmWake();
+  haloWake();
   if (today() !== lastDay) { lastDay = today(); weekStart = mondayOf(new Date()); }
   render(); // picks up anything done in the workout app meanwhile
   syncNow();
@@ -2947,12 +2961,12 @@ addEventListener('storage', e => { if (e.key && (e.key.startsWith('workout_') ||
 let lastMode = weekMode();
 addEventListener('resize', () => {
   $$('.seg').forEach(s => placeInd(s, true));
+  arcLayout();
   if (weekMode() !== lastMode) { lastMode = weekMode(); if (S.ui.tab === 'week') render(); }
 });
 
 /* ---------- boot ---------- */
-$('#nav').innerHTML = TABS.map(t => `<button data-tab="${t.k}">${t.label}</button>`).join('');
-$('#tabbar').insertAdjacentHTML('beforeend', TABS.map(t => `<button data-tab="${t.k}">${I[t.k]}<span>${t.label}</span></button>`).join(''));
+arcBuild();
 $('#kbdHint').textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 island.el = $('#island');
 // A short boot sequence on a cold open; tapping skips it.
