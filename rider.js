@@ -682,7 +682,9 @@ function frame(now) {
   const lift = state.wardrobe && innerWidth <= 760 ? .62 : 0;   // wardrobe open: frame him in the top half, above the sheet
   const ty = -lift + (state.camY || (sit ? .25 : skiing ? 1.02 : .92)), tx = skiing ? state.x * .55 : 0;
   const tz = sit ? -.4 : 0;
-  camera.position.set(tx + Math.sin(a) * Math.cos(el) * dist, ty + Math.sin(el) * dist, tz + Math.cos(a) * Math.cos(el) * dist);
+  // a slow handheld drift, for the lofi feel
+  const da = REDUCED ? 0 : .035 * Math.sin(t * .13) + .015 * Math.sin(t * .31), de = REDUCED ? 0 : .012 * Math.sin(t * .09);
+  camera.position.set(tx + Math.sin(a + da) * Math.cos(el + de) * dist, ty + Math.sin(el + de) * dist, tz + Math.cos(a + da) * Math.cos(el + de) * dist);
   camera.lookAt(tx, ty - .05, tz);
   renderer.render(scene, camera);
   placeBubble();
