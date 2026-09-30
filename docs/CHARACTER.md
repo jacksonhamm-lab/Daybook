@@ -41,7 +41,32 @@
 
 - Push the current model further. Cheapest, but the ceiling is low.
 
-**Decision:** pending. Jackson is looking into VRoid.
+**Decision (2026-09-30): VRoid.** Jackson made the model: `Jackson.vrm` (kept outside
+the repo, see below).
+
+### The model
+
+- VRM 1.0, 14MB, 1.82m tall. 54 humanoid bones, spring-bone hair, MToon shading.
+- Expressions: happy, angry, sad, relaxed, surprised, blink (both / left / right),
+  mouth shapes (aa, ih, ou, ee, oh), neutral.
+- Current clothes are VRoid defaults: oversized white tee, black knee shorts, sneakers.
+- Loads with `@pixiv/three-vrm` 3.5.5 on our three.js r169 (tested). Clothing colours
+  can be changed live through each material's `litFactor` / `shadeColorFactor`
+  (tested), which is the basis for in-app colour customisation.
+- Meta: avatar use "only author", redistribution not allowed. It's Jackson's own model,
+  but **the GitHub repo is public**, so the file must not be committed.
+
+### Plan
+
+- **Soft clothing (jacket, baggy pants, boots): made in VRoid.** Code can't make fabric
+  that bends properly with the body. Keep the fabric textures white or light grey
+  so the app can tint them any colour.
+- **Hard gear: made in code and attached to bones.** Skis (Armada / Atomic Bent style
+  topsheets), poles, goggles, beanie or mask.
+- **Hosting:** serve the file from Cloudflare (KV or R2) through the Worker instead of
+  the repo. Compress textures first (target 3–5MB).
+- **Motion:** procedural skiing on the humanoid bones (downhill stance, carving,
+  tuck), plus Mixamo clips if useful. Hair springs will react to the speed.
 
 ## Constraints
 
