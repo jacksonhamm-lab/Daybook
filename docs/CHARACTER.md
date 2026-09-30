@@ -58,9 +58,20 @@ the repo, see below).
 
 ### Plan
 
-- **Soft clothing (jacket, baggy pants, boots): made in VRoid.** Code can't make fabric
-  that bends properly with the body. Keep the fabric textures white or light grey
-  so the app can tint them any colour.
+- **Soft clothing is generated in code from the body** (VRoid can't add ski clothes).
+  Prototype: `dress.js` in the scratchpad test page. It takes the body's triangles by
+  which bone moves them, subdivides them, reshapes them, and binds the result to the
+  same skeleton, so the clothes bend exactly like the body. Colours live in materials,
+  so recolouring is free.
+  - Jacket: **The North Face shell jacket** (Jackson rejected a Nuptse puffer as
+    "terrible"): smooth, a little loose, covers the top of the pants, black zip and
+    cuff tabs, white chest logo.
+  - Pants: **TNF shell snow pants**, wide and straight from thigh to ankle (his
+    reference photo), falling over the boots, logo on the wearer's right thigh. Legs
+    are pushed out from each leg's centre line to a minimum radius, not just inflated.
+  - Boots khaki, gloves black.
+  - Still to clean up: a gap at the front of the hem, the zip's end, jagged colour
+    edges.
 - **Hard gear: made in code and attached to bones.** Skis (Armada / Atomic Bent style
   topsheets), poles, goggles, beanie or mask.
 - **Hosting:** serve the file from Cloudflare (KV or R2) through the Worker instead of
