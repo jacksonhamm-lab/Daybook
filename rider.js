@@ -208,7 +208,7 @@ function stepSettings(dt, t) {
     for (let i = 0; i < f.n; i++) {
       if (f.life[i] <= 0) { if (Math.random() < dt * 2.5) { f.max[i] = f.life[i] = .8 + Math.random() * 1.2; P[i * 3] = o.x + (Math.random() - .5) * .15; P[i * 3 + 1] = .25; P[i * 3 + 2] = o.z + (Math.random() - .5) * .15; f.v[i * 3] = (Math.random() - .5) * .3; f.v[i * 3 + 1] = .6 + Math.random() * .7; f.v[i * 3 + 2] = (Math.random() - .5) * .3; } else { A[i] = 0; continue; } }
       f.life[i] -= dt; const u = 1 - f.life[i] / f.max[i];
-      [0, 1, 2].forEach(k => { P[i * 3 + k] += f.v[i * 3 + k] * dt; }); P[i * 3] += Math.sin(t * 3 + i) * dt * .15;
+      P[i * 3] += f.v[i * 3] * dt + Math.sin(t * 3 + i) * dt * .15; P[i * 3 + 1] += f.v[i * 3 + 1] * dt; P[i * 3 + 2] += f.v[i * 3 + 2] * dt;
       S[i] = .02 + .015 * (1 - u); A[i] = (1 - u) * (.6 + .4 * Math.sin(t * 20 + i));
     }
     ['position', 'size', 'alpha'].forEach(k => { f.g.attributes[k].needsUpdate = true; });
@@ -266,11 +266,11 @@ function stepWorld(dt, skiing) {
     }
   }
   { // spray: short-lived puffs that fly out, fall and get left behind
-    const f = world.spray, P = f.g.attributes.position.array, S = f.g.attributes.size.array, A = f.g.attributes.alpha.array;
+    const f = world.spray, P = f.g.attributes.position.array, S = f.g.attributes.size.array, A = f.g.attributes.alpha.array, drag = Math.exp(-1.8 * dt);
     for (let i = 0; i < f.n; i++) {
       if (f.life[i] <= 0) { A[i] = 0; continue; }
       f.life[i] -= dt; const u = 1 - f.life[i] / f.max[i];
-      f.v[i * 3 + 1] -= 6 * dt; [0, 1, 2].forEach(k => { f.v[i * 3 + k] *= Math.exp(-1.8 * dt); P[i * 3 + k] += f.v[i * 3 + k] * dt; });
+      f.v[i * 3 + 1] -= 6 * dt; for (let k = 0; k < 3; k++) { f.v[i * 3 + k] *= drag; P[i * 3 + k] += f.v[i * 3 + k] * dt; }
       P[i * 3 + 2] -= d; if (P[i * 3 + 1] < 0) { P[i * 3 + 1] = 0; f.v[i * 3 + 1] = 0; }
       S[i] = .07 + .34 * Math.sqrt(u); A[i] = .7 * (1 - u) * (1 - u);
     }
@@ -640,7 +640,10 @@ function size() {
   camera.userData.small = h < 260;   // the floating window on a page: frame him, not the scene
   camera.updateProjectionMatrix();
   pointScale = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
-  [world.flakes, world.spray].forEach(f => { f.p.material.uniforms.scale.value = pointScale; });
+  // every particle pool is sized to the canvas (the floating window is much smaller than the stage)
+  [world.flakes, world.spray, world.stars, world.sparks, world.dust, world.steam].forEach(f => { if (f) f.p.material.uniforms.scale.value = pointScale; });
+  // draw once now, replacing any pending frame so there's never more than one loop running
+  if (raf) { cancelAnimationFrame(raf); raf = 0; }
   frame(performance.now());
 }
 const live = () => ok && wrap && wrap.isConnected && !document.hidden && inView;

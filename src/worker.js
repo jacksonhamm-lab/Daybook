@@ -195,7 +195,7 @@ async function runReminders(hash, env) {
     const anchorMs = Date.parse((st.payAnchor || '2026-09-25') + 'T12:00:00Z');
     const todayMs = Date.parse(now.date + 'T12:00:00Z');
     const gapDays = Math.round((todayMs - anchorMs) / 864e5);
-    const send = +st.paySubmitDays ?? 4;
+    const send = st.paySubmitDays == null ? 4 : +st.paySubmitDays;
     const untilPayday = ((-gapDays % cyc) + cyc) % cyc; // days from today to the next payday
     if (untilPayday === send) {
       outgoing.push({ key: 'submit', payload: { title: 'Send your hours', body: 'Payday Friday — Len enters them tomorrow', tag: 'submit', url: '/' } });
@@ -212,14 +212,17 @@ async function runReminders(hash, env) {
   (S.tasks || []).forEach(t => {
     if (!t.remind || !occursOn(t, now.date) || isDone(t, now.date)) return;
     const payload = { title: t.title, body: 'Due now · swipe for Done or Tomorrow', tag: 't:' + t.id, url: '/', id: t.id, date: now.date, badge: open.length };
-    if (dueNow(now.hm, t.remind) && !already('t:' + t.id)) { outgoing.push({ key: 't:' + t.id, payload, stamp: t.id }); return; }
-    if (!nag || !already('t:' + t.id) || mins(now.hm) > mins('22:30')) return;
+    const k = 't:' + t.id + '@' + t.remind;
+    if (dueNow(now.hm, t.remind) && !already(k)) { outgoing.push({ key: k, payload, stamp: t.id }); return; }
+    if (!nag || !already(k) || mins(now.hm) > mins('22:30')) return;
     const late = mins(now.hm) - mins(t.remind), last = sent.last[t.id] || 0;
     if (Date.now() - last < nag * 60000 - 20000) return;
     payload.body = `Still open · ${late < 60 ? late + ' min' : Math.floor(late / 60) + 'h ' + (late % 60) + 'm'} overdue · Done or Tomorrow`;
     outgoing.push({ key: null, payload, stamp: t.id });
   });
 
+  // forget nag timestamps for reminders that are no longer open
+  const openIds = new Set(open.map(t => t.id)); Object.keys(sent.last).forEach(id => { if (!openIds.has(id)) delete sent.last[id]; });
   if (!outgoing.length) return;
   for (const item of outgoing) {
     await deliver(hash, subs, item.payload, env);

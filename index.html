@@ -1125,8 +1125,8 @@ body.home .main{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
   <div class="sp"></div>
   <button class="btn qa-btn" data-act="spot-open"><svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="qa-t">Quick add</span><span class="kbd" id="kbdHint">Ctrl K</span></button>
   <span id="syncDot" class="sync-dot off" title="Sync status"></span>
-  <button class="lvl" data-act="progress" title="Progress" id="lvlBadge"></button>
-  <button class="avatar" data-act="settings" title="Settings" id="avatar">J</button>
+  <button class="lvl" data-act="progress" title="Progress" aria-label="Progress" id="lvlBadge"></button>
+  <button class="avatar" data-act="settings" title="Settings" aria-label="Settings" id="avatar">J</button>
 </header>
 
 <main class="main" id="main">
@@ -1232,6 +1232,7 @@ function load() {
       if (!raw) continue;
       const d = defaults();
       const s = { ...d, ...raw, settings: { ...d.settings, ...raw.settings }, ui: { ...d.ui, ...raw.ui } };
+      if (s.ui.tab === 'notes') s.ui.tab = 'week';   // Notes now lives under Plan
       if (!TABS.some(t => t.k === s.ui.tab)) s.ui.tab = 'today';
       return s;
     } catch (e) {}
@@ -1338,8 +1339,9 @@ async function syncNow(depth = 0) {
     if (put.status === 409) { SYNC.busy = false; return syncNow(depth + 1); }
     if (put.status === 401) throw new Error(codeDetail('PUT', put));
     if (!put.ok) throw new Error('Server said ' + put.status);
-    S = { ...merged, ui: S.ui, clock: S.clock };
-    LAST = JSON.parse(JSON.stringify(S));
+    const next = { ...merged, ui: S.ui, clock: S.clock };
+    if (JSON.stringify(forServer(S)) !== before) { S = { ...mergeState(S, merged), ui: S.ui, clock: S.clock }; LAST = JSON.parse(JSON.stringify(next)); syncSoon(); }   // you changed something mid-sync: keep it
+    else { S = next; LAST = JSON.parse(JSON.stringify(S)); }
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
     SYNC.at = Date.now(); SYNC.state = 'ok'; SYNC.err = '';
     try { localStorage.setItem('daybook_sync_at', String(SYNC.at)); } catch (e) {}
@@ -2373,6 +2375,7 @@ function renderToday(part) {
       <div class="stg-acts">${S.clock ? `<button class="stg-pill" style="--c:#64d2ff" data-act="attr" data-k="grind" data-v="hours:"><i class="stg-dot"></i>${S.clock.breakTs ? 'On break' : 'On the clock'} <span data-clock>0:00:00</span></button>` : ''}${slip.length ? `<button class="stg-pill" style="--c:#ff453a" data-act="attr" data-k="focus" data-v="week:">${I.bell}${slip.length} need${slip.length === 1 ? 's' : ''} a decision</button>` : ''}</div>
       <div class="stg-date">${longDate(d)}</div>
     </section>`;
+  if (!part) return stage;
   const M = [];
   if (slip.length) M.push(mod('decide', { title: 'Needs a decision', value: slip.length, sub: 'Reminder passed', icon: IC.bell, c: 'var(--red)', alert: true, open: true, i: 1,
     body: `<div class="decs">${slip.map(t => `<div class="dec" style="--c:${CATS[t.cat].color}"><div class="dec-h"><span class="dec-i">${I.bell}</span><div class="dec-t"><b>${esc(t.title)}</b><span>Was due ${t12(t.remind)}</span></div></div>
@@ -2971,19 +2974,22 @@ function openPage(v, chip) {
   const tab = v.split(':')[0], p = TABS.find(x => x.k === tab);
   if (!p || GROW.busy) return;
   if (REDUCED || !chip || !chip.animate || tab === S.ui.tab) { if (tab !== S.ui.tab) history.pushState({ page: tab }, ''); return goAttr(v); }
-  GROW.busy = true;
+  GROW.busy = true; GROW.chip = chip.dataset.k;
   const veilEl = veil(chip.style.getPropertyValue('--c') || p.color), from = rectClip(chip.getBoundingClientRect());
   veilEl.animate([{ clipPath: from, opacity: .7 }, { clipPath: 'inset(0px 0px 0px 0px round 0px)', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
   setTimeout(() => {
     history.pushState({ page: tab }, '');
     goAttr(v);
+    const back = $(`#v-${tab} .pg-back`); back && back.focus({ preventScroll: true });
     veilEl.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 280, easing: 'ease-out', fill: 'forwards' });
     setTimeout(() => { veilEl.remove(); GROW.busy = false; }, 300);
   }, 420);
 }
-function goHome() {
+function goHome(fromPop) {
   const from = S.ui.tab, p = TABS.find(x => x.k === from);
-  if (from === 'today' || GROW.busy) return;
+  if (from === 'today') return;
+  if (GROW.busy) { setTimeout(() => goHome(fromPop), 250); return; }
+  if (!fromPop && history.state && history.state.page) { history.back(); return; }   // popstate brings us back here
   closeSheet();
   if (REDUCED || !document.body.animate) return switchTab('today');
   GROW.busy = true;
@@ -2991,19 +2997,19 @@ function goHome() {
   veilEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 170, easing: 'ease-out', fill: 'forwards' });
   setTimeout(() => {
     switchTab('today');
-    const chip = $(`#v-today .attr[data-k="${p.attr}"]`), to = chip ? rectClip(chip.getBoundingClientRect()) : 'inset(45% 45% 45% 45% round 20px)';
+    const chip = $(`#v-today .attr[data-k="${GROW.chip && TABS.find(x => x.k === from) ? GROW.chip : p.attr}"]`) || $(`#v-today .attr[data-k="${p.attr}"]`), to = chip ? rectClip(chip.getBoundingClientRect()) : 'inset(45% 45% 45% 45% round 20px)';
     veilEl.animate([{ clipPath: 'inset(0px 0px 0px 0px round 0px)', opacity: 1 }, { clipPath: to, opacity: .35 }], { duration: 420, easing: 'cubic-bezier(.3,.7,.2,1)', fill: 'forwards' });
     setTimeout(() => { veilEl.remove(); GROW.busy = false; chip && pop(chip); }, 440);
   }, 180);
 }
-addEventListener('popstate', () => { if (S.ui.tab !== 'today') goHome(); });
+addEventListener('popstate', () => { if (S.ui.tab !== 'today') goHome(true); });
 // drag a page down from the top to go back to Dex
 (() => {
   let d = null;
   const views = () => $$('.view.on');
   addEventListener('touchstart', e => {
     if (S.ui.tab === 'today' || SHEET || scrollY > 2 || e.touches.length > 1 || GROW.busy) return;
-    if (!e.target.closest('#main') || e.target.closest('input,textarea,select,.strip,.wtiles,.board,.chips,.pg-tabs,.ptrack')) return;
+    if (!e.target.closest('#main') || e.target.closest('input,textarea,select,.strip,.wtiles,.board,.chips')) return;
     d = { x: e.touches[0].clientX, y: e.touches[0].clientY, dy: 0, on: false };
   }, { passive: true });
   addEventListener('touchmove', e => {
@@ -3028,6 +3034,7 @@ function placeDex(t) {
   if (show && !box) { box = document.createElement('button'); box.id = 'dexPip'; box.className = 'dexpip'; box.dataset.act = 'home'; box.setAttribute('aria-label', 'Back to Dex'); box.innerHTML = '<span class="pip-t"></span>'; document.body.append(box); }
   if (!box) return;
   box.classList.toggle('on', show);
+  if (!show) return Buddy.mount($('#buddySlot'));   // parked on the hidden stage, so it stops drawing
   if (show) { Buddy.mount(box); box.querySelector('.pip-t').innerHTML = c.mode === 'work' ? '<span data-clock>0:00:00</span>' : c.sessionLive ? 'Training' : 'Train day'; }
 }
 function switchTab(k, sel) {
@@ -3146,7 +3153,6 @@ document.addEventListener('click', e => {
     case 'mod': return toggleMod(v);
     case 'attr': haptic(6); return openPage(v, el);
     case 'home': haptic(6); return goHome();
-    case 'page': haptic(6); if (v !== S.ui.tab) { FX.enter = 'enter'; switchTab(v); } return;
     case 'srow': { const row = el.closest('.srow2'), open = !row.classList.contains('open'); SROW = open ? v : 'none'; $$('#v-hours .srow2').forEach(r => r.classList.toggle('open', open && r === row)); return haptic(4); }
     case 'note-save': return addNote();
     case 'cap-cat': NOTE_CAT = NOTE_CAT === v ? null : v; $$('#v-notes .cap .chip').forEach(c => c.classList.toggle('on', c.dataset.v === NOTE_CAT)); return pop(el);
@@ -3204,7 +3210,7 @@ document.addEventListener('click', e => {
     case 'toggle-brief': S.settings.remindDaily = !S.settings.remindDaily; commit(); return refreshSheet();
     case 'tm-remind': { const t = task(); t.remind = v || null; save(); return refreshSheet(); }
     case 'rm-done': { const t = S.tasks.find(x => x.id === el.dataset.id); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } else t.done = true; commit(); return island.toast('Done', { icon: I.check, color: '#30d158' }); }
-    case 'rm-later': { const t = S.tasks.find(x => x.id === el.dataset.id); const n = new Date(Date.now() + 2 * 3600e3); t.remind = pad(n.getHours()) + ':' + pad(n.getMinutes()); commit(); return island.toast('Back at ' + t12(t.remind), { icon: I.bell, color: '#ff9f0a' }); }
+    case 'rm-later': { const t = S.tasks.find(x => x.id === el.dataset.id); const n = new Date(Date.now() + 2 * 3600e3); t.remind = pad(n.getHours()) + ':' + pad(n.getMinutes()); if (iso(n) !== today() && !t.repeat) t.date = iso(n); commit(); return island.toast('Back at ' + t12(t.remind), { icon: I.bell, color: '#ff9f0a' }); }
     case 'rm-tomorrow': { const t = S.tasks.find(x => x.id === el.dataset.id); t.date = iso(addDays(parse(today()), 1)); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } commit(); return island.toast('Moved to tomorrow', { icon: I.arrow, color: '#0a84ff' }); }
     case 'df-cat': DRAFT.cat = v; return composeStep(1);
     case 'df-when': DRAFT.date = v; return composeStep(2);
@@ -3387,7 +3393,7 @@ document.addEventListener('keydown', e => {
   if (k === 'ArrowLeft') return shiftWeek(-1);
   if (k === 'ArrowRight') return shiftWeek(1);
   if (k.toLowerCase() === 't') return shiftWeek(0);
-  if ('123456'.includes(k)) return switchTab(TABS[+k - 1].k);
+  if (/^[1-9]$/.test(k) && +k <= TABS.length) return switchTab(TABS[+k - 1].k);
 });
 
 /* ---------- live ticking ---------- */
