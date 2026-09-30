@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/jsm/utils/BufferGeometryUtils.js';
 import { VRMLoaderPlugin, VRMUtils } from './vendor/three-vrm.module.min.js';
-import { dress, toon } from './dress.js';
+import { dress, toon, INK } from './dress.js';
 import { gear, fists } from './gear.js';
 import { physique } from './physique.js';
 
@@ -47,8 +47,9 @@ function buildScene() {
   cv = renderer.domElement;
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(30, 1, .1, 90);
-  scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x2a2f48, 1.2));
-  const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(1.5, 3, 2.5); scene.add(key);
+  world.hemi = new THREE.HemisphereLight(0xdfe8ff, 0x2a2f48, 1.2); scene.add(world.hemi);
+  const key = world.key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(1.5, 3, 2.5); scene.add(key);
+  world.outdoor = new THREE.Group(); scene.add(world.outdoor);
 
   // groomed snow with faint old tracks; it scrolls away under him, and fades out at the edges
   const snow = canvasTex(512, 512, (x, W, H) => {
@@ -59,7 +60,7 @@ function buildScene() {
   snow.wrapS = snow.wrapT = THREE.RepeatWrapping; snow.repeat.set(5, 5); snow.anisotropy = 8;
   const fade = canvasTex(256, 256, (x, W, H) => { const g = x.createRadialGradient(W / 2, H * .56, 0, W / 2, H * .56, W / 2); g.addColorStop(0, '#fff'); g.addColorStop(.3, '#ddd'); g.addColorStop(.75, '#333'); g.addColorStop(1, '#000'); x.fillStyle = g; x.fillRect(0, 0, W, H); });
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(26, 26), new THREE.MeshLambertMaterial({ color: 0x9aabc8, map: snow, alphaMap: fade, transparent: true, depthWrite: false }));
-  ground.rotation.x = -Math.PI / 2; ground.position.set(0, -.003, -3); ground.renderOrder = -1; scene.add(ground);
+  ground.rotation.x = -Math.PI / 2; ground.position.set(0, -.003, -3); ground.renderOrder = -1; world.outdoor.add(ground); world.fade = fade;
   world.snow = snow;
 
   // pines streaming past on both sides
@@ -72,7 +73,7 @@ function buildScene() {
   })();
   world.trees = Array.from({ length: 16 }, (_, i) => {
     const mats = [toon(0x3b2c22), toon(0x1f4a3e), toon(0xeef3fb)]; mats.forEach(m => { m.transparent = true; m.side = THREE.FrontSide; });
-    const m = new THREE.Mesh(pine, mats); scene.add(m);
+    const m = new THREE.Mesh(pine, mats); world.outdoor.add(m);
     const t = { m, mats }; placeTree(t, -34 + i * 2.6); return t;
   });
 
@@ -86,6 +87,8 @@ function buildScene() {
   world.flakes = pool(220, 0xf4f8ff);
   { const f = world.flakes, P = f.g.attributes.position.array; for (let i = 0; i < f.n; i++) { P[i * 3] = (Math.random() - .5) * 11; P[i * 3 + 1] = Math.random() * 5; P[i * 3 + 2] = -14 + Math.random() * 20; f.g.attributes.size.array[i] = .02 + Math.random() * .03; f.g.attributes.alpha.array[i] = .5 + Math.random() * .4; } }
   world.spray = pool(320, 0xf7faff);
+  world.pool = pool;
+  buildSettings();
 
   // ski tracks: two fading ribbons laid behind the skis
   world.tracks = ['l', 'r'].map(() => {
@@ -98,6 +101,89 @@ function buildScene() {
     m.frustumCulled = false; m.renderOrder = 0; scene.add(m);
     return { m, g, N, pts: [] };
   });
+}
+/* ---------- settings for the other outfits ---------- */
+const box = (parent, w, h, d, color, x, y, z, ry = 0) => { const g = new THREE.BoxGeometry(w, h, d), m = new THREE.Group(); m.add(new THREE.Mesh(g, toon(color)), new THREE.Mesh(g, INK)); m.position.set(x, y, z); m.rotation.y = ry; parent.add(m); return m; };
+const cyl = (parent, r, len, color, x, y, z, rot = [0, 0, 0], seg = 16) => { const g = new THREE.CylinderGeometry(r, r, len, seg), m = new THREE.Group(); m.add(new THREE.Mesh(g, toon(color)), new THREE.Mesh(g, INK)); m.position.set(x, y, z); m.rotation.set(...rot); parent.add(m); return m; };
+function floor(parent, draw) {
+  const t = canvasTex(512, 512, draw); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 4); t.anisotropy = 8;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.MeshLambertMaterial({ map: t, alphaMap: world.fade, transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; m.position.set(0, -.003, -2); m.renderOrder = -1; parent.add(m);
+}
+function buildSettings() {
+  // gym: rubber floor, a power rack with a loaded bar, a dumbbell rack, plates, dust in the light
+  const gym = world.gym = new THREE.Group(); scene.add(gym);
+  floor(gym, (x, W, H) => { x.fillStyle = '#2c2d31'; x.fillRect(0, 0, W, H); for (let i = 0; i < 4000; i++) { x.fillStyle = ['#3a3b40', '#232428', '#4a3f35'][i % 3]; x.fillRect(Math.random() * W, Math.random() * H, 2, 2); } x.strokeStyle = 'rgba(0,0,0,.45)'; x.lineWidth = 3; x.strokeRect(0, 0, W, H); });
+  const rack = new THREE.Group(); rack.position.set(-2.2, 0, -2.3); rack.rotation.y = .45; gym.add(rack);
+  [[-.6, -.5], [.6, -.5], [-.6, .5], [.6, .5]].forEach(([x, z]) => box(rack, .07, 2.3, .07, 0x1c1d22, x, 1.15, z));
+  [-.5, .5].forEach(z => box(rack, 1.27, .07, .07, 0x1c1d22, 0, 2.28, z)); [-.6, .6].forEach(x => box(rack, .07, .07, 1.07, 0x1c1d22, x, 2.28, 0));
+  cyl(rack, .015, 2.1, 0x9a9ca3, 0, 1.38, .5, [0, 0, Math.PI / 2]);
+  [-1, 1].forEach(k => { cyl(rack, .225, .05, 0x17181c, k * .82, 1.38, .5, [0, 0, Math.PI / 2], 28); cyl(rack, .17, .04, 0xc0392b, k * .87, 1.38, .5, [0, 0, Math.PI / 2], 24); });
+  const dbr = new THREE.Group(); dbr.position.set(1.8, 0, -1.2); dbr.rotation.y = -.55; gym.add(dbr);
+  box(dbr, 1.5, .06, .36, 0x1c1d22, 0, .55, 0); box(dbr, 1.5, .06, .36, 0x1c1d22, 0, .3, .12);
+  [-.72, .72].forEach(x => box(dbr, .06, .6, .4, 0x1c1d22, x, .3, .05));
+  for (let i = 0; i < 5; i++) { const x = -.56 + i * .28, s = .8 + i * .07; cyl(dbr, .012, .2, 0x9a9ca3, x, .63, 0, [Math.PI / 2, 0, 0]); [-1, 1].forEach(k => box(dbr, .09 * s, .09 * s, .06, 0x17181c, x, .63, k * .1)); }
+  [0, .05, .1].forEach((y, i) => cyl(gym, .225 - i * .03, .045, 0x17181c, 1.2, .025 + y, .75, [0, 0, 0], 28));
+  // shop: wood floor, a rail of jackets and a table of folded shirts (Thomas Jeffery vibes)
+  const shop = world.shop = new THREE.Group(); scene.add(shop);
+  floor(shop, (x, W, H) => { for (let i = 0; i < 8; i++) { const c = ['#7a5a3c', '#6f5135', '#836243', '#74553a'][i % 4]; x.fillStyle = c; x.fillRect(i * W / 8, 0, W / 8, H); x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect(i * W / 8, 0, 2, H); const cut = Math.random() * H; x.fillRect(i * W / 8, cut, W / 8, 2); } for (let i = 0; i < 90; i++) { x.strokeStyle = 'rgba(40,24,12,.18)'; x.lineWidth = 1; x.beginPath(); const px = Math.random() * W; x.moveTo(px, Math.random() * H); x.lineTo(px + (Math.random() - .5) * 4, Math.random() * H); x.stroke(); } });
+  const rail = new THREE.Group(); rail.position.set(-1.25, 0, -1.55); rail.rotation.y = .25; shop.add(rail);
+  [-.85, .85].forEach(x => cyl(rail, .018, 1.7, 0xb08d57, x, .85, 0)); cyl(rail, .016, 1.75, 0xb08d57, 0, 1.68, 0, [0, 0, Math.PI / 2]);
+  [0x1f2a44, 0x3a3d42, 0xb8864e, 0x2f3b2f, 0x6b2b2b, 0x1f2a44, 0x8a8f96].forEach((c, i) => { const j = box(rail, .44, .74, .07, c, -.72 + i * .24, 1.26, .02 * (i % 2), .9); j.rotation.z = (i % 3 - 1) * .03; });
+  box(shop, 1.2, .72, .62, 0x4a3322, 1.55, .36, -.75, -.4);
+  [[0xf2efe8, -.35], [0xbcd3ea, 0], [0x9aa0a8, .35]].forEach(([c, dx]) => { for (let k = 0; k < 3; k++) box(shop, .3, .045, .24, c, 1.55 + dx * Math.cos(.4), .745 + k * .048, -.75 + dx * Math.sin(.4), -.4); });
+  box(shop, .72, 1.9, .05, 0xb08d57, 2.15, .95, -1.7, -.6); box(shop, .6, 1.76, .02, 0x9fb3c8, 2.15, .95, -1.67, -.6);
+  // camp: stars, a moon and a small fire in the snow for the late-night look
+  const camp = world.camp = new THREE.Group(); scene.add(camp);
+  const fire = world.fire = new THREE.Group(); fire.position.set(-.8, 0, .6); camp.add(fire);
+  for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, st = new THREE.Mesh(new THREE.DodecahedronGeometry(.07 + (i % 3) * .015), toon(0x6d7280)); st.position.set(Math.cos(a) * .3, .04, Math.sin(a) * .3); fire.add(st); }
+  [0, 1.1, 2.2].forEach(a => cyl(fire, .045, .5, 0x5b3a22, 0, .07, 0, [Math.PI / 2 - .35, a, 0], 8));
+  world.flames = [[.16, .42, 0xff7a1a], [.11, .34, 0xffb347], [.06, .22, 0xffe7a0]].map(([r, h, c]) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: .92, blending: THREE.AdditiveBlending, depthWrite: false })); m.position.y = .1 + h / 2; m.userData.h = h; fire.add(m); return m; });
+  world.fireLight = new THREE.PointLight(0xff9a4a, 3, 6, 1.6); world.fireLight.position.set(0, .5, 0); fire.add(world.fireLight);
+  const moon = new THREE.Mesh(new THREE.CircleGeometry(1.3, 40), new THREE.MeshBasicMaterial({ color: 0xf4f1e2, fog: false })); moon.position.set(3.2, 7.2, -30); camp.add(moon);
+  const halo = new THREE.Mesh(new THREE.CircleGeometry(3.2, 40), new THREE.MeshBasicMaterial({ color: 0xbfd0ff, transparent: true, opacity: .12, depthWrite: false })); halo.position.set(3.2, 7.2, -30.1); camp.add(halo);
+  world.stars = world.pool(160, 0xffffff);
+  { const f = world.stars, P = f.g.attributes.position.array; for (let i = 0; i < f.n; i++) { P[i * 3] = (Math.random() - .5) * 60; P[i * 3 + 1] = 3 + Math.random() * 16; P[i * 3 + 2] = -34 + Math.random() * 10; f.g.attributes.size.array[i] = .08 + Math.random() * .14; f.max[i] = Math.random() * 6; } }
+  world.sparks = world.pool(50, 0xffa04a);
+  world.dust = world.pool(70, 0xffe2b8);
+  { const f = world.dust, P = f.g.attributes.position.array; for (let i = 0; i < f.n; i++) { P[i * 3] = (Math.random() - .5) * 6; P[i * 3 + 1] = Math.random() * 2.8; P[i * 3 + 2] = -2 + Math.random() * 4; f.g.attributes.size.array[i] = .012 + Math.random() * .02; f.g.attributes.alpha.array[i] = .2 + Math.random() * .3; } }
+}
+// what each outfit's world looks like: which props show, the light, and the sky behind
+const SETTINGS = {
+  ski: { sky: 0xdfe8ff, ground: 0x2a2f48, hemi: 1.2, key: 0xffffff, keyI: 2.2, bg: '' },
+  sleep: { sky: 0x8fa6d8, ground: 0x141a2c, hemi: .75, key: 0xa9bcff, keyI: 1.1, bg: 'radial-gradient(90% 70% at 50% 30%,#1c2645 0%,#0e1427 55%,#070a13 100%)' },
+  gym: { sky: 0xffe2c4, ground: 0x2a2018, hemi: 1.05, key: 0xffd9a8, keyI: 2.3, bg: 'radial-gradient(80% 70% at 50% 28%,#5e4837 0%,#34281f 45%,#16110d 100%)' },
+  work: { sky: 0xfff0dc, ground: 0x3a2e22, hemi: 1.15, key: 0xfff1de, keyI: 2.0, bg: 'radial-gradient(80% 70% at 50% 28%,#7d6852 0%,#473b2f 45%,#1c1611 100%)' },
+};
+let bgEl = null, envKey = '';
+function setEnv(key) {
+  if (key === envKey) return; envKey = key;
+  const S = SETTINGS[key], outdoor = key === 'ski' || key === 'sleep';
+  world.outdoor.visible = outdoor; world.flakes.p.visible = outdoor;
+  world.gym.visible = key === 'gym'; world.shop.visible = key === 'work'; world.camp.visible = key === 'sleep';
+  world.stars.p.visible = world.sparks.p.visible = key === 'sleep'; world.dust.p.visible = key === 'gym' || key === 'work';
+  world.hemi.color.set(S.sky); world.hemi.groundColor.set(S.ground); world.hemi.intensity = S.hemi; world.key.color.set(S.key); world.key.intensity = S.keyI;
+  if (bgEl) { bgEl.style.opacity = S.bg ? 1 : 0; if (S.bg) bgEl.style.background = S.bg; }
+}
+function stepSettings(dt, t) {
+  if (envKey === 'sleep') {
+    world.flames.forEach((m, i) => { const k = 1 + .18 * Math.sin(t * (9 + i * 3)) + .1 * Math.sin(t * (23 + i * 5)); m.scale.set(1 + .08 * Math.sin(t * 13 + i), k, 1 + .08 * Math.cos(t * 11 + i)); m.position.y = .1 + m.userData.h * k / 2; });
+    world.fireLight.intensity = 2.6 + .6 * Math.sin(t * 11) + .4 * Math.sin(t * 27);
+    const f = world.sparks, P = f.g.attributes.position.array, A = f.g.attributes.alpha.array, S = f.g.attributes.size.array, o = world.fire.position;
+    for (let i = 0; i < f.n; i++) {
+      if (f.life[i] <= 0) { if (Math.random() < dt * 2.5) { f.max[i] = f.life[i] = .8 + Math.random() * 1.2; P[i * 3] = o.x + (Math.random() - .5) * .15; P[i * 3 + 1] = .25; P[i * 3 + 2] = o.z + (Math.random() - .5) * .15; f.v[i * 3] = (Math.random() - .5) * .3; f.v[i * 3 + 1] = .6 + Math.random() * .7; f.v[i * 3 + 2] = (Math.random() - .5) * .3; } else { A[i] = 0; continue; } }
+      f.life[i] -= dt; const u = 1 - f.life[i] / f.max[i];
+      [0, 1, 2].forEach(k => { P[i * 3 + k] += f.v[i * 3 + k] * dt; }); P[i * 3] += Math.sin(t * 3 + i) * dt * .15;
+      S[i] = .02 + .015 * (1 - u); A[i] = (1 - u) * (.6 + .4 * Math.sin(t * 20 + i));
+    }
+    ['position', 'size', 'alpha'].forEach(k => { f.g.attributes[k].needsUpdate = true; });
+    const st = world.stars; for (let i = 0; i < st.n; i++) st.g.attributes.alpha.array[i] = .45 + .4 * Math.sin(t * (.8 + st.max[i] * .3) + st.max[i] * 7); st.g.attributes.alpha.needsUpdate = true;
+  }
+  if (envKey === 'gym' || envKey === 'work') {
+    const f = world.dust, P = f.g.attributes.position.array;
+    for (let i = 0; i < f.n; i++) { P[i * 3] += Math.sin(t * .3 + i) * dt * .04; P[i * 3 + 1] += (Math.cos(t * .25 + i * 1.7) * .03 + .01) * dt; if (P[i * 3 + 1] > 2.9) P[i * 3 + 1] = 0; }
+    f.g.attributes.position.needsUpdate = true;
+  }
 }
 function placeTree(t, z) {
   const side = Math.random() < .5 ? -1 : 1;
@@ -193,7 +279,7 @@ function ensureRider() {
     loading = null;
     const swap = () => {
       if (rider && rider !== r) { scene.remove(rider.vrm.scene); const old = rider; delete cache[old.key]; VRMUtils.deepDispose(old.vrm.scene); }
-      rider = r; scene.add(r.vrm.scene); world.tracks.forEach(t => { t.pts = []; });
+      rider = r; scene.add(r.vrm.scene); setEnv(r.key); world.tracks.forEach(t => { t.pts = []; });
       cv.style.opacity = 1; wake();
     };
     if (rider) { cv.style.opacity = 0; setTimeout(swap, 280); } else swap();
@@ -378,6 +464,7 @@ function frame(now) {
   if (performance.now() - state.pointerAt > 2600) { state.lookT.x = Math.sin(t * .35) * .25; state.lookT.y = 0; }
   state.look.x = damp(state.look.x, state.lookT.x, 6, dt); state.look.y = damp(state.look.y, state.lookT.y, 6, dt);
   stepWorld(dt, skiing);
+  stepSettings(dt, t);
   if (rider) {
     const r = rider; r.vrm.humanoid.resetNormalizedPose();
     autonomous(dt);
@@ -412,10 +499,11 @@ function frame(now) {
 function mount(slot) {
   if (!ok || !slot) return;
   if (!wrap) {
-    try { buildScene(); } catch (e) { ok = false; slot.classList.add('no3d'); console.warn('3D unavailable', e); return; }
+    try { buildScene(); setEnv(want()); } catch (e) { ok = false; slot.classList.add('no3d'); console.warn('3D unavailable', e); return; }
     wrap = document.createElement('div'); wrap.className = 'bd';
     cv.style.transition = 'opacity .28s ease';
-    wrap.append(cv);
+    bgEl = document.createElement('div'); bgEl.style.cssText = 'position:absolute;inset:0;opacity:0;transition:opacity .6s ease;pointer-events:none';
+    wrap.append(bgEl, cv); cv.style.position = 'relative';
     sayEl = document.createElement('div'); sayEl.className = 'bd-say'; wrap.append(sayEl);
     zEl = document.createElement('div'); zEl.className = 'bd-z'; zEl.innerHTML = '<i>z</i><i>z</i><i>Z</i>'; wrap.append(zEl);
     bind();

@@ -17,6 +17,11 @@
   - **Work** (clocked in): `Work.vrm`, standing easy, breathing, eyes follow your finger.
   - **Sleep** (11pm to 6am): `Sleep.vrm`, sitting in the snow with legs out, leaning back
     on his hands, eyes closed, z's. Tapping wakes him for a minute.
+- **Each outfit has its own setting** (`SETTINGS` / `setEnv` in rider.js): ski = night slope;
+  gym = warm-lit gym (rubber floor, power rack with a loaded bar, dumbbell rack, plates, dust);
+  work = menswear shop floor (wood planks, rail of jackets, table of folded shirts, mirror);
+  sleep = snowy clearing at night with stars, moon and a flickering campfire that lights him.
+  Lighting and the sky behind (a gradient layer under the canvas) change with it.
 - Tap: hop (ski) or wave (standing) and say the next useful line. Double-tap: a 360.
   Drag sideways: swing the camera round (springs back).
 - Feet are pinned to the snow each frame (the lowest foot, or the seat when sitting).
