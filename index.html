@@ -732,7 +732,7 @@ body{background:radial-gradient(120% 80% at 70% -10%,#1a2350 0%,#0a0e22 45%,#050
 .top .nav{display:none}
 
 /* ---- arc navigation ---- */
-.arc{position:fixed;z-index:45;left:0;right:0;bottom:0;height:calc(122px + env(safe-area-inset-bottom));touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+.arc{position:fixed;z-index:45;left:0;right:0;bottom:0;height:calc(122px + env(safe-area-inset-bottom));pointer-events:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;overflow:hidden}
 .arc-bed{position:absolute;left:50%;top:22px;width:760px;height:760px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(10,14,34,.0) 88%,rgba(255,255,255,.05) 88.3%,rgba(12,16,36,.86) 89%);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 -1px 0 rgba(255,255,255,.08)}
 .arc-bed{background:rgba(10,13,30,.78);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -20px 60px -20px color-mix(in srgb,var(--c,#0a84ff) 40%,transparent)}
 .arc-ring{position:absolute;left:50%;top:54px;width:84px;height:84px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.0) 58%,rgba(255,255,255,.14) 60%,rgba(255,255,255,.04) 72%,transparent 73%);box-shadow:0 0 30px -4px color-mix(in srgb,var(--c,#0a84ff) 70%,transparent),inset 0 0 0 1.5px rgba(255,255,255,.22);transition:box-shadow .4s}
@@ -1043,6 +1043,15 @@ button.hchip:active{transform:scale(.95)}
   .at-n{font-size:8.5px;letter-spacing:.08em}.at-l{font-size:8.5px}.at-i{display:none}
   .at-v{font-size:16px;margin:3px 0 5px}
 }
+
+.arc-bed,.arc-it{pointer-events:auto;touch-action:pan-y}
+/* 4: clip sideways overflow in a way iPhone Safari respects */
+html,body{overflow-x:clip}
+.main{overflow-x:clip}
+/* 5: the page stays pinned under an open sheet */
+body.locked{position:fixed;left:0;right:0;width:100%}
+/* 6: the tab wheel steps aside while you type on a phone */
+@media(max-width:900px){.arc{transition:transform .35s var(--ios),opacity .25s}body.typing .arc{transform:translateY(120%);opacity:0}body.typing .arc *{pointer-events:none}}
 </style>
 </head>
 <body>
@@ -1988,7 +1997,7 @@ function arcBuild() {
     arcGo(i);
   };
   el.addEventListener('pointerup', end);
-  el.addEventListener('pointercancel', end);
+  el.addEventListener('pointercancel', () => { if (!ARC.drag) return; ARC.drag = null; el.classList.remove('drag'); arcSync(); });
   el.addEventListener('wheel', e => {
     e.preventDefault();
     ARC.wheelAcc += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
@@ -2757,18 +2766,22 @@ const SHEETS = {
       <div class="row end"><button class="btn white" data-act="close-sheet">Done</button></div>`;
   },
 };
+// iPhone ignores overflow:hidden on body, so the page is fixed in place instead.
+let lockedY = null;
+function lockPage() { if (lockedY !== null) return; lockedY = scrollY; document.body.style.top = -lockedY + 'px'; document.body.classList.add('locked'); }
+function unlockPage() { if (lockedY === null) return; const y = lockedY; lockedY = null; document.body.classList.remove('locked'); document.body.style.top = ''; scrollTo(0, y); }
 function openSheet(type, arg) {
   SHEET = { type, arg };
   const sh = $('#sheet'); sh.innerHTML = SHEETS[type](arg); sh.scrollTop = 0; sh.style.transform = '';
   // rAF never fires while the app is backgrounded, and a locked page with no
   // sheet on it looks frozen, so make sure it opens either way.
   $('#ov').classList.add('on'); const show = () => { if (SHEET && SHEET.type === type) sh.classList.add('on'); }; requestAnimationFrame(show); setTimeout(show, 80);
-  document.body.classList.add('locked'); afterSheet();
+  lockPage(); afterSheet();
   if (type === 'task' && matchMedia('(hover:hover)').matches) { const ta = sh.querySelector('textarea'); ta && setTimeout(() => { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 250); }
 }
 function refreshSheet() { if (!SHEET) return; const sh = $('#sheet'), sc = sh.scrollTop, open = [...sh.querySelectorAll('details')].map(d => d.open); sh.innerHTML = SHEETS[SHEET.type](SHEET.arg); sh.querySelectorAll('details').forEach((d, i) => { if (open[i]) d.open = true; }); sh.scrollTop = sc; afterSheet(); }
 function afterSheet() { $$('#sheet .seg').forEach(s => placeInd(s, true)); animateValues($('#sheet')); }
-function closeSheet() { if (!SHEET) return; SHEET = null; const sh = $('#sheet'); sh.classList.remove('on'); sh.style.transform = ''; $('#ov').classList.remove('on'); document.body.classList.remove('locked'); render(); }
+function closeSheet() { if (!SHEET) return; SHEET = null; const sh = $('#sheet'); sh.classList.remove('on'); sh.style.transform = ''; $('#ov').classList.remove('on'); unlockPage(); render(); }
 
 /* ---------- spotlight ---------- */
 const EXAMPLES = ['call dentist fri', 'work 9-5 tomorrow 30m break', 'applied Patagonia - Campaigns Associate', 'stretch every day #gym', 'email Len about promo #work', 'gym done'];
@@ -3126,24 +3139,62 @@ document.addEventListener('drop', e => {
   island.toast(`Moved to ${rel(t.date)}`, { icon: I.arrow, color: CATS[t.cat].color });
 });
 
-/* drag-to-dismiss sheets (touch). Swipe-to-change-week was removed: diagonal scrolls kept flipping weeks. */
+/* Drag-to-dismiss sheets (phones). Pull down from the handle any time, or from anywhere
+   on the sheet while it's scrolled to the top, the way iOS sheets work. Touch events,
+   not pointer events: the browser cancels pointer events the moment it starts a scroll,
+   which is what used to leave sheets stuck half-closed. */
 let sd = null;
-$('#sheet').addEventListener('pointerdown', e => { if (!e.target.closest('.grab,.sart .art') || e.target.closest('button') || e.pointerType === 'mouse') return; sd = { y: e.clientY, dy: 0 }; $('#sheet').classList.add('dragging'); });
-addEventListener('pointermove', e => { if (!sd) return; sd.dy = Math.max(0, e.clientY - sd.y); $('#sheet').style.transform = `translate(-50%,${sd.dy}px)`; });
-addEventListener('pointerup', () => { if (!sd) return; const sh = $('#sheet'); sh.classList.remove('dragging'); sh.style.transform = ''; if (sd.dy > 110) closeSheet(); sd = null; });
+const sheetEl = $('#sheet');
+const sheetDraggable = () => innerWidth <= 760;
+sheetEl.addEventListener('touchstart', e => {
+  sd = null;
+  if (!SHEET || !sheetDraggable() || e.touches.length !== 1 || e.target.closest('input,textarea,select')) return;
+  const t = e.touches[0];
+  sd = { x: t.clientX, y: t.clientY, dy: 0, active: false, grab: !!e.target.closest('.grab,.sart .art'), lastY: t.clientY, lastT: e.timeStamp, v: 0 };
+}, { passive: true });
+sheetEl.addEventListener('touchmove', e => {
+  if (!sd) return;
+  const t = e.touches[0], dx = t.clientX - sd.x, dy = t.clientY - sd.y;
+  if (!sd.active) {
+    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { sd = null; return; } // sideways: chips and rails keep it
+    if (dy > 6 && (sd.grab || sheetEl.scrollTop <= 0)) { sd.active = true; sd.y = t.clientY; sheetEl.classList.add('dragging'); }
+    else { if (dy < -6 && !sd.grab) sd = null; return; } // pulling up scrolls the sheet as normal
+  }
+  e.preventDefault();
+  sd.dy = Math.max(0, t.clientY - sd.y);
+  sheetEl.style.transform = `translate(-50%,${sd.dy}px)`;
+  sd.v = (t.clientY - sd.lastY) / Math.max(1, e.timeStamp - sd.lastT); sd.lastY = t.clientY; sd.lastT = e.timeStamp;
+}, { passive: false });
+const sheetRelease = () => {
+  const d = sd; sd = null;
+  if (!d || !d.active) return;
+  sheetEl.classList.remove('dragging');
+  // far enough, or a quick flick, closes it; anything else springs back
+  if (d.dy > Math.min(140, sheetEl.offsetHeight * .25) || (d.v > .5 && d.dy > 24)) closeSheet();
+  else sheetEl.style.transform = '';
+};
+sheetEl.addEventListener('touchend', sheetRelease);
+sheetEl.addEventListener('touchcancel', sheetRelease);
 
-/* iOS can still zoom on a fast second tap; swallow it and deliver the tap as a normal click. */
-let lastTouch = 0;
+/* iOS can still zoom on a fast second tap; swallow it and deliver the tap as a normal click.
+   Only for taps: a touch that moved (a scroll) must never turn into a click. */
+let lastTouch = 0, touchFrom = null;
+document.addEventListener('touchstart', e => { const t = e.touches[0]; touchFrom = t ? { x: t.clientX, y: t.clientY } : null; }, { passive: true, capture: true });
 document.addEventListener('touchend', e => {
-  const t = e.timeStamp;
-  if (t - lastTouch < 350 && e.changedTouches.length === 1 && !e.target.closest('input,textarea,select,.grab')) {
+  const now = e.timeStamp, c = e.changedTouches[0];
+  const still = !!(touchFrom && c && Math.hypot(c.clientX - touchFrom.x, c.clientY - touchFrom.y) < 10);
+  if (still && now - lastTouch < 350 && e.changedTouches.length === 1 && !e.target.closest('input,textarea,select,.grab')) {
     e.preventDefault();
     const hit = e.target.closest('button,a,label,[data-act],[data-tab],summary');
     if (hit) hit.click();
   }
-  lastTouch = t;
+  lastTouch = still ? now : 0;
 }, { passive: false });
 ['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
+
+const isTextField = el => el && el.matches && el.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=file]),textarea,select');
+document.addEventListener('focusin', e => { if (isTextField(e.target)) document.body.classList.add('typing'); });
+document.addEventListener('focusout', () => setTimeout(() => { if (!isTextField(document.activeElement)) document.body.classList.remove('typing'); }, 60));
 
 /* keyboard */
 document.addEventListener('keydown', e => {
