@@ -228,18 +228,22 @@ export function gear(vrm, outfit = {}, colors = {}, { skiTex, lens: lensTint = '
 
 // Close both hands into fists round the pole grips (normalized bones: fingers point
 // along ±x in the rest pose, so curling is a turn about z).
-// (called every frame, so the bone list is looked up once per model and reused)
-const CURL = [1.35, 1.55, 1.1], FINGER_BONES = new WeakMap();
-export function fists(vrm, amount = 1) {
+// Hands. 0 = relaxed (a natural curl, looser at the index, tighter at the little finger,
+// thumb resting in), 1 = a closed fist, negative = opening toward flat (-1). One value per hand.
+// Called every frame, so the bone list is looked up once per model and reused.
+const FIST = [1.35, 1.55, 1.1], RELAX = { Index: [.2, .3, .2], Middle: [.3, .4, .26], Ring: [.4, .46, .3], Little: [.5, .5, .36] }, FINGER_BONES = new WeakMap();
+export function hands(vrm, L = 0, R = 0) {
   let F = FINGER_BONES.get(vrm);
   if (!F) {
     const h = vrm.humanoid; F = [];
     ['left', 'right'].forEach(side => {
-      const k = side === 'left' ? -1 : 1;
-      ['Index', 'Middle', 'Ring', 'Little'].forEach(f => ['Proximal', 'Intermediate', 'Distal'].forEach((j, n) => { const b = h.getNormalizedBoneNode(side + f + j); if (b) F.push([b, 'z', k * CURL[n]]); }));
-      const t = h.getNormalizedBoneNode(side + 'ThumbProximal'), t2 = h.getNormalizedBoneNode(side + 'ThumbDistal'); if (t) F.push([t, 'y', k * -.5]); if (t2) F.push([t2, 'z', k * .6]);
+      const k = side === 'left' ? -1 : 1, l = side === 'left';
+      ['Index', 'Middle', 'Ring', 'Little'].forEach(f => ['Proximal', 'Intermediate', 'Distal'].forEach((j, n) => { const bn = h.getNormalizedBoneNode(side + f + j); if (bn) F.push([bn, 'z', k, RELAX[f][n], FIST[n], l]); }));
+      const t = h.getNormalizedBoneNode(side + 'ThumbProximal'), t2 = h.getNormalizedBoneNode(side + 'ThumbDistal');
+      if (t) F.push([t, 'y', k, -.2, -.5, l]); if (t2) F.push([t2, 'z', k, .25, .6, l]);
     });
     FINGER_BONES.set(vrm, F);
   }
-  for (const [b, axis, v] of F) b.rotation[axis] = v * amount;
+  for (const [bn, axis, k, relax, fist, l] of F) { const s = l ? L : R; bn.rotation[axis] = k * (s >= 0 ? relax + (fist - relax) * Math.min(1, s) : relax * (1 + Math.max(-1, s))); }
 }
+export function fists(vrm, amount = 1) { hands(vrm, amount, amount); }

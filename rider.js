@@ -14,7 +14,7 @@ import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/jsm/utils/BufferGeometryUtils.js';
 import { VRMLoaderPlugin, VRMUtils } from './vendor/three-vrm.module.min.js';
 import { dress, toon, INK } from './dress.js';
-import { gear, fists } from './gear.js';
+import { gear, fists, hands } from './gear.js';
 import { physique } from './physique.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -414,7 +414,7 @@ const SLEEP_YAW = .35;   // lying with his feet toward the camera, head back on 
 const ACTS = { hop: .9, spin: 1.5, wave: 2.4, flex: 2.6 };
 // What he gets up to when he isn't skiing: a workout in the gym, bits of business on the shop floor.
 const TASKS = { gym: ['curl', 'squat', 'jacks', 'curl', 'squat', 'flex'], work: ['watch', 'tie', 'look', 'browse'], sleep: ['warm', 'cocoa', 'stars', 'warm', 'cocoa'] };
-const TASK_LEN = { curl: 7.5, squat: 6.5, jacks: 5.5, watch: 3.6, tie: 3.2, look: 6, browse: 8, warm: 9, cocoa: 6, stretch: 3.6, stars: 6 };
+const TASK_LEN = { curl: 7.5, squat: 6.5, jacks: 5.5, watch: 3.6, tie: 3.2, look: 6, browse: 8, warm: 9.5, cocoa: 10.5, stretch: 3.6, stars: 6 };
 function stepTask(kind, dt) {
   if (REDUCED || !TASKS[kind]) { state.task = null; return; }
   if (state.task && state.task.kind !== kind) state.task = null;
@@ -505,21 +505,21 @@ function standPose(r, t, dt, sleepy, gym) {
   B('head').rotation.set(-state.look.y * .18 + .03 * n2, state.look.x * .4 + .06 * n1, sw * .04 + .02 * n2);
   if (a === 'wave') {
     const W = ease(Math.min(clamp(state.actT / .3, 0, 1), clamp((ACTS.wave - state.actT) / .35, 0, 1)));
-    B('rightUpperArm').rotation.set(-.08 * (1 - W), 0, lerp(1.4, -1.1, W)); B('rightLowerArm').rotation.set(0, lerp(.12, 0, W), lerp(0, -.5 + .45 * Math.sin(state.actT * 11), W));
+    B('rightUpperArm').rotation.set(-.08 * (1 - W), 0, lerp(1.4, -1.1, W)); hr = lerp(hr, -.85, W); B('rightLowerArm').rotation.set(0, lerp(.12, 0, W), lerp(0, -.5 + .45 * Math.sin(state.actT * 11), W));
   }
   if (gym) {
     // athletic stance: feet wider, fists, shoulders back
     B('leftUpperLeg').rotation.z = .07 - sw * .02; B('rightUpperLeg').rotation.z = -.07 - sw * .02;
-    B('chest').rotation.x = -.04 + .015 * br; fists(r.vrm, .85);
+    B('chest').rotation.x = -.04 + .015 * br;
     if (a === 'flex') {
       // double biceps: upper arms out level with the shoulders, forearms up, a grin
       const W = ease(Math.min(clamp(state.actT / .35, 0, 1), clamp((ACTS.flex - state.actT) / .4, 0, 1))), pump = Math.sin(state.actT * 7) * .05;
       B('leftUpperArm').rotation.set(-.15 * W - .08 * (1 - W), 0, lerp(-1.4, -.12, W)); B('rightUpperArm').rotation.set(-.15 * W - .08 * (1 - W), 0, lerp(1.4, .12, W));
       B('leftLowerArm').rotation.set(0, lerp(-.3, -.25, W), lerp(0, 1.95 + pump, W)); B('rightLowerArm').rotation.set(0, lerp(.3, .25, W), lerp(0, -1.95 - pump, W));
-      B('head').rotation.y += .35 * W; B('spine').rotation.x -= .05 * W;
+      B('head').rotation.y += .35 * W; B('spine').rotation.x -= .05 * W; hl = hr = lerp(.85, 1, W);
     }
   }
-  let air = 0;
+  let air = 0, hl = gym ? .85 : .06 * Math.sin(t * .8), hr = gym ? .85 : .06 * Math.sin(t * .8 + 1.3);   // hands: relaxed, or fists in the gym
   const T = !a && state.task, k = T ? T.t : 0, W = T ? ease(Math.min(clamp(k / .5, 0, 1), clamp((TASK_LEN[T.name] - k) / .5, 0, 1))) : 0;
   const mixR = (n, x, y, z) => { const R = B(n).rotation; R.set(lerp(R.x, x, W), lerp(R.y, y, W), lerp(R.z, z, W)); };
   if (r.dumbbells) r.dumbbells.forEach(d => { d.visible = !!T && T.name === 'curl' && W > .05; });
@@ -557,7 +557,7 @@ function standPose(r, t, dt, sleepy, gym) {
     const wig = Math.sin(k * 7) * .08;
     mixR('leftUpperArm', -.45, 0, -1.25); mixR('rightUpperArm', -.45, 0, 1.25);
     mixR('leftLowerArm', 0, -1.78, wig); mixR('rightLowerArm', 0, 1.78, wig);
-    mixR('head', .1 - .1 * Math.sin(k * 3.5), 0, 0);
+    mixR('head', .1 - .1 * Math.sin(k * 3.5), 0, 0); hl = hr = lerp(hl, .45, W);
   }
   if (T && T.name === 'look') {
     // weight on one hip, looking round the shop
@@ -573,30 +573,54 @@ function standPose(r, t, dt, sleepy, gym) {
     r.vrm.scene.rotation.y = face;
     if (g) gait(B, g * 5.8, k < 2.2 ? ramp(k, 0, 2.2) : ramp(k, 5.6, 8));
   }
-  if (r.mug) { const has = !!T && T.name === 'cocoa' && k > .5 && k < TASK_LEN.cocoa - .5; r.mug.visible = has; world.campMug.visible = !has; }
+  // a trip somewhere and back: face where you're going, walk forwards both ways, turn to camera at the end
+  const trip = (to, k, len, stay0, stay1) => {
+    const out = Math.atan2(to.x, to.z), home = Math.atan2(-to.x, -to.z), P = r.vrm.scene.position;
+    if (k < stay0) { const u = ease(clamp((k - .25) / (stay0 - .25), 0, 1)); P.x = to.x * u; P.z = to.z * u; r.vrm.scene.rotation.y = out; if (k > .25) gait(B, k * 5.8, ramp(k, .25, stay0)); return 'out'; }
+    if (k < stay1) { P.x = to.x; P.z = to.z; return 'there'; }
+    const u = ease(clamp((k - stay1 - .35) / (len - stay1 - .95), 0, 1)); P.x = to.x * (1 - u); P.z = to.z * (1 - u);
+    if (k < len - .6) { r.vrm.scene.rotation.y = home; if (k > stay1 + .35) gait(B, k * 5.8, ramp(k, stay1 + .35, len - .6)); } else r.vrm.scene.rotation.y = 0;
+    return 'back';
+  };
+  // bending down to the ground (to the mug), right arm reaching for it
+  const bend = (b) => {
+    const R = n => B(n).rotation, mixB = (n, x, y, z) => { const o = R(n); o.set(lerp(o.x, x, b), lerp(o.y, y, b), lerp(o.z, z, b)); };
+    mixB('leftUpperLeg', -.75, 0, .1); mixB('rightUpperLeg', -.75, 0, -.1); mixB('leftLowerLeg', 1.2, 0, 0); mixB('rightLowerLeg', 1.2, 0, 0); mixB('leftFoot', -.45, 0, 0); mixB('rightFoot', -.45, 0, 0);
+    mixB('spine', .7, 0, 0); mixB('chest', .2, 0, 0); mixB('head', .15, 0, 0);
+    mixB('rightUpperArm', -.55, 0, 1.4); mixB('rightLowerArm', 0, .15, 0);
+  };
+  if (r.mug) { const has = !!T && T.name === 'cocoa' && k > 2.2 && k < 7.55; r.mug.visible = has; world.campMug.visible = !has; }
   let yawn = 0;
   if (T && T.name === 'warm') {
-    // walks over to the fire, leans in and warms his hands, then comes back to the blanket
+    // walks over to the fire, leans in and warms his hands, then turns and walks back to the blanket
     const f = world.fire.position, to = { x: f.x - .62, z: f.z + .12 }, len = TASK_LEN.warm, face = Math.atan2(f.x - to.x, f.z - to.z);
-    const go = (u, a, b) => { r.vrm.scene.position.x = lerp(a.x, b.x, u); r.vrm.scene.position.z = lerp(a.z, b.z, u); };
-    let g = 0, c = 0;
-    if (k < 1.8) { go(ease(k / 1.8), { x: 0, z: 0 }, to); g = k; r.vrm.scene.rotation.y = face * Math.min(1, k / .4); }
-    else if (k < len - 1.8) { go(1, to, to); r.vrm.scene.rotation.y = face; c = Math.min(1, (k - 1.8) / .6, (len - 1.8 - k) / .6); }
-    else { go(ease((k - (len - 1.8)) / 1.8), to, { x: 0, z: 0 }); g = k; r.vrm.scene.rotation.y = lerp(face, 0, ease(clamp((k - len + .6) / .6, 0, 1))); }
-    if (g) gait(B, g * 5.8, k < 1.8 ? ramp(k, 0, 1.8) : ramp(k, len - 1.8, len));
+    const leg = trip(to, k, len, 1.9, len - 2.1);
+    let c = 0;
+    if (leg === 'there') { r.vrm.scene.rotation.y = face; c = Math.min(1, (k - 1.9) / .6, (len - 2.1 - k) / .6); }
     if (c > 0) {
       const rub = Math.sin(k * 9) * .12, R = n => B(n).rotation, mixC = (n, x, y, z) => { const o = R(n); o.set(lerp(o.x, x, c), lerp(o.y, y, c), lerp(o.z, z, c)); };
       // standing, leaning in over the fire with his hands out (no squat)
       mixC('leftUpperLeg', -.12, 0, .08); mixC('rightUpperLeg', -.12, 0, -.08); mixC('leftLowerLeg', .18, 0, 0); mixC('rightLowerLeg', .18, 0, 0); mixC('leftFoot', -.06, 0, 0); mixC('rightFoot', -.06, 0, 0);
       mixC('spine', .38, 0, 0); mixC('chest', .12, 0, 0); mixC('head', .05, 0, 0);
-      mixC('leftUpperArm', -1.05, 0, -1.28); mixC('rightUpperArm', -1.05, 0, 1.28); mixC('leftLowerArm', 0, -.55 + rub, 0); mixC('rightLowerArm', 0, .55 + rub, 0);
+      mixC('leftUpperArm', -1.05, 0, -1.28); mixC('rightUpperArm', -1.05, 0, 1.28); hl = lerp(hl, -.55 + .1 * Math.sin(k * 3), c); hr = lerp(hr, -.55 + .1 * Math.sin(k * 3 + 1), c); mixC('leftLowerArm', 0, -.55 + rub, 0); mixC('rightLowerArm', 0, .55 + rub, 0);
     }
   }
   if (T && T.name === 'cocoa') {
-    // picks up the cocoa and sips it, head tipping back a little with each sip
-    const sip = Math.max(0, Math.sin(k * 1.6));
-    mixR('rightUpperArm', -.78, 0, 1.12); mixR('rightLowerArm', 0, 2.05 + .22 * sip, 0);
-    mixR('head', -.12 * sip, -.1, 0);
+    // walks to the mug, bends and picks it up, drinks (cup right at his mouth, head tipping
+    // into each sip), bends and puts it back on the snow, then walks back to the blanket
+    const m = world.mugTop, d = Math.hypot(m.x, m.z) || 1, to = { x: m.x * (1 - .4 / d), z: m.z * (1 - .4 / d) }, len = TASK_LEN.cocoa, toMug = Math.atan2(m.x - to.x, m.z - to.z);
+    const leg = trip(to, k, len, 1.6, 8.3);
+    if (leg === 'there') {
+      const down1 = Math.min(ramp(k, 1.6, 2.8, .45), 1), down2 = Math.min(ramp(k, 7.1, 8.3, .45), 1), drink = ramp(k, 2.8, 7.1, .5);
+      r.vrm.scene.rotation.y = lerp(toMug, toMug - .9, drink);   // turns toward you while he drinks
+      bend(Math.max(down1, down2));
+      hr = lerp(hr, 1, Math.max(ramp(k, 1.9, 7.8, .3), 0));
+      if (drink > 0) {
+        const sip = Math.max(0, Math.sin((k - 2.8) * 1.5)), R = n => B(n).rotation, mixD = (n, x, y, z) => { const o = R(n); o.set(lerp(o.x, x, drink), lerp(o.y, y, drink), lerp(o.z, z, drink)); };
+        mixD('rightUpperArm', -.9, 0, .76 - .06 * sip); mixD('rightLowerArm', 0, 2.3 + .17 * sip, 0);   // measured: rim at his lips on each sip mixD('rightHand', -.25 * sip, 0, 0);
+        mixD('head', .12 - .22 * sip, -.12, 0); mixD('neck', .05, 0, 0);
+      }
+    }
   }
   if (T && T.name === 'stretch') {
     // a big yawn and a stretch, arms over his head
@@ -609,6 +633,7 @@ function standPose(r, t, dt, sleepy, gym) {
     // looks up at the stars, swaying a little
     mixR('head', -.5, Math.sin(k * .5) * .3, 0); mixR('spine', -.08, 0, Math.sin(k * .7) * .03);
   }
+  hands(r.vrm, hl, hr);
   const bl = blinkAmount(dt);
   expr(r.vrm, { aa: yawn * .8, blink: sleepy ? Math.max(bl, .35) : bl, happy: a === 'wave' || a === 'flex' ? .8 : state.ctx.allDone ? .35 : 0, relaxed: sleepy ? .4 : 0 });
   return { air };
@@ -625,7 +650,7 @@ function sleepPose(r, t) {
   B('head').rotation.set(-.15 + nod, lerp(-.35, .35, v), 0);   // turned toward the fire, then away when he shifts
   B('leftUpperArm').rotation.set(-.18, 0, -1.32); B('rightUpperArm').rotation.set(-.18, 0, 1.32);
   B('leftLowerArm').rotation.set(0, -.55, -1.25); B('rightLowerArm').rotation.set(0, .55, 1.25);   // forearms across his stomach
-  B('leftHand').rotation.z = -.2; B('rightHand').rotation.z = .2; fists(r.vrm, .3);
+  B('leftHand').rotation.z = -.2; B('rightHand').rotation.z = .2; hands(r.vrm, .15, .2);
   expr(r.vrm, { blink: 1, relaxed: .7 });
   return { air: 0 };
 }

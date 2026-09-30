@@ -32,8 +32,12 @@
   nods now and then, and the cocoa steams. Folded arms / hands in pockets read badly (hands
   ended up at his face or held out), so they were dropped.
 - **Awake at the night camp** (tap him while he sleeps): yawns and stretches first, then warms his
-  hands at the fire (walks over and crouches), sips cocoa (the mug moves to his hand), looks up
+  hands at the fire (walks over and crouches), walks to the cocoa, bends to pick it up, drinks with the cup at his lips, bends to put it back, walks back, looks up
   at the stars, until he dozes off again after a minute. The camera follows him when he walks.
+- **Hands** (`hands(vrm, L, R)` in gear.js): relaxed natural curl by default (never flat), fists on
+  poles/dumbbells/flex, a grip on the mug, open cupped palms at the fire, an open hand to wave, soft
+  curls asleep. He said the flat hands looked "stiff as boards".
+- Trips (fire, mug, jacket rail) walk forwards both ways (`trip()`), then turn to face you.
 - **Motion feel** (his note: it can look animated, just not stiff and robotic):
   - every joint eases to its new angle (`smoothPose`), legs quickly, head and hands trailing
     (`LAG`), so changes blend and extremities overlap;
