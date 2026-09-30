@@ -217,6 +217,20 @@ async function runReminders(hash, env) {
   await env.SYNC.put(sentKey, JSON.stringify(sent), { expirationTtl: 172800 });
 }
 
+// Dex's 3D models (Jackson's own VRoid avatar and outfits). The repo is public, so they are
+// never committed: they live in KV, already gzipped, and are sent as-is behind Access.
+// Upload: npx wrangler kv key put --binding SYNC --remote "model:ski.vrm" --path models/ski.vrm.gz
+async function modelApi(url, env) {
+  const name = url.pathname.slice('/models/'.length);
+  if (!/^[a-z]+.vrm$/.test(name)) return new Response('Not found', { status: 404 });
+  const body = await env.SYNC.get('model:' + name, 'arrayBuffer');
+  if (!body) return new Response('Not found', { status: 404 });
+  return new Response(body, {
+    encodeBody: 'manual',
+    headers: { 'content-type': 'model/gltf-binary', 'content-encoding': 'gzip', 'cache-control': 'private, max-age=2592000, immutable', 'x-content-type-options': 'nosniff' },
+  });
+}
+
 export default {
   async scheduled(event, env, ctx) {
     const index = (await env.SYNC.get('subs-index', 'json')) || [];
@@ -226,6 +240,7 @@ export default {
   },
 
   async fetch(request, env) {
+    if (new URL(request.url).pathname.startsWith('/models/')) return modelApi(new URL(request.url), env);
     const url = new URL(request.url);
     if (url.pathname === '/api/state') return syncApi(request, env);
     if (url.pathname.startsWith('/api/push/')) return pushApi(request, env, url);

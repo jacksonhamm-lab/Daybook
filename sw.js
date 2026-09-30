@@ -12,6 +12,14 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (url.pathname.endsWith('/api/state')) return;
   if (e.request.method !== 'GET' || url.origin !== location.origin || !url.pathname.startsWith(new URL('./', location).pathname)) return;
+  // Dex's models are big and only change with a new ?v=, so serve them from the cache first
+  if (url.pathname.includes('/models/')) {
+    e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
+      return res;
+    })));
+    return;
+  }
   e.respondWith(
     fetch(e.request).then(res => {
       const copy = res.clone();

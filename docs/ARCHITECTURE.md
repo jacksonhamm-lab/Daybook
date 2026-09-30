@@ -8,8 +8,11 @@ Start here before touching code.
 | Path | What it is |
 |---|---|
 | `index.html` | The whole app: CSS, markup and the main script (~3,200 lines). No build step. |
-| `buddy.js` | Dex, the 3D character. An ES module using three.js. Talks to the page through `window.Buddy` and `window.buddyContext()`. |
-| `vendor/` | three.js r169 (`three.module.min.js`) plus `RoundedBoxGeometry.js` and `RoomEnvironment.js`. Loaded through an import map in `<head>`. |
+| `rider.js` | Dex, the 3D character: Jackson's VRoid model skiing downhill (or in his Work / Sleep outfit). Talks to the page through `window.Buddy` and `window.buddyContext()`. |
+| `dress.js`, `gear.js` | The ski outfit, built in code on the model: jacket, pants, boots, gloves (`dress.js`); mask, goggles, skis, poles (`gear.js`). |
+| `buddy.js` | The old code-built Dex. Only loaded if the models can't be fetched. |
+| `models/` (not in git) | The `.vrm` files, slimmed and gzipped. **Never commit them** (public repo); they are served from KV, see Hosting. |
+| `vendor/` | three.js r169 (`three.module.min.js`), `RoundedBoxGeometry.js`, `RoomEnvironment.js`, `jsm/` (GLTFLoader and BufferGeometryUtils from r169) and `three-vrm.module.min.js` (@pixiv/three-vrm 3.5.5). Loaded through an import map in `<head>`. |
 | `meals.json` | The Protein Prep Book: recipes, grocery list, prep plan, snacks. |
 | `sw.js` | Service worker. Network-first cache, push notifications, notification buttons. |
 | `src/worker.js` | Cloudflare Worker: sync API, push API, reminder cron, `/workout/` proxy. |
@@ -25,6 +28,7 @@ Start here before touching code.
 - Check a deploy is live: `curl -s "https://apps.jacksonhamm.ca/?cb=$RANDOM" | grep -c <something new>`.
 - Secrets live in the Cloudflare dashboard, not the repo: `SYNC_KEYS` (allowed sync-code hashes) and `VAPID_PRIVATE_JWK`.
 - `/workout/*` is proxied from the Jackson-Workout-Plan repo so both apps share one origin and one localStorage.
+- `/models/<name>.vrm` is served by the Worker from KV key `model:<name>.vrm` (stored gzipped, sent with `content-encoding: gzip`). To update a model: slim it (textures over 1024px halved, thumbnail shrunk, then gzip), run `npx wrangler kv key put --binding SYNC --remote "model:ski.vrm" --path models/ski.vrm.gz`, and bump `V` in `rider.js` so phones fetch the new file. The service worker caches models cache-first.
 
 ## Data
 
@@ -90,5 +94,7 @@ Line numbers drift, so search for the section comment instead.
 ## Testing locally
 
 - The `daybook` preview server serves the scratchpad folder; the app is at `http://localhost:8765/db/index.html`.
-- The preview pane throttles animation when hidden. To inspect Dex, step frames by hand: `Buddy._.frame(t)`. Move the camera with `Buddy._.state.camDist` and `camY`.
+- Put the slimmed `.vrm` files (ungzipped) in `models/` so the local server can serve them.
+- The preview pane throttles animation when hidden. To inspect Dex, step frames by hand: `Buddy._.frame(t)`. Move the camera with `Buddy._.state.camDist` and `camY`; swing it with `state.orbit` (hold it with `state.drag = {x:0,y:0,orbit:0,moved:0}`).
+- To see another outfit, override the context: `window.buddyContext = () => ({ ...orig(), mode: 'work' })` then `Buddy.update(buddyContext())`.
 - Screenshots right after a programmatic scroll are sometimes blank; take a second one.
