@@ -33,7 +33,7 @@ let renderer, scene, camera, wrap, cv, sayEl, zEl, raf = 0, last = 0, inView = t
 let rider = null, loading = null, pointScale = 800;
 const state = {
   mode: 'idle', act: null, actT: 0, next: 8, ctx: {}, lineI: 0, sayUntil: 0,
-  phase: 0, x: 0, tuck: 0, tuckT: 0, orbit: 0, drag: null, taps: [],
+  phase: 0, x: 0, tuck: 0, tuckT: 0, orbit: (() => { try { return +localStorage.getItem('daybook_orbit') || 0; } catch (e) { return 0; } })(), drag: null, taps: [], touchAt: performance.now(),
   look: { x: 0, y: 0 }, lookT: { x: 0, y: 0 }, pointerAt: 0, blink: 0, blinkAt: 2, wokeAt: 0,
 };
 const world = {};
@@ -620,11 +620,11 @@ function bind() {
     const r = cv.getBoundingClientRect(); state.pointerAt = performance.now();
     state.lookT.x = clamp(((e.clientX - r.left) / r.width - .5) * 2.2, -1, 1); state.lookT.y = clamp(((e.clientY - r.top) / r.height - .35) * 2, -1, 1);
     const d = state.drag;
-    if (d) { const dx = e.clientX - d.x; d.moved = Math.max(d.moved, Math.abs(dx), Math.abs(e.clientY - d.y)); if (d.moved > 8) state.orbit = clamp(d.orbit - dx * .006, -1.2, 1.2); }
+    if (d) { state.touchAt = performance.now(); const dx = e.clientX - d.x; d.moved = Math.max(d.moved, Math.abs(dx), Math.abs(e.clientY - d.y)); if (d.moved > 8) state.orbit = d.orbit - dx * .008; }   // all the way round if you like
     wake();
   });
-  cv.addEventListener('pointerdown', e => { state.drag = { x: e.clientX, y: e.clientY, orbit: state.orbit, moved: 0 }; wake(); });
-  const up = cancel => { const d = state.drag; state.drag = null; if (d && !cancel && d.moved <= 8) tap(); wake(); };
+  cv.addEventListener('pointerdown', e => { state.touchAt = performance.now(); state.drag = { x: e.clientX, y: e.clientY, orbit: state.orbit, moved: 0 }; wake(); });
+  const up = cancel => { const d = state.drag; state.drag = null; if (d && d.moved > 8) { state.orbit = Math.atan2(Math.sin(state.orbit), Math.cos(state.orbit)); try { localStorage.setItem('daybook_orbit', String(state.orbit)); } catch (e) {} } if (d && !cancel && d.moved <= 8) tap(); wake(); };
   cv.addEventListener('pointerup', () => up(false));
   cv.addEventListener('pointercancel', () => up(true));
   cv.addEventListener('pointerleave', () => { state.pointerAt = 0; });
@@ -680,7 +680,8 @@ function frame(now) {
   world.tracks.forEach(tr => { tr.m.visible = skiing; });
   world.spray.p.visible = skiing;
   // camera: three-quarter view from the front, following him a little; drag swings it round
-  if (!state.drag) state.orbit = damp(state.orbit, 0, 1.6, dt);
+  // left alone for a few seconds, the camera slowly walks round him (a turn every ~90s)
+  if (!REDUCED && !state.drag && !state.wardrobe && !camera.userData.small && now - state.touchAt > 6000) state.orbit += dt * .07;
   const dist = (state.camDist || camera.userData.dist || 7) * (sit ? (camera.aspect < 1 ? 1.05 : .78) : 1) * (camera.userData.small ? .62 : 1), a = (skiing ? .5 : sit ? .95 : .32) + state.orbit, el = skiing ? .17 : sit ? .5 : .1;
   const lift = state.wardrobe && innerWidth <= 760 ? .62 : 0;   // wardrobe open: frame him in the top half, above the sheet
   const ty = -lift + (state.camY || (sit ? .25 : skiing ? 1.02 : .92)), tx = skiing ? state.x * .55 : 0;
@@ -726,5 +727,6 @@ function update(ctx) {
   wake();
 }
 function wardrobe(on) { state.wardrobe = !!on; wake(); }
-window.Buddy = { mount, update, say, play, wardrobe, get _() { return { camera, scene, state, world, rider: () => rider, frame }; } };
+function resetView() { state.orbit = 0; try { localStorage.removeItem('daybook_orbit'); } catch (e) {} wake(); }
+window.Buddy = { mount, update, say, play, wardrobe, resetView, get _() { return { camera, scene, state, world, rider: () => rider, frame }; } };
 const slot0 = document.querySelector('#buddySlot'); if (slot0) mount(slot0);

@@ -2798,7 +2798,8 @@ const SHEETS = {
       ${grp('Look &amp; scene', D.look === 'auto' ? 'Follows your day' : D.look, `
         <div class="lbl" style="margin-top:0">Look</div>${chips('look', [['auto', 'Follows your day'], ['ski', 'Ski'], ['gym', 'Gym'], ['work', 'Work'], ['sleep', 'Night camp']])}
         <p class="sub" style="margin:6px 0 0">${D.look === 'auto' ? 'Ski by default, gym on training days, work clothes on the clock, night camp after 11pm.' : 'He stays in this look until you set it back to Follows your day.'}</p>
-        <div class="lbl">Ski slope</div>${chips('time', [['night', 'Night'], ['sunset', 'Sunset'], ['day', 'Day']])}`, true)}
+        <div class="lbl">Ski slope</div>${chips('time', [['night', 'Night'], ['sunset', 'Sunset'], ['day', 'Day']])}
+        <div class="lbl">Camera</div><p class="sub" style="margin:0 0 8px">Drag sideways on the scene to walk the camera round him; it stays where you leave it.</p><button class="btn sm" data-act="dex-view">Reset camera</button>`, true)}
       ${grp('Ski kit', 'Jacket, pants, boots, gloves, poles', `
         <div class="lbl" style="margin-top:0">Jacket</div>${sw('jacket', [['#b8863b', 'Golden'], ['#e0a526', 'Mustard'], ['#d9652b', 'Orange'], ['#a8322a', 'Red'], ['#243251', 'Navy'], ['#56603f', 'Olive'], ['#1e1f24', 'Black'], ['#e6dfcf', 'Cream']])}
         <div class="lbl">Pants</div>${sw('pants', [['#1c1d22', 'Black'], ['#3b3e45', 'Charcoal'], ['#222b45', 'Navy'], ['#4d5638', 'Olive'], ['#b39f74', 'Khaki'], ['#dedcd6', 'White']])}
@@ -3216,6 +3217,7 @@ document.addEventListener('click', e => {
     case 'set-nag': S.settings.nag = +v; commit(); return refreshSheet();
     case 'open-dex': haptic(6); return openSheet('dex');
     case 'dex': S.settings.dex = { ...(S.settings.dex || {}), [el.dataset.k]: v }; haptic(6); commit(); return refreshSheet();
+    case 'dex-view': window.Buddy && Buddy.resetView && Buddy.resetView(); haptic(6); return;
     case 'dex-reset': S.settings.dex = { ...DEX_DEFAULTS }; commit(); return refreshSheet();
     case 'toggle-brief': S.settings.remindDaily = !S.settings.remindDaily; commit(); return refreshSheet();
     case 'tm-remind': { const t = task(); t.remind = v || null; save(); return refreshSheet(); }

@@ -31,8 +31,11 @@
   and back. Asleep he breathes deeply, shifts every ~16s (head rolls, the other knee comes up),
   nods now and then, and the cocoa steams. Folded arms / hands in pockets read badly (hands
   ended up at his face or held out), so they were dropped.
+- **Camera:** drag sideways to walk it round him; it stays where you leave it (remembered per
+  device; Reset camera is in Customise). Left alone for 6s it slowly circles him (~90s a turn),
+  pausing while you touch the scene or have the wardrobe open.
 - Tap: hop (ski) or wave (standing) and say the next useful line. Double-tap: a 360.
-  Drag sideways: swing the camera round (springs back).
+  Drag sideways: swing the camera round (it stays; see Camera below).
 - Feet are pinned to the snow each frame (the lowest foot, or the seat when sitting).
 - If the models can't load, the old code-built Dex (`buddy.js`) takes over.
 
