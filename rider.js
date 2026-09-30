@@ -597,6 +597,7 @@ function size() {
   renderer.setSize(w, h, false); camera.aspect = w / h;
   const need = Math.max(camera.aspect < 1 ? 3.2 : 3.6, 2.3 / camera.aspect);   // metres of scene to fit top to bottom
   camera.userData.dist = need / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  camera.userData.small = h < 260;   // the floating window on a page: frame him, not the scene
   camera.updateProjectionMatrix();
   pointScale = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
   [world.flakes, world.spray].forEach(f => { f.p.material.uniforms.scale.value = pointScale; });
@@ -637,7 +638,7 @@ function frame(now) {
   world.spray.p.visible = skiing;
   // camera: three-quarter view from the front, following him a little; drag swings it round
   if (!state.drag) state.orbit = damp(state.orbit, 0, 1.6, dt);
-  const dist = (state.camDist || camera.userData.dist || 7) * (sit ? .78 : 1), a = (skiing ? .5 : sit ? .95 : .32) + state.orbit, el = skiing ? .17 : sit ? .5 : .1;
+  const dist = (state.camDist || camera.userData.dist || 7) * (sit ? .78 : 1) * (camera.userData.small ? .62 : 1), a = (skiing ? .5 : sit ? .95 : .32) + state.orbit, el = skiing ? .17 : sit ? .5 : .1;
   const ty = state.camY || (sit ? .25 : skiing ? 1.02 : .92), tx = skiing ? state.x * .55 : 0;
   const tz = sit ? -.4 : 0;
   camera.position.set(tx + Math.sin(a) * Math.cos(el) * dist, ty + Math.sin(el) * dist, tz + Math.cos(a) * Math.cos(el) * dist);
