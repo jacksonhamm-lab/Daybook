@@ -10,6 +10,7 @@ Start here before touching code.
 | `index.html` | The whole app: CSS, markup and the main script (~3,200 lines). No build step. |
 | `rider.js` | Dex, the 3D character: Jackson's VRoid model skiing downhill (or in his Work / Sleep outfit). Talks to the page through `window.Buddy` and `window.buddyContext()`. |
 | `dress.js`, `gear.js` | The ski outfit, built in code on the model: jacket, pants, boots, gloves (`dress.js`); mask, goggles, skis, poles (`gear.js`). |
+| `physique.js` | The gym look's build: muscle shapes pushed into the body, plus anime shadows and ink lines drawn by the skin shader. |
 | `buddy.js` | The old code-built Dex. Only loaded if the models can't be fetched. |
 | `models/` (not in git) | The `.vrm` files, slimmed and gzipped. **Never commit them** (public repo); they are served from KV, see Hosting. |
 | `vendor/` | three.js r169 (`three.module.min.js`), `RoundedBoxGeometry.js`, `RoomEnvironment.js`, `jsm/` (GLTFLoader and BufferGeometryUtils from r169) and `three-vrm.module.min.js` (@pixiv/three-vrm 3.5.5). Loaded through an import map in `<head>`. |

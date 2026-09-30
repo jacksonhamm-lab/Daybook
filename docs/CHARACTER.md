@@ -2,12 +2,18 @@
 
 ## Now (v6, rider.js)
 
-- **Jackson's own VRoid model**, three outfits by time of day (from `buddyContext().mode`):
+- **Jackson's own VRoid model**, four outfits by time of day (from `buddyContext().mode`):
   - **Ski** (default): the code-built ski kit (see Plan below). Skis downhill non-stop:
     carved turns (lean into the turn, skis yawed, upper body counter-rotated and more
     upright, inside leg bent more, pole plant at each transition), snow spray off the
     outside ski, fading tracks, pines and snowfall streaming past on a night slope.
     Tuck runs on training days; a 360 when the list is clear.
+  - **Gym** (training day, until the session is marked done): `Gym.vrm` (shirtless, black
+    sweats), made leaner and more defined by `physique.js` (his ask: "more muscular, like
+    Luffy"; reference was Wano-era Luffy). Bigger delts, arms and forearms, broad flat pecs,
+    lats and traps; painted cel shadows under the pecs and ab rows, down the midline, outside
+    the six-pack, on the flanks and the delt V, with thin ink lines on the top edges; skin
+    shadow tone deepened. Athletic stance with fists; tap for a double-biceps flex.
   - **Work** (clocked in): `Work.vrm`, standing easy, breathing, eyes follow your finger.
   - **Sleep** (11pm to 6am): `Sleep.vrm`, sitting in the snow with legs out, leaning back
     on his hands, eyes closed, z's. Tapping wakes him for a minute.
@@ -119,6 +125,7 @@ the repo, see below).
 - Photos of real gear he owns are the best spec: measure colours from the photo, but
   redraw graphics in code rather than pasting product photos.
 - **Models he has made (2026-09-30)**, all the same body, all kept out of the repo:
+  - `Gym.vrm`: shirtless, black sweatpants, sandals.
   - `Jackson.vrm`: base (tee, shorts, sneakers); the ski kit is built on it.
   - `Work.vrm`: beige blazer, white shirt, striped tie, navy trousers, tan loafers.
   - `Sleep.vrm`: black hoodie, black sweats, sandals.

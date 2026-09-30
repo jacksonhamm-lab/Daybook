@@ -15,10 +15,11 @@ import { mergeGeometries } from './vendor/jsm/utils/BufferGeometryUtils.js';
 import { VRMLoaderPlugin, VRMUtils } from './vendor/three-vrm.module.min.js';
 import { dress, toon } from './dress.js';
 import { gear, fists } from './gear.js';
+import { physique } from './physique.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const V = 1;   // bump to make phones fetch new model files
-const MODELS = { ski: `models/ski.vrm?v=${V}`, work: `models/work.vrm?v=${V}`, sleep: `models/sleep.vrm?v=${V}` };
+const MODELS = { ski: `models/ski.vrm?v=${V}`, work: `models/work.vrm?v=${V}`, sleep: `models/sleep.vrm?v=${V}`, gym: `models/gym.vrm?v=${V}` };
 const SPEED = REDUCED ? 0 : 7.5;   // metres a second down the hill
 const TURN = 1.05;                 // carving rhythm, radians a second (one left+right every ~6s)
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -27,7 +28,6 @@ const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const bump = (p, at, w) => { const d = Math.atan2(Math.sin(p - at), Math.cos(p - at)); return Math.exp(-d * d / w); };
-const lookFor = mode => mode === 'work' ? 'work' : mode === 'sleep' ? 'sleep' : 'ski';
 
 let renderer, scene, camera, wrap, cv, sayEl, zEl, raf = 0, last = 0, inView = true, ok = true, failed = false;
 let rider = null, loading = null, pointScale = 800;
@@ -172,6 +172,7 @@ function prepare(key, vrm) {
   const h = vrm.humanoid, B = n => h.getNormalizedBoneNode(n), R = n => h.getRawBoneNode(n);
   vrm.scene.updateMatrixWorld(true);
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
+  if (key === 'gym') physique(vrm);   // leaner and more defined, Luffy-style
   if (key === 'ski') {
     r.outfit = dress(vrm); r.kit = gear(vrm, r.outfit);
     r.tails = ['l', 'r'].map(s => { const o = new THREE.Object3D(); o.position.set(0, .01, -.8); r.kit.skis[s].add(o); return o; });
@@ -180,7 +181,8 @@ function prepare(key, vrm) {
 }
 function want() {
   if (state.mode === 'sleep' && state.wokeAt && performance.now() - state.wokeAt < 60000) return 'sleep';
-  return lookFor(state.mode);
+  // night beats work beats training; otherwise he's skiing
+  return state.mode === 'sleep' ? 'sleep' : state.mode === 'work' ? 'work' : state.ctx.training ? 'gym' : 'ski';
 }
 function ensureRider() {
   const k = want();
@@ -206,13 +208,14 @@ function fallback() {
 }
 
 /* ---------- poses ---------- */
-const ACTS = { hop: .9, spin: 1.5, wave: 2.4 };
-function play(name) { if (REDUCED && name !== 'hop') return; if (!ACTS[name]) name = state.mode === 'idle' ? 'hop' : 'wave'; state.act = name; state.actT = 0; }
+const ACTS = { hop: .9, spin: 1.5, wave: 2.4, flex: 2.6 };
+function play(name) { if (REDUCED && name !== 'hop') return; if (!ACTS[name]) name = want() === 'ski' ? 'hop' : want() === 'gym' ? 'flex' : 'wave'; state.act = name; state.actT = 0; }
 function autonomous(dt) {
-  if (REDUCED || state.act || want() !== 'ski') return;
+  if (REDUCED || state.act || (want() !== 'ski' && want() !== 'gym')) return;
   state.next -= dt; if (state.next > 0) return;
   state.next = 7 + Math.random() * 6;
   const r = Math.random();
+  if (want() === 'gym') { if (r < .5) play('flex'); return; }
   if (state.ctx.allDone && r < .45) play('spin'); else if (r < .25) play('hop');
 }
 function expr(vrm, v) { const E = vrm.expressionManager; if (!E) return; ['happy', 'blink', 'surprised', 'relaxed'].forEach(n => E.setValue(n, v[n] || 0)); }
@@ -255,7 +258,7 @@ function skiPose(r, t, dt) {
   expr(r.vrm, { happy: a ? .6 : 0 });
   return { air, lean, s };
 }
-function standPose(r, t, dt, sleepy) {
+function standPose(r, t, dt, sleepy, gym) {
   const { B } = r, a = state.act, u = a ? clamp(state.actT / ACTS[a], 0, 1) : 0, br = Math.sin(t * 1.6), sw = Math.sin(t * .5);
   r.vrm.scene.rotation.set(0, state.look.x * .12, 0); r.vrm.scene.position.x = 0;
   B('hips').rotation.z = sw * .025; B('leftUpperLeg').rotation.z = -sw * .025; B('rightUpperLeg').rotation.z = -sw * .025;
@@ -268,8 +271,20 @@ function standPose(r, t, dt, sleepy) {
     const W = ease(Math.min(clamp(state.actT / .3, 0, 1), clamp((ACTS.wave - state.actT) / .35, 0, 1)));
     B('rightUpperArm').rotation.set(-.08 * (1 - W), 0, lerp(1.4, -1.1, W)); B('rightLowerArm').rotation.set(0, lerp(.12, 0, W), lerp(0, -.5 + .45 * Math.sin(state.actT * 11), W));
   }
+  if (gym) {
+    // athletic stance: feet wider, fists, shoulders back
+    B('leftUpperLeg').rotation.z = .07 - sw * .02; B('rightUpperLeg').rotation.z = -.07 - sw * .02;
+    B('chest').rotation.x = -.04 + .015 * br; fists(r.vrm, .85);
+    if (a === 'flex') {
+      // double biceps: upper arms out level with the shoulders, forearms up, a grin
+      const W = ease(Math.min(clamp(state.actT / .35, 0, 1), clamp((ACTS.flex - state.actT) / .4, 0, 1))), pump = Math.sin(state.actT * 7) * .05;
+      B('leftUpperArm').rotation.set(-.15 * W - .08 * (1 - W), 0, lerp(-1.4, -.12, W)); B('rightUpperArm').rotation.set(-.15 * W - .08 * (1 - W), 0, lerp(1.4, .12, W));
+      B('leftLowerArm').rotation.set(0, lerp(-.3, -.25, W), lerp(0, 1.95 + pump, W)); B('rightLowerArm').rotation.set(0, lerp(.3, .25, W), lerp(0, -1.95 - pump, W));
+      B('head').rotation.y += .35 * W; B('spine').rotation.x -= .05 * W;
+    }
+  }
   const bl = blinkAmount(dt);
-  expr(r.vrm, { blink: sleepy ? Math.max(bl, .35) : bl, happy: a === 'wave' ? .8 : state.ctx.allDone ? .35 : 0, relaxed: sleepy ? .4 : 0 });
+  expr(r.vrm, { blink: sleepy ? Math.max(bl, .35) : bl, happy: a === 'wave' || a === 'flex' ? .8 : state.ctx.allDone ? .35 : 0, relaxed: sleepy ? .4 : 0 });
   return { air: 0 };
 }
 function sleepPose(r, t) {
@@ -320,7 +335,7 @@ function tap() {
   state.taps = state.taps.filter(x => now - x < 380); state.taps.push(now);
   if (state.mode === 'sleep' && !(state.wokeAt && now - state.wokeAt < 60000)) { state.wokeAt = now; say('Oh! Still up? Get some sleep.'); return; }
   if (want() === 'ski') { if (state.taps.length >= 2) { play('spin'); say(state.ctx.allDone ? 'Everything done. Send it.' : 'Send it!', 2400); } else { play('hop'); nextLine(); } }
-  else { play('wave'); nextLine(); }
+  else { play(want() === 'gym' ? 'flex' : 'wave'); nextLine(); }
   navigator.vibrate && navigator.vibrate(8);
 }
 function bind() {
@@ -369,7 +384,7 @@ function frame(now) {
     let res;
     if (r.key === 'ski') res = skiPose(r, t, dt);
     else if (sit) res = sleepPose(r, t);
-    else res = standPose(r, t, dt, r.key === 'sleep');
+    else res = standPose(r, t, dt, r.key === 'sleep', r.key === 'gym');
     if (state.act) { state.actT += dt; if (state.actT > ACTS[state.act]) state.act = null; }
     r.vrm.update(dt);
     ground(r, res.air, sit);
