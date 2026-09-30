@@ -1018,6 +1018,31 @@ button.hchip:active{transform:scale(.95)}
 .mod.wide:not(.open) .mod-l{margin:0;flex:1;font-size:15px;font-weight:700;letter-spacing:-.01em;text-transform:none;color:var(--text)}
 .mod.wide:not(.open) .mod-v{padding:0;font-size:20px}
 .mod.wide:not(.open) .mod-s,.mod.wide:not(.open) .mod-dot{display:none}
+
+/* ---- attributes around the skier ---- */
+.attrs{position:absolute;z-index:3;top:86px;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.attrs.l{left:14px}.attrs.r{right:14px}
+.attr{pointer-events:auto;width:128px;padding:9px 11px 10px;border-radius:16px;text-align:left;color:#fff;background:linear-gradient(160deg,rgba(18,22,40,.62),rgba(18,22,40,.38));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 3px 0 0 var(--c),0 12px 26px -16px rgba(0,0,0,.9);animation:attrIn .6s var(--spring) both;animation-delay:calc(.25s + var(--i) * 70ms);transition:transform .35s var(--spring),background .25s}
+.attrs.r .attr{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset -3px 0 0 var(--c),0 12px 26px -16px rgba(0,0,0,.9)}
+.attrs.l .attr{--from:-18px}.attrs.r .attr{--from:18px}
+@keyframes attrIn{from{opacity:0;transform:translateX(var(--from))}}
+.attr:hover{background:linear-gradient(160deg,rgba(28,34,60,.72),rgba(28,34,60,.5))}
+.attr:active{transform:scale(.95)}
+.at-h{display:flex;align-items:center;gap:6px}
+.at-i{width:18px;height:18px;border-radius:6px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 26%,transparent);color:color-mix(in srgb,var(--c) 80%,#fff)}
+.at-i svg{width:11px;height:11px;stroke-width:2.2}
+.at-n{font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:color-mix(in srgb,var(--c) 70%,#fff)}
+.at-l{margin-left:auto;font-family:var(--display);font-size:9.5px;font-weight:700;color:rgba(255,255,255,.55)}
+.at-v{display:block;margin:4px 0 6px;font-family:var(--display);font-size:19px;font-weight:600;letter-spacing:-.04em;line-height:1}
+.at-v small{font-size:11px;opacity:.55;margin-left:2px;font-weight:600}
+.attr .pbar{height:4px;background:rgba(255,255,255,.12)}
+.attr .pbar i{box-shadow:0 0 8px var(--c)}
+@media(max-width:760px){
+  .attrs{top:80px;gap:8px}.attrs.l{left:10px}.attrs.r{right:10px}
+  .attr{width:100px;padding:7px 9px 8px;border-radius:14px}
+  .at-n{font-size:8.5px;letter-spacing:.08em}.at-l{font-size:8.5px}.at-i{display:none}
+  .at-v{font-size:16px;margin:3px 0 5px}
+}
 </style>
 </head>
 <body>
@@ -2229,6 +2254,38 @@ const IC = {
   bench: '<svg class="ico" viewBox="0 0 24 24"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 8h5v5"/></svg>',
 };
 
+/* ---------- attributes ----------
+   Dex's stats are your Daybook. Each one has a level earned from everything you've
+   ever logged there, and a bar for how this week (or today) is going. Tap one to go
+   to that part of the app. */
+const attrLvl = (n, per) => Math.floor(Math.sqrt(Math.max(0, n) / per)) + 1;
+function attributes() {
+  const d = today(), wk = curWeek(), list = tasksOn(d), done = list.filter(t => isDone(t, d)).length;
+  const plan = wk.filter(x => wo(x).s !== 'REST'), sDone = plan.filter(x => wo(x).done).length;
+  const pk = periodFor(d), pH = periodHours(pk) + extraHours(pk), pTarget = (+S.settings.hoursGoal || 20) * (pk.cyc || 14) / 7;
+  const wkStart = mondayOf(new Date()).getTime(), cl = cardioLogs(), cMin = cl.filter(l => l.ts >= wkStart).reduce((a, l) => a + l.min, 0);
+  const ag = +S.settings.appGoal || 5, apps = appsIn(wk), sk = shakesToday(), skN = SHAKES.filter(([k]) => sk[k]).length;
+  const shakeTicks = Object.values(S.shakes || {}).reduce((a, x) => a + SHAKES.filter(([k]) => x[k]).length, 0);
+  return [
+    { k: 'focus', name: 'Focus', c: '#64d2ff', icon: IC.tasks, lvl: attrLvl(doneTaskCount(), 3), val: `${done}<small>/${list.length}</small>`, bar: list.length ? done / list.length : 0, go: 'today:tasks' },
+    { k: 'grind', name: 'Grind', c: '#0a84ff', icon: IC.work, lvl: attrLvl(totalHours(), 12), val: `${fh(pH)}<small>h</small>`, bar: pH / pTarget, go: 'hours:shifts' },
+    { k: 'strength', name: 'Strength', c: '#ff9f0a', icon: IC.train, lvl: attrLvl(Object.values(S.workouts).filter(w => w.done).length, 1), val: `${sDone}<small>/${plan.length}</small>`, bar: plan.length ? sDone / plan.length : 0, go: 'training:' },
+    { k: 'stamina', name: 'Stamina', c: '#ff375f', icon: IC.heart, lvl: attrLvl(cl.reduce((a, l) => a + l.min, 0), 30), val: `${cMin}<small>min</small>`, bar: cMin / 90, go: 'training:cardio' },
+    { k: 'hustle', name: 'Hustle', c: '#30d158', icon: IC.jobs, lvl: attrLvl(S.jobs.filter(j => j.status !== 'Wishlist').length, .5), val: `${apps}<small>/${ag}</small>`, bar: apps / ag, go: 'jobs:' },
+    { k: 'fuel', name: 'Fuel', c: '#ffd60a', icon: IC.fuel, lvl: attrLvl(shakeTicks, 2), val: `${skN}<small>/${SHAKES.length}</small>`, bar: skN / SHAKES.length, go: 'training:fuel' },
+  ];
+}
+const attrChip = (a, i) => `<button class="attr" style="--c:${a.c};--i:${i}" data-act="attr" data-v="${a.go}" aria-label="${a.name} level ${a.lvl}">
+    <span class="at-h"><span class="at-i">${a.icon}</span><span class="at-n">${a.name}</span><span class="at-l">LV ${a.lvl}</span></span>
+    <b class="at-v">${a.val}</b>${pbar('at-' + a.k, clamp01(a.bar), a.c)}</button>`;
+const attrColumns = () => { const A = attributes(); return `<div class="attrs l">${A.slice(0, 3).map(attrChip).join('')}</div><div class="attrs r">${A.slice(3).map((a, i) => attrChip(a, i + 3)).join('')}</div>`; };
+function goAttr(v) {
+  const [tab, m] = v.split(':');
+  if (m) S.ui.mods = { ...(S.ui.mods || {}), [tab]: m };
+  if (tab === S.ui.tab) { save(); render(); const el = $(`#v-${tab} .mod[data-mod="${m}"]`); el && el.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' }); return; }
+  switchTab(tab);
+}
+
 function renderToday() {
   const d = today(), wk = curWeek();
   const apps = appsIn(wk), ag = +S.settings.appGoal || 0;
@@ -2247,6 +2304,7 @@ function renderToday() {
         <div class="stg-xp">${pbar('xp', into / need, '#ffd60a')}<em>${into}/${need} XP</em></div>
       </div>
       <div id="buddySlot"></div>
+      ${attrColumns()}
       <div class="stg-date">${longDate(d)}</div>
     </section>`;
   const M = [];
@@ -2899,6 +2957,7 @@ document.addEventListener('click', e => {
     case 'rest-skip': REST = null; island.key = null; return island.live();
     case 'shake': return toggleShake(v);
     case 'mod': return toggleMod(v);
+    case 'attr': haptic(6); return goAttr(v);
     case 'srow': { const row = el.closest('.srow2'), open = !row.classList.contains('open'); SROW = open ? v : 'none'; $$('#v-hours .srow2').forEach(r => r.classList.toggle('open', open && r === row)); return haptic(4); }
     case 'note-save': return addNote();
     case 'cap-cat': NOTE_CAT = NOTE_CAT === v ? null : v; $$('#v-notes .cap .chip').forEach(c => c.classList.toggle('on', c.dataset.v === NOTE_CAT)); return pop(el);
