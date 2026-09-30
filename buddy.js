@@ -329,7 +329,7 @@ function computePose(t, dt) {
     if (a === 'stroll') {
       const dx = state.tx - state.x, dz = state.tz - state.z, dist = Math.hypot(dx, dz);
       if (dist < .03) { state.act = null; state.lookT.x = 0; }
-      else { const sp = Math.min(dist, .9 * dt); state.x += dx / dist * sp; state.z += dz / dist * sp; skate(P, t * 5.2); P.yaw = Math.atan2(dx, dz); P.gog = 1; }
+      else { const sp = Math.min(dist, .9 * dt); state.x += dx / dist * sp; state.z += dz / dist * sp; skate(P, t * 5.2); P.yaw = Math.atan2(dx, dz); }
     }
     state.actT += dt;
     if (state.act && a !== 'stroll' && state.actT > d) state.act = null;
@@ -337,10 +337,37 @@ function computePose(t, dt) {
   return P;
 }
 
+// Two-bone arm: point the upper arm and bend the elbow so the hand lands on a target (in the jacket's space).
+const _t = new THREE.Vector3(), _p = new THREE.Vector3(), _u = new THREE.Vector3(), _x = new THREE.Vector3(), _y = new THREE.Vector3(), _z = new THREE.Vector3(), _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
+const ARM = .3, FORE = .3, POLE_R = new THREE.Vector3(1, -.7, -.35).normalize(), DOWN = new THREE.Vector3(0, -1, 0), POLE_HANG = new THREE.Vector3(.25, -1, .2).normalize();
+// where the right hand grips the goggles: the top edge of the frame, off to the right, in goggle space
+const GRIP = (() => { const a = .12 / .235; return new THREE.Vector3(Math.sin(a) * .245, .06, Math.cos(a) * .245); })();
+function armIK(ar, target, pole, w) {
+  const t = _t.copy(target).sub(ar.sh.position), d = clamp(t.length(), .12, ARM + FORE - .002), dir = t.normalize();
+  const alpha = Math.acos(clamp((ARM * ARM + d * d - FORE * FORE) / (2 * ARM * d), -1, 1));
+  const bend = Math.PI - Math.acos(clamp((ARM * ARM + FORE * FORE - d * d) / (2 * ARM * FORE), -1, 1));
+  const side = _p.copy(pole).addScaledVector(dir, -pole.dot(dir)).normalize();
+  const u = _u.copy(dir).multiplyScalar(Math.cos(alpha)).addScaledVector(side, Math.sin(alpha)).normalize();
+  _y.copy(u).negate(); _z.copy(dir).addScaledVector(u, -dir.dot(u)).normalize(); _x.crossVectors(_y, _z);
+  _q.setFromRotationMatrix(_m.makeBasis(_x, _y, _z));
+  ar.sh.quaternion.slerp(_q, w);
+  ar.el.rotation.set(lerp(ar.el.rotation.x, -bend, w), 0, ar.el.rotation.z * (1 - w));
+}
 const POSE_KEYS = ['hipY', 'fz', 'air', 'tiltZ', 'tiltX', 'sq', 'sLx', 'sLz', 'sRx', 'sRz', 'eL', 'eR', 'eLz', 'eRz', 'tLz', 'tRz', 'headX', 'headZ'];
 function applyPose(P, dt, t) {
   for (const key of POSE_KEYS) pose[key] = damp(pose[key] ?? P[key], P[key], key === 'air' ? 30 : 11, dt);
-  pose.gog = damp(pose.gog ?? P.gog, P.gog, 6, dt);
+  const want = P.gog > .5 ? 1 : 0;
+  if (state.gogWant === undefined) { state.gogWant = want; pose.gog = want; }
+  if (want !== state.gogWant) { state.gogWant = want; if (REDUCED) pose.gog = want; else state.grab = { from: pose.gog, to: want, t: 0 }; }
+  let reach = 0;
+  const g = state.grab;
+  if (g) { // reach up, pull, let go
+    g.t += dt; const T = g.t;
+    if (T < .34) reach = ease(T / .34);
+    else if (T < .82) { reach = 1; pose.gog = lerp(g.from, g.to, ease((T - .34) / .48)); }
+    else if (T < 1.15) { pose.gog = g.to; reach = 1 - ease((T - .82) / .33); }
+    else { pose.gog = g.to; state.grab = null; }
+  }
   rig.hips.position.y = pose.hipY;
   state.hipV = (pose.hipY + pose.air - state.lastHip) / Math.max(dt, .001); state.lastHip = pose.hipY + pose.air;
   const lookYaw = state.act === 'stroll' || state.mode === 'work' ? 0 : state.look.x * .15;
@@ -364,6 +391,15 @@ function applyPose(P, dt, t) {
     ar.sh.rotation.set(sx, 0, sz); ar.el.rotation.set(ex, 0, ez);
     ar.pole.rotation.set(.12 - (sx + ex + pose.tiltX), 0, -(sz + ez) * .85 - pose.tiltZ + s * .06);
   });
+  if (reach > .001) {
+    rig.root.updateMatrixWorld(true);
+    rig.goggles.localToWorld(_t.copy(GRIP)); rig.body.worldToLocal(_t);
+    armIK(rig.armR, _t.clone(), POLE_R, reach);
+    // the pole dangles from the wrist while the hand is up
+    rig.root.updateMatrixWorld(true);
+    rig.armR.el.getWorldQuaternion(_q2).invert();
+    rig.armR.pole.quaternion.slerp(_q2.multiply(_q.setFromUnitVectors(DOWN, POLE_HANG)), reach);
+  }
   const leds = state.ctx.leds || [0, 0, 0];
   rig.leds.forEach((l, i) => { const v = clamp(leds[i] || 0, 0, 1), p = .55 + .45 * Math.sin(t * 2.4 + i); l.material.color.copy(l.userData.dim).lerp(l.userData.base, v >= 1 ? 1 : v * p); });
   state.blinkAt -= dt;
@@ -445,7 +481,7 @@ const live = () => ok && wrap && wrap.isConnected && !document.hidden && inView;
 function wake() { if (!raf && live()) { last = 0; raf = requestAnimationFrame(frame); } }
 function frame(now) {
   raf = 0; if (!renderer) return;
-  const dt = last ? Math.min(.05, (now - last) / 1000) : 1 / 60; last = now;
+  const dt = last ? clamp((now - last) / 1000, 0, .05) : 1 / 60; last = Math.max(last, now);
   const t = now / 1000;
   // mode follows the day, unless you just woke it up
   const want = state.ctx.mode || 'idle';
@@ -487,5 +523,5 @@ function update(ctx) {
   else if (prev.mode && prev.mode !== ctx.mode && ctx.mode === 'work') say('Clocked in. Let’s get it.');
   wake();
 }
-window.Buddy = { mount, update, say, play, get _() { return { camera, rig, state, pose }; } };
+window.Buddy = { mount, update, say, play, get _() { return { camera, rig, state, pose, frame }; } };
 const pending = document.querySelector('#buddySlot'); if (pending) mount(pending);
