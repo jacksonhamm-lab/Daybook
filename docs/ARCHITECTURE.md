@@ -46,6 +46,16 @@ Everything is one object, `S`, saved to `localStorage.daybook_v1` and synced.
 
 Workout logs (`workout_state_v3`, `log_*_v1`) belong to the workout app and are read from localStorage.
 
+## Pay periods
+
+- Two-week periods, **Friday to Thursday** (`payAnchor` 2026-09-25 is a payday; the period ends the
+  day before payday). Paid the Friday after it ends.
+- Hours go to Len on the **Monday** of payday week (`submitDay` = payday − `paySubmitDays` 4), with
+  Tue–Thu estimated from recent same-weekday shifts. E.g. Sep 25 – Oct 8: send Mon Oct 5, paid Fri Oct 9.
+- **The Work page is period-based** (his call: always show the period total): the headline is the
+  period's hours × rate (+ subscription hours), all 14 days are listed Fri → Thu, and the arrows step
+  by period (`PAY.date`, `curPeriod()`). "Copy for Len" copies the submit summary.
+
 ## Sync
 
 - `save()` stamps whatever changed, then syncs a few seconds later.

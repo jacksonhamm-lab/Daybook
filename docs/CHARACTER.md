@@ -31,6 +31,9 @@
   and back. Asleep he breathes deeply, shifts every ~16s (head rolls, the other knee comes up),
   nods now and then, and the cocoa steams. Folded arms / hands in pockets read badly (hands
   ended up at his face or held out), so they were dropped.
+- **Awake at the night camp** (tap him while he sleeps): yawns and stretches first, then warms his
+  hands at the fire (walks over and crouches), sips cocoa (the mug moves to his hand), looks up
+  at the stars, until he dozes off again after a minute. The camera follows him when he walks.
 - **Camera:** drag sideways to walk it round him; it stays where you leave it (remembered per
   device; Reset camera is in Customise). Left alone for 6s it slowly circles him (~90s a turn),
   pausing while you touch the scene or have the wardrobe open.

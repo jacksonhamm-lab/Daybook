@@ -147,7 +147,7 @@ function buildSettings() {
   { const P = blanket.geometry.attributes.position; for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i); P.setY(i, P.getY(i) + .012 * Math.sin(x * 9 + z * 3) * Math.cos(z * 5)); } blanket.geometry.computeVertexNormals(); }
   blanket.position.set(0, .013, -.05); bed.add(blanket);
   cyl(bed, .09, .5, 0xe9e1d0, 0, .09, -.98, [0, 0, Math.PI / 2], 16);                                   // pillow
-  const mug = new THREE.Group(); mug.position.set(.78, 0, -.35); bed.add(mug);
+  const mug = new THREE.Group(); mug.position.set(.78, 0, -.35); bed.add(mug); world.campMug = mug;
   cyl(mug, .045, .1, 0xd9573b, 0, .05, 0); { const h = new THREE.Mesh(new THREE.TorusGeometry(.028, .008, 6, 14), toon(0xd9573b)); h.position.set(.05, .05, 0); mug.add(h); }
   { const top = new THREE.Mesh(new THREE.CircleGeometry(.04, 16), toon(0x5a3420)); top.rotation.x = -Math.PI / 2; top.position.y = .098; mug.add(top); }
   const lantern = new THREE.Group(); lantern.position.set(-.8, 0, -.85); bed.add(lantern);
@@ -316,6 +316,7 @@ function prepare(key, vrm) {
   const h = vrm.humanoid, B = n => h.getNormalizedBoneNode(n), R = n => h.getRawBoneNode(n);
   vrm.scene.updateMatrixWorld(true);
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
+  if (key === 'sleep') r.mug = holdInFist(vrm, 'right', cocoaMug());
   if (key === 'gym') { r.build = dexPrefs().build; physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
   if (key === 'ski') {
     const D = dexPrefs();
@@ -330,6 +331,13 @@ function dumbbell() {
   const g = new THREE.Group(), head = new THREE.CylinderGeometry(.05, .05, .075, 6).rotateX(Math.PI / 2), bar = new THREE.CylinderGeometry(.014, .014, .2, 10).rotateX(Math.PI / 2);
   g.add(new THREE.Mesh(bar, toon(0x9a9ca3)));
   [-1, 1].forEach(k => { const h = new THREE.Mesh(head, toon(0x1b1c21)); h.position.z = k * .12; g.add(h, Object.assign(new THREE.Mesh(head, INK), {})); g.children[g.children.length - 1].position.z = k * .12; });
+  g.visible = false; return g;
+}
+// the cocoa mug, standing up along the fist (thumb side up)
+function cocoaMug() {
+  const g = new THREE.Group(), body = new THREE.CylinderGeometry(.045, .042, .1, 16).rotateX(Math.PI / 2), m = new THREE.Mesh(body, toon(0xd9573b));
+  m.position.set(-.035, 0, .02); g.add(m, Object.assign(new THREE.Mesh(body, INK))); g.children[1].position.copy(m.position);
+  const top = new THREE.Mesh(new THREE.CircleGeometry(.04, 16), toon(0x5a3420)); top.position.set(-.035, 0, .071); g.add(top);
   g.visible = false; return g;
 }
 // parent a prop to a hand so it sits in the closed fist (built in the bind pose, like the ski poles)
@@ -405,8 +413,8 @@ function fallback() {
 const SLEEP_YAW = .35;   // lying with his feet toward the camera, head back on the pillow, so his face stays in view
 const ACTS = { hop: .9, spin: 1.5, wave: 2.4, flex: 2.6 };
 // What he gets up to when he isn't skiing: a workout in the gym, bits of business on the shop floor.
-const TASKS = { gym: ['curl', 'squat', 'jacks', 'curl', 'squat', 'flex'], work: ['watch', 'tie', 'look', 'browse'] };
-const TASK_LEN = { curl: 7.5, squat: 6.5, jacks: 5.5, watch: 3.6, tie: 3.2, look: 6, browse: 8 };
+const TASKS = { gym: ['curl', 'squat', 'jacks', 'curl', 'squat', 'flex'], work: ['watch', 'tie', 'look', 'browse'], sleep: ['warm', 'cocoa', 'stars', 'warm', 'cocoa'] };
+const TASK_LEN = { curl: 7.5, squat: 6.5, jacks: 5.5, watch: 3.6, tie: 3.2, look: 6, browse: 8, warm: 9, cocoa: 6, stretch: 3.6, stars: 6 };
 function stepTask(kind, dt) {
   if (REDUCED || !TASKS[kind]) { state.task = null; return; }
   if (state.task && state.task.kind !== kind) state.task = null;
@@ -427,7 +435,7 @@ function autonomous(dt) {
   if (want() === 'gym') { if (r < .5) play('flex'); return; }
   if (state.ctx.allDone && r < .45) play('spin'); else if (r < .25) play('hop');
 }
-function expr(vrm, v) { const E = vrm.expressionManager; if (!E) return; ['happy', 'blink', 'surprised', 'relaxed'].forEach(n => E.setValue(n, v[n] || 0)); }
+function expr(vrm, v) { const E = vrm.expressionManager; if (!E) return; ['happy', 'blink', 'surprised', 'relaxed', 'aa'].forEach(n => E.setValue(n, v[n] || 0)); }
 function blinkAmount(dt) {
   state.blinkAt -= dt; if (state.blinkAt < 0) { state.blink = 1; state.blinkAt = 2.2 + Math.random() * 3.5; }
   state.blink = Math.max(0, state.blink - dt * 7);
@@ -549,8 +557,45 @@ function standPose(r, t, dt, sleepy, gym) {
       B('leftLowerLeg').rotation.x = .5 * Math.max(0, c); B('rightLowerLeg').rotation.x = .5 * Math.max(0, -c);
       B('leftUpperArm').rotation.x = .28 * s; B('rightUpperArm').rotation.x = -.28 * s; }
   }
+  if (r.mug) { const has = !!T && T.name === 'cocoa' && k > .5 && k < TASK_LEN.cocoa - .5; r.mug.visible = has; world.campMug.visible = !has; }
+  let yawn = 0;
+  if (T && T.name === 'warm') {
+    // walks over to the fire, crouches and warms his hands, then comes back to the blanket
+    const f = world.fire.position, to = { x: f.x * .5, z: f.z * .5 }, len = TASK_LEN.warm, face = Math.atan2(f.x - to.x, f.z - to.z);
+    const go = (u, a, b) => { r.vrm.scene.position.x = lerp(a.x, b.x, u); r.vrm.scene.position.z = lerp(a.z, b.z, u); };
+    let g = 0, c = 0;
+    if (k < 1.8) { go(ease(k / 1.8), { x: 0, z: 0 }, to); g = k; r.vrm.scene.rotation.y = face * Math.min(1, k / .4); }
+    else if (k < len - 1.8) { go(1, to, to); r.vrm.scene.rotation.y = face; c = Math.min(1, (k - 1.8) / .6, (len - 1.8 - k) / .6); }
+    else { go(ease((k - (len - 1.8)) / 1.8), to, { x: 0, z: 0 }); g = k; r.vrm.scene.rotation.y = lerp(face, 0, ease(clamp((k - len + .6) / .6, 0, 1))); }
+    if (g) { const s = Math.sin(g * 6.5), co = Math.cos(g * 6.5);
+      B('leftUpperLeg').rotation.x = -.38 * s; B('rightUpperLeg').rotation.x = .38 * s; B('leftLowerLeg').rotation.x = .5 * Math.max(0, co); B('rightLowerLeg').rotation.x = .5 * Math.max(0, -co);
+      B('leftUpperArm').rotation.x = .28 * s; B('rightUpperArm').rotation.x = -.28 * s; }
+    if (c > 0) {
+      const rub = Math.sin(k * 9) * .12, R = n => B(n).rotation, mixC = (n, x, y, z) => { const o = R(n); o.set(lerp(o.x, x, c), lerp(o.y, y, c), lerp(o.z, z, c)); };
+      mixC('leftUpperLeg', -1.0, 0, .12); mixC('rightUpperLeg', -1.0, 0, -.12); mixC('leftLowerLeg', 1.45, 0, 0); mixC('rightLowerLeg', 1.45, 0, 0); mixC('leftFoot', -.45, 0, 0); mixC('rightFoot', -.45, 0, 0);
+      mixC('spine', .3, 0, 0); mixC('head', .1, 0, 0);
+      mixC('leftUpperArm', -1.25, 0, -1.2); mixC('rightUpperArm', -1.25, 0, 1.2); mixC('leftLowerArm', 0, -.55 + rub, 0); mixC('rightLowerArm', 0, .55 + rub, 0);
+    }
+  }
+  if (T && T.name === 'cocoa') {
+    // picks up the cocoa and sips it, head tipping back a little with each sip
+    const sip = Math.max(0, Math.sin(k * 1.6));
+    mixR('rightUpperArm', -.78, 0, 1.12); mixR('rightLowerArm', 0, 2.05 + .22 * sip, 0);
+    mixR('head', -.12 * sip, -.1, 0);
+  }
+  if (T && T.name === 'stretch') {
+    // a big yawn and a stretch, arms over his head
+    const s = Math.sin(Math.PI * clamp(k / TASK_LEN.stretch, 0, 1));
+    mixR('leftUpperArm', -.2, 0, lerp(-1.4, 1.15, s)); mixR('rightUpperArm', -.2, 0, lerp(1.4, -1.15, s));
+    mixR('leftLowerArm', 0, 0, .3 * s); mixR('rightLowerArm', 0, 0, -.3 * s);
+    mixR('spine', -.12 * s, 0, 0); mixR('head', -.35 * s, 0, 0); yawn = s;
+  }
+  if (T && T.name === 'stars') {
+    // looks up at the stars, swaying a little
+    mixR('head', -.5, Math.sin(k * .5) * .3, 0); mixR('spine', -.08, 0, Math.sin(k * .7) * .03);
+  }
   const bl = blinkAmount(dt);
-  expr(r.vrm, { blink: sleepy ? Math.max(bl, .35) : bl, happy: a === 'wave' || a === 'flex' ? .8 : state.ctx.allDone ? .35 : 0, relaxed: sleepy ? .4 : 0 });
+  expr(r.vrm, { aa: yawn * .8, blink: sleepy ? Math.max(bl, .35) : bl, happy: a === 'wave' || a === 'flex' ? .8 : state.ctx.allDone ? .35 : 0, relaxed: sleepy ? .4 : 0 });
   return { air };
 }
 function sleepPose(r, t) {
@@ -610,7 +655,7 @@ function placeBubble() {
 function tap() {
   const now = performance.now();
   state.taps = state.taps.filter(x => now - x < 380); state.taps.push(now);
-  if (state.mode === 'sleep' && !(state.wokeAt && now - state.wokeAt < 60000)) { state.wokeAt = now; say('Oh! Still up? Get some sleep.'); return; }
+  if ((state.mode === 'sleep' || dexPrefs().look === 'sleep') && !(state.wokeAt && now - state.wokeAt < 60000)) { state.wokeAt = now; state.task = { kind: 'sleep', name: 'stretch', t: 0 }; state.lastTask = 'stretch'; say(state.mode === 'sleep' ? 'Oh! Still up? Get some sleep.' : 'Mm… cocoa?'); return; }
   if (want() === 'ski') { if (state.taps.length >= 2) { play('spin'); say(state.ctx.allDone ? 'Everything done. Send it.' : 'Send it!', 2400); } else { play('hop'); nextLine(); } }
   else { play(want() === 'gym' ? 'flex' : 'wave'); nextLine(); }
   navigator.vibrate && navigator.vibrate(8);
@@ -684,8 +729,11 @@ function frame(now) {
   if (!REDUCED && !state.drag && !state.wardrobe && !camera.userData.small && now - state.touchAt > 6000) state.orbit += dt * .07;
   const dist = (state.camDist || camera.userData.dist || 7) * (sit ? (camera.aspect < 1 ? 1.05 : .78) : 1) * (camera.userData.small ? .62 : 1), a = (skiing ? .5 : sit ? .95 : .32) + state.orbit, el = skiing ? .17 : sit ? .5 : .1;
   const lift = state.wardrobe && innerWidth <= 760 ? .62 : 0;   // wardrobe open: frame him in the top half, above the sheet
-  const ty = -lift + (state.camY || (sit ? .25 : skiing ? 1.02 : .92)), tx = skiing ? state.x * .55 : 0;
-  const tz = sit ? -.4 : 0;
+  const ty = -lift + (state.camY || (sit ? .25 : skiing ? 1.02 : .92)), tx0 = rider ? rider.vrm.scene.position.x : 0, tz0 = rider && !sit ? rider.vrm.scene.position.z : 0;
+  // the camera drifts after him when he walks somewhere (the fire, the jacket rail) or carves
+  state.fx = damp(state.fx ?? tx0, tx0, 2.5, dt); state.fz = damp(state.fz ?? tz0, tz0, 2.5, dt);
+  const tx = skiing ? state.fx * .55 : state.fx * .8;
+  const tz = sit ? -.4 : state.fz * .8;
   // a slow handheld drift, for the lofi feel
   const da = REDUCED ? 0 : .035 * Math.sin(t * .13) + .015 * Math.sin(t * .31), de = REDUCED ? 0 : .012 * Math.sin(t * .09);
   camera.position.set(tx + Math.sin(a + da) * Math.cos(el + de) * dist, ty + Math.sin(el + de) * dist, tz + Math.cos(a + da) * Math.cos(el + de) * dist);

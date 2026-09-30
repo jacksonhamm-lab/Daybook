@@ -1645,6 +1645,9 @@ const isCutoff = d => periodFor(d).end === d;
 // Hours go to Len on the Monday of payday week, so the rest of that week gets estimated.
 const submitDay = p => iso(addDays(parse(p.payday), -(+S.settings.paySubmitDays || 4)));
 const inSubmitWindow = p => today() >= submitDay(p) && today() <= p.end;
+// The Work page is organised by pay period (Fri–Thu, hours to Len on the Monday), not by week.
+const PAY = { date: null };
+const curPeriod = () => periodFor(PAY.date || today());
 // Best guess for a day: the same weekday from recent weeks, else a usual shift.
 function estimateShift(date) {
   for (let back = 1; back <= 4; back++) {
@@ -2370,7 +2373,7 @@ function renderToday(part) {
   const { lvl, into, need } = levelFor(xpTotal());
   const follow = S.jobs.filter(needsFollow), slip = slipped(), sh = S.shifts[d], shH = shiftHours(sh), sk = shakesToday();
   const tmr = iso(addDays(parse(d), 1)), tw = wo(tmr), tsh = S.shifts[tmr], tList = tasksOn(tmr);
-  const due = daysBetween(d, pk.end), dueTxt = due < 0 ? 'Period closed' : due === 0 ? 'Due today' : due === 1 ? 'Due tomorrow' : `Due ${DOW_LONG[dowIdx(pk.end)]}`;
+  const due = daysBetween(d, submitDay(pk)), dueTxt = d > pk.end ? 'Period closed' : due < 0 ? 'Sent to Len' : due === 0 ? 'To Len today' : due === 1 ? 'To Len tomorrow' : `To Len ${DOW_LONG[dowIdx(submitDay(pk))]}`;
   const sub = inSubmitWindow(pk) ? pendingDays(pk) : [], est = sub.reduce((a, x) => a + shiftHours(x.est), 0);
   const stage = `<section class="stage2 anim" style="--i:0">
       <div class="stg-top">
@@ -2432,19 +2435,25 @@ function shiftRow(d, i, pr, td) {
     </div></div></div>`;
 }
 function renderHours() {
-  const dates = weekDates(), td = today(), hrs = weekHours(dates), rate = +S.settings.rate, goal = +S.settings.hoursGoal, pr = presets();
-  const worked = dates.filter(d => shiftHours(S.shifts[d]) > 0).length;
-  const weeks = [...Array(8)].map((_, i) => addDays(weekStart, -7 * (7 - i)));
-  const vals = weeks.map(w => weekHours(datesOf(w))), top = Math.max(goal, ...vals, 1);
-  const nz = vals.filter(v => v > 0), avg = nz.length ? nz.reduce((a, b) => a + b, 0) / nz.length : 0;
-  const p = periodFor(iso(weekStart)), pTotal = periodHours(p) + extraHours(p), win = inSubmitWindow(p) && pendingDays(p).length > 0;
-  const right = `<button class="btn tint" data-act="copy-last">Copy last week</button><button class="btn fill" data-act="copy-summary">Copy summary</button>${weekNav()}`;
-  return hero(`Hours · ${weekLabel(weekStart)}`, rate ? `≈ ${money(hrs * rate)}` : 'Hours', '', right, orb('hh', hrs, 'hours', goal ? hrs / goal : hrs / 40, '#64d2ff', true), [[worked, `Day${worked === 1 ? '' : 's'} worked`], worked ? [`${fh(hrs / worked)}<small>h</small>`, 'Avg shift'] : null]) + `<div class="mods">
+  const p = curPeriod(), td = today(), rate = +S.settings.rate, goal = +S.settings.hoursGoal, pr = presets();
+  const dates = periodDates(p), hrs = periodHours(p), ex = extraHours(p), total = hrs + ex;
+  const worked = dates.filter(d => shiftHours(S.shifts[d]) > 0).length, isNow = p.start <= td && td <= p.end;
+  const pend = inSubmitWindow(p) ? pendingDays(p) : [], est = pend.reduce((s, x) => s + shiftHours(x.est), 0), win = pend.length > 0;
+  const sd = submitDay(p), toLen = sd === td ? 'today' : sd > td ? `${DOW_LONG[dowIdx(sd)]} ${short(sd)}` : null;
+  const past = [...Array(6)].map((_, i) => periodFor(iso(addDays(parse(p.start), -p.cyc * (5 - i)))));
+  const vals = past.map(x => periodHours(x) + extraHours(x)), top = Math.max(goal * p.cyc / 7, ...vals, 1);
+  const nz = vals.filter(v => v > 0), avg = nz.length ? nz.reduce((s, v) => s + v, 0) / nz.length : 0;
+  const nav = `<div class="wnav"><button class="btn icon" data-act="pprev" aria-label="Previous pay period">‹</button><button class="btn" data-act="pnow">${isNow ? 'This period' : 'Jump to now'}</button><button class="btn icon" data-act="pnext" aria-label="Next pay period">›</button></div>`;
+  const right = `<button class="btn fill" data-act="copy-submit">Copy for Len</button>${nav}`;
+  const sub = `Paid ${DOW_LONG[dowIdx(p.payday)]} ${short(p.payday)}${toLen ? ` · hours to Len ${toLen}` : ''}${win ? ` · ≈ ${fh(total + est)}h with ${pend.map(x => DOW[dowIdx(x.date)]).join(', ')} estimated` : ''}`;
+  return hero(`Pay period · ${short(p.start)} – ${short(p.end)}`, rate ? money(total * rate) : `${fh(total)} hours`, sub, right,
+    orb('hh', total, 'hours', goal ? total / (goal * p.cyc / 7) : total / 80, '#64d2ff', true),
+    [[`${fh(hrs)}<small>h</small>`, 'Worked'], [worked, `Day${worked === 1 ? '' : 's'}`], ex ? [`${fh(ex)}<small>h</small>`, 'Subscriptions'] : null, win ? [`${fh(total + est)}<small>h</small>`, 'With estimates'] : null]) + `<div class="mods">
     ${renderToday('work')}
-    ${mod('shifts', { title: 'Shifts', value: `${nk('hs', hrs, 1)}<small>h</small>`, sub: 'Tap a day to edit', icon: IC.work, c: 'var(--teal)', open: !win, wide: true, i: 1, body: `<div class="srows">${dates.map((d, i) => shiftRow(d, i, pr, td)).join('')}</div>` })}
-    ${mod('pay', { title: 'Pay period', value: rate ? money(pTotal * rate) : `${fh(pTotal)}<small>h</small>`, sub: `${short(p.start)} – ${short(p.end)}`, icon: IC.pay, c: 'var(--blue)', alert: win, open: win, i: 2, body: payCard() })}
-    ${mod('trend', { title: 'Last 8 weeks', value: avg ? `${fh(Math.round(avg * 10) / 10)}<small>h avg</small>` : '—', sub: 'Hours per week', icon: IC.chart, c: 'var(--teal)', i: 3,
-      body: `<div class="bars">${avg ? `<div class="avg" style="bottom:calc(${avg / top * 82}% + 27px)"><span>avg</span></div>` : ''}${weeks.map((w, i) => `<div class="bc ${i === 7 ? 'cur' : ''}" style="--i:${i}"><div class="b" data-pk="bar-${iso(w)}" data-to="${vals[i] / top * .82}">${vals[i] ? `<span>${fh(vals[i])}</span>` : ''}</div><span class="bl">${short(iso(w))}</span></div>`).join('')}</div>` })}
+    ${mod('shifts', { title: 'Shifts', value: `${nk('hs', hrs, 1)}<small>h</small>`, sub: `${short(p.start)} – ${short(p.end)} · tap a day to edit`, icon: IC.work, c: 'var(--teal)', open: !win, wide: true, i: 1, body: `<div class="srows">${dates.map(d => shiftRow(d, dowIdx(d), pr, td)).join('')}</div>` })}
+    ${mod('pay', { title: 'Pay', value: `${fh(total)}<small>h</small>`, sub: [rate ? money(total * rate) : '', toLen ? `to Len ${DOW[dowIdx(sd)]}` : `paid ${short(p.payday)}`].filter(Boolean).join(' · '), icon: IC.pay, c: 'var(--blue)', alert: win, open: win, i: 2, body: payCard() })}
+    ${mod('trend', { title: 'Last 6 periods', value: avg ? `${fh(Math.round(avg * 10) / 10)}<small>h avg</small>` : '—', sub: 'Hours per pay period', icon: IC.chart, c: 'var(--teal)', i: 3,
+      body: `<div class="bars">${avg ? `<div class="avg" style="bottom:calc(${avg / top * 82}% + 27px)"><span>avg</span></div>` : ''}${past.map((x, i) => `<div class="bc ${i === 5 ? 'cur' : ''}" style="--i:${i}"><div class="b" data-pk="bar-${x.start}" data-to="${vals[i] / top * .82}">${vals[i] ? `<span>${fh(vals[i])}</span>` : ''}</div><span class="bl">${short(x.start)}</span></div>`).join('')}</div>` })}
   </div>`;
 }
 
@@ -2492,13 +2501,13 @@ window.buddyContext = function () {
   const d = today(), list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, left = list.length - done;
   const w = wo(d), hr = new Date().getHours(), name = S.settings.name || 'there', wk = curWeek(), ag = +S.settings.appGoal || 0, apps = appsIn(wk);
   const cut = s => s.length > 44 ? s.slice(0, 42).trim() + '…' : s;
-  const lines = [], slip = slipped(), p = periodFor(d), due = daysBetween(d, p.end), sk = shakesToday();
+  const lines = [], slip = slipped(), p = periodFor(d), due = daysBetween(d, submitDay(p)), sk = shakesToday();
   if (slip.length) lines.push(`Don’t forget: ${esc(cut(slip[0].title))}`);
   if (S.clock) lines.push(`On the clock for ${fmtDur(clockElapsed()).replace(/:\d\d$/, '')}.`);
   if (left) { const nx = list.find(t => !isDone(t, d)); lines.push(`${left} left today. Next: ${esc(cut(nx.title))}`); }
   else lines.push(list.length ? 'Your list is clear. Nice.' : 'Nothing on the list yet. Add something?');
   lines.push(w.s === 'REST' ? 'Rest day. Walk, stretch, eat well.' : w.done ? `${esc(sessName(w.s))} is done. Recover well.` : `${esc(sessName(w.s))} is on today.`);
-  if (due >= 0 && due <= 2) lines.push(due === 0 ? 'Last day to enter your hours.' : `Hours are due in ${due} day${due === 1 ? '' : 's'}.`);
+  if (due >= 0 && due <= 2) lines.push(due === 0 ? 'Send your hours to Len today.' : `Hours go to Len in ${due} day${due === 1 ? '' : 's'}.`);
   if (ag && apps < ag) lines.push(`${ag - apps} more application${ag - apps === 1 ? '' : 's'} to hit ${ag} this week.`);
   if (!sk.p && hr >= 10) lines.push('Protein shake yet?');
   const greet = hr < 5 ? `Up late, ${esc(name)}?` : hr < 12 ? `Morning, ${esc(name)}!` : hr < 17 ? `Hey ${esc(name)}!` : `Evening, ${esc(name)}!`;
@@ -2561,14 +2570,15 @@ function shiftEditor(d) {
 
 // The pay period covering whichever week you're looking at.
 function payCard() {
-  const p = periodFor(iso(weekStart)), td = today(), rate = +S.settings.rate;
+  const p = curPeriod(), td = today(), rate = +S.settings.rate;
   const hrs = periodHours(p), days = periodDates(p);
-  const left = daysBetween(td, p.end), elapsed = days.filter(d => d <= td).length;
+  const sd = submitDay(p), left = daysBetween(td, sd), elapsed = days.filter(d => d <= td).length;
   const worked = days.filter(d => shiftHours(S.shifts[d]) > 0).length;
-  const when = left < 0 ? `Closed ${short(p.end)}`
-    : left === 0 ? `Last day for hours · paid ${DOW_LONG[dowIdx(p.payday)]}`
-    : left === 1 ? `Hours due tomorrow · paid ${DOW_LONG[dowIdx(p.payday)]}`
-    : `Hours due ${DOW_LONG[dowIdx(p.end)]} · ${left} days`;
+  const when = td > p.end ? `Closed ${short(p.end)}`
+    : left < 0 ? `Hours sent to Len · paid ${DOW_LONG[dowIdx(p.payday)]}`
+    : left === 0 ? `Send hours to Len today · paid ${DOW_LONG[dowIdx(p.payday)]}`
+    : left === 1 ? `Hours to Len tomorrow · paid ${DOW_LONG[dowIdx(p.payday)]}`
+    : `Hours to Len ${DOW_LONG[dowIdx(sd)]} · ${left} days`;
   const half = days.slice(0, Math.floor(p.cyc / 2)), rest = days.slice(Math.floor(p.cyc / 2));
   const wk = (list, label) => `<div class="pw"><span>${label}</span><b>${fh(list.reduce((a, d) => a + shiftHours(S.shifts[d]), 0))}h</b></div>`;
   const ex = extraHours(p), total = hrs + ex;
@@ -2587,7 +2597,7 @@ function payCard() {
       <div class="row" style="margin-top:12px"><button class="btn sm white" data-act="copy-submit">Copy for Len</button><button class="btn sm tint" data-act="fill-estimates">Fill them in</button></div>
     </div>` : ''}
     <div class="pws">${wk(half, 'Week 1')}${wk(rest, 'Week 2')}</div>
-    <div class="row" style="margin-top:14px"><button class="btn sm" data-act="copy-period">Copy period</button><button class="btn sm tint" data-act="goto-period">Open period</button></div>`;
+    <div class="row" style="margin-top:14px"><button class="btn sm" data-act="copy-period">Copy period</button></div>`;
 }
 
 function spark(v) {
@@ -3050,7 +3060,7 @@ function placeDex(t) {
 }
 function switchTab(k, sel) {
   if (k === S.ui.tab && !sel) return scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' });
-  weekStart = mondayOf(sel ? parse(sel) : new Date());
+  weekStart = mondayOf(sel ? parse(sel) : new Date()); PAY.date = null;
   S.ui.selDay = sel || null;
   S.ui.tab = k; FX.enter = 'enter'; FX.seg = true; save();
   scrollTo(0, 0);
@@ -3137,6 +3147,9 @@ document.addEventListener('click', e => {
   const task = () => SHEET && S.tasks.find(x => x.id === SHEET.arg.id);
   const job = () => SHEET && S.jobs.find(x => x.id === SHEET.arg);
   switch (a) {
+    case 'pprev': { const p = curPeriod(); PAY.date = iso(addDays(parse(p.start), -1)); FX.enter = 'enter-r'; return render(); }
+    case 'pnext': { const p = curPeriod(); PAY.date = iso(addDays(parse(p.end), 1)); FX.enter = 'enter-l'; return render(); }
+    case 'pnow': PAY.date = null; FX.enter = 'enter'; return render();
     case 'prev': return shiftWeek(-1);
     case 'next': return shiftWeek(1);
     case 'thisweek': return shiftWeek(0);
@@ -3190,9 +3203,9 @@ document.addEventListener('click', e => {
       return;
     }
     case 'copy-summary': return copy(summary());
-    case 'copy-submit': { const p = periodFor(iso(weekStart)); S.submitted = S.submitted || {}; S.submitted[p.payday] = { at: Date.now(), total: periodHours(p) + estimateHours(p) + extraHours(p) }; save(); return copy(submitSummary(p)); }
-    case 'fill-estimates': { const p = periodFor(iso(weekStart)); const pend = pendingDays(p); if (!pend.length) return island.toast('Nothing left to estimate'); return withUndo(`Filled ${pend.length} day${pend.length === 1 ? '' : 's'}`, () => pend.forEach(x => { S.shifts[x.date] = { ...x.est, note: 'estimated' }; })); }
-    case 'copy-period': return copy(periodSummary(periodFor(iso(weekStart))));
+    case 'copy-submit': { const p = curPeriod(); S.submitted = S.submitted || {}; S.submitted[p.payday] = { at: Date.now(), total: periodHours(p) + estimateHours(p) + extraHours(p) }; save(); return copy(submitSummary(p)); }
+    case 'fill-estimates': { const p = curPeriod(); const pend = pendingDays(p); if (!pend.length) return island.toast('Nothing left to estimate'); return withUndo(`Filled ${pend.length} day${pend.length === 1 ? '' : 's'}`, () => pend.forEach(x => { S.shifts[x.date] = { ...x.est, note: 'estimated' }; })); }
+    case 'copy-period': return copy(periodSummary(curPeriod()));
     case 'goto-period': { weekStart = mondayOf(parse(periodFor(iso(weekStart)).start)); FX.enter = 'enter'; return render(); }
     case 'copy-last': {
       const cur = weekDates(), prev = datesOf(addDays(weekStart, -7));
