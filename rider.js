@@ -135,7 +135,10 @@ function buildSettings() {
   box(shop, .72, 1.9, .05, 0xb08d57, 2.15, .95, -1.7, -.6); box(shop, .6, 1.76, .02, 0x9fb3c8, 2.15, .95, -1.67, -.6);
   // camp: stars, a moon and a small fire in the snow for the late-night look
   const camp = world.camp = new THREE.Group(); scene.add(camp);
-  const fire = world.fire = new THREE.Group(); fire.position.set(-.8, 0, .6); camp.add(fire);
+  const fire = world.fire = new THREE.Group(); fire.position.set(-.55, 0, 1.2); camp.add(fire);
+  // the log he sits on (lined up with how he faces when asleep)
+  const seat = new THREE.Group(); seat.rotation.y = -.35; camp.add(seat);
+  cyl(seat, .17, 1.3, 0x5b3a22, 0, .17, -.06, [0, 0, Math.PI / 2], 12); cyl(seat, .172, .02, 0xc9a27a, .65, .17, -.06, [0, 0, Math.PI / 2], 12);
   for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, st = new THREE.Mesh(new THREE.DodecahedronGeometry(.07 + (i % 3) * .015), toon(0x6d7280)); st.position.set(Math.cos(a) * .3, .04, Math.sin(a) * .3); fire.add(st); }
   [0, 1.1, 2.2].forEach(a => cyl(fire, .045, .5, 0x5b3a22, 0, .07, 0, [Math.PI / 2 - .35, a, 0], 8));
   world.flames = [[.16, .42, 0xff7a1a], [.11, .34, 0xffb347], [.06, .22, 0xffe7a0]].map(([r, h, c]) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: .92, blending: THREE.AdditiveBlending, depthWrite: false })); m.position.y = .1 + h / 2; m.userData.h = h; fire.add(m); return m; });
@@ -376,14 +379,13 @@ function standPose(r, t, dt, sleepy, gym) {
 function sleepPose(r, t) {
   const { B } = r, br = Math.sin(t * 1.1);
   r.vrm.scene.rotation.set(0, -.35, 0); r.vrm.scene.position.x = 0;
-  // sitting in the snow, legs out in front, leaning back on his hands, dozed off
-  B('leftUpperLeg').rotation.set(-1.62, 0, .1); B('rightUpperLeg').rotation.set(-1.66, 0, -.12);
-  B('leftLowerLeg').rotation.x = .12; B('rightLowerLeg').rotation.x = .3;
-  B('leftFoot').rotation.x = .25; B('rightFoot').rotation.x = .2;
-  B('spine').rotation.x = -.3 + .015 * br; B('chest').rotation.x = -.05 + .015 * br; B('neck').rotation.x = .3; B('head').rotation.set(.45, .1, .22);
-  B('leftUpperArm').rotation.set(.55, 0, -1.2); B('rightUpperArm').rotation.set(.55, 0, 1.2);
-  B('leftLowerArm').rotation.set(0, .1, 0); B('rightLowerArm').rotation.set(0, -.1, 0);
-  B('leftHand').rotation.z = .6; B('rightHand').rotation.z = -.6;
+  // dozing on a log by the fire: knees bent, forearms on his knees, head dropped
+  B('leftUpperLeg').rotation.set(-1.5, 0, .1); B('rightUpperLeg').rotation.set(-1.5, 0, -.1);
+  B('leftLowerLeg').rotation.x = 1.5; B('rightLowerLeg').rotation.x = 1.5;
+  B('spine').rotation.x = .32 + .015 * br; B('chest').rotation.x = .14 + .015 * br; B('neck').rotation.x = .25; B('head').rotation.set(.5, .08, .12);
+  B('leftUpperArm').rotation.set(-.4, 0, -1.38); B('rightUpperArm').rotation.set(-.4, 0, 1.38);
+  B('leftLowerArm').rotation.set(0, -1.25, 0); B('rightLowerArm').rotation.set(0, 1.25, 0);
+  B('leftHand').rotation.set(-.6, 0, -.5); B('rightHand').rotation.set(-.6, 0, .5); fists(r.vrm, .35);
   expr(r.vrm, { blink: 1, relaxed: .6 });
   return { air: 0 };
 }
@@ -391,7 +393,7 @@ function sleepPose(r, t) {
 function ground(r, air, sit) {
   r.vrm.scene.position.y = 0; r.vrm.scene.updateMatrixWorld(true);
   let low = Math.min(r.R('leftFoot').getWorldPosition(_v).y, r.R('rightFoot').getWorldPosition(_w).y) - r.footRest;
-  if (sit) low = Math.min(low + .04, r.R('hips').getWorldPosition(_v).y - .1);   // heels rest a little lower than a standing ankle
+  
   r.vrm.scene.position.y = -low + air;
 }
 

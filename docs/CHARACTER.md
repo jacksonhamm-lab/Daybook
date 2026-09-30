@@ -15,8 +15,8 @@
     the six-pack, on the flanks and the delt V, with thin ink lines on the top edges; skin
     shadow tone deepened. Athletic stance with fists; tap for a double-biceps flex.
   - **Work** (clocked in): `Work.vrm`, standing easy, breathing, eyes follow your finger.
-  - **Sleep** (11pm to 6am): `Sleep.vrm`, sitting in the snow with legs out, leaning back
-    on his hands, eyes closed, z's. Tapping wakes him for a minute.
+  - **Sleep** (11pm to 6am): `Sleep.vrm`, dozing on a log by the campfire (knees bent,
+    hands by his knees, head dropped), eyes closed, z's. A legs-out lean-back looked stiff; he said it was unnatural. Tapping wakes him for a minute.
 - **Each outfit has its own setting** (`SETTINGS` / `setEnv` in rider.js): ski = night slope;
   gym = warm-lit gym (rubber floor, power rack with a loaded bar, dumbbell rack, plates, dust);
   work = menswear shop floor (wood planks, rail of jackets, table of folded shirts, mirror);
