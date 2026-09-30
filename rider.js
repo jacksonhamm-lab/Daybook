@@ -240,11 +240,24 @@ function stepWorld(dt, skiing) {
   });
   { // snowfall drifts down and, while he's moving, streams away up the hill
     const f = world.flakes, P = f.g.attributes.position.array;
+    if (envKey === 'sleep') {
+      // at the camp: big soft flakes falling slowly and swaying, gathered round him so you see them
+      const now = performance.now() / 1000;
+      if (!f.camp) { f.camp = true; for (let i = 0; i < f.n; i++) { P[i * 3] = (Math.random() - .5) * 6; P[i * 3 + 1] = Math.random() * 3.6; P[i * 3 + 2] = -3.5 + Math.random() * 5.5; f.g.attributes.size.array[i] = .03 + Math.random() * .035; } f.g.attributes.size.needsUpdate = true; }
+      for (let i = 0; i < f.n; i++) {
+        P[i * 3 + 1] -= dt * (.16 + (i % 5) * .025);
+        P[i * 3] += Math.sin(now * .7 + i * 1.3) * dt * .12; P[i * 3 + 2] += Math.cos(now * .5 + i) * dt * .05;
+        if (P[i * 3 + 1] < 0) { P[i * 3] = (Math.random() - .5) * 6; P[i * 3 + 1] = 3.6; P[i * 3 + 2] = -3.5 + Math.random() * 5.5; }
+      }
+      f.g.attributes.position.needsUpdate = true;
+    } else {
+    if (f.camp) { f.camp = false; for (let i = 0; i < f.n; i++) f.g.attributes.size.array[i] = .02 + Math.random() * .03; f.g.attributes.size.needsUpdate = true; }
     for (let i = 0; i < f.n; i++) {
       P[i * 3 + 1] -= dt * (.5 + (i % 7) * .08); P[i * 3 + 2] -= d * .9; P[i * 3] += Math.sin(i + performance.now() / 900) * dt * .1;
       if (P[i * 3 + 1] < 0 || P[i * 3 + 2] < -14) { P[i * 3] = (Math.random() - .5) * 11; P[i * 3 + 1] = sp ? Math.random() * 5 : 5; P[i * 3 + 2] = sp ? 6 : -14 + Math.random() * 20; }
     }
     f.g.attributes.position.needsUpdate = true;
+    }
   }
   { // spray: short-lived puffs that fly out, fall and get left behind
     const f = world.spray, P = f.g.attributes.position.array, S = f.g.attributes.size.array, A = f.g.attributes.alpha.array;
