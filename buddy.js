@@ -12,7 +12,7 @@ import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SMALL = innerWidth < 700;
-const COL = { jacket: 0xffc81a, trim: 0x16171d, pants: 0x1b1c22, skin: 0xf3cdb0, mask: 0x121318, beanie: 0x15161b, hair: 0x2b1d17, glove: 0x16171d, boot: 0xb8a276, sole: 0x3a3228, ski: 0x17181e, gold: 0xd9a92b };
+const COL = { jacket: 0xffc81a, trim: 0x16171d, pants: 0x1b1c22, skin: 0xf3cdb0, mask: 0x121318, beanie: 0x15161b, hair: 0x2b1d17, glove: 0x16171d, boot: 0xb8a276, sole: 0x3a3228, ski: 0x17181e, gold: 0xd9a92b, frame: 0xe7e1d2 };
 const HIP = 1.0;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -38,6 +38,46 @@ function mesh(geo, m, parent, x = 0, y = 0, z = 0, ink = true) {
 }
 // A smooth turned shape from a handful of [radius, height] points.
 function turned(pts, seg = 28, n = 24) { const c = new THREE.SplineCurve(pts.map(([r, y]) => new THREE.Vector2(r, y))); return new THREE.LatheGeometry(c.getPoints(n), seg); }
+// Vertical ribs for the knit.
+function ribTex(base, dark, n = 72) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 8; const x = c.getContext('2d');
+  x.fillStyle = base; x.fillRect(0, 0, 512, 8); x.fillStyle = dark;
+  for (let i = 0; i < n; i++) x.fillRect(i * 512 / n, 0, 512 / n * .42, 8);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; return t;
+}
+// Goggle outline: a wide rounded lens with an arched cut for the nose.
+function gogglePts(w, h, r, notch, n = 160) {
+  const sh = new THREE.Shape(), x0 = -w / 2, y0 = -h / 2;
+  sh.moveTo(x0 + r, y0); sh.lineTo(-notch * 1.25, y0); sh.quadraticCurveTo(0, y0 + notch * 1.5, notch * 1.25, y0);
+  sh.lineTo(w / 2 - r, y0); sh.quadraticCurveTo(w / 2, y0, w / 2, y0 + r); sh.lineTo(w / 2, h / 2 - r * .6); sh.quadraticCurveTo(w / 2, h / 2, w / 2 - r, h / 2);
+  sh.lineTo(x0 + r, h / 2); sh.quadraticCurveTo(x0, h / 2, x0, h / 2 - r * .6); sh.lineTo(x0, y0 + r); sh.quadraticCurveTo(x0, y0, x0 + r, y0);
+  return sh.getSpacedPoints(n);
+}
+// Wrap a flat shape round a vertical cylinder so the goggles follow the face.
+function bend(geo, R) {
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), a = x / R, rr = R + z; p.setXYZ(i, Math.sin(a) * rr, p.getY(i), Math.cos(a) * rr); }
+  geo.computeVertexNormals(); return geo;
+}
+function lensTex(w, h) {
+  // gold mirror: bright at the top left falling to bronze, with two glints, clipped to the goggle outline
+  const c = document.createElement('canvas'); c.width = 512; c.height = Math.round(512 * h / w); const x = c.getContext('2d'), W = c.width, H = c.height;
+  x.beginPath(); gogglePts(w, h, .032, .031, 200).forEach((p, i) => { const px = (p.x / w + .5) * W, py = (.5 - p.y / h) * H; i ? x.lineTo(px, py) : x.moveTo(px, py); }); x.closePath(); x.clip();
+  const g = x.createLinearGradient(0, 0, W * .8, H); g.addColorStop(0, '#ffe79a'); g.addColorStop(.28, '#f0b53a'); g.addColorStop(.6, '#b3701c'); g.addColorStop(1, '#4a2a08');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const v = x.createLinearGradient(0, 0, 0, H); v.addColorStop(0, 'rgba(255,255,255,.25)'); v.addColorStop(.45, 'rgba(255,255,255,0)'); v.addColorStop(1, 'rgba(0,0,0,.25)'); x.fillStyle = v; x.fillRect(0, 0, W, H);
+  x.fillStyle = 'rgba(255,255,255,.55)'; x.beginPath(); x.moveTo(W * .12, 0); x.lineTo(W * .2, 0); x.lineTo(W * .1, H); x.lineTo(W * .02, H); x.fill();
+  x.fillStyle = 'rgba(255,255,255,.3)'; x.beginPath(); x.moveTo(W * .24, 0); x.lineTo(W * .27, 0); x.lineTo(W * .17, H); x.lineTo(W * .14, H); x.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function strapTex() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 64; const x = c.getContext('2d');
+  x.fillStyle = '#8d8474'; x.fillRect(0, 0, 1024, 64);
+  x.fillStyle = 'rgba(255,255,255,.07)'; for (let i = 0; i < 64; i += 4) x.fillRect(0, i, 1024, 1);
+  x.font = '800 34px Inter, sans-serif'; x.textBaseline = 'middle'; x.fillStyle = '#b3aa98';
+  [140, 820].forEach(px => x.fillText('DAYBOOK', px, 34));
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
 function capOf(r, from, to, seg = 36) { return new THREE.SphereGeometry(r, seg, 24, 0, Math.PI * 2, from, to - from); }
 
 function buildScene() {
@@ -119,18 +159,32 @@ function buildBuddy() {
   skull.add(decal); rig.screen = decal;
   mesh(capOf(.207, 1.86, Math.PI), M.mask, skull);
   mesh(new THREE.SphereGeometry(.035, 12, 10), M.mask, skull, 0, -.07, .185, false).scale.set(1, .9, 1.1);
-  mesh(capOf(.214, 0, 1.06), M.beanie, skull, 0, .005, 0);
-  const cuff = mesh(new THREE.TorusGeometry(.207, .034, 10, 44), M.beanie, skull, 0, .104, 0); cuff.rotation.x = Math.PI / 2;
-  const slouch = mesh(new THREE.SphereGeometry(.15, 24, 16), M.beanie, skull, 0, .165, -.07); slouch.scale.set(1.05, .8, 1.1);
-  mesh(new RoundedBoxGeometry(.06, .028, .012, 2, .006), M.gold, skull, .07, .106, .2, false).rotation.y = .34;
+  const knit = toon(0xffffff, { map: ribTex('#1a1b21', '#0e0f13') });
+  mesh(turned([[.001, .272], [.1, .262], [.166, .226], [.205, .172], [.219, .124]], 44, 20), knit, skull);
+  const cuffKnit = toon(0xffffff, { map: ribTex('#1d1e25', '#0c0d11', 96) });
+  mesh(turned([[.214, .127], [.225, .118], [.227, .09], [.224, .07], [.206, .063]], 44, 10), cuffKnit, skull);
   const spike = (x, y, z, rx, rz, r = .036, h = .12) => { const s = mesh(new THREE.ConeGeometry(r, h, 8), M.hair, skull, x, y, z); s.rotation.set(rx, 0, rz); };
   [[-.1, .2, .6], [-.035, .205, .15], [.035, .205, -.15], [.1, .2, -.6]].forEach(([x, z, rz]) => spike(x, .07, z - .025, Math.PI - .55, rz * .5, .034, .09));
   [-1, 1].forEach(s => { spike(s * .19, .0, .05, Math.PI + .1, s * .25, .03, .11); spike(s * .12, .0, -.16, Math.PI + .6, s * .3, .035, .1); });
   const gog = rig.goggles = new THREE.Group(); skull.add(gog);
-  const strap = mesh(new THREE.TorusGeometry(.222, .016, 8, 44), M.mask, gog, 0, .025, 0, false); strap.rotation.x = Math.PI / 2;
-  const frame = mesh(new THREE.SphereGeometry(.226, 40, 10, Math.PI / 2 - .82, 1.64, 1.33, .46), M.mask, gog, 0, 0, 0, false); frame.material = M.mask.clone(); frame.material.side = THREE.DoubleSide;
-  mesh(new THREE.SphereGeometry(.232, 40, 10, Math.PI / 2 - .76, 1.52, 1.37, .38), M.lens, gog, 0, 0, 0, false).material.side = THREE.DoubleSide;
-  rig.tip = new THREE.Mesh(new THREE.SphereGeometry(.12, 8, 6), new THREE.MeshBasicMaterial({ visible: false })); rig.tip.position.set(0, .24, 0); skull.add(rig.tip);
+  gog.position.y = .018;
+  const R = .222, W = .4, H = .135;
+  const outer = new THREE.Shape(gogglePts(W, H, .04, .034)), hole = new THREE.Path(gogglePts(W - .026, H - .026, .03, .03));
+  outer.holes.push(hole);
+  const frameGeo = bend(new THREE.ExtrudeGeometry(outer, { depth: .026, bevelEnabled: true, bevelThickness: .005, bevelSize: .004, bevelSegments: 2, curveSegments: 4 }), R);
+  mesh(frameGeo, toon(COL.frame), gog, 0, 0, 0);
+  const foam = bend(new THREE.ExtrudeGeometry(new THREE.Shape(gogglePts(W - .012, H - .012, .036, .032)), { depth: .012, bevelEnabled: false }), R - .006);
+  mesh(foam, toon(0x101114), gog, 0, 0, 0, false);
+  // the lens is a finely divided sheet cut to the goggle shape by its texture, so it curves smoothly
+  const lensGeo = bend(new THREE.PlaneGeometry(W - .02, H - .02, 64, 10), R + .021);
+  const lm = new THREE.MeshBasicMaterial({ map: lensTex(W - .02, H - .02), transparent: true, alphaTest: .5, side: THREE.DoubleSide });
+  mesh(lensGeo, lm, gog, 0, 0, 0, false).castShadow = false;
+  const sa = W / 2 / R;
+  // the strap hugs the beanie and only tilts a little when the goggles go up
+  const gs = rig.gogStrap = new THREE.Group(); gs.position.y = .018; skull.add(gs);
+  mesh(new THREE.CylinderGeometry(R + .012, R + .012, .07, 48, 1, true, sa - .05, Math.PI * 2 - 2 * sa + .1), toon(0xffffff, { map: strapTex(), side: THREE.DoubleSide }), gs, 0, 0, 0, false);
+  [-1, 1].forEach(k => { const clip = mesh(new RoundedBoxGeometry(.03, .082, .03, 2, .01), toon(COL.frame), gog, Math.sin(sa) * (R + .012) * k, 0, Math.cos(sa) * (R + .012), false); clip.rotation.y = sa * k; });
+  rig.tip = new THREE.Mesh(new THREE.SphereGeometry(.12, 8, 6), new THREE.MeshBasicMaterial({ visible: false })); rig.tip.position.set(0, .3, 0); skull.add(rig.tip);
   // arms with elbows, gloves, poles
   const arm = side => {
     const sh = new THREE.Group(); sh.position.set(side * .235, .44, 0); spine.add(sh);
@@ -305,6 +359,7 @@ function applyPose(P, dt, t) {
   const A = state.antenna; A.v += (-70 * A.a - 6 * A.v - state.hipV * 1.6) * dt; A.a += A.v * dt;
   rig.head.rotation.set(pose.headX - pose.tiltX * .6 + state.look.y * .18, state.look.x * .55, pose.headZ - pose.tiltZ * .5);
   rig.goggles.rotation.x = lerp(-.56, 0, pose.gog) + clamp(A.a, -.25, .25) * (1 - pose.gog);
+  rig.gogStrap.rotation.x = rig.goggles.rotation.x * .45;
   // legs: solved so the skis stay planted, spread for skating
   const [tx, kx] = legIK(pose.hipY, pose.fz);
   [[rig.legL, pose.tLz], [rig.legR, pose.tRz]].forEach(([l, tz]) => { l.thigh.rotation.set(tx, 0, tz); l.knee.rotation.x = kx; l.ski.rotation.set(-(tx + kx), 0, -tz); });
@@ -402,9 +457,9 @@ function frame(now) {
   if (want !== 'sleep' || !state.wokeAt || now - state.wokeAt > 60000) state.mode = want;
   autonomous(dt);
   applyPose(computePose(t, dt), dt, t);
-  const dist = camera.userData.dist || 6;
+  const dist = state.camDist || camera.userData.dist || 6;
   const px = state.pointerAt ? state.lookT.x * .12 : Math.sin(t * .2) * .08;
-  const ly = camera.aspect < 1 ? 1.0 : 1.06; camera.position.set(damp(camera.position.x, px, 3, dt), ly + .28, dist); camera.lookAt(0, ly, 0);
+  const ly = state.camY || (camera.aspect < 1 ? 1.0 : 1.06); camera.position.set(damp(camera.position.x, px, 3, dt), ly + .28, dist); camera.lookAt(0, ly, 0);
   renderer.render(scene, camera);
   placeBubble();
   zEl.classList.toggle('on', state.mode === 'sleep');
