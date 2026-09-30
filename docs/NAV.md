@@ -39,6 +39,8 @@
   the pages that own them: clock in/out is at the top of Work, "needs a decision" at the
   top of Plan, tasks and tomorrow are in Plan, fuel in Train, follow-ups in Jobs. When
   something is live, a pill appears on the scene (on the clock + timer, reminders due).
+- **On phones the scene is full bleed:** edge to edge and top to bottom, the header floats over
+  it, and the camera fits his height (the scene runs off the sides) so he fills the screen.
 - **Dex rides along.** On a page, while you're clocked in, mid-session, or on the Train
   page on a training day, he shows in a small floating window (bottom right) in the
   matching outfit and setting; tap it to go home. `placeDex()` moves the same renderer
