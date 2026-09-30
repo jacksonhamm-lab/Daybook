@@ -60,7 +60,7 @@ function buildScene() {
   snow.wrapS = snow.wrapT = THREE.RepeatWrapping; snow.repeat.set(5, 5); snow.anisotropy = 8;
   const fade = canvasTex(256, 256, (x, W, H) => { const g = x.createRadialGradient(W / 2, H * .56, 0, W / 2, H * .56, W / 2); g.addColorStop(0, '#fff'); g.addColorStop(.3, '#ddd'); g.addColorStop(.75, '#333'); g.addColorStop(1, '#000'); x.fillStyle = g; x.fillRect(0, 0, W, H); });
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(26, 26), new THREE.MeshLambertMaterial({ color: 0x9aabc8, map: snow, alphaMap: fade, transparent: true, depthWrite: false }));
-  ground.rotation.x = -Math.PI / 2; ground.position.set(0, -.003, -3); ground.renderOrder = -1; world.outdoor.add(ground); world.fade = fade;
+  ground.rotation.x = -Math.PI / 2; ground.position.set(0, -.003, -3); ground.renderOrder = -1; world.outdoor.add(ground); world.fade = fade; world.ground = ground;
   world.snow = snow;
 
   // pines streaming past on both sides
@@ -183,10 +183,16 @@ const SETTINGS = {
   gym: { sky: 0xffe2c4, ground: 0x2a2018, hemi: 1.05, key: 0xffd9a8, keyI: 2.3, bg: 'radial-gradient(80% 70% at 50% 28%,#5e4837 0%,#34281f 45%,#16110d 100%)' },
   work: { sky: 0xfff0dc, ground: 0x3a2e22, hemi: 1.15, key: 0xfff1de, keyI: 2.0, bg: 'radial-gradient(80% 70% at 50% 28%,#7d6852 0%,#473b2f 45%,#1c1611 100%)' },
 };
+const SKY = {
+  night: { ...SETTINGS.ski, snow: 0x9aabc8 },
+  sunset: { sky: 0xffc9a8, ground: 0x3a2440, hemi: 1.15, key: 0xffb27a, keyI: 2.1, snow: 0xe6c3c6, bg: 'radial-gradient(90% 75% at 50% 25%,#ffb07a 0%,#c8607a 38%,#4a2a5c 72%,#1c1430 100%)' },
+  day: { sky: 0xeaf4ff, ground: 0x6d7f99, hemi: 1.35, key: 0xffffff, keyI: 2.4, snow: 0xeef3fb, bg: 'radial-gradient(90% 75% at 50% 20%,#dff1ff 0%,#8cc4ef 40%,#4a86c7 75%,#2b5a93 100%)' },
+};
 let bgEl = null, envKey = '';
 function setEnv(key) {
   if (key === envKey) return; envKey = key;
-  const S = SETTINGS[key], outdoor = key === 'ski' || key === 'sleep';
+  const S = key === 'ski' ? (SKY[dexPrefs().time] || SKY.night) : SETTINGS[key], outdoor = key === 'ski' || key === 'sleep';
+  world.ground.material.color.set(key === 'ski' ? S.snow : 0x9aabc8);
   world.outdoor.visible = outdoor; world.flakes.p.visible = outdoor;
   world.gym.visible = key === 'gym'; world.shop.visible = key === 'work'; world.camp.visible = key === 'sleep';
   world.stars.p.visible = world.sparks.p.visible = world.steam.p.visible = key === 'sleep'; world.dust.p.visible = key === 'gym' || key === 'work';
@@ -310,9 +316,11 @@ function prepare(key, vrm) {
   const h = vrm.humanoid, B = n => h.getNormalizedBoneNode(n), R = n => h.getRawBoneNode(n);
   vrm.scene.updateMatrixWorld(true);
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
-  if (key === 'gym') { physique(vrm); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
+  if (key === 'gym') { r.build = dexPrefs().build; physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
   if (key === 'ski') {
-    r.outfit = dress(vrm); r.kit = gear(vrm, r.outfit);
+    const D = dexPrefs();
+    r.outfit = dress(vrm, { jacket: D.jacket, pants: D.pants, boots: D.boots, gloves: D.gloves }); r.kit = gear(vrm, r.outfit, { frame: D.frame, pole: D.poles }, { lens: D.lens, skis: D.skis });
+    r.kit.setMask(D.mask); r.kit.setBeanie(D.head === 'beanie', D.beanie); r.dexWas = { ...D };
     r.tails = ['l', 'r'].map(s => { const o = new THREE.Object3D(); o.position.set(0, .01, -.8); r.kit.skis[s].add(o); return o; });
   }
   return r;
@@ -333,21 +341,53 @@ function holdInFist(vrm, side, obj) {
   const m = skin.skeleton.boneInverses[bi(side + 'Hand')].clone().multiply(new THREE.Matrix4().compose(obj.position, obj.quaternion, obj.scale));
   m.decompose(obj.position, obj.quaternion, obj.scale); bones[bi(side + 'Hand')].add(obj); return obj;
 }
+// his look, chosen in the Customise sheet (settings.dex); the defaults are Jackson's real kit
+export const DEX_DEFAULTS = { look: 'auto', time: 'night', jacket: '#b8863b', pants: '#1c1d22', boots: '#b8a276', gloves: '#16171d', poles: '#1a1b20', head: 'mask', mask: '#1a1b21', beanie: '#16171d', frame: '#d5d0c1', lens: 'gold', skis: 'bent', skin: 'default', build: 'athletic' };
+const dexPrefs = () => ({ ...DEX_DEFAULTS, ...(state.ctx.dex || {}) });
+const SKIN = { default: '#ffffff', warm: '#f6dcc6', tan: '#e2b08a', deep: '#b98460' }, BUILD = { lean: .55, athletic: 1, jacked: 1.45 };
+// skin tone tints the skin materials of whichever model is showing
+function applySkin(r, tone) {
+  const c = new THREE.Color(SKIN[tone] || SKIN.default);
+  r.vrm.scene.traverse(o => { if (!o.isMesh) return; [].concat(o.material).forEach(m => {
+    if (!m || !/SKIN/.test(m.name) || /Outline/.test(m.name) || !m.color) return;
+    if (!m.userData.baseShade && m.shadeColorFactor) m.userData.baseShade = m.shadeColorFactor.clone();
+    m.color.copy(c); if (m.userData.baseShade) m.shadeColorFactor.copy(m.userData.baseShade).multiply(c);
+  }); });
+}
+function applyDex() {
+  const D = dexPrefs();
+  if (!rider) return;
+  applySkin(rider, D.skin);
+  if (envKey) { const k = envKey; envKey = ''; setEnv(k); }   // slope time may have changed
+  if (rider.key === 'gym' && rider.build !== D.build) { delete cache.gym; state.reload = true; }
+  if (rider.key !== 'ski') return;
+  ['jacket', 'pants', 'boots', 'gloves'].forEach(k => rider.outfit.recolor(k, D[k]));
+  const K = rider.kit, was = rider.dexWas || {};
+  if (was.lens !== D.lens) K.setLens(D.lens);
+  if (was.skis !== D.skis) K.setSkis(D.skis);
+  if (was.mask !== D.mask) K.setMask(D.mask);
+  if (was.head !== D.head || was.beanie !== D.beanie) K.setBeanie(D.head === 'beanie', D.beanie);
+  K.setFrame(D.frame); K.setPoles(D.poles);
+  rider.dexWas = { ...D };
+}
 function want() {
+  const look = dexPrefs().look;
+  if (look && look !== 'auto') return look;   // he picked a look to keep
   if (state.mode === 'sleep' && state.wokeAt && performance.now() - state.wokeAt < 60000) return 'sleep';
   // night beats work beats training; otherwise he's skiing
   return state.mode === 'sleep' ? 'sleep' : state.mode === 'work' ? 'work' : state.ctx.training ? 'gym' : 'ski';
 }
 function ensureRider() {
   const k = want();
-  if ((rider && rider.key === k) || loading === k || failed) return;
+  if ((rider && rider.key === k && !state.reload) || loading === k || failed) return;
+  state.reload = false;
   loading = k;
   load(k).then(r => {
     if (loading !== k) return;
     loading = null;
     const swap = () => {
-      if (rider && rider !== r) { scene.remove(rider.vrm.scene); const old = rider; delete cache[old.key]; VRMUtils.deepDispose(old.vrm.scene); }
-      rider = r; scene.add(r.vrm.scene); setEnv(r.key); world.tracks.forEach(t => { t.pts = []; });
+      if (rider && rider !== r) { scene.remove(rider.vrm.scene); const old = rider; if (old.key !== r.key) delete cache[old.key]; VRMUtils.deepDispose(old.vrm.scene); }
+      rider = r; scene.add(r.vrm.scene); setEnv(r.key); applyDex(); world.tracks.forEach(t => { t.pts = []; });
       cv.style.opacity = 1; wake();
     };
     if (rider) { cv.style.opacity = 0; setTimeout(swap, 280); } else swap();
@@ -612,7 +652,7 @@ function frame(now) {
   state.mode = state.ctx.mode || 'idle';
   ensureRider();
   const look = want(), skiing = !!rider && rider.key === 'ski', woke = state.wokeAt && now - state.wokeAt < 60000;
-  const sit = !!rider && rider.key === 'sleep' && state.mode === 'sleep' && !woke;
+  const sit = !!rider && rider.key === 'sleep' && (state.mode === 'sleep' || dexPrefs().look === 'sleep') && !woke;
   if (performance.now() - state.pointerAt > 2600) { state.lookT.x = Math.sin(t * .35) * .25; state.lookT.y = 0; }
   state.look.x = damp(state.look.x, state.lookT.x, 6, dt); state.look.y = damp(state.look.y, state.lookT.y, 6, dt);
   stepWorld(dt, skiing);
@@ -639,7 +679,8 @@ function frame(now) {
   // camera: three-quarter view from the front, following him a little; drag swings it round
   if (!state.drag) state.orbit = damp(state.orbit, 0, 1.6, dt);
   const dist = (state.camDist || camera.userData.dist || 7) * (sit ? .78 : 1) * (camera.userData.small ? .62 : 1), a = (skiing ? .5 : sit ? .95 : .32) + state.orbit, el = skiing ? .17 : sit ? .5 : .1;
-  const ty = state.camY || (sit ? .25 : skiing ? 1.02 : .92), tx = skiing ? state.x * .55 : 0;
+  const lift = state.wardrobe && innerWidth <= 760 ? .62 : 0;   // wardrobe open: frame him in the top half, above the sheet
+  const ty = -lift + (state.camY || (sit ? .25 : skiing ? 1.02 : .92)), tx = skiing ? state.x * .55 : 0;
   const tz = sit ? -.4 : 0;
   camera.position.set(tx + Math.sin(a) * Math.cos(el) * dist, ty + Math.sin(el) * dist, tz + Math.cos(a) * Math.cos(el) * dist);
   camera.lookAt(tx, ty - .05, tz);
@@ -675,8 +716,10 @@ function update(ctx) {
   else if (prev.sessionDone === false && ctx.sessionDone) { play('hop'); say('Session done. Big.'); }
   else if (prev.mode && prev.mode !== ctx.mode && ctx.mode === 'work') say('Clocked in. Let’s get it.');
   state.mode = state.ctx.mode || 'idle';
+  if (JSON.stringify(prev.dex || {}) !== JSON.stringify(state.ctx.dex || {})) applyDex();
   if (renderer && ok) ensureRider();   // start fetching the right outfit now, not on the next frame
   wake();
 }
-window.Buddy = { mount, update, say, play, get _() { return { camera, scene, state, world, rider: () => rider, frame }; } };
+function wardrobe(on) { state.wardrobe = !!on; wake(); }
+window.Buddy = { mount, update, say, play, wardrobe, get _() { return { camera, scene, state, world, rider: () => rider, frame }; } };
 const slot0 = document.querySelector('#buddySlot'); if (slot0) mount(slot0);

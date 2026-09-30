@@ -127,6 +127,22 @@ the repo, see below).
   - Jacket front hem takes a little upper-leg weight so it rides on the thighs in a
     ski stance (otherwise the pants poke through).
 
+## Customise (the hanger button on the scene)
+
+Saved as `settings.dex` (synced); defaults = his real kit (`DEX_DEFAULTS`, in both index.html and
+rider.js). The sheet keeps Dex in view: no blur, shorter sheet on phones with the camera
+lifting him into the top half, docked right on desktop.
+
+- **Look:** follows your day (auto) or pin Ski / Gym / Work / Night camp. **Ski slope:** night,
+  sunset or day (sky, light, snow tint).
+- **Ski kit:** jacket, pants, boots, gloves, poles (colours, live via `recolor` / materials).
+- **Head:** ski mask, or mask + beanie (built from the mask's rings with a folded cuff); mask,
+  beanie and goggle-frame colours; lens tint (gold, ice, rose, smoke, emerald).
+- **Skis:** Bents, Midnight, Glacier, Lava (palettes in `SKIS`, gear.js).
+- **Body:** skin tone (default, warm, tan, deep; tints the MToon skin of every look) and gym
+  build (lean / athletic / jacked = physique amount .55 / 1 / 1.45; changing it reloads the
+  gym model).
+
 ## Outfits (decision 2026-09-30: VRoid + code mix)
 
 - **Everyday outfits** (gym, suit, casual): Jackson makes them in VRoid Studio, where

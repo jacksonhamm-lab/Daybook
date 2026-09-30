@@ -30,9 +30,17 @@ function bend(geo, R, H, bulge = .006) {
 }
 // black-gold mirror (colours measured from his Squad photo): pale gold falling to dark
 // bronze across the lens, darker toward the bottom, one soft glint; clipped to the lens outline
-const lensTex = (pts, w, h) => canvasTex(512, Math.round(512 * h / w), (x, W, H) => {
+// Lens tints you can pick for him (gold is his real Squad lens)
+export const LENSES = {
+  gold: ['#e6d3a2', '#cdae6c', '#9b7c47', '#5a4420', '#3b2c12'],
+  ice: ['#dff4ff', '#94d3f5', '#3f8fcf', '#1f4f86', '#12284a'],
+  rose: ['#ffe0e8', '#f39bb3', '#c7577c', '#7d2c4a', '#3d1426'],
+  smoke: ['#cfd2d9', '#8d929c', '#5a5f69', '#353941', '#1d1f24'],
+  emerald: ['#dcf7e6', '#8fdcb0', '#3e9e6f', '#1f5c40', '#0f2f21'],
+};
+const lensTex = (pts, w, h, tint = 'gold') => canvasTex(512, Math.round(512 * h / w), (x, W, H) => {
   x.beginPath(); pts.forEach((p, i) => { const px = (p.x / w + .5) * W, py = (.5 - p.y / h) * H; i ? x.lineTo(px, py) : x.moveTo(px, py); }); x.closePath(); x.clip();
-  const g = x.createLinearGradient(0, 0, W, H * .4); g.addColorStop(0, '#e6d3a2'); g.addColorStop(.3, '#cdae6c'); g.addColorStop(.6, '#9b7c47'); g.addColorStop(.88, '#5a4420'); g.addColorStop(1, '#3b2c12');
+  const L = LENSES[tint] || LENSES.gold, g = x.createLinearGradient(0, 0, W, H * .4); [0, .3, .6, .88, 1].forEach((o, i) => g.addColorStop(o, L[i]));
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   const v = x.createLinearGradient(0, 0, 0, H); v.addColorStop(0, 'rgba(255,250,230,.22)'); v.addColorStop(.45, 'rgba(255,255,255,0)'); v.addColorStop(1, 'rgba(20,10,0,.35)'); x.fillStyle = v; x.fillRect(0, 0, W, H);
   const s = x.createRadialGradient(W * .26, H * .28, 0, W * .26, H * .28, W * .22); s.addColorStop(0, 'rgba(255,255,240,.45)'); s.addColorStop(1, 'rgba(255,255,240,0)'); x.fillStyle = s; x.fillRect(0, 0, W, H);
@@ -42,27 +50,34 @@ const ribTex = (base, dark, n) => { const t = canvasTex(1024, 8, (x, W, H) => { 
 // Topsheet in the spirit of his Atomic Bents, no lettering: hot pink at the tip bleeding
 // through purple into blue, a dark ridge of peaks, then curling cyan waves down to the tail.
 // Tip is the top of the canvas.
-const bentTex = seed => canvasTex(256, 2048, (x, W, H) => {
-  let s = seed; const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+// Topsheets you can pick: his Bents (sky to sea), plus a few other colourways
+export const SKIS = {
+  bent: { sky: [[0, '#f0406a'], [.12, '#e8336e'], [.24, '#b43c8e'], [.33, '#6c4fb2'], [.4, '#3a5cc0'], [.5, '#2376c8'], [.75, '#1d62b8'], [1, '#27438f']], ridge: '#1b2a6a', deep: [10, 40, 110], curls: ['#8fe6ff', '#46c3f2', '#ffffff', '#2b8fdc', '#b8f1ff'], cloud: [255, 150, 170] },
+  midnight: { sky: [[0, '#1b1f3a'], [.3, '#2a2f5e'], [.45, '#1a2350'], [1, '#0d1330']], ridge: '#0a0e22', deep: [8, 12, 40], curls: ['#d9a441', '#f0c96a', '#ffffff', '#b8862f', '#ffe3a1'], cloud: [120, 130, 200] },
+  glacier: { sky: [[0, '#f4f8fb'], [.25, '#d6ecf5'], [.45, '#9fd4e6'], [1, '#3f93b8']], ridge: '#5d7f99', deep: [30, 110, 150], curls: ['#ffffff', '#c9f0ff', '#1e6f96', '#7fd0ec', '#e8fbff'], cloud: [255, 255, 255] },
+  lava: { sky: [[0, '#ffcf5a'], [.18, '#ff8a2a'], [.35, '#e0421f'], [.5, '#7a1616'], [1, '#1a0b0b']], ridge: '#2a0d0d', deep: [60, 12, 10], curls: ['#ffb347', '#ff6a2a', '#ffe08a', '#c7361b', '#ffd0a0'], cloud: [255, 200, 120] },
+};
+const bentTex = (seed, name = 'bent') => canvasTex(256, 2048, (x, W, H) => {
+  let s = seed; const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647), K = SKIS[name] || SKIS.bent;
   const g = x.createLinearGradient(0, 0, 0, H);
-  [[0, '#f0406a'], [.12, '#e8336e'], [.24, '#b43c8e'], [.33, '#6c4fb2'], [.4, '#3a5cc0'], [.5, '#2376c8'], [.75, '#1d62b8'], [1, '#27438f']].forEach(([o, c]) => g.addColorStop(o, c));
+  K.sky.forEach(([o, c]) => g.addColorStop(o, c));
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   // soft cloud streaks in the pink sky
-  for (let i = 0; i < 14; i++) { const y = H * (.03 + rnd() * .28); x.fillStyle = `rgba(255,${120 + rnd() * 80 | 0},${150 + rnd() * 60 | 0},${.12 + rnd() * .12})`; x.beginPath(); x.ellipse(rnd() * W, y, W * (.3 + rnd() * .5), H * (.004 + rnd() * .008), 0, 0, Math.PI * 2); x.fill(); }
+  for (let i = 0; i < 14; i++) { const y = H * (.03 + rnd() * .28); x.fillStyle = `rgba(${K.cloud[0]},${K.cloud[1] - 30 + rnd() * 80 | 0},${K.cloud[2] - 20 + rnd() * 60 | 0},${.12 + rnd() * .12})`; x.beginPath(); x.ellipse(rnd() * W, y, W * (.3 + rnd() * .5), H * (.004 + rnd() * .008), 0, 0, Math.PI * 2); x.fill(); }
   // a ridge of dark peaks where the sky meets the sea
-  x.fillStyle = '#1b2a6a'; x.beginPath(); x.moveTo(0, H * .44);
+  x.fillStyle = K.ridge; x.beginPath(); x.moveTo(0, H * .44);
   for (let k = 0; k <= 8; k++) x.lineTo(W * k / 8, H * (.36 + (k % 2 ? 0 : .035) + rnd() * .02));
   x.lineTo(W, H * .46); x.lineTo(0, H * .46); x.closePath(); x.fill();
   // waves: deep blue swells, then layered curls in cyan, white and blue
   const curl = (cx, cy, r, turns, col, lw) => { x.strokeStyle = col; x.lineWidth = lw; x.lineCap = 'round'; x.beginPath(); for (let t = 0; t <= 1; t += .01) { const a = t * turns * Math.PI * 2, rr = r * (1 - t * .85), px = cx + Math.cos(a) * rr, py = cy + Math.sin(a) * rr * 1.6; t ? x.lineTo(px, py) : x.moveTo(px, py); } x.stroke(); };
-  for (let i = 0; i < 26; i++) { x.fillStyle = `rgba(${10 + rnd() * 20 | 0},${40 + rnd() * 40 | 0},${110 + rnd() * 60 | 0},.55)`; x.beginPath(); x.ellipse(rnd() * W, H * (.46 + rnd() * .54), W * (.25 + rnd() * .35), H * (.02 + rnd() * .03), rnd() * .6 - .3, 0, Math.PI * 2); x.fill(); }
-  for (let i = 0; i < 46; i++) { const cy = H * (.47 + rnd() * .52), r = W * (.12 + rnd() * .3); curl(rnd() * W, cy, r, .8 + rnd() * 1.2, ['#8fe6ff', '#46c3f2', '#ffffff', '#2b8fdc', '#b8f1ff'][i % 5], 3 + rnd() * 7); }
+  for (let i = 0; i < 26; i++) { x.fillStyle = `rgba(${K.deep[0] + rnd() * 20 | 0},${K.deep[1] + rnd() * 40 | 0},${K.deep[2] + rnd() * 60 | 0},.55)`; x.beginPath(); x.ellipse(rnd() * W, H * (.46 + rnd() * .54), W * (.25 + rnd() * .35), H * (.02 + rnd() * .03), rnd() * .6 - .3, 0, Math.PI * 2); x.fill(); }
+  for (let i = 0; i < 46; i++) { const cy = H * (.47 + rnd() * .52), r = W * (.12 + rnd() * .3); curl(rnd() * W, cy, r, .8 + rnd() * 1.2, K.curls[i % 5], 3 + rnd() * 7); }
   for (let i = 0; i < 5; i++) { x.fillStyle = 'rgba(190,110,60,.8)'; x.beginPath(); x.ellipse(rnd() * W, H * (.55 + rnd() * .4), W * .05, H * .012, rnd() * 3, 0, Math.PI * 2); x.fill(); }
   // dark sidewall lines
   x.fillStyle = '#10131f'; x.fillRect(0, 0, 6, H); x.fillRect(W - 6, 0, 6, H);
 });
 
-export function gear(vrm, outfit = {}, colors = {}, { skiTex } = {}) {
+export function gear(vrm, outfit = {}, colors = {}, { skiTex, lens: lensTint = 'gold', skis: skiName = 'bent' } = {}) {
   const C = { mask: 0x15161b, frame: 0xd5d0c1, strap: 0x8e857c, pole: 0x1a1b20, grip: 0x0e0f12, binding: 0x15161b, accent: 0xd9a441, ...colors };
   let skin, face; const hair = [];
   vrm.scene.traverse(o => { if (!o.isMesh) return; const mats = [].concat(o.material).map(m => m.name).join(); if (o.name === 'Body_(merged)') skin = o; if (/Face_00_SKIN/.test(mats)) face = o; if (/_HAIR/.test(mats)) hair.push(o); });
@@ -114,16 +129,37 @@ export function gear(vrm, outfit = {}, colors = {}, { skiTex } = {}) {
     return m;
   })();
 
+  // ── optional beanie over the mask: the mask's rings above the brow, pushed out, with a folded cuff ──
+  const beanie = (() => {
+    const y0 = eyeY + .036, first = rows.findIndex(y => y >= y0), pos = [], uv = [], idx = [], W = SEG + 1, H = bi('head');
+    const ring = (y, i, extra) => { for (let b = 0; b <= SEG; b++) { const a = (b + .5) / SEG * 2 * Math.PI - Math.PI, R = rad[i][b % SEG] + extra; pos.push(cx + Math.sin(a) * R, y, cz + Math.cos(a) * R); uv.push(b / SEG, y * 4); } };
+    ring(rows[first] - .004, first, .006);                                   // tucked edge
+    for (let i = first; i < rows.length; i++) ring(rows[i], i, rows[i] < y0 + .034 ? .021 : .012 + .004 * (rows.length - i) / rows.length);
+    const nR = pos.length / 3 / W;
+    for (let i = 0; i < nR - 1; i++) for (let b = 0; b < SEG; b++) { const p = i * W + b, q = p + 1; idx.push(p, p + W, q, q, p + W, q + W); }
+    const top = pos.length / 3; pos.push(cx, topY + .026, cz); uv.push(.5, 1);
+    for (let b = 0; b < SEG; b++) idx.push((nR - 1) * W + b, (nR - 1) * W + b + 1, top);
+    const n = pos.length / 3, geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(new Array(n).fill(0).flatMap(() => [H, 0, 0, 0]), 4)); geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(new Array(n).fill(0).flatMap(() => [1, 0, 0, 0]), 4));
+    geo.setIndex(idx); geo.computeVertexNormals();
+    const mat = toon(0xffffff); mat.map = ribTex('#17181d', '#0c0d10', 110);
+    const m = new THREE.SkinnedMesh(geo, mat); m.name = 'beanie'; m.frustumCulled = false; skin.parent.add(m); m.bind(skin.skeleton, skin.bindMatrix);
+    const ink = new THREE.SkinnedMesh(geo, INK); ink.frustumCulled = false; skin.parent.add(ink); ink.bind(skin.skeleton, skin.bindMatrix);
+    m.visible = ink.visible = false; m.userData.ink = ink; return m;
+  })();
+  // the goggles sit a touch proud when there's a beanie under the strap
   // ── goggles: styled on his Squads. A solid bone frame with the mirror lens mounted in
   // front of it (so the frame shows as a rim, heavier along the bottom), strap round the mask ──
-  const goggles = new THREE.Group(); goggles.name = 'goggles';
+  const goggles = new THREE.Group(); goggles.name = 'goggles'; const strapMat = toon(C.strap);
   const gy = eyeY + .003, Rg = maskR(0, gy) + .006, GW = .198, GH = .084;
   goggles.position.set(cx, gy, cz);
   const frameShape = new THREE.Shape(goggleOutline(GW / 2, GH / 2));
-  goggles.add(inked(bend(new THREE.ExtrudeGeometry(frameShape, { depth: .01, bevelEnabled: true, bevelThickness: .0025, bevelSize: .002, bevelSegments: 4, curveSegments: 8 }), Rg, GH), toon(C.frame), INK_FINE));
+  const frameMat = toon(C.frame);
+  goggles.add(inked(bend(new THREE.ExtrudeGeometry(frameShape, { depth: .01, bevelEnabled: true, bevelThickness: .0025, bevelSize: .002, bevelSegments: 4, curveSegments: 8 }), Rg, GH), frameMat, INK_FINE));
   const LW = GW * .955, LH = GH * .86, lensPts = goggleOutline(LW / 2, LH / 2), lensGeo = new THREE.PlaneGeometry(LW, LH, 80, 16);
   lensGeo.translate(0, GH * .035, 0);
-  const lens = new THREE.Mesh(bend(lensGeo, Rg + .0135, GH), new THREE.MeshBasicMaterial({ map: lensTex(lensPts, LW, LH), transparent: true, alphaTest: .5, side: THREE.DoubleSide }));
+  const lens = new THREE.Mesh(bend(lensGeo, Rg + .0135, GH), new THREE.MeshBasicMaterial({ map: lensTex(lensPts, LW, LH, lensTint), transparent: true, alphaTest: .5, side: THREE.DoubleSide }));
   goggles.add(lens);
   const sa = GW / 2 / Rg;
   { // strap: a wide band that follows the mask round the back of the head
@@ -131,7 +167,7 @@ export function gear(vrm, outfit = {}, colors = {}, { skiTex } = {}) {
     for (let k = 0; k <= n; k++) { const a = sa - .06 + (2 * Math.PI - 2 * sa + .12) * k / n, R = Math.max(maskR(a, gy - sh), maskR(a, gy + sh)) + .003; [-sh, sh].forEach(dy => pos.push(Math.sin(a) * R, dy + GH * .06, Math.cos(a) * R)); }
     for (let k = 0; k < n; k++) { const p = k * 2; idx.push(p, p + 2, p + 1, p + 1, p + 2, p + 3); }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
-    goggles.add(inked(geo, toon(C.strap), INK_FINE));
+    goggles.add(inked(geo, strapMat, INK_FINE));
   }
   attach(goggles, 'head');
 
@@ -146,7 +182,8 @@ export function gear(vrm, outfit = {}, colors = {}, { skiTex } = {}) {
     g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.computeVertexNormals(); return g;
   })();
   const loader = new THREE.TextureLoader();
-  const topFor = s => { const m = toon(0xffffff); m.side = THREE.FrontSide; if (skiTex && skiTex[s]) { const t = loader.load(skiTex[s]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; m.map = t; } else m.map = bentTex(s === 'l' ? 1234567 : 7654321); return m; };
+  const topFor = s => { const m = toon(0xffffff); m.side = THREE.FrontSide; if (skiTex && skiTex[s]) { const t = loader.load(skiTex[s]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; m.map = t; } else m.map = bentTex(s === 'l' ? 1234567 : 7654321, skiName); skiTops[s] = m; return m; };
+  const skiTops = {};
   [['l', 'leftFoot'], ['r', 'rightFoot']].forEach(([s, bone]) => {
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, z0 = Infinity, z1 = -Infinity;
     if (boots) for (let v = 0; v < boots.n; v++) { const x = boots.pos[v * 3], y = boots.pos[v * 3 + 1], z = boots.pos[v * 3 + 2]; if ((x > 0) !== (s === 'l')) continue; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
@@ -165,12 +202,12 @@ export function gear(vrm, outfit = {}, colors = {}, { skiTex } = {}) {
   });
 
   // ── poles: in a closed fist, running out of the little-finger side ──
-  const poles = {};
+  const poles = {}, poleMat = toon(C.pole);
   [['l', 'left'], ['r', 'right']].forEach(([s, side]) => {
     const hand = bindPos(side + 'Hand'), mid = bindPos(side + 'MiddleProximal'), grip = hand.clone().lerp(mid, .95); grip.y -= .022;
     const g = new THREE.Group(); g.name = 'pole_' + s; g.position.copy(grip);
-    const L = 1.22, part = (geo, c, y) => { const m = inked(geo, toon(c), INK_FINE); m.position.y = y; g.add(m); };
-    part(new THREE.CylinderGeometry(.0085, .0085, L, 10), C.pole, -L / 2 + .02);
+    const L = 1.22, part = (geo, c, y) => { const m = inked(geo, c.isMaterial ? c : toon(c), INK_FINE); m.position.y = y; g.add(m); };
+    part(new THREE.CylinderGeometry(.0085, .0085, L, 10), poleMat, -L / 2 + .02);
     part(new THREE.CylinderGeometry(.015, .013, .16, 14), C.grip, -.03);
     part(new THREE.CylinderGeometry(.018, .018, .012, 14), C.grip, .054);
     part(new THREE.CylinderGeometry(.05, .05, .006, 20), C.grip, -L + .1);
@@ -178,7 +215,15 @@ export function gear(vrm, outfit = {}, colors = {}, { skiTex } = {}) {
     g.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));   // shaft leaves the fist toward the back (the little-finger side)
     poles[s] = attach(g, side + 'Hand');
   });
-  return { mask, goggles, skis, poles, hair };
+  // live restyling from the customise sheet
+  const setLens = t => { const old = lens.material.map; lens.material.map = lensTex(lensPts, LW, LH, t); lens.material.needsUpdate = true; old && old.dispose(); };
+  const setSkis = n => Object.entries(skiTops).forEach(([s, m]) => { const old = m.map; m.map = bentTex(s === 'l' ? 1234567 : 7654321, n); m.needsUpdate = true; old && old.dispose(); });
+  const shadeOf = c => '#' + new THREE.Color(c).multiplyScalar(.62).getHexString();
+  const retex = (m, c, n) => { const old = m.material.map; m.material.map = ribTex(c, shadeOf(c), n); m.material.needsUpdate = true; old && old.dispose(); };
+  const setMask = c => retex(mask, c, 140);
+  const setBeanie = (on, c) => { beanie.visible = beanie.userData.ink.visible = !!on; if (on && c) retex(beanie, c, 110); };
+  const setFrame = c => frameMat.color.set(c), setStrap = c => strapMat.color.set(c), setPoles = c => poleMat.color.set(c);
+  return { mask, beanie, goggles, skis, poles, hair, setLens, setSkis, setMask, setBeanie, setFrame, setStrap, setPoles };
 }
 
 // Close both hands into fists round the pole grips (normalized bones: fingers point
