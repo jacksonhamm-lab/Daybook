@@ -25,6 +25,12 @@
   sleep = cozy snowy camp at night: plaid blanket, pillow, tent glowing inside, lantern, cocoa,
   a big flickering campfire with a warm glow on the snow, stars and moon.
   Lighting and the sky behind (a gradient layer under the canvas) change with it.
+- **Routines so the standing looks stay busy** (`TASKS` / `stepTask` in rider.js, one after another):
+  gym = alternating dumbbell curls (dumbbells appear in his fists), squats, jumping jacks, a flex;
+  work = checks his watch, straightens his tie, looks round the shop, walks to the jacket rail
+  and back. Asleep he breathes deeply, shifts every ~16s (head rolls, the other knee comes up),
+  nods now and then, and the cocoa steams. Folded arms / hands in pockets read badly (hands
+  ended up at his face or held out), so they were dropped.
 - Tap: hop (ski) or wave (standing) and say the next useful line. Double-tap: a 360.
   Drag sideways: swing the camera round (springs back).
 - Feet are pinned to the snow each frame (the lowest foot, or the seat when sitting).

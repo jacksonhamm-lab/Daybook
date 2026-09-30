@@ -172,6 +172,8 @@ function buildSettings() {
   { const f = world.stars, P = f.g.attributes.position.array; for (let i = 0; i < f.n; i++) { P[i * 3] = (Math.random() - .5) * 60; P[i * 3 + 1] = 3 + Math.random() * 16; P[i * 3 + 2] = -34 + Math.random() * 10; f.g.attributes.size.array[i] = .08 + Math.random() * .14; f.max[i] = Math.random() * 6; } }
   world.sparks = world.pool(50, 0xffa04a);
   world.dust = world.pool(70, 0xffe2b8);
+  world.steam = world.pool(26, 0xf4f1ea);
+  bed.updateMatrixWorld(true); world.mugTop = mug.getWorldPosition(new THREE.Vector3()); world.mugTop.y = .11;
   { const f = world.dust, P = f.g.attributes.position.array; for (let i = 0; i < f.n; i++) { P[i * 3] = (Math.random() - .5) * 6; P[i * 3 + 1] = Math.random() * 2.8; P[i * 3 + 2] = -2 + Math.random() * 4; f.g.attributes.size.array[i] = .012 + Math.random() * .02; f.g.attributes.alpha.array[i] = .2 + Math.random() * .3; } }
 }
 // what each outfit's world looks like: which props show, the light, and the sky behind
@@ -187,7 +189,7 @@ function setEnv(key) {
   const S = SETTINGS[key], outdoor = key === 'ski' || key === 'sleep';
   world.outdoor.visible = outdoor; world.flakes.p.visible = outdoor;
   world.gym.visible = key === 'gym'; world.shop.visible = key === 'work'; world.camp.visible = key === 'sleep';
-  world.stars.p.visible = world.sparks.p.visible = key === 'sleep'; world.dust.p.visible = key === 'gym' || key === 'work';
+  world.stars.p.visible = world.sparks.p.visible = world.steam.p.visible = key === 'sleep'; world.dust.p.visible = key === 'gym' || key === 'work';
   world.hemi.color.set(S.sky); world.hemi.groundColor.set(S.ground); world.hemi.intensity = S.hemi; world.key.color.set(S.key); world.key.intensity = S.keyI;
   if (bgEl) { bgEl.style.opacity = S.bg ? 1 : 0; if (S.bg) bgEl.style.background = S.bg; }
 }
@@ -204,6 +206,16 @@ function stepSettings(dt, t) {
       S[i] = .02 + .015 * (1 - u); A[i] = (1 - u) * (.6 + .4 * Math.sin(t * 20 + i));
     }
     ['position', 'size', 'alpha'].forEach(k => { f.g.attributes[k].needsUpdate = true; });
+    { // steam curling up off the cocoa
+      const f = world.steam, P = f.g.attributes.position.array, A = f.g.attributes.alpha.array, S = f.g.attributes.size.array, o = world.mugTop;
+      for (let i = 0; i < f.n; i++) {
+        if (f.life[i] <= 0) { if (Math.random() < dt * 1.2) { f.max[i] = f.life[i] = 1.6 + Math.random(); P[i * 3] = o.x; P[i * 3 + 1] = o.y; P[i * 3 + 2] = o.z; } else { A[i] = 0; continue; } }
+        f.life[i] -= dt; const u = 1 - f.life[i] / f.max[i];
+        P[i * 3 + 1] += dt * .16; P[i * 3] += Math.sin(t * 2 + i) * dt * .03; P[i * 3 + 2] += Math.cos(t * 1.7 + i) * dt * .02;
+        S[i] = .025 + .06 * u; A[i] = .32 * Math.sin(Math.PI * u);
+      }
+      ['position', 'size', 'alpha'].forEach(k => { f.g.attributes[k].needsUpdate = true; });
+    }
     const st = world.stars; for (let i = 0; i < st.n; i++) st.g.attributes.alpha.array[i] = .45 + .4 * Math.sin(t * (.8 + st.max[i] * .3) + st.max[i] * 7); st.g.attributes.alpha.needsUpdate = true;
   }
   if (envKey === 'gym' || envKey === 'work') {
@@ -285,12 +297,28 @@ function prepare(key, vrm) {
   const h = vrm.humanoid, B = n => h.getNormalizedBoneNode(n), R = n => h.getRawBoneNode(n);
   vrm.scene.updateMatrixWorld(true);
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
-  if (key === 'gym') physique(vrm);   // leaner and more defined, Luffy-style
+  if (key === 'gym') { physique(vrm); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
   if (key === 'ski') {
     r.outfit = dress(vrm); r.kit = gear(vrm, r.outfit);
     r.tails = ['l', 'r'].map(s => { const o = new THREE.Object3D(); o.position.set(0, .01, -.8); r.kit.skis[s].add(o); return o; });
   }
   return r;
+}
+// a dumbbell: knurled handle along the fist's axis, a hex head each end
+function dumbbell() {
+  const g = new THREE.Group(), head = new THREE.CylinderGeometry(.05, .05, .075, 6).rotateX(Math.PI / 2), bar = new THREE.CylinderGeometry(.014, .014, .2, 10).rotateX(Math.PI / 2);
+  g.add(new THREE.Mesh(bar, toon(0x9a9ca3)));
+  [-1, 1].forEach(k => { const h = new THREE.Mesh(head, toon(0x1b1c21)); h.position.z = k * .12; g.add(h, Object.assign(new THREE.Mesh(head, INK), {})); g.children[g.children.length - 1].position.z = k * .12; });
+  g.visible = false; return g;
+}
+// parent a prop to a hand so it sits in the closed fist (built in the bind pose, like the ski poles)
+function holdInFist(vrm, side, obj) {
+  let skin; vrm.scene.traverse(o => { if (o.isSkinnedMesh && o.name === 'Body_(merged)') skin = o; });
+  const bones = skin.skeleton.bones, bi = n => bones.indexOf(vrm.humanoid.getRawBoneNode(n)), bind = n => skin.skeleton.boneInverses[bi(n)].clone().invert();
+  const hand = new THREE.Vector3().setFromMatrixPosition(bind(side + 'Hand')), mid = new THREE.Vector3().setFromMatrixPosition(bind(side + 'MiddleProximal'));
+  obj.position.copy(hand.lerp(mid, .95)); obj.position.y -= .022;
+  const m = skin.skeleton.boneInverses[bi(side + 'Hand')].clone().multiply(new THREE.Matrix4().compose(obj.position, obj.quaternion, obj.scale));
+  m.decompose(obj.position, obj.quaternion, obj.scale); bones[bi(side + 'Hand')].add(obj); return obj;
 }
 function want() {
   if (state.mode === 'sleep' && state.wokeAt && performance.now() - state.wokeAt < 60000) return 'sleep';
@@ -323,7 +351,21 @@ function fallback() {
 /* ---------- poses ---------- */
 const SLEEP_YAW = .35;   // lying with his feet toward the camera, head back on the pillow, so his face stays in view
 const ACTS = { hop: .9, spin: 1.5, wave: 2.4, flex: 2.6 };
-function play(name) { if (REDUCED && name !== 'hop') return; if (!ACTS[name]) name = want() === 'ski' ? 'hop' : want() === 'gym' ? 'flex' : 'wave'; state.act = name; state.actT = 0; }
+// What he gets up to when he isn't skiing: a workout in the gym, bits of business on the shop floor.
+const TASKS = { gym: ['curl', 'squat', 'jacks', 'curl', 'squat', 'flex'], work: ['watch', 'tie', 'look', 'browse'] };
+const TASK_LEN = { curl: 7.5, squat: 6.5, jacks: 5.5, watch: 3.6, tie: 3.2, look: 6, browse: 8 };
+function stepTask(kind, dt) {
+  if (REDUCED || !TASKS[kind]) { state.task = null; return; }
+  if (state.task && state.task.kind !== kind) state.task = null;
+  if (state.act) return;   // a tap reaction plays first
+  if (state.task) { state.task.t += dt; if (state.task.t > TASK_LEN[state.task.name]) { state.task = null; state.taskNext = 1.2 + Math.random() * 2.5; } return; }
+  state.taskNext = (state.taskNext ?? 2) - dt; if (state.taskNext > 0) return;
+  const list = TASKS[kind]; let name; do name = list[Math.floor(Math.random() * list.length)]; while (name === state.lastTask);
+  state.lastTask = name;
+  if (name === 'flex') { play('flex'); state.taskNext = 2 + Math.random() * 2; return; }
+  state.task = { kind, name, t: 0 };
+}
+function play(name) { if (REDUCED && name !== 'hop') return; if (!ACTS[name]) name = want() === 'ski' ? 'hop' : want() === 'gym' ? 'flex' : 'wave'; state.act = name; state.actT = 0; state.task = null; }
 function autonomous(dt) {
   if (REDUCED || state.act || (want() !== 'ski' && want() !== 'gym')) return;
   state.next -= dt; if (state.next > 0) return;
@@ -397,18 +439,77 @@ function standPose(r, t, dt, sleepy, gym) {
       B('head').rotation.y += .35 * W; B('spine').rotation.x -= .05 * W;
     }
   }
+  let air = 0;
+  const T = !a && state.task, k = T ? T.t : 0, W = T ? ease(Math.min(clamp(k / .5, 0, 1), clamp((TASK_LEN[T.name] - k) / .5, 0, 1))) : 0;
+  const mixR = (n, x, y, z) => { const R = B(n).rotation; R.set(lerp(R.x, x, W), lerp(R.y, y, W), lerp(R.z, z, W)); };
+  if (r.dumbbells) r.dumbbells.forEach(d => { d.visible = !!T && T.name === 'curl' && W > .05; });
+  if (T && T.name === 'curl') {
+    // alternating dumbbell curls, elbows pinned to his sides
+    const ph = k * 2.3, cl = Math.max(0, Math.sin(ph)), cr = Math.max(0, -Math.sin(ph));
+    mixR('leftUpperArm', -.1, 0, -1.42); mixR('rightUpperArm', -.1, 0, 1.42);
+    mixR('leftLowerArm', 0, -.25 - 2.05 * cl, 0); mixR('rightLowerArm', 0, .25 + 2.05 * cr, 0);
+    B('head').rotation.y = lerp(B('head').rotation.y, (cl - cr) * .25, W);
+  }
+  if (T && T.name === 'squat') {
+    // bodyweight squats, arms out front for balance
+    const d = (1 - Math.cos(k * 2.1)) / 2;
+    mixR('leftUpperLeg', -1.35 * d, 0, .09); mixR('rightUpperLeg', -1.35 * d, 0, -.09);
+    mixR('leftLowerLeg', 2.05 * d, 0, 0); mixR('rightLowerLeg', 2.05 * d, 0, 0);
+    mixR('leftFoot', -.7 * d, 0, 0); mixR('rightFoot', -.7 * d, 0, 0);
+    mixR('spine', .4 * d, 0, 0); mixR('head', -.3 * d, 0, 0);
+    mixR('leftUpperArm', -1.45, 0, -1.4); mixR('rightUpperArm', -1.45, 0, 1.4); mixR('leftLowerArm', 0, -.1, 0); mixR('rightLowerArm', 0, .1, 0);
+  }
+  if (T && T.name === 'jacks') {
+    // jumping jacks: arms over his head and feet apart on every hop
+    const p = k * 3.3, o = (1 - Math.cos(p)) / 2;
+    mixR('leftUpperArm', 0, 0, lerp(-1.42, 1.2, o)); mixR('rightUpperArm', 0, 0, lerp(1.42, -1.2, o));
+    mixR('leftLowerArm', 0, 0, .15 * o); mixR('rightLowerArm', 0, 0, -.15 * o);
+    mixR('leftUpperLeg', 0, 0, .03 + .24 * o); mixR('rightUpperLeg', 0, 0, -.03 - .24 * o);
+    air = .07 * Math.abs(Math.sin(p)) * W;
+  }
+  if (T && T.name === 'watch') {
+    // a glance at his watch
+    mixR('leftUpperArm', -.3, 0, -1.3); mixR('leftLowerArm', 0, -1.35, 0); mixR('leftHand', 0, 0, .3);
+    mixR('head', .45, .22, 0);
+  }
+  if (T && T.name === 'tie') {
+    // straightens his tie
+    const wig = Math.sin(k * 7) * .08;
+    mixR('leftUpperArm', -.45, 0, -1.25); mixR('rightUpperArm', -.45, 0, 1.25);
+    mixR('leftLowerArm', 0, -1.78, wig); mixR('rightLowerArm', 0, 1.78, wig);
+    mixR('head', .1 - .1 * Math.sin(k * 3.5), 0, 0);
+  }
+  if (T && T.name === 'look') {
+    // weight on one hip, looking round the shop
+    mixR('hips', 0, 0, .05); mixR('head', 0, Math.sin(k * .9) * .45, 0);
+  }
+  if (T && T.name === 'browse') {
+    // walks over to the jacket rail, looks through it, walks back
+    const to = { x: -.6, z: -.55 }, walk = (u, from, dest) => { r.vrm.scene.position.x = lerp(from.x, dest.x, u); r.vrm.scene.position.z = lerp(from.z, dest.z, u); };
+    let g = 0, face = 0;
+    if (k < 2.2) { const u = ease(k / 2.2); walk(u, { x: 0, z: 0 }, to); g = k; face = Math.atan2(to.x, to.z) * Math.min(1, k / .4); }
+    else if (k < 5.6) { walk(1, to, to); face = lerp(Math.atan2(to.x, to.z), Math.PI + .25, ease(clamp((k - 2.2) / .6, 0, 1))); const reach = Math.sin(clamp((k - 3) / 2, 0, 1) * Math.PI); mixR('rightUpperArm', -1.1 * reach, 0, 1.4 - .25 * reach); mixR('head', -.05, .2 * Math.sin(k * 1.5), 0); }
+    else { const u = ease((k - 5.6) / 2.4); walk(u, to, { x: 0, z: 0 }); g = k; face = lerp(Math.atan2(-to.x, -to.z), 0, ease(clamp((k - 7.4) / .6, 0, 1))); }
+    r.vrm.scene.rotation.y = face;
+    if (g) { const s = Math.sin(g * 6.5), c = Math.cos(g * 6.5);
+      B('leftUpperLeg').rotation.x = -.38 * s; B('rightUpperLeg').rotation.x = .38 * s;
+      B('leftLowerLeg').rotation.x = .5 * Math.max(0, c); B('rightLowerLeg').rotation.x = .5 * Math.max(0, -c);
+      B('leftUpperArm').rotation.x = .28 * s; B('rightUpperArm').rotation.x = -.28 * s; }
+  }
   const bl = blinkAmount(dt);
   expr(r.vrm, { blink: sleepy ? Math.max(bl, .35) : bl, happy: a === 'wave' || a === 'flex' ? .8 : state.ctx.allDone ? .35 : 0, relaxed: sleepy ? .4 : 0 });
-  return { air: 0 };
+  return { air };
 }
 function sleepPose(r, t) {
-  const { B } = r, br = Math.sin(t * 1.1);
+  const { B } = r, br = Math.sin(t * 1.05);
+  // every 16s or so he shifts: head rolls to the other side and the other knee comes up
+  const cyc = (t / 16) % 2, v = REDUCED ? 0 : smooth(.0, .12, cyc) * (1 - smooth(1, 1.12, cyc)), nod = REDUCED ? 0 : Math.exp(-(((t % 23) - 11) ** 2) * 8) * .12;
   // asleep on his back on the blanket: one knee up, hands folded on his stomach, head turned to the fire
   r.vrm.scene.rotation.order = 'YXZ'; r.vrm.scene.rotation.set(-Math.PI / 2, SLEEP_YAW, 0);
-  B('rightUpperLeg').rotation.set(-.75, 0, -.05); B('rightLowerLeg').rotation.x = 1.35; B('rightFoot').rotation.x = -.55;
-  B('leftUpperLeg').rotation.set(-.08, 0, .08); B('leftLowerLeg').rotation.x = .15; B('leftFoot').rotation.x = .35;
-  B('spine').rotation.x = -.03 + .02 * br; B('chest').rotation.x = .02 * br;
-  B('head').rotation.set(-.15, -.35, 0);   // turned a little toward the fire
+  B('rightUpperLeg').rotation.set(lerp(-.75, -.1, v), 0, -.05); B('rightLowerLeg').rotation.x = lerp(1.35, .2, v); B('rightFoot').rotation.x = lerp(-.55, .3, v);
+  B('leftUpperLeg').rotation.set(lerp(-.08, -.72, v), 0, .08); B('leftLowerLeg').rotation.x = lerp(.15, 1.3, v); B('leftFoot').rotation.x = lerp(.35, -.55, v);
+  B('spine').rotation.x = -.03 + .035 * br; B('chest').rotation.x = .04 * br;   // slow, deep breaths
+  B('head').rotation.set(-.15 + nod, lerp(-.35, .35, v), 0);   // turned toward the fire, then away when he shifts
   B('leftUpperArm').rotation.set(-.18, 0, -1.32); B('rightUpperArm').rotation.set(-.18, 0, 1.32);
   B('leftLowerArm').rotation.set(0, -.55, -1.25); B('rightLowerArm').rotation.set(0, .55, 1.25);   // forearms across his stomach
   B('leftHand').rotation.z = -.2; B('rightHand').rotation.z = .2; fists(r.vrm, .3);
@@ -508,7 +609,7 @@ function frame(now) {
     let res;
     if (r.key === 'ski') res = skiPose(r, t, dt);
     else if (sit) res = sleepPose(r, t);
-    else res = standPose(r, t, dt, r.key === 'sleep', r.key === 'gym');
+    else { stepTask(r.key, dt); res = standPose(r, t, dt, r.key === 'sleep', r.key === 'gym'); }
     if (state.act) { state.actT += dt; if (state.actT > ACTS[state.act]) state.act = null; }
     r.vrm.update(dt);
     ground(r, res.air, sit);
