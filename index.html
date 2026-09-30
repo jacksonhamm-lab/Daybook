@@ -898,6 +898,126 @@ button.hchip:active{transform:scale(.95)}
 .lightp .chip{background:rgba(20,24,40,.06);color:#141828}
 .lightp .chip.on{background:var(--c);color:#fff}
 .lightp .btn.white{background:linear-gradient(90deg,var(--mint1),var(--mint2));color:#062a20}
+
+/* ===== v5: modules, a calmer stage ===== */
+/* Today's stage: just the skier, your name and level */
+.stage2{position:relative;height:clamp(420px,58vh,560px);margin:18px 0 14px;border-radius:34px;overflow:hidden;background:radial-gradient(80% 70% at 50% 36%,#5d6890 0%,#353d5f 40%,#1b2037 80%,#121626 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 40px 80px -40px rgba(0,0,0,.9)}
+.stage2::before{content:"";position:absolute;left:50%;bottom:7%;width:74%;height:20%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(235,242,255,.22),transparent);pointer-events:none}
+.stage2::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 28%,rgba(140,180,255,.10) 44%,rgba(255,200,120,.08) 56%,transparent 72%)}
+.stage2 .stg-top{position:absolute;z-index:3;left:16px;right:16px;top:16px;display:flex;align-items:center;gap:12px}
+.stg-xp{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:110px}
+.stg-xp .pbar{width:100%;height:5px;background:rgba(255,255,255,.15)}
+.stg-xp em{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.04em;color:rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
+.stg-date{position:absolute;z-index:3;left:0;right:0;bottom:14px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);pointer-events:none}
+@media(max-width:760px){.stage2{margin:10px -6px 12px;height:min(470px,60vh);border-radius:30px}}
+
+/* ---- modules ---- */
+.mods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 16px;grid-auto-flow:row dense}
+@media(min-width:900px){.mods{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}}
+.mod{position:relative;min-width:0;border-radius:26px;scroll-margin-top:84px;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.028) 70%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.075),0 22px 44px -30px rgba(0,0,0,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);transition:background .4s,box-shadow .4s;animation:cardIn .55s var(--ios) both;animation-delay:calc(var(--i,0)*38ms)}
+.mod.open,.mod.wide{grid-column:1/-1}
+.mod-h{position:relative;width:100%;min-height:136px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto 1fr auto auto;align-items:start;padding:14px 14px 13px;text-align:left;color:inherit;border-radius:26px}
+.mod-h:active{transform:scale(.985)}
+.mod-ic{width:36px;height:36px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 20%,transparent);color:color-mix(in srgb,var(--c) 85%,#fff);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 28%,transparent)}
+.mod-ic svg{width:19px;height:19px}
+.mod-dot{justify-self:end;width:7px;height:7px;margin-top:4px;border-radius:50%;background:rgba(255,255,255,.18)}
+.mod.live .mod-dot{background:var(--c);box-shadow:0 0 10px var(--c)}
+.mod.alert .mod-dot{background:var(--red);box-shadow:0 0 10px var(--red);animation:pulseDot 1.6s infinite}
+.mod-l{grid-column:1/-1;align-self:end;margin-top:14px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text2)}
+.mod-v{grid-column:1/-1;font-family:var(--display);font-size:25px;font-weight:600;letter-spacing:-.04em;line-height:1.12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:44px}
+.mod-v small{font-size:13px;opacity:.5;font-weight:600;letter-spacing:0;margin-left:2px}
+.mod-s{grid-column:1/-1;font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:44px}
+.mod-x{display:none}
+.mod-q{position:absolute;right:12px;bottom:12px;z-index:2;transition:opacity .25s,transform .35s var(--spring)}
+.qbtn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--q,#fff);color:#141828;box-shadow:0 10px 22px -10px rgba(0,0,0,.8);transition:transform .35s var(--spring)}
+.qbtn[style*="--q"]{color:#fff}
+.qbtn:active{transform:scale(.88)}
+.qbtn svg{width:18px;height:18px}
+.mod-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .55s var(--ios)}
+.mod-in{overflow:hidden;min-height:0;opacity:0;transition:opacity .3s}
+.mod.open .mod-b{grid-template-rows:1fr}
+.mod.open .mod-in{opacity:1;transition-delay:.12s}
+.mod-in>.ch:first-child,.mod-in>.ch:first-child+.sub[style]{display:none}
+/* open: the tile turns into a light card with a dark title bar, like a settings module */
+.mod.open{background:#eef1f7;color:#141828;box-shadow:0 34px 70px -34px rgba(0,0,0,.95);backdrop-filter:none;-webkit-backdrop-filter:none;
+  --text:#141828;--text2:rgba(20,24,40,.62);--text3:rgba(20,24,40,.42);--sep:rgba(20,24,40,.08);--fill:rgba(20,24,40,.07);--glass:rgba(20,24,40,.04);--glass2:#fff;--stroke:rgba(20,24,40,.1)}
+.mod.open .mod-h{display:flex;align-items:center;gap:10px;min-height:0;margin:8px;width:calc(100% - 16px);padding:9px 10px 9px 9px;border-radius:19px;background:#141828;color:#fff}
+.mod.open .mod-ic{width:32px;height:32px;border-radius:11px}
+.mod.open .mod-dot,.mod.open .mod-s{display:none}
+.mod.open .mod-l{order:1;margin:0;font-size:14px;font-weight:700;letter-spacing:-.01em;text-transform:none;color:#fff;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mod.open .mod-v{order:2;font-size:14px;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.12);color:#fff;flex:none}
+.mod.open .mod-v small{font-size:11px}
+.mod.open .mod-x{order:3;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#fff;flex:none;position:relative}
+.mod.open .mod-x::before,.mod.open .mod-x::after{content:"";position:absolute;width:12px;height:2px;border-radius:2px;background:#141828;transform:rotate(45deg)}
+.mod.open .mod-x::after{transform:rotate(-45deg)}
+.mod.open .mod-q{opacity:0;pointer-events:none;transform:scale(.6)}
+.mod.open .mod-in{padding:6px 16px 18px}
+/* light surfaces for things that live inside an open module (and the light panels) */
+:is(.mod.open,.lightp) .task{background:#fff;border-radius:16px;padding:10px 12px;box-shadow:0 0 0 1px rgba(20,24,40,.07)}
+:is(.mod.open,.lightp) .tasks{gap:7px}
+:is(.mod.open,.lightp) .task+.task{box-shadow:0 0 0 1px rgba(20,24,40,.07)}
+:is(.mod.open,.lightp) .task.done .tt{text-decoration-color:rgba(20,24,40,.3)}
+:is(.mod.open,.lightp) .qadd{background:#fff;border-radius:16px;box-shadow:0 0 0 1px rgba(20,24,40,.07);margin-top:10px}
+:is(.mod.open,.lightp) .qadd input{color:#141828;background:none;box-shadow:none}
+:is(.mod.open,.lightp) input,:is(.mod.open,.lightp) select,:is(.mod.open,.lightp) textarea{color-scheme:light;background:#fff;color:#141828;box-shadow:0 0 0 1px rgba(20,24,40,.1)}
+:is(.mod.open,.lightp) .btn{background:#fff;border-color:rgba(20,24,40,.1);color:#141828}
+:is(.mod.open,.lightp) .btn.white{background:linear-gradient(90deg,var(--mint1),var(--mint2));color:#062a20;border-color:transparent}
+:is(.mod.open,.lightp) .btn.tint{background:color-mix(in srgb,var(--c,var(--blue)) 16%,#fff);color:color-mix(in srgb,var(--c,var(--blue)) 75%,#000);border-color:transparent}
+:is(.mod.open,.lightp) .btn.fill{background:var(--c,var(--blue));color:#fff}
+:is(.mod.open,.lightp) .chip{background:rgba(20,24,40,.07);color:#141828}
+:is(.mod.open,.lightp) .chip.on{background:var(--c);color:var(--on,#fff)}
+:is(.mod.open,.lightp) .nitem,:is(.mod.open,.lightp) .pw,:is(.mod.open,.lightp) .bm,:is(.mod.open,.lightp) .dec,:is(.mod.open,.lightp) .shake{background:#fff;box-shadow:0 0 0 1px rgba(20,24,40,.07)}
+:is(.mod.open,.lightp) .shake .sk-box{border-color:rgba(20,24,40,.25)}
+:is(.mod.open,.lightp) .shake.on{background:color-mix(in srgb,var(--green) 14%,#fff)}
+:is(.mod.open,.lightp) .banner{background:rgba(255,69,58,.1);color:#b3261e}
+:is(.mod.open,.lightp) .submitbox{background:color-mix(in srgb,var(--teal) 14%,#fff)}
+:is(.mod.open,.lightp) .sb-head span{color:#0b6f8a}
+:is(.mod.open,.lightp) .sb-days span{background:#fff}
+:is(.mod.open,.lightp) .pbar{background:rgba(20,24,40,.09)}
+:is(.mod.open,.lightp) .wb-t{background:rgba(20,24,40,.07)}
+:is(.mod.open,.lightp) .dk-in{color:#fff}
+:is(.mod.open,.lightp) .disc{background:radial-gradient(circle at 50% 42%,#2a3048,#141828 70%)}
+:is(.mod.open,.lightp) .ni{color:color-mix(in srgb,var(--c) 70%,#000)}
+:is(.mod.open,.lightp) .dec-i{color:color-mix(in srgb,var(--c) 70%,#000)}
+.mod-art .art{border-radius:22px;min-height:210px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:11px 2px;border-bottom:1px solid var(--sep);font-size:14px}
+.kv span{color:var(--text2)}
+.kv b{font-weight:600;text-align:right}
+.mini-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.mini-list li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#fff;font-size:14px;box-shadow:0 0 0 1px rgba(20,24,40,.07)}
+.mini-list li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+/* shift rows: a one-line summary that opens to edit */
+.srows{display:flex;flex-direction:column;gap:7px}
+.srow2{border-radius:18px;background:#fff;box-shadow:0 0 0 1px rgba(20,24,40,.07);overflow:hidden}
+.srow2.today{box-shadow:0 0 0 1.5px color-mix(in srgb,var(--red) 55%,transparent)}
+.sr-h{width:100%;display:grid;grid-template-columns:62px minmax(0,1fr) auto;align-items:center;gap:10px;padding:11px 14px;text-align:left;color:inherit}
+.sr-d b{display:block;font-size:15px;font-weight:700}
+.sr-d span{font-size:11px;color:var(--text3)}
+.srow2.today .sr-d b{color:var(--red)}
+.sr-t{font-size:13.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-h .sh{font-size:20px}
+.sr-b{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s var(--ios)}
+.sr-in{overflow:hidden;min-height:0;padding:0 14px}
+.srow2.open .sr-b{grid-template-rows:1fr}
+.srow2.open .sr-in{padding:2px 14px 14px}
+.srow2 .sin{margin-bottom:10px}
+.srow2 .sin input[type=time]{width:auto;flex:1;min-width:110px}
+.srow2 .bk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text2)}
+.srow2 .bk input{width:64px}
+.srow2 .sx{justify-content:flex-start}
+/* settings in folds */
+.sgrp{border-radius:18px;background:rgba(255,255,255,.04);margin-bottom:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.sgrp>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;cursor:pointer;font-weight:700;font-size:15px}
+.sgrp>summary::-webkit-details-marker{display:none}
+.sgrp>summary span{font-weight:500;font-size:12.5px;color:var(--text3)}
+.sgrp>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--text3);border-bottom:2px solid var(--text3);transform:rotate(45deg);transition:transform .3s;margin-left:6px}
+.sgrp[open]>summary::after{transform:rotate(-135deg)}
+.sgrp>.sg-in{padding:0 16px 16px}
+
+.mod.wide:not(.open) .mod-h{display:flex;align-items:center;gap:12px;min-height:0;padding:12px 14px}
+.mod.wide:not(.open) .mod-l{margin:0;flex:1;font-size:15px;font-weight:700;letter-spacing:-.01em;text-transform:none;color:var(--text)}
+.mod.wide:not(.open) .mod-v{padding:0;font-size:20px}
+.mod.wide:not(.open) .mod-s,.mod.wide:not(.open) .mod-dot{display:none}
 </style>
 </head>
 <body>
@@ -2062,60 +2182,170 @@ function sessionArt(d, opts = {}) {
     ${w.prog ? pbar('art-' + d + (opts.small ? 's' : ''), w.prog.p) : ''}<div class="foot">${foot}</div></div>`;
 }
 
+/* ---------- modules ----------
+   Secondary things live in tiles that show one number. Tap a tile and it opens in
+   place; opening one closes the others on that screen, so a page never shows more
+   than one detail at a time. Which one is open is remembered per tab. */
+function modOpen(id, dflt) { const m = (S.ui.mods || {})[S.ui.tab]; return m === undefined ? !!dflt : m === id; }
+function mod(id, o) {
+  const open = modOpen(id, o.open);
+  return `<section class="mod${open ? ' open' : ''}${o.alert ? ' alert' : ''}${o.live ? ' live' : ''}${o.wide ? ' wide' : ''}" data-mod="${id}" style="--c:${o.c};--i:${o.i ?? 2}">
+    <button class="mod-h" data-act="mod" data-v="${id}" aria-expanded="${open}">
+      <span class="mod-ic">${o.icon}</span><span class="mod-dot"></span>
+      <span class="mod-l">${o.title}</span>
+      <span class="mod-v">${o.value}</span>
+      <span class="mod-s">${o.sub || '&nbsp;'}</span>
+      <span class="mod-x" aria-hidden="true"></span>
+    </button>
+    ${o.quick ? `<div class="mod-q">${o.quick}</div>` : ''}
+    <div class="mod-b"><div class="mod-in">${o.body}</div></div>
+  </section>`;
+}
+const qbtn = (act, icon, label, extra = '') => `<button class="qbtn" data-act="${act}" ${extra} aria-label="${label}">${icon}</button>`;
+function toggleMod(id) {
+  const tab = S.ui.tab, root = $('#v-' + tab), all = [...root.querySelectorAll('.mod')];
+  const el = all.find(m => m.dataset.mod === id); if (!el) return;
+  const opening = !el.classList.contains('open');
+  S.ui.mods = { ...(S.ui.mods || {}), [tab]: opening ? id : null }; save();
+  const first = new Map(all.map(m => [m, m.getBoundingClientRect()]));
+  all.forEach(m => { const on = opening && m === el; m.classList.toggle('open', on); m.querySelector('.mod-h').setAttribute('aria-expanded', on); });
+  if (!REDUCED) all.forEach(m => {
+    const a = first.get(m), b = m.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top;
+    if (Math.abs(dx) + Math.abs(dy) < 1) return;
+    m.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.32,.72,0,1)' });
+  });
+  haptic(6);
+  if (opening) { animateValues(el); setTimeout(() => { const r = el.getBoundingClientRect(); if (r.top < 70 || r.top > innerHeight * .55) el.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' }); }, 80); }
+}
+const IC = {
+  bell: I.bell, tasks: I.task, work: I.hours, train: I.training, jobs: I.jobs, week: I.week,
+  pay: '<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
+  fuel: '<svg class="ico" viewBox="0 0 24 24"><path d="M8 3h8l-1 5v12a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V8L8 3zM9 8h6"/></svg>',
+  heart: '<svg class="ico" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M4 12h4l2-3 3 6 2-3h5"/></svg>',
+  chart: '<svg class="ico" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  plan: '<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>',
+  plus: '<svg class="ico" viewBox="0 0 24 24" style="stroke-width:2.2"><path d="M12 5v14M5 12h14"/></svg>',
+  stop: '<svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5"/></svg>',
+  bench: '<svg class="ico" viewBox="0 0 24 24"><path d="M4 17l5-5 4 4 7-8"/><path d="M15 8h5v5"/></svg>',
+};
+
 function renderToday() {
   const d = today(), wk = curWeek();
-  const plan = wk.filter(x => wo(x).s !== 'REST'), sDone = plan.filter(x => wo(x).done).length;
   const apps = appsIn(wk), ag = +S.settings.appGoal || 0;
   const list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, left = list.length - done, ov = overdue();
   const hr = new Date().getHours(), greet = hr < 5 ? 'Late night' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
   const w = wo(d), pk = periodFor(d), pHours = periodHours(pk) + extraHours(pk), rate = +S.settings.rate;
   const { lvl, into, need } = levelFor(xpTotal());
-  const follow = S.jobs.filter(needsFollow).slice(0, 3), slip = slipped();
-  const tmr = iso(addDays(parse(d), 1)), tw = wo(tmr), tsh = S.shifts[tmr], tTasks = tasksOn(tmr).length;
-  const nexts = [
-    ...follow.map(j => `<div class="nitem" style="--c:var(--green)"><div class="ni">${esc(j.company[0] || '?')}</div><div class="nb"><b>Follow up · ${esc(j.company)}</b><span>Applied ${daysBetween(j.date, d)} days ago</span></div><button class="btn tint sm" style="--c:var(--green)" data-act="followed" data-id="${j.id}">Done</button></div>`),
-    `<div class="nitem" style="--c:var(--indigo)"><div class="ni">${I.week}</div><div class="nb"><b>Tomorrow</b><span>${[shiftHours(tsh) ? `${t12(tsh.start)}–${t12(tsh.end)}` : 'No shift', tw.s === 'REST' ? 'Rest' : sessName(tw.s), `${tTasks} task${tTasks === 1 ? '' : 's'}`].join(' · ')}</span></div><button class="btn sm" data-tab="week" data-sel="${tmr}">Open</button></div>`,
-    (() => { const left = daysBetween(d, pk.end), h = periodHours(pk), total = h + extraHours(pk);
-      const head = left === 0 ? 'Last day to enter hours' : left === 1 ? 'Hours due tomorrow' : left < 0 ? 'Period closed' : `Hours due ${DOW_LONG[dowIdx(pk.end)]}`;
-      return left <= 2 && left >= -1 ? `<div class="nitem" style="--c:var(--teal)"><div class="ni">${I.hours}</div><div class="nb"><b>${head}</b><span>${fh(total)} h logged${rate ? ' · ≈ ' + money(total * rate) : ''} · paid ${DOW_LONG[dowIdx(pk.payday)]}</span></div><button class="btn sm" data-tab="hours">Hours</button></div>` : ''; })(),
-    ag && apps < ag ? `<div class="nitem" style="--c:var(--green)"><div class="ni">${I.jobs}</div><div class="nb"><b>${ag - apps} more application${ag - apps === 1 ? '' : 's'}</b><span>to hit ${ag} this week</span></div><button class="btn sm" data-tab="jobs">Log</button></div>` : '',
-  ].filter(Boolean).join('');
-  // one big button for whatever matters most right now
-  let cta, alt = '';
-  if (S.clock) cta = `<button class="pn-cta out" data-act="clock-out"><span>Clock out</span><em data-clock>0:00:00</em><i>${I.hours}</i></button>`;
-  else if (w.s !== 'REST' && !w.done) { cta = `<button class="pn-cta" data-act="open-session" data-date="${d}"><span>Start ${esc(sessName(w.s))}</span><em>${w.s}${w.prog ? ` · ${w.prog.done}/${w.prog.total}` : ''}</em><i>${I.play}</i></button>`; alt = `<button class="pn-alt" data-act="clock-in" aria-label="Clock in">${I.hours}</button>`; }
-  else cta = `<button class="pn-cta" data-act="clock-in"><span>Clock in</span><em>${shiftHours(S.shifts[d]) ? `${fh(shiftHours(S.shifts[d]))} h today` : 'Start the timer'}</em><i>${I.play}</i></button>`;
-  const dash = `<section class="dash anim" style="--i:0">
-    <div class="stg">
+  const follow = S.jobs.filter(needsFollow), slip = slipped(), sh = S.shifts[d], shH = shiftHours(sh), sk = shakesToday();
+  const tmr = iso(addDays(parse(d), 1)), tw = wo(tmr), tsh = S.shifts[tmr], tList = tasksOn(tmr);
+  const due = daysBetween(d, pk.end), dueTxt = due < 0 ? 'Period closed' : due === 0 ? 'Due today' : due === 1 ? 'Due tomorrow' : `Due ${DOW_LONG[dowIdx(pk.end)]}`;
+  const sub = inSubmitWindow(pk) ? pendingDays(pk) : [], est = sub.reduce((a, x) => a + shiftHours(x.est), 0);
+  const stage = `<section class="stage2 anim" style="--i:0">
       <div class="stg-top">
         <button class="stg-sq" data-act="progress" aria-label="Level ${lvl}"><small>LV</small><b>${lvl}</b></button>
         <div class="stg-hi"><span>${greet}</span><b>${esc(S.settings.name || 'there')}</b></div>
+        <div class="stg-xp">${pbar('xp', into / need, '#ffd60a')}<em>${into}/${need} XP</em></div>
       </div>
       <div id="buddySlot"></div>
-      <button class="stc l" data-tab="hours"><span class="stc-i">${I.hours}</span><b>${nk('dh', pHours, 1)}</b><span>Hours this period${rate ? `<br>≈ ${money(pHours * rate)}` : ''}</span></button>
-      <button class="stc r" data-tab="training"><span class="stc-i">${I.training}</span><b>${nk('ds', sDone)}<small>/${plan.length}</small></b><span>Sessions<br>this week</span></button>
-    </div>
-    <div class="pnl">
-      <div class="pn-h"><div><h2>${esc((S.settings.name || 'Player').toUpperCase())} ${new Date().getFullYear()}</h2><span>${longDate(d)}</span></div></div>
-      <div class="pn-score"><div><span>Done</span><b>${nk('pd', done)}</b></div><i></i><div><span>Left</span><b>${nk('pl', left)}</b></div></div>
-      <div class="pn-xp"><span>Level ${lvl}</span>${pbar('xp', into / need, '#18c29c')}<span>${into}/${need} XP</span></div>
-      ${ov.length ? `<div class="banner"><span>${ov.length} overdue from earlier</span><button class="btn sm tint" style="--c:var(--red)" data-act="rollover">Move to today</button></div>` : ''}
-      <ul class="tasks drop pn-list" data-drop="${d}">${list.map(t => taskLi(t, d)).join('') || '<li class="empty"><b>Nothing on today</b>Add a task below</li>'}</ul>
-      ${addForm(d, 'Add a task… try “call Tim fri #work”')}
-      <div class="pn-ctas">${cta}${alt}</div>
-    </div>
-  </section>`;
-  const decisions = slip.length ? `<section class="card g12 anim slip-card" style="--i:2"><div class="ch"><h3>Needs a decision</h3><span class="sub">Reminder passed</span></div>
-      <div class="decs">${slip.map(t => `<div class="dec" style="--c:${CATS[t.cat].color}"><div class="dec-h"><span class="dec-i">${I.bell}</span><div class="dec-t"><b>${esc(t.title)}</b><span>Was due ${t12(t.remind)}</span></div></div>
-        <div class="dec-b"><button class="btn sm tint" style="--c:var(--green)" data-act="rm-done" data-id="${t.id}">Done</button><button class="btn sm" data-act="rm-later" data-id="${t.id}">+2h</button><button class="btn sm" data-act="rm-tomorrow" data-id="${t.id}">Tomorrow</button></div></div>`).join('')}</div></section>` : '';
-  return dash + `<div class="grid today-grid">
-    ${decisions}
-    <div class="rail g12">
-      <section class="card anim disc-card" style="--i:3">${clockCard(d)}</section>
-      <section class="card tilecard focusable anim" style="--i:4">${sessionArt(d, { kicker: w.s === 'REST' ? 'Recovery' : `Today · ${w.s}` })}</section>
-      <section class="card anim next-card" style="--i:5"><div class="ch"><h3>Up next</h3></div><div class="nlist">${nexts || '<div class="empty"><b>All clear</b>Nothing waiting on you</div>'}</div></section>
-    </div>
+      <div class="stg-date">${longDate(d)}</div>
+    </section>`;
+  const M = [];
+  if (slip.length) M.push(mod('decide', { title: 'Needs a decision', value: slip.length, sub: 'Reminder passed', icon: IC.bell, c: 'var(--red)', alert: true, open: true, i: 1,
+    body: `<div class="decs">${slip.map(t => `<div class="dec" style="--c:${CATS[t.cat].color}"><div class="dec-h"><span class="dec-i">${I.bell}</span><div class="dec-t"><b>${esc(t.title)}</b><span>Was due ${t12(t.remind)}</span></div></div>
+      <div class="dec-b"><button class="btn sm tint" style="--c:var(--green)" data-act="rm-done" data-id="${t.id}">Done</button><button class="btn sm" data-act="rm-later" data-id="${t.id}">+2h</button><button class="btn sm" data-act="rm-tomorrow" data-id="${t.id}">Tomorrow</button></div></div>`).join('')}</div>` }));
+  M.push(mod('tasks', { title: 'Tasks', value: `${nk('mt', done)}<small>/${list.length}</small>`, sub: !list.length ? 'Nothing yet' : left ? `${left} left` : 'All done', icon: IC.tasks, c: 'var(--blue)', open: !slip.length, i: 2, live: !!left,
+    body: `${ov.length ? `<div class="banner"><span>${ov.length} overdue from earlier</span><button class="btn sm tint" style="--c:var(--red)" data-act="rollover">Move to today</button></div>` : ''}
+      <ul class="tasks drop" data-drop="${d}">${list.map(t => taskLi(t, d)).join('') || '<li class="empty"><b>Nothing on today</b>Add one below</li>'}</ul>
+      ${addForm(d, 'Add a task… try “call Tim fri #work”')}` }));
+  M.push(mod('work', { title: 'Work', value: S.clock ? `<span data-clock>0:00:00</span>` : shH ? `${fh(shH)}<small>h</small>` : 'Off', sub: S.clock ? (S.clock.breakTs ? 'On break' : 'On the clock') : shH ? `${t12(sh.start)}–${t12(sh.end)}` : 'Not clocked in', icon: IC.work, c: 'var(--teal)', live: !!S.clock, i: 3,
+    quick: S.clock ? qbtn('clock-out', IC.stop, 'Clock out', 'style="--q:#ff5b4f"') : qbtn('clock-in', I.play, 'Clock in'), body: clockCard(d) }));
+  M.push(mod('train', { title: 'Training', value: w.s === 'REST' ? 'Rest' : w.done ? 'Done' : w.s, sub: esc(sessName(w.s)), icon: IC.train, c: 'var(--orange)', live: w.s !== 'REST' && !w.done, i: 4,
+    quick: w.s !== 'REST' && !w.done ? qbtn('open-session', I.play, 'Start session', `data-date="${d}"`) : '',
+    body: `<div class="mod-art">${sessionArt(d, { kicker: w.s === 'REST' ? 'Recovery' : `Today · ${w.s}` })}</div>
+      <div class="shakes" style="margin-top:12px">${SHAKES.map(([k, label]) => `<button class="shake ${sk[k] ? 'on' : ''}" data-act="shake" data-v="${k}"><span class="sk-box">${I.check}</span>${label}</button>`).join('')}</div>` }));
+  M.push(mod('pay', { title: 'Pay period', value: `${nk('mp', pHours, 1)}<small>h</small>`, sub: dueTxt, icon: IC.pay, c: 'var(--blue)', alert: sub.length > 0, i: 5, open: false,
+    body: `<div class="kv"><span>Period</span><b>${short(pk.start)} – ${short(pk.end)}</b></div><div class="kv"><span>Hours due</span><b>${dueTxt}</b></div><div class="kv"><span>Payday</span><b>${DOW_LONG[dowIdx(pk.payday)]} ${short(pk.payday)}</b></div>
+      ${rate ? `<div class="kv"><span>Estimated pay</span><b>${money(pHours * rate)}</b></div>` : ''}
+      ${sub.length ? `<div class="submitbox"><div class="sb-head"><b>Send to Len ${submitDay(pk) === d ? 'today' : rel(submitDay(pk))}</b><span>${fh(pHours + est)} h</span></div><div class="sub">${fh(periodHours(pk))}h logged + ${fh(est)}h estimated</div>
+        <div class="row" style="margin-top:12px"><button class="btn sm white" data-act="copy-submit">Copy for Len</button><button class="btn sm tint" data-act="fill-estimates">Fill them in</button></div></div>` : ''}
+      <div class="row" style="margin-top:14px"><button class="btn sm" data-tab="hours">Open Hours</button></div>` }));
+  M.push(mod('tmr', { title: 'Tomorrow', value: `${tList.length}<small> task${tList.length === 1 ? '' : 's'}</small>`, sub: [shiftHours(tsh) ? `${t12(tsh.start)}–${t12(tsh.end)}` : 'No shift', tw.s === 'REST' ? 'rest' : tw.s].join(' · '), icon: IC.week, c: 'var(--indigo)', i: 6,
+    body: `<div class="kv"><span>Shift</span><b>${shiftHours(tsh) ? `${t12(tsh.start)} – ${t12(tsh.end)}` : 'None'}</b></div><div class="kv"><span>Training</span><b>${tw.s === 'REST' ? 'Rest day' : esc(sessName(tw.s))}</b></div>
+      ${tList.length ? `<ul class="mini-list">${tList.map(t => `<li style="--c:${(CATS[t.cat] || CATS.life).color}">${esc(t.title)}</li>`).join('')}</ul>` : ''}
+      <div class="row" style="margin-top:14px"><button class="btn sm" data-tab="week" data-sel="${tmr}">Plan tomorrow</button></div>` }));
+  M.push(mod('jobs', { title: 'Applications', value: `${nk('mj', apps)}${ag ? `<small>/${ag}</small>` : ''}`, sub: follow.length ? `${follow.length} to follow up` : 'this week', icon: IC.jobs, c: 'var(--green)', alert: follow.length > 0, i: 7,
+    body: `${follow.map(j => `<div class="nitem" style="--c:var(--green)"><div class="ni">${esc(j.company[0] || '?')}</div><div class="nb"><b>Follow up · ${esc(j.company)}</b><span>Applied ${daysBetween(j.date, d)} days ago</span></div><button class="btn tint sm" style="--c:var(--green)" data-act="followed" data-id="${j.id}">Done</button></div>`).join('') || `<p class="sub" style="margin:0">${ag && apps < ag ? `${ag - apps} more to hit ${ag} this week.` : 'Nothing to chase right now.'}</p>`}
+      <div class="row" style="margin-top:14px"><button class="btn sm" data-tab="jobs">Log an application</button></div>` }));
+  return stage + `<div class="mods">${M.join('')}</div>`;
+}
+
+// Hours: one row per day that opens to edit, pay and history as tiles.
+let SROW = null;
+function shiftRow(d, i, pr, td) {
+  const s = S.shifts[d] || {}, h = shiftHours(s), open = SROW ? SROW === d : d === td && !h;
+  return `<div class="srow2${open ? ' open' : ''}${d === td ? ' today' : ''}" data-date="${d}">
+    <button class="sr-h" data-act="srow" data-v="${d}"><span class="sr-d"><b>${DOW[i]}</b><span>${short(d)}${isCutoff(d) ? ' · due' : isPayday(d) ? ' · payday' : ''}</span></span>
+      <span class="sr-t" data-times-for="${d}">${h ? `${t12(s.start)} – ${t12(s.end)}${+s.brk ? ` · ${s.brk}m break` : ''}` : 'Not logged'}</span>
+      <span class="sh" data-total-for="${d}">${h ? `${fh(h)}<small>h</small>` : '<span class="muted">—</span>'}</span></button>
+    <div class="sr-b"><div class="sr-in">
+      <div class="sin"><input type="time" data-f="start" value="${esc(s.start || '')}" aria-label="Start"><span class="to">–</span><input type="time" data-f="end" value="${esc(s.end || '')}" aria-label="End">
+        <label class="bk"><input type="number" inputmode="numeric" data-f="brk" min="0" step="5" placeholder="0" value="${esc(s.brk ?? '')}" aria-label="Break minutes">min break</label></div>
+      <div class="sx">${pr.map(p => presetChip(p, d)).join('')}${h ? `<button class="btn sm tint" style="--c:var(--red)" data-act="clear-shift" data-date="${d}">Clear</button>` : ''}</div>
+    </div></div></div>`;
+}
+function renderHours() {
+  const dates = weekDates(), td = today(), hrs = weekHours(dates), rate = +S.settings.rate, goal = +S.settings.hoursGoal, pr = presets();
+  const worked = dates.filter(d => shiftHours(S.shifts[d]) > 0).length;
+  const weeks = [...Array(8)].map((_, i) => addDays(weekStart, -7 * (7 - i)));
+  const vals = weeks.map(w => weekHours(datesOf(w))), top = Math.max(goal, ...vals, 1);
+  const nz = vals.filter(v => v > 0), avg = nz.length ? nz.reduce((a, b) => a + b, 0) / nz.length : 0;
+  const p = periodFor(iso(weekStart)), pTotal = periodHours(p) + extraHours(p), win = inSubmitWindow(p) && pendingDays(p).length > 0;
+  const right = `<button class="btn tint" data-act="copy-last">Copy last week</button><button class="btn fill" data-act="copy-summary">Copy summary</button>${weekNav()}`;
+  return hero(`Hours · ${weekLabel(weekStart)}`, rate ? `≈ ${money(hrs * rate)}` : 'Hours', '', right, orb('hh', hrs, 'hours', goal ? hrs / goal : hrs / 40, '#64d2ff', true), [[worked, `Day${worked === 1 ? '' : 's'} worked`], worked ? [`${fh(hrs / worked)}<small>h</small>`, 'Avg shift'] : null]) + `<div class="mods">
+    ${mod('shifts', { title: 'Shifts', value: `${nk('hs', hrs, 1)}<small>h</small>`, sub: 'Tap a day to edit', icon: IC.work, c: 'var(--teal)', open: !win, wide: true, i: 1, body: `<div class="srows">${dates.map((d, i) => shiftRow(d, i, pr, td)).join('')}</div>` })}
+    ${mod('pay', { title: 'Pay period', value: rate ? money(pTotal * rate) : `${fh(pTotal)}<small>h</small>`, sub: `${short(p.start)} – ${short(p.end)}`, icon: IC.pay, c: 'var(--blue)', alert: win, open: win, i: 2, body: payCard() })}
+    ${mod('trend', { title: 'Last 8 weeks', value: avg ? `${fh(Math.round(avg * 10) / 10)}<small>h avg</small>` : '—', sub: 'Hours per week', icon: IC.chart, c: 'var(--teal)', i: 3,
+      body: `<div class="bars">${avg ? `<div class="avg" style="bottom:calc(${avg / top * 82}% + 27px)"><span>avg</span></div>` : ''}${weeks.map((w, i) => `<div class="bc ${i === 7 ? 'cur' : ''}" style="--i:${i}"><div class="b" data-pk="bar-${iso(w)}" data-to="${vals[i] / top * .82}">${vals[i] ? `<span>${fh(vals[i])}</span>` : ''}</div><span class="bl">${short(iso(w))}</span></div>`).join('')}</div>` })}
   </div>`;
+}
+
+function renderTraining() {
+  const dates = weekDates(), td = today();
+  const plan = dates.filter(d => wo(d).s !== 'REST'), sDone = plan.filter(d => wo(d).done).length;
+  const tiles = dates.map((d, i) => {
+    const w = wo(d), st = SESS[w.s];
+    return `<button class="wtile focusable anim" data-act="open-session" data-date="${d}" style="--i:${i + 1}"><div class="art" style="background:${st.art}"><span class="wm">${w.s === 'REST' ? 'R' : w.s}</span>
+      <span class="dnum ${d === td ? 'today' : ''}">${DOW[i]} ${parse(d).getDate()}</span>${w.done ? `<span class="badge">✓</span>` : ''}
+      <span class="code">${w.s === 'REST' ? 'Rest' : w.s}</span><div class="nm">${esc(sessName(w.s))}</div>${w.prog ? pbar('wt-' + d, w.prog.p) : ''}</div></button>`;
+  }).join('');
+  const bmDefs = [['pushups', 'Pushups', 'reps'], ['plank', 'Plank', 'sec'], ['row', '1-arm row @10kg', 'reps']];
+  const bms = bmDefs.map(([k, l, u]) => {
+    const L = benchLogs(k), last = L[L.length - 1], pb = L.length ? Math.max(...L.map(x => x.reps)) : null;
+    return `<div class="bm"><div class="k">${l}</div><div class="v">${last ? nk('bm-' + k, last.reps) : '—'}<small>${u}</small></div><div class="s">${pb !== null ? `PB ${pb}${last && last.reps === pb ? ' · new best' : ''}` : 'No logs yet'}</div>${spark(L.map(x => x.reps))}
+      <form data-bench="${k}"><input type="number" inputmode="numeric" min="1" placeholder="${u}"><button class="btn sm tint" style="--c:var(--orange)">Log</button></form></div>`;
+  }).join('');
+  const lastPush = benchLogs('pushups').slice(-1)[0];
+  const cl = cardioLogs(), wkStart = mondayOf(new Date()).getTime(), wkC = cl.filter(l => l.ts >= wkStart), cMin = wkC.reduce((a, l) => a + l.min, 0);
+  const pk = picks(), sk = shakesToday(), skN = SHAKES.filter(([k]) => sk[k]).length;
+  if (!BOOK) loadBook().then(() => { if (S.ui.tab === 'training') render(); }).catch(() => {});
+  const streak = weekStreak();
+  const hist = (() => { let full = 0, n = 0; for (let i = 1; i <= 8; i++) { const ds = datesOf(addDays(mondayOf(new Date()), -7 * i)); if (ds[6] < S.since) continue; n++; const pl = ds.filter(x => wo(x).s !== 'REST'); if (pl.length && pl.every(x => wo(x).done)) full++; } return { full, n }; })();
+  const lib = ['D1', 'D2', 'D3', 'D4'].map((k, i) => `<button class="focusable" data-act="open-session" data-s="${k}"><div class="art" style="background:${SESS[k].art}"><span class="wm">${k}</span><span class="code">${k} · ${flatEx(k.toLowerCase()).length} exercises</span><div class="nm">${esc(sessName(k))}</div><div class="ds">${esc(sessSub(k))}</div></div></button>`).join('');
+  return hero('Training', plan.length - sDone > 0 ? `${plan.length - sDone} session${plan.length - sDone === 1 ? '' : 's'} to go` : 'Week complete', weekLabel(weekStart), `<a class="btn" href="${esc(S.settings.workoutUrl)}" target="_blank" rel="noopener">Workout app ${I.link}</a>${weekNav()}`, orb('tr', sDone, `of ${plan.length}`, plan.length ? sDone / plan.length : 0, '#ff9f0a'), [[`${streak}<small>wk</small>`, 'Full-week streak']]) + `
+    <div class="wtiles">${tiles}</div>
+    <div class="mods" style="margin-top:16px">
+      ${mod('fuel', { title: 'Fuel', value: `${skN}<small>/${SHAKES.length}</small>`, sub: `Shakes · ${pk.m.length ? pk.m.length + ' meal' + (pk.m.length === 1 ? '' : 's') : 'no meals'}`, icon: IC.fuel, c: 'var(--green)', live: skN < SHAKES.length, i: 8,
+        body: `<div class="shakes">${SHAKES.map(([k, label]) => `<button class="shake ${sk[k] ? 'on' : ''}" data-act="shake" data-v="${k}"><span class="sk-box">${I.check}</span>${label}</button>`).join('')}</div>
+          ${pk.m.length ? `<div class="lbl">This week's meals · tap to drop one</div><div class="chips">${pk.m.map(n => { const r = recipeFor(n); return `<button class="chip on" style="--c:var(--green);--on:#fff" data-act="pick-meal" data-v="${esc(n)}">${esc(n)}${r ? ` · ${r.m[1]}g` : ''}</button>`; }).join('')}</div>` : ''}
+          <div class="row" style="margin-top:14px"><button class="btn sm white" data-act="open-book">${pk.m.length ? 'Prep book' : 'Pick this week\'s meals'}</button></div>` })}
+      ${mod('cardio', { title: 'Cardio', value: `${nk('cm', cMin)}<small>min</small>`, sub: `${wkC.length} this week`, icon: IC.heart, c: 'var(--pink)', i: 9,
+        body: `${cardioForm(null)}<div class="nlist" style="margin-top:14px">${cl.slice(-3).reverse().map(l => `<div class="nitem" style="--c:var(--pink)"><div class="ni">${esc(l.type[0])}</div><div class="nb"><b>${esc(l.type)} · ${l.min} min${l.dist ? ` · ${l.dist} km` : ''}</b><span>${rel(iso(new Date(l.ts)))}</span></div></div>`).join('')}</div>` })}
+      ${mod('bench', { title: 'Benchmarks', value: lastPush ? `${lastPush.reps}<small> pushups</small>` : '—', sub: 'Pushups, plank, row', icon: IC.bench, c: 'var(--yellow)', i: 10, body: `<div class="bms">${bms}</div>` })}
+      ${mod('hist', { title: 'Consistency', value: `${hist.full}<small>/${hist.n || 0}</small>`, sub: 'Full weeks', icon: IC.chart, c: 'var(--orange)', i: 11, body: weekBars() })}
+      ${mod('plan', { title: 'Plan', value: 'Split', sub: 'Week & program', icon: IC.plan, c: 'var(--indigo)', wide: false, i: 12,
+        body: `<div class="lbl" style="margin-top:0">Weekly split</div><div class="tpl">${DOW.map((n, i) => `<label>${n}<select data-act="set-tpl" data-i="${i}">${SESS_KEYS.map(k => `<option value="${k}" ${k === S.template[i] ? 'selected' : ''}>${k === 'REST' ? 'Rest' : k}</option>`).join('')}</select></label>`).join('')}</div>
+          <div class="lbl">Program · tap a session to view it</div><div class="plib">${lib}</div>` })}
+    </div>`;
 }
 
 // What the buddy knows about your day: its mood, its lights, and what it can tell you.
@@ -2190,32 +2420,6 @@ function shiftEditor(d) {
     ${shiftHours(s) ? `<button class="btn sm tint" style="--c:var(--red);margin-top:12px" data-act="clear-shift" data-date="${d}">Clear shift</button>` : ''}`;
 }
 
-function renderHours() {
-  const dates = weekDates(), td = today(), hrs = weekHours(dates), rate = +S.settings.rate, goal = +S.settings.hoursGoal, pr = presets();
-  const worked = dates.filter(d => shiftHours(S.shifts[d]) > 0).length;
-  const rows = dates.map((d, i) => {
-    const s = S.shifts[d] || {}, h = shiftHours(s);
-    return `<div class="srow anim ${d === td ? 'today' : ''}" data-date="${d}" style="--i:${i + 2}">
-      <div class="sd"><b>${DOW[i]}</b><span>${short(d)}${isCutoff(d) ? ' · hours due' : isPayday(d) ? ' · payday' : ''}</span></div>
-      <div class="sin"><input type="time" data-f="start" value="${esc(s.start || '')}" aria-label="Start"><span class="to">–</span><input type="time" data-f="end" value="${esc(s.end || '')}" aria-label="End">
-        <label class="bk"><input type="number" inputmode="numeric" data-f="brk" min="0" step="5" placeholder="0" value="${esc(s.brk ?? '')}" aria-label="Break minutes">min</label></div>
-      <div class="sh" data-total-for="${d}">${h ? `${fh(h)}<small>h</small>` : '<span class="muted">—</span>'}</div>
-      <div class="sx">${h ? `<button class="xbtn" data-act="clear-shift" data-date="${d}" aria-label="Clear">✕</button>` : pr.slice(0, 2).map(p => presetChip(p, d)).join('')}</div></div>`;
-  }).join('');
-  const weeks = [...Array(8)].map((_, i) => addDays(weekStart, -7 * (7 - i)));
-  const vals = weeks.map(w => weekHours(datesOf(w))), top = Math.max(goal, ...vals, 1);
-  const nz = vals.filter(v => v > 0), avg = nz.length ? nz.reduce((a, b) => a + b, 0) / nz.length : 0;
-  const right = `<button class="btn tint" data-act="copy-last">Copy last week</button><button class="btn fill" data-act="copy-summary">Copy summary</button>${weekNav()}`;
-  return hero(`Hours · ${weekLabel(weekStart)}`, rate ? `≈ ${money(hrs * rate)}` : 'Hours', '', right, orb('hh', hrs, 'hours', goal ? hrs / goal : hrs / 40, '#64d2ff', true), [[worked, `Day${worked === 1 ? '' : 's'} worked`], worked ? [`${fh(hrs / worked)}<small>h</small>`, 'Avg shift'] : null, goal ? [`${Math.round(hrs / goal * 100)}<small>%</small>`, `of ${goal}h target`] : null]) + `<div class="grid">
-    <section class="card g8 anim lightp" style="--i:1"><div class="ch"><h3>Shifts</h3><span class="sub">Type times or tap a usual shift</span></div>${rows}</section>
-    <div class="g4" style="display:flex;flex-direction:column;gap:16px">
-      <section class="card anim" style="--i:2">${payCard()}</section>
-      <section class="card anim" style="--i:3">${clockCard(td)}</section>
-      <section class="card anim" style="--i:4"><div class="ch"><h3>Last 8 weeks</h3><span class="sub">${avg ? `avg ${fh(Math.round(avg * 10) / 10)}h` : ''}</span></div>
-        <div class="bars">${avg ? `<div class="avg" style="bottom:calc(${avg / top * 82}% + 27px)"><span>avg</span></div>` : ''}${weeks.map((w, i) => `<div class="bc ${i === 7 ? 'cur' : ''}" style="--i:${i}"><div class="b" data-pk="bar-${iso(w)}" data-to="${vals[i] / top * .82}">${vals[i] ? `<span>${fh(vals[i])}</span>` : ''}</div><span class="bl">${short(iso(w)).replace(' ', ' ')}</span></div>`).join('')}</div></section>
-    </div></div>`;
-}
-
 // The pay period covering whichever week you're looking at.
 function payCard() {
   const p = periodFor(iso(weekStart)), td = today(), rate = +S.settings.rate;
@@ -2247,45 +2451,6 @@ function payCard() {
     <div class="row" style="margin-top:14px"><button class="btn sm" data-act="copy-period">Copy period</button><button class="btn sm tint" data-act="goto-period">Open period</button></div>`;
 }
 
-function renderTraining() {
-  const dates = weekDates(), td = today();
-  const plan = dates.filter(d => wo(d).s !== 'REST'), sDone = plan.filter(d => wo(d).done).length;
-  const src = PROGRAM ? `Program from Jackson-Workout-Plan · ${PROGRAM_LIVE ? 'synced ' + ago(PROGRAM_AT) : 'cached ' + ago(PROGRAM_AT)}` : 'Loading your program from Jackson-Workout-Plan…';
-  const tiles = dates.map((d, i) => {
-    const w = wo(d), st = SESS[w.s];
-    return `<button class="wtile focusable anim" data-act="open-session" data-date="${d}" style="--i:${i + 1}"><div class="art" style="background:${st.art}"><span class="wm">${w.s === 'REST' ? 'R' : w.s}</span>
-      <span class="dnum ${d === td ? 'today' : ''}">${DOW[i]} ${parse(d).getDate()}</span>${w.done ? `<span class="badge">✓</span>` : ''}
-      <span class="code">${w.s === 'REST' ? 'Rest' : w.s}</span><div class="nm">${esc(sessName(w.s))}</div>${w.prog ? pbar('wt-' + d, w.prog.p) : ''}</div></button>`;
-  }).join('');
-  const bms = [['pushups', 'Pushups', 'reps'], ['plank', 'Plank', 'sec'], ['row', '1-arm row @10kg', 'reps']].map(([k, l, u]) => {
-    const L = benchLogs(k), last = L[L.length - 1], pb = L.length ? Math.max(...L.map(x => x.reps)) : null;
-    return `<div class="bm"><div class="k">${l}</div><div class="v">${last ? nk('bm-' + k, last.reps) : '—'}<small>${u}</small></div><div class="s">${pb !== null ? `PB ${pb}${last && last.reps === pb ? ' · new best' : ''}` : 'No logs yet'}</div>${spark(L.map(x => x.reps))}
-      <form data-bench="${k}"><input type="number" inputmode="numeric" min="1" placeholder="${u}"><button class="btn sm tint" style="--c:var(--orange)">Log</button></form></div>`;
-  }).join('');
-  const cl = cardioLogs(), wkStart = mondayOf(new Date()).getTime(), wkC = cl.filter(l => l.ts >= wkStart);
-  const pk = picks(), sh = shakesToday();
-  if (!BOOK) loadBook().then(() => { if (S.ui.tab === 'training') render(); }).catch(() => {});
-  const streak = weekStreak();
-  const lib = ['D1', 'D2', 'D3', 'D4'].map((k, i) => `<button class="focusable anim" data-act="open-session" data-s="${k}" style="--i:${i + 12}"><div class="art" style="background:${SESS[k].art}"><span class="wm">${k}</span><span class="code">${k} · ${flatEx(k.toLowerCase()).length} exercises</span><div class="nm">${esc(sessName(k))}</div><div class="ds">${esc(sessSub(k))}</div></div></button>`).join('');
-  return hero(src, plan.length - sDone > 0 ? `${plan.length - sDone} session${plan.length - sDone === 1 ? '' : 's'} to go` : 'Week complete', weekLabel(weekStart), `<a class="btn" href="${esc(S.settings.workoutUrl)}" target="_blank" rel="noopener">Workout app ${I.link}</a>${weekNav()}`, orb('tr', sDone, `of ${plan.length}`, plan.length ? sDone / plan.length : 0, '#ff9f0a'), [[`${streak}<small>wk</small>`, 'Full-week streak'], [`${wkC.reduce((a, l) => a + l.min, 0)}<small>min</small>`, 'Cardio this week']]) + `
-    <div class="wtiles">${tiles}</div>
-    <div class="grid" style="margin-top:16px">
-      <section class="card g7 anim" style="--i:8"><div class="ch"><h3>Benchmarks</h3><span class="sub">Shared with the workout app</span></div><div class="bms">${bms}</div></section>
-      <section class="card g5 anim" style="--i:8.5"><div class="ch"><h3>Fuel</h3><span class="sub">${pk.m.length ? `${pk.m.length} meal${pk.m.length === 1 ? '' : 's'} this week` : 'Nothing picked yet'}</span></div>
-        <div class="shakes">${SHAKES.map(([k, label]) => `<button class="shake ${sh[k] ? 'on' : ''}" data-act="shake" data-v="${k}"><span class="sk-box">${I.check}</span>${label}</button>`).join('')}</div>
-        ${pk.m.length ? `<div class="lbl">This week's meals · tap to drop one</div>
-        <div class="chips">${pk.m.map(n => { const r = recipeFor(n); return `<button class="chip on" style="--c:var(--green);--on:#fff" data-act="pick-meal" data-v="${esc(n)}">${esc(n)}${r ? ` · ${r.m[1]}g` : ''}</button>`; }).join('')}</div>` : ''}
-        <div class="row" style="margin-top:14px"><button class="btn sm white" data-act="open-book">${pk.m.length ? 'Prep book' : 'Pick this week\'s meals'}</button></div></section>
-      <section class="card g5 anim" style="--i:9"><div class="ch"><h3>Cardio</h3><span class="sub">${wkC.length} this week</span></div>
-        <div class="big">${nk('cardio', wkC.reduce((a, l) => a + l.min, 0))}<small>min this week</small></div>${cardioForm(null)}
-        <div class="nlist" style="margin-top:14px">${cl.slice(-3).reverse().map(l => `<div class="nitem" style="--c:var(--pink)"><div class="ni">${l.type[0]}</div><div class="nb"><b>${esc(l.type)} · ${l.min} min${l.dist ? ` · ${l.dist} km` : ''}</b><span>${rel(iso(new Date(l.ts)))}</span></div></div>`).join('')}</div></section>
-      <section class="card g7 anim" style="--i:10"><div class="ch"><h3>Sessions per week</h3><span class="sub">Last 8 weeks</span></div>${weekBars()}</section>
-      <details class="card g5 anim fold" style="--i:11"><summary><h3>Plan</h3><span class="sub">Weekly split &amp; program</span></summary>
-        <div class="lbl" style="margin-top:16px">Weekly split</div>
-        <div class="tpl">${DOW.map((n, i) => `<label>${n}<select data-act="set-tpl" data-i="${i}">${SESS_KEYS.map(k => `<option value="${k}" ${k === S.template[i] ? 'selected' : ''}>${k === 'REST' ? 'Rest' : k}</option>`).join('')}</select></label>`).join('')}</div>
-        <div class="lbl">Program · tap a session to view it</div><div class="plib">${lib}</div></details>
-    </div>`;
-}
 function spark(v) {
   if (v.length < 2) return '<svg></svg>';
   const s = v.slice(-10), mx = Math.max(...s), mn = Math.min(...s), rg = mx - mn || 1;
@@ -2308,14 +2473,13 @@ function renderJobs() {
       <div class="jr">${needsFollow(j) ? `<button class="pill" style="--c:var(--orange)" data-act="followed" data-id="${j.id}">Follow up</button>` : ''}<span class="pill" style="--c:${STATUSES[j.status]}">${j.status}</span>${j.link ? `<a href="${esc(/^https?:/i.test(j.link) ? j.link : 'https://' + j.link)}" target="_blank" rel="noopener" aria-label="Open posting">${I.link}</a>` : ''}</div></div>`;
   }).join('');
   return hero('Job search', g ? (n >= g ? 'Goal hit this week' : `${g - n} more to hit ${g}`) : 'Applications this week', '', '', orb('apps', n, g ? `of ${g}` : 'sent', g ? n / g : Math.min(1, n / 5), '#30d158'), [[counts.Applied, 'Waiting to hear', 'data-act="jfilter" data-v="Applied"'], [counts.Interview, 'Interviewing', 'data-act="jfilter" data-v="Interview"'], [S.jobs.filter(needsFollow).length, 'Need a follow-up']]) + `<div class="grid">
-    <section class="card g12 anim" style="--i:1"><div class="ch"><h3>Log an application</h3><span class="sub">Paste a link and the company fills itself</span></div>
-      <form class="jadd" id="jadd" autocomplete="off">
+    <div class="g12"><div class="mods" style="margin:0">${mod('log', { title: 'Log an application', value: '+', sub: '', icon: IC.plus, c: 'var(--green)', open: !S.jobs.length, wide: true, i: 1, body: `<form class="jadd" id="jadd" autocomplete="off">
         <input class="jl" name="link" placeholder="Job link (optional)" inputmode="url">
         <input name="company" placeholder="Company" required>
         <input name="role" placeholder="Role">
         <div class="seg" data-seg="jstat"><button type="button" class="on" data-act="jadd-status" data-v="Applied">Applied</button><button type="button" data-act="jadd-status" data-v="Wishlist">Wishlist</button></div>
         <button class="btn fill" style="--c:var(--green)">Add</button>
-      </form></section>
+      </form>` })}</div></div>
     <section class="card g12 anim lightp" style="--i:2">
       <div class="segwrap"><div class="seg" data-seg="jf">${Object.keys(counts).map(s => `<button class="${f === s ? 'on' : ''}" data-act="jfilter" data-v="${s}">${s}<b>${counts[s]}</b></button>`).join('')}</div></div>
       ${rows || `<div class="empty">${S.jobs.length ? '<b>Nothing in this stage</b>Try another filter' : '<b>No applications yet</b>Try Ctrl K → “applied Patagonia - Campaigns Associate”'}</div>`}</section>
@@ -2504,36 +2668,34 @@ const SHEETS = {
   },
   settings() {
     const st = S.settings;
-    return `<div class="grab"></div><h2>Settings</h2><p class="shp" style="margin-bottom:18px">Saved on this device.</p>
-      <label class="field"><span>Your name</span><input data-sf="name" value="${esc(st.name)}"></label>
-      <div class="row fill"><label class="field"><span>Weekly hours target</span><input type="number" inputmode="decimal" data-sf="hoursGoal" value="${st.hoursGoal || ''}" placeholder="None"></label>
-      <label class="field"><span>Hourly rate (CAD)</span><input type="number" inputmode="decimal" step="0.25" data-sf="rate" value="${st.rate || ''}" placeholder="Hide pay"></label></div>
-      <div class="row fill"><label class="field"><span>Next (or last) payday</span><input type="date" data-sf="payAnchor" value="${esc(st.payAnchor || '2026-09-25')}"></label>
-      <label class="field"><span>Paid every</span><select data-sf="payCycle"><option value="7" ${+st.payCycle === 7 ? 'selected' : ''}>Week</option><option value="14" ${+st.payCycle !== 7 ? 'selected' : ''}>2 weeks</option></select></label></div>
-      <label class="field"><span>Send hours this many days before payday</span><input type="number" inputmode="numeric" min="0" max="10" data-sf="paySubmitDays" value="${st.paySubmitDays ?? 4}"></label>
-      <label class="field"><span>Hours due this many days before payday</span><input type="number" inputmode="numeric" min="0" max="7" data-sf="payCutoff" value="${st.payCutoff ?? 1}"></label>
-      <p class="sub" style="margin:-4px 0 14px">With a Friday payday and a one-day cut-off, a period runs Friday to Thursday and work on payday counts toward the next one.</p>
-      <label class="field"><span>Subscription hours each period</span><input type="number" inputmode="decimal" step="0.5" min="0" data-sf="extraHours" value="${st.extraHours || ''}" placeholder="0"></label>
-      <p class="sub" style="margin:-4px 0 14px">Added to every period to cover the tools you pay for. You can nudge it per period on the Hours tab.</p>
-      <label class="field"><span>Weekly applications goal</span><input type="number" inputmode="numeric" data-sf="appGoal" value="${st.appGoal || ''}" placeholder="None"></label>
-      <label class="field"><span>Workout app link</span><input data-sf="workoutUrl" value="${esc(st.workoutUrl)}"></label>
-      <div class="lbl">Reminders</div>
-      <p class="sub" style="margin-top:0">Push notifications for tasks you give a time, plus a morning rundown. Turn them on once per device.</p>
-      <div class="row">${PUSH.on ? `<button class="btn" data-act="push-off">Turn off</button><button class="btn white" data-act="push-test">Send a test</button>`
-        : `<button class="btn white" data-act="push-on">Turn on notifications</button>`}</div>
-      <p class="sub" id="pushStatus" style="margin:8px 0 0">${esc(pushLabel())}</p>
-      <div class="row" style="margin-top:12px;align-items:center">
-        <button class="chip ${st.remindDaily ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="toggle-brief">Morning rundown</button>
-        <input type="time" data-sf="remindAt" value="${esc(st.remindAt || '08:00')}" style="width:130px">
-      </div>
-      <div class="lbl">Sync across devices</div>
-      <p class="sub" style="margin-top:0">Paste the same sync code on your laptop and phone and they keep each other up to date. Changes merge, so editing both offline is fine.</p>
-      <div class="row"><input id="syncCode" placeholder="Sync code" value="${esc(SYNC.code)}" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" inputmode="text" onfocus="this.select()">
-        ${SYNC.code ? `<button class="btn" data-act="sync-off">Turn off</button><button class="btn white" data-act="sync-now">Sync now</button>` : `<button class="btn white" data-act="sync-on">Connect</button>`}</div>
-      <p class="sub" id="syncStatus" style="margin:8px 0 0">${esc(syncLabel())}</p>
-      <div class="lbl">Backup</div><p class="sub" style="margin-top:0">A copy stays on each device. Export one now and then anyway.</p>
-      <div class="row"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Import backup</button></div>
-      <div class="lbl">Install</div><p class="sub" style="margin-top:0">iPhone: Share → Add to Home Screen. Android / Chrome: menu → Install app.</p>
+    const grp = (title, hint, body, open) => `<details class="sgrp"${open ? ' open' : ''}><summary>${title}<span>${hint}</span></summary><div class="sg-in">${body}</div></details>`;
+    return `<div class="grab"></div><h2>Settings</h2><p class="shp" style="margin-bottom:16px">Tap a section to open it.</p>
+      ${grp('You', esc(st.name || 'Name'), `<label class="field"><span>Your name</span><input data-sf="name" value="${esc(st.name)}"></label>`)}
+      ${grp('Pay', `${st.rate ? money(st.rate) + '/h · ' : ''}every ${+st.payCycle === 7 ? 'week' : '2 weeks'}`, `
+        <div class="row fill"><label class="field"><span>Hourly rate (CAD)</span><input type="number" inputmode="decimal" step="0.25" data-sf="rate" value="${st.rate || ''}" placeholder="Hide pay"></label>
+        <label class="field"><span>Paid every</span><select data-sf="payCycle"><option value="7" ${+st.payCycle === 7 ? 'selected' : ''}>Week</option><option value="14" ${+st.payCycle !== 7 ? 'selected' : ''}>2 weeks</option></select></label></div>
+        <label class="field"><span>Next (or last) payday</span><input type="date" data-sf="payAnchor" value="${esc(st.payAnchor || '2026-09-25')}"></label>
+        <div class="row fill"><label class="field"><span>Hours due, days before payday</span><input type="number" inputmode="numeric" min="0" max="7" data-sf="payCutoff" value="${st.payCutoff ?? 1}"></label>
+        <label class="field"><span>Send to Len, days before</span><input type="number" inputmode="numeric" min="0" max="10" data-sf="paySubmitDays" value="${st.paySubmitDays ?? 4}"></label></div>
+        <label class="field"><span>Subscription hours each period</span><input type="number" inputmode="decimal" step="0.5" min="0" data-sf="extraHours" value="${st.extraHours || ''}" placeholder="0"></label>
+        <p class="sub" style="margin:-4px 0 0">With a Friday payday and a one-day cut-off, a period runs Friday to Thursday.</p>`)}
+      ${grp('Goals', [st.hoursGoal ? `${st.hoursGoal}h/wk` : '', st.appGoal ? `${st.appGoal} apps/wk` : ''].filter(Boolean).join(' · ') || 'None set', `
+        <div class="row fill"><label class="field"><span>Weekly hours target</span><input type="number" inputmode="decimal" data-sf="hoursGoal" value="${st.hoursGoal || ''}" placeholder="None"></label>
+        <label class="field"><span>Weekly applications</span><input type="number" inputmode="numeric" data-sf="appGoal" value="${st.appGoal || ''}" placeholder="None"></label></div>`)}
+      ${grp('Reminders', PUSH.on ? 'On' : 'Off', `
+        <p class="sub" style="margin-top:0">Notifications for tasks with a time, plus a morning rundown. Turn them on once per device.</p>
+        <div class="row">${PUSH.on ? `<button class="btn" data-act="push-off">Turn off</button><button class="btn white" data-act="push-test">Send a test</button>` : `<button class="btn white" data-act="push-on">Turn on notifications</button>`}</div>
+        <p class="sub" id="pushStatus" style="margin:8px 0 0">${esc(pushLabel())}</p>
+        <div class="row" style="margin-top:12px;align-items:center"><button class="chip ${st.remindDaily ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="toggle-brief">Morning rundown</button><input type="time" data-sf="remindAt" value="${esc(st.remindAt || '08:00')}" style="width:130px"></div>`)}
+      ${grp('Sync', SYNC.code ? 'Connected' : 'Off', `
+        <p class="sub" style="margin-top:0">Same sync code on your laptop and phone and they stay in step. Changes merge, so editing both offline is fine.</p>
+        <div class="row"><input id="syncCode" placeholder="Sync code" value="${esc(SYNC.code)}" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" inputmode="text" onfocus="this.select()">
+          ${SYNC.code ? `<button class="btn" data-act="sync-off">Turn off</button><button class="btn white" data-act="sync-now">Sync now</button>` : `<button class="btn white" data-act="sync-on">Connect</button>`}</div>
+        <p class="sub" id="syncStatus" style="margin:8px 0 0">${esc(syncLabel())}</p>`)}
+      ${grp('More', 'Backup, install, workout link', `
+        <div class="row"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Import backup</button></div>
+        <label class="field" style="margin-top:14px"><span>Workout app link</span><input data-sf="workoutUrl" value="${esc(st.workoutUrl)}"></label>
+        <p class="sub" style="margin:0">Install: iPhone Share → Add to Home Screen. Android / Chrome: menu → Install app.</p>`)}
       <div class="row end"><button class="btn white" data-act="close-sheet">Done</button></div>`;
   },
 };
@@ -2687,7 +2849,8 @@ function logCardio(form) {
   syncAuto(); save(); if (SHEET) refreshSheet(); render();
 }
 function updateShiftDisplays(d) {
-  const h = shiftHours(S.shifts[d]);
+  const h = shiftHours(S.shifts[d]), sd = S.shifts[d] || {};
+  $$(`[data-times-for="${d}"]`).forEach(el => { el.textContent = h ? `${t12(sd.start)} – ${t12(sd.end)}${+sd.brk ? ` · ${sd.brk}m break` : ''}` : 'Not logged'; });
   $$(`[data-total-for="${d}"]`).forEach(el => { el.innerHTML = el.classList.contains('sh') ? (h ? `${fh(h)}<small>h</small>` : '<span class="muted">—</span>') : (h ? `${fh(h)} hours` : 'no shift'); if (h) pop(el); });
 }
 function summary() {
@@ -2735,6 +2898,8 @@ document.addEventListener('click', e => {
     case 'rest-add': if (REST) REST.end += 30000; return tick();
     case 'rest-skip': REST = null; island.key = null; return island.live();
     case 'shake': return toggleShake(v);
+    case 'mod': return toggleMod(v);
+    case 'srow': { const row = el.closest('.srow2'), open = !row.classList.contains('open'); SROW = open ? v : 'none'; $$('#v-hours .srow2').forEach(r => r.classList.toggle('open', open && r === row)); return haptic(4); }
     case 'note-save': return addNote();
     case 'cap-cat': NOTE_CAT = NOTE_CAT === v ? null : v; $$('#v-notes .cap .chip').forEach(c => c.classList.toggle('on', c.dataset.v === NOTE_CAT)); return pop(el);
     case 'open-note': return openSheet('note', el.dataset.id);

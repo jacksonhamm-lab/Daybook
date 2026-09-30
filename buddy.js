@@ -1,18 +1,19 @@
-/* Dex — the Daybook buddy, a little skier.
-   A 3D toy that lives on the Today stage. It idles, skates around, looks at your
-   finger and reacts to your day: ski-prep squats in a tuck on training days,
-   skates in place with goggles down while you're on the clock, does a 360 when
-   the list is clear, and sits back on its skis to sleep at night. Tap it to make
-   it hop and say something useful, tap the pompom to boing it, tap the snow and it
-   skates there, drag it to spin it. The page feeds it context via window.buddyContext(). */
+/* Dex — the Daybook buddy: an anime-style skier.
+   Cel-shaded with ink outlines. Yellow jacket, baggy black snowpants, khaki boots,
+   black beanie and mask, gold goggles. It idles, skates around, looks at your finger
+   and reacts to your day: ski-prep squats with goggles down on training days, skates
+   in place while you're on the clock, a 360 when the list is clear, and sits in the
+   snow to sleep at night. Tap it to hop and hear something useful, tap its head to
+   bonk it, tap the snow and it skates there, drag to spin. Context comes from
+   window.buddyContext(). */
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from './vendor/RoundedBoxGeometry.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SMALL = innerWidth < 700;
-const COL = { jacket: 0xff3d1f, pants: 0x27305a, skin: 0xf2c3a0, beanie: 0x12a88a, cuff: 0xf4f1ea, pom: 0xfdfbf6, mitt: 0x12a88a, collar: 0xf4f1ea, hair: 0x5a3a26, strap: 0x1c2033, lens: 0xff8a3d, boot: 0xf5f5f7, buckle: 0x21b89a, ski: 0xffd23f, grip: 0x1c2033 };
-const HIP = .56;
+const COL = { jacket: 0xffc81a, trim: 0x16171d, pants: 0x1b1c22, skin: 0xf3cdb0, mask: 0x121318, beanie: 0x15161b, hair: 0x2b1d17, glove: 0x16171d, boot: 0xb8a276, sole: 0x3a3228, ski: 0x17181e, gold: 0xd9a92b };
+const HIP = 1.0;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -26,171 +27,199 @@ const rig = {}, face = {}, pose = {}, state = {
 };
 
 /* ---------- build ---------- */
-function mat(color, o = {}) { return new THREE.MeshPhysicalMaterial({ color, roughness: .38, clearcoat: .55, clearcoatRoughness: .3, ...o }); }
-function mesh(geo, m, parent, x = 0, y = 0, z = 0) { const me = new THREE.Mesh(geo, m); me.position.set(x, y, z); me.castShadow = true; me.receiveShadow = true; parent.add(me); return me; }
+// Cel shading: three flat tones instead of smooth light, plus an ink outline, for the anime look.
+const TONES = (() => { const t = new THREE.DataTexture(new Uint8Array([95, 95, 95, 255, 175, 175, 175, 255, 255, 255, 255, 255]), 3, 1, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
+const toon = (color, o = {}) => new THREE.MeshToonMaterial({ color, gradientMap: TONES, ...o });
+const INK = (() => { const m = new THREE.MeshBasicMaterial({ color: 0x0a0b10, side: THREE.BackSide }); m.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', 'vec3 transformed = position + normal * 0.0085;'); }; return m; })();
+function mesh(geo, m, parent, x = 0, y = 0, z = 0, ink = true) {
+  const me = new THREE.Mesh(geo, m); me.position.set(x, y, z); me.castShadow = true; me.receiveShadow = true; parent.add(me);
+  if (ink) { const o = new THREE.Mesh(geo, INK); o.castShadow = false; me.add(o); }
+  return me;
+}
+// A smooth turned shape from a handful of [radius, height] points.
+function turned(pts, seg = 28, n = 24) { const c = new THREE.SplineCurve(pts.map(([r, y]) => new THREE.Vector2(r, y))); return new THREE.LatheGeometry(c.getPoints(n), seg); }
+function capOf(r, from, to, seg = 36) { return new THREE.SphereGeometry(r, seg, 24, 0, Math.PI * 2, from, to - from); }
 
 function buildScene() {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08;
+  renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   cv = renderer.domElement;
   scene = new THREE.Scene();
   const pm = new THREE.PMREMGenerator(renderer);
   scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture;
-  camera = new THREE.PerspectiveCamera(28, 1, .1, 60);
-
-  scene.add(new THREE.HemisphereLight(0xc8dcff, 0x1a2036, .55));
-  const key = new THREE.DirectionalLight(0xfff1e0, 2.4); key.position.set(2.6, 5.2, 3.6); key.castShadow = true;
-  key.shadow.mapSize.set(SMALL ? 1024 : 2048, SMALL ? 1024 : 2048); key.shadow.camera.left = -3; key.shadow.camera.right = 3; key.shadow.camera.top = 3; key.shadow.camera.bottom = -3; key.shadow.bias = -.0004; key.shadow.normalBias = .02;
+  camera = new THREE.PerspectiveCamera(26, 1, .1, 60);
+  scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x2a2f48, 1.25));
+  const key = new THREE.DirectionalLight(0xfff4e6, 2.6); key.position.set(2.4, 5, 3.2); key.castShadow = true;
+  key.shadow.mapSize.set(SMALL ? 1024 : 2048, SMALL ? 1024 : 2048); key.shadow.camera.left = -3; key.shadow.camera.right = 3; key.shadow.camera.top = 3; key.shadow.camera.bottom = -3; key.shadow.bias = -.0005; key.shadow.normalBias = .02;
   scene.add(key);
-  const rim = new THREE.DirectionalLight(0x7fb0ff, 1.6); rim.position.set(-3.5, 2.8, -3); scene.add(rim);
-  const warm = new THREE.PointLight(0xff9a6a, 3, 6); warm.position.set(1.8, .6, 1.6); scene.add(warm);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: .38 }));
-  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor); rig.floor = floor;
-
+  const rim = new THREE.DirectionalLight(0x9cc2ff, 1.8); rim.position.set(-3.5, 3, -3); scene.add(rim);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: .34 }));
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
   buildBuddy();
 }
 
+const L1 = .42, L2 = .40, FOOT = .215; // thigh, shin, ankle-to-snow
 function buildBuddy() {
+  const M = {
+    jacket: toon(COL.jacket), trim: toon(COL.trim), pants: toon(COL.pants), skin: toon(COL.skin), mask: toon(COL.mask), beanie: toon(COL.beanie),
+    hair: toon(COL.hair), glove: toon(COL.glove), boot: toon(COL.boot), sole: toon(COL.sole), ski: toon(COL.ski),
+    gold: new THREE.MeshPhysicalMaterial({ color: COL.gold, metalness: 1, roughness: .18, clearcoat: 1 }),
+    lens: new THREE.MeshPhysicalMaterial({ color: 0xf0c048, metalness: 1, roughness: .12, iridescence: .25, iridescenceIOR: 1.3, clearcoat: 1, emissive: 0x3a2a00 }),
+  };
   const root = rig.root = new THREE.Group(); scene.add(root);
   const hips = rig.hips = new THREE.Group(); hips.position.y = HIP; root.add(hips);
-  const jacket = mat(COL.jacket, { roughness: .5, clearcoat: .35 });
-  const pants = mat(COL.pants, { roughness: .6, clearcoat: .15 });
-  const skin = mat(COL.skin, { roughness: .55, clearcoat: .1 });
-  const knit = mat(COL.beanie, { roughness: .8, clearcoat: 0 });
-  const mitt = mat(COL.mitt, { roughness: .7, clearcoat: .1 });
-  // pants
-  mesh(new RoundedBoxGeometry(.62, .28, .48, 5, .13), pants, hips, 0, .05, 0);
-  // legs, boots, skis
+  // baggy snowpants: a seat and two wide legs with a knee joint
+  mesh(turned([[.001, .1], [.16, .08], [.2, 0], [.19, -.09], [.12, -.15], [.001, -.16]]), M.pants, hips).scale.set(1.08, 1, .92);
   const leg = side => {
-    const piv = new THREE.Group(); piv.position.set(side * .16, -.02, 0); hips.add(piv);
-    mesh(new THREE.CapsuleGeometry(.105, .16, 6, 14), pants, piv, 0, -.17, 0);
-    const boot = mesh(new RoundedBoxGeometry(.22, .23, .32, 4, .07), mat(COL.boot, { roughness: .3, clearcoat: .8 }), piv, 0, -.42, .02);
-    mesh(new RoundedBoxGeometry(.235, .04, .12, 2, .015), mat(COL.buckle, { metalness: .3 }), piv, 0, -.36, .06);
-    const ski = new THREE.Group(); ski.position.set(0, -.545, .1); piv.add(ski);
-    const skiMat = mat(COL.ski, { roughness: .25, clearcoat: 1 });
-    mesh(new RoundedBoxGeometry(.16, .035, 1.25, 2, .015), skiMat, ski, 0, 0, 0);
-    const tip = mesh(new RoundedBoxGeometry(.16, .035, .26, 2, .015), skiMat, ski, 0, .05, .7); tip.rotation.x = -.45;
-    mesh(new RoundedBoxGeometry(.165, .012, 1.2, 1, .005), mat(0x1c2033, { clearcoat: 0 }), ski, 0, -.018, 0);
-    return { piv, boot, ski };
+    const thigh = new THREE.Group(); thigh.position.set(side * .11, -.02, 0); hips.add(thigh);
+    mesh(turned([[.132, 0], [.148, -.14], [.145, -.3], [.136, -.44]]), M.pants, thigh);
+    const knee = new THREE.Group(); knee.position.y = -L1; thigh.add(knee);
+    mesh(turned([[.136, .03], [.142, -.12], [.158, -.27], [.172, -.35], [.166, -.405]]), M.pants, knee);
+    [-.24, -.3, -.355].forEach(y => { const f = mesh(new THREE.TorusGeometry(y > -.26 ? .156 : .166, .016, 8, 28), M.pants, knee, 0, y, 0, false); f.rotation.x = Math.PI / 2 + (y > -.33 ? .12 : -.08); });
+    const ankle = new THREE.Group(); ankle.position.y = -L2; knee.add(ankle);
+    mesh(new THREE.CylinderGeometry(.085, .095, .14, 20), M.boot, ankle, 0, -.03, 0);
+    mesh(new RoundedBoxGeometry(.17, .12, .31, 4, .05), M.boot, ankle, 0, -.12, .05);
+    mesh(new RoundedBoxGeometry(.18, .03, .32, 2, .012), M.sole, ankle, 0, -.18, .05, false);
+    [.0, .09].forEach(z => mesh(new RoundedBoxGeometry(.18, .022, .035, 2, .008), M.sole, ankle, 0, -.07 + z * .3, .12 + z, false));
+    const ski = new THREE.Group(); ski.position.set(0, -.2, .1); ankle.add(ski);
+    mesh(new RoundedBoxGeometry(.15, .03, 1.3, 2, .012), M.ski, ski);
+    const tip = mesh(new RoundedBoxGeometry(.15, .03, .26, 2, .012), M.ski, ski, 0, .05, .72); tip.rotation.x = -.45;
+    mesh(new RoundedBoxGeometry(.05, .006, 1.1, 1, .002), M.gold, ski, 0, .017, 0, false);
+    return { thigh, knee, ski };
   };
   rig.legL = leg(-1); rig.legR = leg(1);
-  // puffy jacket
-  const body = rig.body = new THREE.Group(); body.position.y = .42; hips.add(body);
-  rig.shell = mesh(new RoundedBoxGeometry(.74, .64, .56, 7, .25), jacket, body);
-  [-.1, .1].forEach(y => { const r = mesh(new THREE.TorusGeometry(.33, .018, 8, 40), jacket, body, 0, y, 0); r.rotation.x = Math.PI / 2; r.scale.set(1.08, .82, 1); });
-  mesh(new RoundedBoxGeometry(.03, .5, .02, 1, .01), mat(0x2a2f45, { clearcoat: 0 }), body, 0, -.02, .28);
-  const collar = mesh(new THREE.TorusGeometry(.2, .07, 12, 32), mat(COL.collar, { roughness: .8, clearcoat: 0 }), body, 0, .3, 0); collar.rotation.x = Math.PI / 2;
-  // three patches on the jacket: hours, training, applications
+  // yellow jacket
+  const spine = rig.body = new THREE.Group(); spine.position.y = .08; hips.add(spine);
+  rig.shell = mesh(turned([[.001, -.15], [.205, -.14], [.215, -.06], [.19, .08], [.21, .26], [.205, .4], [.17, .49], [.1, .55], [.001, .56]], 32, 30), M.jacket, spine);
+  rig.shell.scale.set(1.14, 1, .84);
+  const hem = mesh(new THREE.TorusGeometry(.205, .022, 8, 36), M.trim, spine, 0, -.135, 0, false); hem.rotation.x = Math.PI / 2; hem.scale.set(1.14, .84, 1);
+  mesh(new RoundedBoxGeometry(.018, .62, .02, 1, .008), M.trim, spine, 0, .2, .178, false);
+  mesh(new THREE.CylinderGeometry(.105, .12, .12, 24, 1, true), M.jacket, spine, 0, .59, 0).material.side = THREE.DoubleSide;
+  const hood = mesh(new THREE.SphereGeometry(.13, 20, 14), M.jacket, spine, 0, .54, -.13); hood.scale.set(1.35, .72, .8);
+  // lift pass on the zip: three lights for hours, training and applications
+  const pass = new THREE.Group(); pass.position.set(.1, .3, .185); pass.rotation.set(-.08, .18, .06); spine.add(pass);
+  mesh(new RoundedBoxGeometry(.085, .11, .008, 2, .01), toon(0xf6f4ee), pass, 0, 0, 0);
   rig.leds = [0x64d2ff, 0xff9f0a, 0x30d158].map((c, i) => {
-    const m = new THREE.MeshBasicMaterial({ color: c, toneMapped: false });
-    const led = mesh(new THREE.CylinderGeometry(.038, .038, .02, 18), m, body, .12 + i * .075, .1 - i * .018, .275); led.rotation.x = Math.PI / 2 - .12; led.castShadow = false;
-    led.userData = { base: new THREE.Color(c), dim: new THREE.Color(c).multiplyScalar(.2) };
+    const led = new THREE.Mesh(new THREE.CircleGeometry(.012, 16), new THREE.MeshBasicMaterial({ color: c, toneMapped: false }));
+    led.position.set(-.024 + i * .024, -.03, .006); pass.add(led);
+    led.userData = { base: new THREE.Color(c), dim: new THREE.Color(c).multiplyScalar(.25) };
     return led;
   });
-  // head
-  const head = rig.head = new THREE.Group(); head.position.y = .64; body.add(head);
-  mesh(new THREE.SphereGeometry(.36, 40, 30), skin, head);
-  [-1, 1].forEach(s => mesh(new THREE.SphereGeometry(.07, 16, 12), skin, head, s * .35, -.02, 0));
+  // head: mask over the lower face, beanie, hair, gold goggles
+  const neck = rig.neck = new THREE.Group(); neck.position.y = .6; spine.add(neck);
+  mesh(new THREE.CylinderGeometry(.075, .085, .14, 18), M.mask, neck, 0, .02, 0, false);
+  const head = rig.head = new THREE.Group(); head.position.y = .19; head.scale.setScalar(1.17); neck.add(head);
+  const skull = mesh(new THREE.SphereGeometry(.2, 40, 30), M.skin, head); skull.scale.set(1, 1.08, 1.02); rig.skull = skull;
   face.canvas = document.createElement('canvas'); face.canvas.width = 512; face.canvas.height = 256;
   face.ctx = face.canvas.getContext('2d'); face.tex = new THREE.CanvasTexture(face.canvas); face.tex.colorSpace = THREE.SRGBColorSpace; face.tex.anisotropy = 4;
-  const decal = new THREE.Mesh(new THREE.SphereGeometry(.362, 40, 20, Math.PI / 2 - .8, 1.6, .95, 1.05), new THREE.MeshStandardMaterial({ map: face.tex, transparent: true, roughness: .6, depthWrite: false }));
-  head.add(decal); rig.screen = decal;
-  // hair poking out under the beanie
-  const hair = mat(COL.hair, { roughness: .8, clearcoat: 0 });
-  [[-.31, .06, .12, .9], [.31, .06, .12, -.9], [-.2, .07, -.27, .4], [.2, .07, -.27, -.4], [0, .08, -.33, 0]].forEach(([x, y, z, r]) => { const h = mesh(new THREE.SphereGeometry(.08, 12, 10), hair, head, x, y, z); h.scale.set(1.2, .6, .7); h.rotation.z = r; });
-  // beanie, cuff, pompom on a spring
-  mesh(new THREE.SphereGeometry(.38, 40, 20, 0, Math.PI * 2, 0, Math.PI * .44), knit, head, 0, .04, 0);
-  const cuff = mesh(new THREE.TorusGeometry(.365, .06, 12, 48), mat(COL.cuff, { roughness: .9, clearcoat: 0 }), head, 0, .15, 0); cuff.rotation.x = Math.PI / 2;
-  const pom = rig.antenna = new THREE.Group(); pom.position.set(0, .41, 0); head.add(pom);
-  rig.tipMat = mat(COL.pom, { roughness: 1, clearcoat: 0 });
-  rig.tip = mesh(new THREE.IcosahedronGeometry(.11, 2), rig.tipMat, pom, 0, .08, 0);
-  // goggles: they sit on the beanie and drop over the eyes when it's time to focus
-  const gog = rig.goggles = new THREE.Group(); head.add(gog);
-  const strap = mesh(new THREE.TorusGeometry(.395, .03, 8, 48), mat(COL.strap, { roughness: .6, clearcoat: 0 }), gog, 0, .03, 0); strap.rotation.x = Math.PI / 2;
-  mesh(new RoundedBoxGeometry(.5, .19, .1, 4, .07), mat(0xffffff, { roughness: .2 }), gog, 0, .03, .375);
-  const lens = mesh(new RoundedBoxGeometry(.46, .15, .06, 4, .06), new THREE.MeshPhysicalMaterial({ color: COL.lens, metalness: .9, roughness: .08, iridescence: 1, iridescenceIOR: 1.6, clearcoat: 1 }), gog, 0, .03, .415);
-  lens.castShadow = false;
-  // puffy arms, mittens, poles
+  const decal = new THREE.Mesh(new THREE.SphereGeometry(.2012, 40, 16, Math.PI / 2 - .8, 1.6, 1.12, .76), new THREE.MeshBasicMaterial({ map: face.tex, transparent: true, depthWrite: false }));
+  skull.add(decal); rig.screen = decal;
+  mesh(capOf(.207, 1.86, Math.PI), M.mask, skull);
+  mesh(new THREE.SphereGeometry(.035, 12, 10), M.mask, skull, 0, -.07, .185, false).scale.set(1, .9, 1.1);
+  mesh(capOf(.214, 0, 1.06), M.beanie, skull, 0, .005, 0);
+  const cuff = mesh(new THREE.TorusGeometry(.207, .034, 10, 44), M.beanie, skull, 0, .104, 0); cuff.rotation.x = Math.PI / 2;
+  const slouch = mesh(new THREE.SphereGeometry(.15, 24, 16), M.beanie, skull, 0, .165, -.07); slouch.scale.set(1.05, .8, 1.1);
+  mesh(new RoundedBoxGeometry(.06, .028, .012, 2, .006), M.gold, skull, .07, .106, .2, false).rotation.y = .34;
+  const spike = (x, y, z, rx, rz, r = .036, h = .12) => { const s = mesh(new THREE.ConeGeometry(r, h, 8), M.hair, skull, x, y, z); s.rotation.set(rx, 0, rz); };
+  [[-.1, .2, .6], [-.035, .205, .15], [.035, .205, -.15], [.1, .2, -.6]].forEach(([x, z, rz]) => spike(x, .07, z - .025, Math.PI - .55, rz * .5, .034, .09));
+  [-1, 1].forEach(s => { spike(s * .19, .0, .05, Math.PI + .1, s * .25, .03, .11); spike(s * .12, .0, -.16, Math.PI + .6, s * .3, .035, .1); });
+  const gog = rig.goggles = new THREE.Group(); skull.add(gog);
+  const strap = mesh(new THREE.TorusGeometry(.222, .016, 8, 44), M.mask, gog, 0, .025, 0, false); strap.rotation.x = Math.PI / 2;
+  const frame = mesh(new THREE.SphereGeometry(.226, 40, 10, Math.PI / 2 - .82, 1.64, 1.33, .46), M.mask, gog, 0, 0, 0, false); frame.material = M.mask.clone(); frame.material.side = THREE.DoubleSide;
+  mesh(new THREE.SphereGeometry(.232, 40, 10, Math.PI / 2 - .76, 1.52, 1.37, .38), M.lens, gog, 0, 0, 0, false).material.side = THREE.DoubleSide;
+  rig.tip = new THREE.Mesh(new THREE.SphereGeometry(.12, 8, 6), new THREE.MeshBasicMaterial({ visible: false })); rig.tip.position.set(0, .24, 0); skull.add(rig.tip);
+  // arms with elbows, gloves, poles
   const arm = side => {
-    const piv = new THREE.Group(); piv.position.set(side * .37, .15, 0); body.add(piv);
-    mesh(new THREE.CapsuleGeometry(.095, .2, 6, 14), jacket, piv, 0, -.18, 0);
-    const hand = mesh(new THREE.SphereGeometry(.105, 20, 16), mitt, piv, 0, -.38, .02);
-    const pole = new THREE.Group(); pole.position.set(0, -.38, .02); pole.rotation.x = .08; piv.add(pole);
-    const steel = new THREE.MeshStandardMaterial({ color: 0xc9ced9, metalness: .85, roughness: .25 });
-    mesh(new THREE.CylinderGeometry(.045, .04, .16, 12), mat(COL.grip), pole, 0, .02, 0);
-    mesh(new THREE.CylinderGeometry(.014, .012, 1.0, 8), steel, pole, 0, -.5, 0);
-    const basket = mesh(new THREE.TorusGeometry(.06, .012, 6, 18), mat(COL.grip), pole, 0, -.9, 0); basket.rotation.x = Math.PI / 2;
-    return { piv, hand, pole };
+    const sh = new THREE.Group(); sh.position.set(side * .235, .44, 0); spine.add(sh);
+    mesh(new THREE.SphereGeometry(.088, 20, 14), M.jacket, sh, 0, -.01, 0);
+    mesh(turned([[.084, 0], [.08, -.15], [.07, -.3]]), M.jacket, sh);
+    const el = new THREE.Group(); el.position.y = -.3; sh.add(el);
+    mesh(turned([[.07, .02], [.066, -.12], [.06, -.24]]), M.jacket, el);
+    const cuffA = mesh(new THREE.TorusGeometry(.058, .016, 8, 20), M.trim, el, 0, -.24, 0, false); cuffA.rotation.x = Math.PI / 2;
+    const hand = mesh(new THREE.SphereGeometry(.062, 18, 14), M.glove, el, 0, -.3, .01); hand.scale.set(.95, 1.15, 1.15);
+    mesh(new THREE.SphereGeometry(.026, 10, 8), M.glove, el, -side * .045, -.28, .045, false);
+    const pole = new THREE.Group(); pole.position.set(0, -.3, .01); el.add(pole);
+    mesh(new THREE.CylinderGeometry(.024, .02, .13, 12), M.glove, pole, 0, .03, 0, false);
+    mesh(new THREE.CylinderGeometry(.01, .009, 1.02, 8), M.glove, pole, 0, -.5, 0, false);
+    const b = mesh(new THREE.TorusGeometry(.045, .008, 6, 18), M.gold, pole, 0, -.9, 0, false); b.rotation.x = Math.PI / 2;
+    return { sh, el, hand, pole };
   };
   rig.armL = arm(-1); rig.armR = arm(1);
-  rig.hit = [rig.shell, rig.head.children[0], decal, rig.armL.hand, rig.armR.hand];
+  rig.hit = [rig.shell, skull, decal, rig.armL.hand, rig.armR.hand];
 }
 
-/* ---------- the face ---------- */
-function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+/* ---------- the face: anime eyes above the mask ---------- */
 function heart(c, x, y, s) { c.beginPath(); c.moveTo(x, y + s * .35); c.bezierCurveTo(x - s, y - s * .35, x - s * .45, y - s, x, y - s * .45); c.bezierCurveTo(x + s * .45, y - s, x + s, y - s * .35, x, y + s * .35); c.fill(); }
 let faceKey = '';
-// The decal is wider on the canvas than on the head, so everything is drawn squeezed sideways.
 function drawFace(expr, lx, ly, blink) {
   const key = `${expr}|${lx.toFixed(2)}|${ly.toFixed(2)}|${blink.toFixed(2)}`;
   if (key === faceKey) return; faceKey = key;
-  const c = face.ctx, W = 512, H = 256;
+  const c = face.ctx, W = 512, H = 256, ink = '#140d0a';
   c.clearRect(0, 0, W, H);
-  c.save(); c.translate(W / 2, 0); c.scale(.76, 1);
-  const ink = '#1b1f2e', ex = 92, cx = lx * 24, cy = 128 + ly * 10;
-  c.fillStyle = c.strokeStyle = ink; c.lineCap = 'round'; c.lineJoin = 'round';
-  // cheeks
-  c.fillStyle = expr === 'happy' || expr === 'love' || expr === 'stretch' ? 'rgba(255,110,120,.55)' : 'rgba(255,120,120,.28)';
-  c.beginPath(); c.ellipse(cx - 170, cy + 52, 38, 22, 0, 0, 7); c.ellipse(cx + 170, cy + 52, 38, 22, 0, 0, 7); c.fill();
-  c.fillStyle = ink; c.lineWidth = 13;
-  const eye = x => {
-    if (expr === 'happy' || expr === 'stretch') { c.beginPath(); c.arc(x, cy + 18, 38, Math.PI * 1.15, Math.PI * 1.85); c.stroke(); return; }
-    if (expr === 'sleep') { c.beginPath(); c.arc(x, cy - 8, 36, Math.PI * .15, Math.PI * .85); c.stroke(); return; }
-    if (expr === 'love') { c.fillStyle = '#ff4f7a'; heart(c, x, cy + 8, 52); c.fillStyle = ink; return; }
-    let w = 58, h = 80;
-    if (expr === 'surprised') { w = 72; h = 84; }
-    if (expr === 'tired') h = 34;
-    h = Math.max(6, h * (1 - blink));
-    roundRect(c, x - w / 2, cy - h / 2, w, h, Math.min(w, h) / 2); c.fill();
-    if (h > 22) { c.fillStyle = '#fff'; c.beginPath(); c.arc(x - w * .18 + lx * 3, cy - h * .2, 11, 0, 7); c.fill(); c.beginPath(); c.arc(x + w * .15, cy + h * .18, 5, 0, 7); c.fill(); c.fillStyle = ink; }
-    if (expr === 'tired') { c.lineWidth = 8; c.beginPath(); c.moveTo(x - 28, cy - 18); c.lineTo(x + 28, cy - 18); c.stroke(); c.lineWidth = 13; }
+  c.save(); c.translate(W / 2, 0); c.scale(.92, 1);
+  const ey = 124 + ly * 6, closed = blink > .7 || expr === 'happy' || expr === 'stretch' || expr === 'sleep';
+  if (expr === 'happy' || expr === 'love' || expr === 'stretch') { c.fillStyle = 'rgba(255,110,120,.45)'; c.beginPath(); c.ellipse(-168, 200, 46, 18, 0, 0, 7); c.ellipse(168, 200, 46, 18, 0, 0, 7); c.fill(); }
+  const brow = (s) => {
+    const x = s * 104, lift = expr === 'surprised' ? -16 : 0, tilt = expr === 'focus' ? 14 : expr === 'tired' ? -8 : expr === 'surprised' ? -4 : 2;
+    c.strokeStyle = '#2a1a12'; c.lineWidth = 11; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x - s * 38, 50 + lift + tilt); c.quadraticCurveTo(x, 38 + lift, x + s * 40, 48 + lift - tilt * .4); c.stroke();
   };
-  eye(cx - ex); eye(cx + ex);
-  const my = cy + 76; c.lineWidth = 11; c.beginPath();
-  if (expr === 'surprised') { c.ellipse(cx, my, 14, 17, 0, 0, 7); c.fill(); }
-  else if (expr === 'happy' || expr === 'love' || expr === 'stretch') { c.moveTo(cx - 34, my - 8); c.quadraticCurveTo(cx, my + 32, cx + 34, my - 8); c.closePath(); c.fill(); c.fillStyle = '#ff7b8a'; c.beginPath(); c.ellipse(cx, my + 8, 12, 6, 0, 0, 7); c.fill(); }
-  else if (expr === 'focus') { c.moveTo(cx - 20, my); c.quadraticCurveTo(cx, my - 5, cx + 20, my); c.stroke(); }
-  else if (expr === 'sleep' || expr === 'tired') { c.moveTo(cx - 12, my); c.quadraticCurveTo(cx, my + 6, cx + 12, my); c.stroke(); }
-  else { c.moveTo(cx - 24, my - 4); c.quadraticCurveTo(cx, my + 14, cx + 24, my - 4); c.stroke(); }
+  brow(-1); brow(1);
+  const eye = s => {
+    const x = s * 104 + lx * 12;
+    c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = ink;
+    if (closed) {
+      const up = expr === 'happy' || expr === 'stretch';
+      c.lineWidth = 12; c.beginPath();
+      if (up) { c.moveTo(x - 46, ey + 16); c.quadraticCurveTo(x, ey - 30, x + 46, ey + 16); }
+      else { c.moveTo(x - 46, ey); c.quadraticCurveTo(x, ey + 24, x + 46, ey); c.moveTo(x + s * 46, ey); c.lineTo(x + s * 58, ey - 9); }
+      c.stroke(); return;
+    }
+    const w = expr === 'surprised' ? 86 : 78, h = expr === 'surprised' ? 106 : 98, lid = expr === 'tired' ? .45 : expr === 'focus' ? .2 : 0;
+    c.save();
+    c.beginPath(); c.ellipse(x, ey, w / 2, h / 2, 0, 0, 7); c.clip();
+    if (lid) { c.beginPath(); c.rect(x - w, ey - h / 2 + h * lid, w * 2, h); c.clip(); }
+    c.fillStyle = '#fff'; c.fillRect(x - w, ey - h, w * 2, h * 2);
+    const ix = x + lx * 9 - s * 2, iy = ey + 6 + ly * 5, iw = expr === 'surprised' ? 46 : 62, ih = expr === 'surprised' ? 64 : 86;
+    if (expr === 'love') { c.fillStyle = '#ff4f7a'; heart(c, ix, iy, 42); }
+    else {
+      const g = c.createLinearGradient(0, iy - ih / 2, 0, iy + ih / 2); g.addColorStop(0, '#1e120c'); g.addColorStop(.55, '#5a3418'); g.addColorStop(1, '#d6923c');
+      c.fillStyle = g; c.beginPath(); c.ellipse(ix, iy, iw / 2, ih / 2, 0, 0, 7); c.fill();
+      c.fillStyle = '#0d0705'; c.beginPath(); c.ellipse(ix, iy - 2, iw * .22, ih * .26, 0, 0, 7); c.fill();
+      c.fillStyle = 'rgba(255,220,160,.55)'; c.beginPath(); c.ellipse(ix, iy + ih * .28, iw * .3, ih * .1, 0, 0, 7); c.fill();
+      c.fillStyle = '#fff'; c.beginPath(); c.ellipse(ix - iw * .2, iy - ih * .2, 11, 14, -.3, 0, 7); c.fill();
+      c.beginPath(); c.arc(ix + iw * .2, iy + ih * .16, 5, 0, 7); c.fill();
+    }
+    c.restore();
+    // lashes: a heavy top line with a flick at the outer corner
+    const top = ey - h / 2 + h * lid;
+    c.lineWidth = 16; c.beginPath(); c.moveTo(x - s * w * .52, ey - h * .1 + h * lid * .6); c.quadraticCurveTo(x - s * w * .1, top - 12, x + s * w * .5, top + 4); c.lineTo(x + s * (w * .5 + 14), top - 6); c.stroke();
+    c.lineWidth = 5; c.beginPath(); c.moveTo(x + s * w * .15, ey + h * .5 - 2); c.quadraticCurveTo(x + s * w * .42, ey + h * .42, x + s * w * .5, ey + h * .28); c.stroke();
+  };
+  eye(-1); eye(1);
   c.restore();
   face.tex.needsUpdate = true;
 }
 
 /* ---------- behaviour ---------- */
-const ACTS = {
-  wave: 2.4, jump: 1, dance: 3.4, lift: 4.6, look: 2.2, stretch: 2.6, boing: 1.2, stroll: 99,
-};
-function play(name) {
-  if (REDUCED && name !== 'jump') return;
-  state.act = name; state.actT = 0;
-}
-function strollTo(x, z) { state.tx = clamp(x, -1.15, 1.15); state.tz = clamp(z, -.5, .8); play('stroll'); }
+const ACTS = { wave: 2.4, jump: 1.05, dance: 3.6, lift: 5, look: 2.2, stretch: 2.6, boing: 1.2, stroll: 99 };
+function play(name) { if (REDUCED && name !== 'jump') return; state.act = name; state.actT = 0; }
+function strollTo(x, z) { state.tx = clamp(x, -1.1, 1.1); state.tz = clamp(z, -.5, .7); play('stroll'); }
 function autonomous(dt) {
   if (REDUCED || state.act || state.drag || state.mode !== 'idle') return;
   state.next -= dt; if (state.next > 0) return;
   state.next = 4 + Math.random() * 5;
   const c = state.ctx, r = Math.random();
   if (c.training && r < .3) return play('lift');
-  if (r < .45) return strollTo((Math.random() * 2 - 1) * 1.05, Math.random() * .6 - .2);
+  if (r < .45) return strollTo((Math.random() * 2 - 1) * 1.0, Math.random() * .5 - .2);
   if (r < .65) return play('look');
   if (r < .8) return play('stretch');
   if (r < .9) return play('wave');
   play(c.allDone ? 'dance' : 'look');
 }
-
 function baseExpr() {
   const c = state.ctx;
   if (state.mode === 'sleep') return 'sleep';
@@ -199,57 +228,59 @@ function baseExpr() {
   if (c.late) return 'tired';
   return 'idle';
 }
-
-// A skating stride: one ski pushes out while the poles swing.
-function skate(P, w, amt = 1) {
-  const s = Math.sin(w);
-  P.lLz = -(.06 + .28 * Math.max(0, s)) * amt; P.lRz = (.06 + .28 * Math.max(0, -s)) * amt;
-  P.aLx = (-.2 - s * .55) * amt; P.aRx = (-.2 + s * .55) * amt;
-  P.tiltZ = s * .12 * amt; P.hipY += Math.abs(Math.cos(w)) * .03 * amt - .03 * amt; P.tiltX = .12 * amt;
+// Two-bone leg: given how high the hip is and how far forward the foot sits, bend the knee so the ski stays on the snow.
+function legIK(hipH, fz) {
+  const dy = Math.max(.05, hipH - .02 - FOOT), d = clamp(Math.hypot(dy, fz), .22, L1 + L2 - .0005);
+  const knee = Math.PI - Math.acos(clamp((L1 * L1 + L2 * L2 - d * d) / (2 * L1 * L2), -1, 1));
+  const a = Math.acos(clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1));
+  return [-(Math.atan2(fz, dy) + a), knee];
 }
-
+// A skating stride: one ski pushes out, the poles swing, the body leans in.
+function skate(P, w) {
+  const s = Math.sin(w);
+  P.tLz = -(.05 + .3 * Math.max(0, s)); P.tRz = .05 + .3 * Math.max(0, -s);
+  P.sLx = -.25 - s * .6; P.sRx = -.25 + s * .6; P.eL = -.6 + s * .2; P.eR = -.6 - s * .2;
+  P.tiltZ = s * .1; P.tiltX = .28; P.hipY = HIP - .09 + Math.abs(Math.cos(w)) * .03; P.headX = -.18;
+}
 function computePose(t, dt) {
-  const P = { hipY: HIP, tiltZ: 0, tiltX: 0, sq: 1, aLx: 0, aLz: -.28, aRx: 0, aRz: .28, lLx: 0, lRx: 0, lLz: -.04, lRz: .04, yaw: .42, headX: 0, gog: 0, expr: baseExpr() };
-  const br = Math.sin(t * 2.1);
-  P.hipY += br * .01; P.sq = 1 + br * .014; P.aLz -= br * .03; P.aRz += br * .03;
+  const P = { hipY: HIP, fz: .02, air: 0, tiltZ: 0, tiltX: .04, sq: 1, sLx: .05, sLz: -.2, sRx: .05, sRz: .2, eL: -.35, eR: -.35, eLz: 0, eRz: 0, tLz: -.04, tRz: .04, yaw: .38, headX: 0, headZ: 0, gog: 0, expr: baseExpr() };
+  const br = Math.sin(t * 2), sway = Math.sin(t * .8);
+  P.sq = 1 + br * .012; P.hipY += br * .006; P.sLz -= br * .02; P.sRz += br * .02; P.tiltZ = sway * .02; P.headZ = -sway * .03;
   if (state.mode === 'sleep') {
-    // sitting back on the skis, tips in the air
-    P.hipY = .2 + Math.sin(t * .9) * .01; P.lLx = P.lRx = -1.35; P.tiltX = -.18; P.headX = .22; P.aLz = -.6; P.aRz = .6; P.aLx = P.aRx = .3; P.sq = 1 + Math.sin(t * .9) * .02;
+    // sitting back on the snow, hands behind, skis out front
+    Object.assign(P, { hipY: .36 + br * .006, fz: .58, tiltX: -.32, sLx: .55, sRx: .55, sLz: -.35, sRz: .35, eL: .1, eR: .1, headX: .3, headZ: .12, gog: 0 });
   }
-  if (state.mode === 'work' && !state.act) { skate(P, t * 4.6); P.yaw = .55; P.gog = 1; }
+  if (state.mode === 'work' && !state.act) { skate(P, t * 4.2); P.yaw = .6; P.gog = 1; }
   const a = state.act, k = state.actT;
   if (a) {
-    const d = ACTS[a], u = clamp(k / d, 0, 1), inW = clamp(k / .25, 0, 1), outW = a === 'stroll' ? 1 : clamp((d - k) / .3, 0, 1), W = ease(Math.min(inW, outW));
+    const d = ACTS[a], u = clamp(k / d, 0, 1), W = ease(Math.min(clamp(k / .25, 0, 1), a === 'stroll' ? 1 : clamp((d - k) / .3, 0, 1)));
     const mix = (key, v) => { P[key] = lerp(P[key], v, W); };
-    if (a === 'wave') { mix('aRz', 2.55 + Math.sin(k * 11) * .3); mix('aRx', -.2); mix('tiltZ', -.06); P.expr = 'happy'; }
-    if (a === 'stretch') { mix('aLz', -2.9); mix('aRz', 2.9); mix('sq', 1.06); mix('hipY', HIP + .04); P.expr = 'stretch'; }
-    if (a === 'look') { const s = Math.sin(u * Math.PI * 2); mix('yaw', s * .7); state.lookT.x = s; }
+    if (a === 'wave') { mix('sRz', 2.5); mix('sRx', -.15); mix('eR', -.9); P.eRz = Math.sin(k * 10) * .45 * W; mix('tiltZ', -.05); mix('headZ', .08); P.expr = 'happy'; }
+    if (a === 'stretch') { mix('sLz', -2.95); mix('sRz', 2.95); mix('eL', 0); mix('eR', 0); mix('sq', 1.04); mix('hipY', HIP + .03); mix('tiltX', -.08); mix('headX', -.15); P.expr = 'stretch'; }
+    if (a === 'look') { const s = Math.sin(u * Math.PI * 2); mix('yaw', .38 + s * .8); state.lookT.x = s; }
     if (a === 'lift') {
-      // ski-prep squats in a racer's tuck
-      const q = (1 - Math.cos(k * 3)) / 2;
-      const lx = -.3 - q * .5; mix('hipY', .545 * Math.cos(lx) + .02); mix('tiltX', .3 + q * .35); mix('lLx', lx); mix('lRx', lx);
-      mix('aLx', -1.1 - q * .3); mix('aRx', -1.1 - q * .3); mix('aLz', -.15); mix('aRz', .15); mix('headX', -.2 - q * .2); mix('gog', 1); P.expr = 'focus';
+      // ski-prep squats: sit back into a tuck and stand up again, goggles down
+      const q = (1 - Math.cos(k * 2.6)) / 2;
+      mix('hipY', HIP - .04 - q * .34); mix('fz', .06); mix('tiltX', .3 + q * .5); mix('headX', -.25 - q * .4);
+      mix('sLx', -1.05 - q * .25); mix('sRx', -1.05 - q * .25); mix('sLz', -.12); mix('sRz', .12); mix('eL', -.7); mix('eR', -.7); mix('gog', 1); P.expr = 'focus';
     }
     if (a === 'jump') {
-      let y = HIP, s = 1;
-      if (u < .16) { const q = u / .16; y = HIP - .1 * q; s = 1 - .1 * q; }
-      else if (u < .68) { const q = (u - .16) / .52; y = HIP - .1 + Math.sin(q * Math.PI) * .6; s = 1.06 - .06 * q; P.aLz = -2.3; P.aRz = 2.3; P.lLx = P.lRx = -.35 * Math.sin(q * Math.PI); }
-      else if (u < .84) { const q = (u - .68) / .16; y = HIP - .1 + .1 * q; s = .9 + .1 * q; }
-      P.hipY = y; P.sq = s; P.expr = u < .3 ? 'surprised' : 'happy';
+      if (u < .18) { const q = ease(u / .18); P.hipY = HIP - .26 * q; P.tiltX = .04 + .3 * q; P.sLx = P.sRx = .4 * q; }
+      else if (u < .7) { const q = (u - .18) / .52; P.air = Math.sin(q * Math.PI) * .62; P.hipY = HIP - .2 * Math.sin(q * Math.PI); P.sLz = -2.4; P.sRz = 2.4; P.eL = P.eR = -.2; P.tiltX = -.05; }
+      else if (u < .86) { const q = (u - .7) / .16; P.hipY = HIP - .22 * (1 - q); P.tiltX = .2 * (1 - q); }
+      P.expr = u < .3 ? 'surprised' : 'happy';
     }
-    if (a === 'boing') { P.expr = 'surprised'; mix('tiltZ', Math.sin(k * 14) * .12 * (1 - u)); }
+    if (a === 'boing') { P.expr = 'surprised'; P.headZ += Math.sin(k * 16) * .25 * (1 - u); P.headX += Math.sin(k * 11) * .12 * (1 - u); }
     if (a === 'dance') {
-      const b = k * 7.5; mix('hipY', HIP + Math.abs(Math.sin(b)) * .16); mix('tiltZ', Math.sin(b) * .2); mix('aLz', -1.6 - Math.sin(b) * 1.1); mix('aRz', 1.6 - Math.sin(b) * 1.1);
-      if (u > .6) P.yaw += ease((u - .6) / .4) * Math.PI * 2; // a 360 on the skis
+      const b = k * 7; mix('hipY', HIP - .08 + Math.abs(Math.sin(b)) * .06); P.air = Math.max(0, Math.sin(b)) * .08 * W; mix('tiltZ', Math.sin(b / 2) * .18);
+      mix('sLz', -1.8 - Math.sin(b) * .9); mix('sRz', 1.8 - Math.sin(b) * .9); mix('eL', -.5); mix('eR', -.5);
+      if (u > .62) P.yaw += ease((u - .62) / .38) * Math.PI * 2;
       P.expr = 'love';
     }
     if (a === 'stroll') {
       const dx = state.tx - state.x, dz = state.tz - state.z, dist = Math.hypot(dx, dz);
       if (dist < .03) { state.act = null; state.lookT.x = 0; }
-      else {
-        const sp = Math.min(dist, .95 * dt); state.x += dx / dist * sp; state.z += dz / dist * sp;
-        skate(P, t * 5.5); P.yaw = Math.atan2(dx, dz); P.gog = 1;
-      }
+      else { const sp = Math.min(dist, .9 * dt); state.x += dx / dist * sp; state.z += dz / dist * sp; skate(P, t * 5.2); P.yaw = Math.atan2(dx, dz); P.gog = 1; }
     }
     state.actT += dt;
     if (state.act && a !== 'stroll' && state.actT > d) state.act = null;
@@ -257,35 +288,32 @@ function computePose(t, dt) {
   return P;
 }
 
+const POSE_KEYS = ['hipY', 'fz', 'air', 'tiltZ', 'tiltX', 'sq', 'sLx', 'sLz', 'sRx', 'sRz', 'eL', 'eR', 'eLz', 'eRz', 'tLz', 'tRz', 'headX', 'headZ'];
 function applyPose(P, dt, t) {
-  const k = 12;
-  pose.hipY = damp(pose.hipY ?? P.hipY, P.hipY, k, dt);
-  rig.hips.position.y = pose.hipY;
-  state.hipV = (pose.hipY - state.lastHip) / Math.max(dt, .001); state.lastHip = pose.hipY;
-  for (const key of ['tiltZ', 'tiltX', 'sq', 'aLx', 'aLz', 'aRx', 'aRz', 'lLx', 'lRx', 'lLz', 'lRz', 'headX']) pose[key] = damp(pose[key] ?? P[key], P[key], k, dt);
+  for (const key of POSE_KEYS) pose[key] = damp(pose[key] ?? P[key], P[key], key === 'air' ? 30 : 11, dt);
   pose.gog = damp(pose.gog ?? P.gog, P.gog, 6, dt);
-  const lookYaw = state.act === 'stroll' || state.mode === 'work' ? 0 : state.look.x * .3;
-  pose.yaw = damp(pose.yaw ?? 0, P.yaw + lookYaw * .4, 7, dt);
+  rig.hips.position.y = pose.hipY;
+  state.hipV = (pose.hipY + pose.air - state.lastHip) / Math.max(dt, .001); state.lastHip = pose.hipY + pose.air;
+  const lookYaw = state.act === 'stroll' || state.mode === 'work' ? 0 : state.look.x * .15;
+  pose.yaw = damp(pose.yaw ?? P.yaw, P.yaw + lookYaw, 6, dt);
   if (!state.drag) { state.spin += state.spinV * dt; state.spinV *= Math.exp(-dt * 2.2); if (Math.abs(state.spinV) < .4) state.spin = damp(state.spin, Math.round(state.spin / (Math.PI * 2)) * Math.PI * 2, 3, dt); }
   rig.root.rotation.y = pose.yaw + state.spin;
-  rig.root.position.set(state.x, 0, state.z);
-  rig.body.rotation.z = pose.tiltZ; rig.body.rotation.x = pose.tiltX;
-  rig.body.scale.set(1 + (1 - pose.sq) * .6, pose.sq, 1 + (1 - pose.sq) * .6);
-  // the head turns toward your finger more than the body does
-  rig.head.rotation.set(pose.headX + state.look.y * .15, state.look.x * .45, -pose.tiltZ * .4);
-  rig.goggles.rotation.x = lerp(-.62, 0, pose.gog);
-  rig.armL.piv.rotation.set(pose.aLx, 0, pose.aLz); rig.armR.piv.rotation.set(pose.aRx, 0, pose.aRz);
-  // keep the poles pointing at the snow whatever the arms are doing
-  rig.armL.pole.rotation.x = .1 - pose.aLx * .75; rig.armR.pole.rotation.x = .1 - pose.aRx * .75;
-  rig.armL.pole.rotation.z = -pose.aLz * .6; rig.armR.pole.rotation.z = -pose.aRz * .6;
-  rig.legL.piv.rotation.set(pose.lLx, 0, pose.lLz); rig.legR.piv.rotation.set(pose.lRx, 0, pose.lRz);
-  // skis stay flat on the snow when a leg swings out
-  rig.legL.ski.rotation.set(-pose.lLx, 0, -pose.lLz); rig.legR.ski.rotation.set(-pose.lRx, 0, -pose.lRz);
-  // pompom: a damped spring kicked by movement
-  const A = state.antenna, acc = -state.hipV * 2.4;
-  A.v += (-55 * A.a - 4.5 * A.v + acc) * dt; A.a += A.v * dt;
-  A.w += (-45 * A.b - 4 * A.w + (state.act === 'stroll' ? Math.sin(t * 5.5) * 5 : 0) - pose.tiltZ * 12) * dt; A.b += A.w * dt;
-  rig.antenna.rotation.x = clamp(A.a, -.9, .9); rig.antenna.rotation.z = clamp(A.b, -.9, .9);
+  rig.root.position.set(state.x, pose.air, state.z);
+  rig.body.rotation.set(pose.tiltX, 0, pose.tiltZ);
+  rig.body.scale.set(1 + (1 - pose.sq) * .5, pose.sq, 1 + (1 - pose.sq) * .5);
+  // head leads the look, the goggles bounce a little when they're up
+  const A = state.antenna; A.v += (-70 * A.a - 6 * A.v - state.hipV * 1.6) * dt; A.a += A.v * dt;
+  rig.head.rotation.set(pose.headX - pose.tiltX * .6 + state.look.y * .18, state.look.x * .55, pose.headZ - pose.tiltZ * .5);
+  rig.goggles.rotation.x = lerp(-.56, 0, pose.gog) + clamp(A.a, -.25, .25) * (1 - pose.gog);
+  // legs: solved so the skis stay planted, spread for skating
+  const [tx, kx] = legIK(pose.hipY, pose.fz);
+  [[rig.legL, pose.tLz], [rig.legR, pose.tRz]].forEach(([l, tz]) => { l.thigh.rotation.set(tx, 0, tz); l.knee.rotation.x = kx; l.ski.rotation.set(-(tx + kx), 0, -tz); });
+  // arms, and poles kept pointing at the snow
+  const arms = [[rig.armL, pose.sLx, pose.sLz, pose.eL, pose.eLz, -1], [rig.armR, pose.sRx, pose.sRz, pose.eR, pose.eRz, 1]];
+  arms.forEach(([ar, sx, sz, ex, ez, s]) => {
+    ar.sh.rotation.set(sx, 0, sz); ar.el.rotation.set(ex, 0, ez);
+    ar.pole.rotation.set(.12 - (sx + ex + pose.tiltX), 0, -(sz + ez) * .85 - pose.tiltZ + s * .06);
+  });
   const leds = state.ctx.leds || [0, 0, 0];
   rig.leds.forEach((l, i) => { const v = clamp(leds[i] || 0, 0, 1), p = .55 + .45 * Math.sin(t * 2.4 + i); l.material.color.copy(l.userData.dim).lerp(l.userData.base, v >= 1 ? 1 : v * p); });
   state.blinkAt -= dt;
@@ -294,7 +322,7 @@ function applyPose(P, dt, t) {
   const bl = state.blink > .5 ? (1 - state.blink) * 2 : state.blink * 2;
   if (performance.now() - state.pointerAt > 2600 && state.act !== 'look') { state.lookT.x = Math.sin(t * .35) * .25; state.lookT.y = 0; }
   state.look.x = damp(state.look.x, state.lookT.x, 6, dt); state.look.y = damp(state.look.y, state.lookT.y, 6, dt);
-  drawFace(P.expr, state.look.x, state.look.y, P.expr === 'idle' || P.expr === 'focus' ? bl : 0);
+  drawFace(P.expr, state.look.x, state.look.y, P.expr === 'idle' || P.expr === 'focus' || P.expr === 'tired' ? bl : 0);
 }
 
 /* ---------- speech ---------- */
@@ -344,7 +372,7 @@ function bind() {
     const now = performance.now();
     state.taps = state.taps.filter(x => now - x < 380); state.taps.push(now);
     if (state.mode === 'sleep') { state.mode = 'idle'; state.wokeAt = now; play('jump'); say('Oh! Still up? Get some sleep.'); return wake(); }
-    if (d.onTip) { state.antenna.v += 14; state.antenna.w -= 10; play('boing'); say('Boing.', 1400); }
+    if (d.onTip) { state.antenna.v += 6; play('boing'); say('Hey! Watch the beanie.', 1600); }
     else if (d.onBody) { if (state.taps.length >= 2) { play('dance'); say(state.ctx.allDone ? 'Everything done. Party.' : 'Dance break!', 2600); } else { play('jump'); nextLine(); } navigator.vibrate && navigator.vibrate(8); }
     else { toNdc(e); ray.setFromCamera(ndc, camera); if (ray.ray.intersectPlane(floorPlane, floorPt)) strollTo(floorPt.x, floorPt.z); }
     wake();
@@ -360,7 +388,7 @@ function size() {
   const w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return;
   renderer.setSize(w, h, false); camera.aspect = w / h;
   // keep the whole buddy in frame on a narrow phone stage
-  const narrow = camera.aspect < 1, fitH = narrow ? 3.25 : 2.9, fitW = 2.3 / camera.aspect, need = Math.max(fitH, fitW), dist = need / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const narrow = camera.aspect < 1, fitH = narrow ? 3.3 : 2.85, fitW = 2.05 / camera.aspect, need = Math.max(fitH, fitW), dist = need / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   camera.userData.dist = dist; camera.updateProjectionMatrix(); frame(performance.now());
 }
 const live = () => ok && wrap && wrap.isConnected && !document.hidden && inView;
@@ -376,7 +404,7 @@ function frame(now) {
   applyPose(computePose(t, dt), dt, t);
   const dist = camera.userData.dist || 6;
   const px = state.pointerAt ? state.lookT.x * .12 : Math.sin(t * .2) * .08;
-  const ly = camera.aspect < 1 ? .86 : .98; camera.position.set(damp(camera.position.x, px, 3, dt), ly + .3, dist); camera.lookAt(0, ly, 0);
+  const ly = camera.aspect < 1 ? 1.0 : 1.06; camera.position.set(damp(camera.position.x, px, 3, dt), ly + .28, dist); camera.lookAt(0, ly, 0);
   renderer.render(scene, camera);
   placeBubble();
   zEl.classList.toggle('on', state.mode === 'sleep');
@@ -409,5 +437,5 @@ function update(ctx) {
   else if (prev.mode && prev.mode !== ctx.mode && ctx.mode === 'work') say('Clocked in. Let’s get it.');
   wake();
 }
-window.Buddy = { mount, update, say, play };
+window.Buddy = { mount, update, say, play, get _() { return { camera, rig, state, pose }; } };
 const pending = document.querySelector('#buddySlot'); if (pending) mount(pending);
