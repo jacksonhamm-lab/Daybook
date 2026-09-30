@@ -202,17 +202,29 @@ async function runReminders(hash, env) {
     }
   }
 
-  // Per-task reminders
+  // Per-task reminders. With nag mode on (settings.nag = minutes), a reminder that's still
+  // open is sent again every N minutes, replacing the last one and alerting again, until
+  // Done or Tomorrow is tapped. It stops at 10:30pm. The app icon badge shows how many are open.
+  const mins = s => (+s.slice(0, 2)) * 60 + (+s.slice(3, 5));
+  const open = (S.tasks || []).filter(t => t.remind && occursOn(t, now.date) && !isDone(t, now.date) && mins(t.remind) <= mins(now.hm));
+  const nag = Math.max(0, +st.nag || 0);
+  sent.last = sent.last || {};
   (S.tasks || []).forEach(t => {
     if (!t.remind || !occursOn(t, now.date) || isDone(t, now.date)) return;
-    if (!dueNow(now.hm, t.remind) || already('t:' + t.id)) return;
-    outgoing.push({ key: 't:' + t.id, payload: { title: t.title, body: 'Due now · swipe for Done or Tomorrow', tag: 't:' + t.id, url: '/', id: t.id, date: now.date } });
+    const payload = { title: t.title, body: 'Due now · swipe for Done or Tomorrow', tag: 't:' + t.id, url: '/', id: t.id, date: now.date, badge: open.length };
+    if (dueNow(now.hm, t.remind) && !already('t:' + t.id)) { outgoing.push({ key: 't:' + t.id, payload, stamp: t.id }); return; }
+    if (!nag || !already('t:' + t.id) || mins(now.hm) > mins('22:30')) return;
+    const late = mins(now.hm) - mins(t.remind), last = sent.last[t.id] || 0;
+    if (Date.now() - last < nag * 60000 - 20000) return;
+    payload.body = `Still open · ${late < 60 ? late + ' min' : Math.floor(late / 60) + 'h ' + (late % 60) + 'm'} overdue · Done or Tomorrow`;
+    outgoing.push({ key: null, payload, stamp: t.id });
   });
 
   if (!outgoing.length) return;
   for (const item of outgoing) {
     await deliver(hash, subs, item.payload, env);
-    sent.keys.push(item.key);
+    if (item.key) sent.keys.push(item.key);
+    if (item.stamp) sent.last[item.stamp] = Date.now();
   }
   await env.SYNC.put(sentKey, JSON.stringify(sent), { expirationTtl: 172800 });
 }

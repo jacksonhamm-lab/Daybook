@@ -49,6 +49,8 @@ function readCode() {
 self.addEventListener('push', e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { title: 'Daybook', body: e.data ? e.data.text() : 'Reminder' }; }
+  // open reminders on the app icon (home-screen apps, iOS 16.4+)
+  if (typeof d.badge === 'number' && self.navigator.setAppBadge) (d.badge ? self.navigator.setAppBadge(d.badge) : self.navigator.clearAppBadge()).catch(() => {});
   e.waitUntil(self.registration.showNotification(d.title || 'Daybook', {
     body: d.body || '',
     tag: d.tag || 'daybook',

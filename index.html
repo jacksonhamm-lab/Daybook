@@ -2788,7 +2788,10 @@ const SHEETS = {
         <p class="sub" style="margin-top:0">Notifications for tasks with a time, plus a morning rundown. Turn them on once per device.</p>
         <div class="row">${PUSH.on ? `<button class="btn" data-act="push-off">Turn off</button><button class="btn white" data-act="push-test">Send a test</button>` : `<button class="btn white" data-act="push-on">Turn on notifications</button>`}</div>
         <p class="sub" id="pushStatus" style="margin:8px 0 0">${esc(pushLabel())}</p>
-        <div class="row" style="margin-top:12px;align-items:center"><button class="chip ${st.remindDaily ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="toggle-brief">Morning rundown</button><input type="time" data-sf="remindAt" value="${esc(st.remindAt || '08:00')}" style="width:130px"></div>`)}
+        <div class="row" style="margin-top:12px;align-items:center"><button class="chip ${st.remindDaily ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="toggle-brief">Morning rundown</button><input type="time" data-sf="remindAt" value="${esc(st.remindAt || '08:00')}" style="width:130px"></div>
+        <div class="lbl" style="margin-top:14px">Keep reminding until it's done</div>
+        <div class="chips">${[[0, 'Off'], [10, 'Every 10 min'], [15, 'Every 15 min'], [30, 'Every 30 min']].map(([m, l]) => `<button class="chip ${(+st.nag || 0) === m ? 'on' : ''}" style="--c:var(--orange);--on:#fff" data-act="set-nag" data-v="${m}">${l}</button>`).join('')}</div>
+        <p class="sub" style="margin:6px 0 0">A reminder you haven't ticked off comes back, like Apple Reminders, until you tap Done or Tomorrow. Stops at 10:30pm.</p>`)}
       ${grp('Sync', SYNC.code ? 'Connected' : 'Off', `
         <p class="sub" style="margin-top:0">Same sync code on your laptop and phone and they stay in step. Changes merge, so editing both offline is fine.</p>
         <div class="row"><input id="syncCode" placeholder="Sync code" value="${esc(SYNC.code)}" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" inputmode="text" onfocus="this.select()">
@@ -2865,6 +2868,8 @@ function render() {
   paintLevel();
   arcSync();
   island.live(); tick();
+  // open reminders on the app icon
+  try { const n = slipped().length; if (navigator.setAppBadge) (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {}); } catch (e) {}
   FX = {};
 }
 // FLIP: remember where each task sat, then slide it from there to its new spot instead of jumping.
@@ -3135,6 +3140,7 @@ document.addEventListener('click', e => {
         .then(d => island.toast(d.ok ? 'Test sent — check your notifications' : (d.error || 'Test failed')))
         .catch(() => island.toast('Test failed'));
     }
+    case 'set-nag': S.settings.nag = +v; commit(); return refreshSheet();
     case 'toggle-brief': S.settings.remindDaily = !S.settings.remindDaily; commit(); return refreshSheet();
     case 'tm-remind': { const t = task(); t.remind = v || null; save(); return refreshSheet(); }
     case 'rm-done': { const t = S.tasks.find(x => x.id === el.dataset.id); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } else t.done = true; commit(); return island.toast('Done', { icon: I.check, color: '#30d158' }); }
