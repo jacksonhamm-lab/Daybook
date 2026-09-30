@@ -8,7 +8,7 @@
     upright, inside leg bent more, pole plant at each transition), snow spray off the
     outside ski, fading tracks, pines and snowfall streaming past on a night slope.
     Tuck runs on training days; a 360 when the list is clear.
-  - **Gym** (training day, until the session is marked done): `Gym.vrm` (shirtless, black
+  - **Gym** (training day, until the session is marked done; on purpose, it's his reminder to train): `Gym.vrm` (shirtless, black
     sweats), made leaner and more defined by `physique.js` (his ask: "more muscular, like
     Luffy"; reference was Wano-era Luffy). Bigger delts, arms and forearms, broad flat pecs,
     lats and traps; painted cel shadows under the pecs and ab rows, down the midline, outside
