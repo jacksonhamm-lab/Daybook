@@ -63,15 +63,19 @@ the repo, see below).
   which bone moves them, subdivides them, reshapes them, and binds the result to the
   same skeleton, so the clothes bend exactly like the body. Colours live in materials,
   so recolouring is free.
-  - Jacket: **The North Face shell jacket** (Jackson rejected a Nuptse puffer as
-    "terrible"): smooth, a little loose, covers the top of the pants, black zip and
-    cuff tabs, white chest logo.
-  - Pants: **TNF shell snow pants**, wide and straight from thigh to ankle (his
-    reference photo), falling over the boots, logo on the wearer's right thigh. Legs
-    are pushed out from each leg's centre line to a minimum radius, not just inflated.
-  - Boots khaki, gloves black.
-  - Still to clean up: a gap at the front of the hem, the zip's end, jagged colour
-    edges.
+  - Jacket: **shell jacket** (Jackson rejected a Nuptse puffer as "terrible"). Fitted
+    through the shoulders and chest, then it hangs straight down from the chest
+    (measured around the body at chest height) instead of hugging the waist, with a
+    slight flare at a hem that covers the top of the pants. The zip is its own thin
+    skinned strip, not painted triangles (that came out as a sawtooth).
+  - Pants: **wide, straight shell snow pants** (his reference photo), long enough to
+    stack in loose, uneven folds over the boots. Legs are pushed out from each leg's
+    centre line to a minimum radius, not just inflated.
+  - **No logos** (his call).
+  - Boots khaki. Gloves black gauntlets that tuck inside the sleeve cuffs, so **no
+    skin shows at the wrists**.
+  - Garment materials are double-sided so looking into a hem shows lining, not the
+    black outline layer.
 - **Hard gear: made in code and attached to bones.** Skis (Armada / Atomic Bent style
   topsheets), poles, goggles, beanie or mask.
 - **Hosting:** serve the file from Cloudflare (KV or R2) through the Worker instead of
