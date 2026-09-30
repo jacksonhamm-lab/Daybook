@@ -135,14 +135,37 @@ function buildSettings() {
   box(shop, .72, 1.9, .05, 0xb08d57, 2.15, .95, -1.7, -.6); box(shop, .6, 1.76, .02, 0x9fb3c8, 2.15, .95, -1.67, -.6);
   // camp: stars, a moon and a small fire in the snow for the late-night look
   const camp = world.camp = new THREE.Group(); scene.add(camp);
-  const fire = world.fire = new THREE.Group(); fire.position.set(-.55, 0, 1.2); camp.add(fire);
-  // the log he sits on (lined up with how he faces when asleep)
-  const seat = new THREE.Group(); seat.rotation.y = -.35; camp.add(seat);
-  cyl(seat, .17, 1.3, 0x5b3a22, 0, .17, -.06, [0, 0, Math.PI / 2], 12); cyl(seat, .172, .02, 0xc9a27a, .65, .17, -.06, [0, 0, Math.PI / 2], 12);
+  const fire = world.fire = new THREE.Group(); fire.position.set(.95, 0, -1.05); camp.add(fire);
+  // where he sleeps: a plaid blanket on the snow, a rolled pillow, cocoa and a lantern within reach
+  const bed = new THREE.Group(); bed.rotation.y = SLEEP_YAW; camp.add(bed);   // bed space: +z runs toward his feet
+  const plaid = canvasTex(256, 256, (x, W, H) => {
+    x.fillStyle = '#9e2a2b'; x.fillRect(0, 0, W, H);
+    x.fillStyle = 'rgba(25,18,20,.55)'; for (let i = 0; i < 4; i++) { x.fillRect(i * 64 + 20, 0, 26, H); x.fillRect(0, i * 64 + 20, W, 26); }
+    x.fillStyle = 'rgba(230,200,150,.35)'; for (let i = 0; i < 4; i++) { x.fillRect(i * 64 + 52, 0, 4, H); x.fillRect(0, i * 64 + 52, W, 4); }
+  }); plaid.wrapS = plaid.wrapT = THREE.RepeatWrapping; plaid.repeat.set(3, 5);
+  const blanket = new THREE.Mesh(new THREE.BoxGeometry(1.25, .025, 2.05, 8, 1, 12), toon(0xffffff)); blanket.material.map = plaid;
+  { const P = blanket.geometry.attributes.position; for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i); P.setY(i, P.getY(i) + .012 * Math.sin(x * 9 + z * 3) * Math.cos(z * 5)); } blanket.geometry.computeVertexNormals(); }
+  blanket.position.set(0, .013, -.05); bed.add(blanket);
+  cyl(bed, .09, .5, 0xe9e1d0, 0, .09, -.98, [0, 0, Math.PI / 2], 16);                                   // pillow
+  const mug = new THREE.Group(); mug.position.set(.78, 0, -.35); bed.add(mug);
+  cyl(mug, .045, .1, 0xd9573b, 0, .05, 0); { const h = new THREE.Mesh(new THREE.TorusGeometry(.028, .008, 6, 14), toon(0xd9573b)); h.position.set(.05, .05, 0); mug.add(h); }
+  { const top = new THREE.Mesh(new THREE.CircleGeometry(.04, 16), toon(0x5a3420)); top.rotation.x = -Math.PI / 2; top.position.y = .098; mug.add(top); }
+  const lantern = new THREE.Group(); lantern.position.set(-.8, 0, -.85); bed.add(lantern);
+  cyl(lantern, .07, .03, 0x2a2b30, 0, .015, 0); cyl(lantern, .07, .03, 0x2a2b30, 0, .2, 0); cyl(lantern, .03, .03, 0x2a2b30, 0, .235, 0);
+  { const glass = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .16, 14), new THREE.MeshBasicMaterial({ color: 0xffd08a })); glass.position.y = .108; lantern.add(glass); }
+  world.lanternLight = new THREE.PointLight(0xffc27a, 1.1, 2.5, 1.8); world.lanternLight.position.y = .25; lantern.add(world.lanternLight);
+  // a small A-frame tent glowing from inside
+  const tent = new THREE.Group(); tent.position.set(-1.5, 0, -2.6); tent.rotation.y = .35; camp.add(tent);
+  { const W = 1.5, Hh = 1.2, D = 1.8, shape = new THREE.Shape([new THREE.Vector2(-W / 2, 0), new THREE.Vector2(W / 2, 0), new THREE.Vector2(0, Hh)]);
+    const body = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: D, bevelEnabled: false }), toon(0x3f6b5a)); body.position.z = -D / 2; tent.add(body); { const ink = new THREE.Mesh(body.geometry, INK); ink.position.copy(body.position); tent.add(ink); }
+    const door = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-.32, 0), new THREE.Vector2(.32, 0), new THREE.Vector2(0, .78)])), new THREE.MeshBasicMaterial({ color: 0xffc37a })); door.position.z = D / 2 + .005; tent.add(door); }
+  // the fire's warm pool of light on the snow
+  { const glowTex = canvasTex(128, 128, (x, W, H) => { const g = x.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W / 2); g.addColorStop(0, 'rgba(255,170,90,.9)'); g.addColorStop(.4, 'rgba(255,130,60,.35)'); g.addColorStop(1, 'rgba(255,120,50,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H); });
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); glow.rotation.x = -Math.PI / 2; glow.position.set(.95, .006, -1.05); camp.add(glow); world.glow = glow; }
   for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, st = new THREE.Mesh(new THREE.DodecahedronGeometry(.07 + (i % 3) * .015), toon(0x6d7280)); st.position.set(Math.cos(a) * .3, .04, Math.sin(a) * .3); fire.add(st); }
-  [0, 1.1, 2.2].forEach(a => cyl(fire, .045, .5, 0x5b3a22, 0, .07, 0, [Math.PI / 2 - .35, a, 0], 8));
-  world.flames = [[.16, .42, 0xff7a1a], [.11, .34, 0xffb347], [.06, .22, 0xffe7a0]].map(([r, h, c]) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: .92, blending: THREE.AdditiveBlending, depthWrite: false })); m.position.y = .1 + h / 2; m.userData.h = h; fire.add(m); return m; });
-  world.fireLight = new THREE.PointLight(0xff9a4a, 3, 6, 1.6); world.fireLight.position.set(0, .5, 0); fire.add(world.fireLight);
+  [0, .8, 1.6, 2.4].forEach(a => cyl(fire, .05, .6, 0x5b3a22, 0, .12, 0, [Math.PI / 2 - .5, a, 0], 8));
+  world.flames = [[.22, .62, 0xff7a1a], [.15, .5, 0xffb347], [.08, .32, 0xffe7a0]].map(([r, h, c]) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: .92, blending: THREE.AdditiveBlending, depthWrite: false })); m.position.y = .1 + h / 2; m.userData.h = h; fire.add(m); return m; });
+  world.fireLight = new THREE.PointLight(0xff9a4a, 4, 8, 1.5); world.fireLight.position.set(0, .5, 0); fire.add(world.fireLight);
   const moon = new THREE.Mesh(new THREE.CircleGeometry(1.3, 40), new THREE.MeshBasicMaterial({ color: 0xf4f1e2, fog: false })); moon.position.set(3.2, 7.2, -30); camp.add(moon);
   const halo = new THREE.Mesh(new THREE.CircleGeometry(3.2, 40), new THREE.MeshBasicMaterial({ color: 0xbfd0ff, transparent: true, opacity: .12, depthWrite: false })); halo.position.set(3.2, 7.2, -30.1); camp.add(halo);
   world.stars = world.pool(160, 0xffffff);
@@ -154,7 +177,7 @@ function buildSettings() {
 // what each outfit's world looks like: which props show, the light, and the sky behind
 const SETTINGS = {
   ski: { sky: 0xdfe8ff, ground: 0x2a2f48, hemi: 1.2, key: 0xffffff, keyI: 2.2, bg: '' },
-  sleep: { sky: 0x8fa6d8, ground: 0x141a2c, hemi: .75, key: 0xa9bcff, keyI: 1.1, bg: 'radial-gradient(90% 70% at 50% 30%,#1c2645 0%,#0e1427 55%,#070a13 100%)' },
+  sleep: { sky: 0x8fa6d8, ground: 0x241a1c, hemi: .7, key: 0xa9bcff, keyI: .9, bg: 'radial-gradient(90% 70% at 50% 30%,#1c2645 0%,#0e1427 55%,#070a13 100%)' },
   gym: { sky: 0xffe2c4, ground: 0x2a2018, hemi: 1.05, key: 0xffd9a8, keyI: 2.3, bg: 'radial-gradient(80% 70% at 50% 28%,#5e4837 0%,#34281f 45%,#16110d 100%)' },
   work: { sky: 0xfff0dc, ground: 0x3a2e22, hemi: 1.15, key: 0xfff1de, keyI: 2.0, bg: 'radial-gradient(80% 70% at 50% 28%,#7d6852 0%,#473b2f 45%,#1c1611 100%)' },
 };
@@ -171,7 +194,8 @@ function setEnv(key) {
 function stepSettings(dt, t) {
   if (envKey === 'sleep') {
     world.flames.forEach((m, i) => { const k = 1 + .18 * Math.sin(t * (9 + i * 3)) + .1 * Math.sin(t * (23 + i * 5)); m.scale.set(1 + .08 * Math.sin(t * 13 + i), k, 1 + .08 * Math.cos(t * 11 + i)); m.position.y = .1 + m.userData.h * k / 2; });
-    world.fireLight.intensity = 2.6 + .6 * Math.sin(t * 11) + .4 * Math.sin(t * 27);
+    world.fireLight.intensity = 3.6 + .7 * Math.sin(t * 11) + .5 * Math.sin(t * 27);
+    world.glow.material.opacity = .85 + .12 * Math.sin(t * 9); world.lanternLight.intensity = 1.05 + .08 * Math.sin(t * 5);
     const f = world.sparks, P = f.g.attributes.position.array, A = f.g.attributes.alpha.array, S = f.g.attributes.size.array, o = world.fire.position;
     for (let i = 0; i < f.n; i++) {
       if (f.life[i] <= 0) { if (Math.random() < dt * 2.5) { f.max[i] = f.life[i] = .8 + Math.random() * 1.2; P[i * 3] = o.x + (Math.random() - .5) * .15; P[i * 3 + 1] = .25; P[i * 3 + 2] = o.z + (Math.random() - .5) * .15; f.v[i * 3] = (Math.random() - .5) * .3; f.v[i * 3 + 1] = .6 + Math.random() * .7; f.v[i * 3 + 2] = (Math.random() - .5) * .3; } else { A[i] = 0; continue; } }
@@ -297,6 +321,7 @@ function fallback() {
 }
 
 /* ---------- poses ---------- */
+const SLEEP_YAW = .35;   // lying with his feet toward the camera, head back on the pillow, so his face stays in view
 const ACTS = { hop: .9, spin: 1.5, wave: 2.4, flex: 2.6 };
 function play(name) { if (REDUCED && name !== 'hop') return; if (!ACTS[name]) name = want() === 'ski' ? 'hop' : want() === 'gym' ? 'flex' : 'wave'; state.act = name; state.actT = 0; }
 function autonomous(dt) {
@@ -326,7 +351,7 @@ function skiPose(r, t, dt) {
   if (a === 'hop') { air = .42 * Math.sin(Math.PI * u); flexAir = .45 * Math.sin(Math.PI * u); }
   if (a === 'spin') { air = .62 * Math.sin(Math.PI * u); flexAir = .6 * Math.sin(Math.PI * u); spin = Math.PI * 2 * ease(clamp((u - .08) / .84, 0, 1)); }
   const lean = .42 * s * amp * (1 - smooth(0, .15, air)), yaw = .38 * c * amp;
-  r.vrm.scene.rotation.set(0, yaw + spin, lean);
+  r.vrm.scene.rotation.order = 'XYZ'; r.vrm.scene.rotation.set(0, yaw + spin, lean);
   r.vrm.scene.position.x = state.x;
   // legs: flexed stance, deeper at the apex of each turn, the inside leg bending more
   const f = .85 + .35 * Math.abs(s) * amp + .7 * tk + flexAir, inR = .3 * Math.max(0, s) * amp, inL = .3 * Math.max(0, -s) * amp;
@@ -349,7 +374,7 @@ function skiPose(r, t, dt) {
 }
 function standPose(r, t, dt, sleepy, gym) {
   const { B } = r, a = state.act, u = a ? clamp(state.actT / ACTS[a], 0, 1) : 0, br = Math.sin(t * 1.6), sw = Math.sin(t * .5);
-  r.vrm.scene.rotation.set(0, state.look.x * .12, 0); r.vrm.scene.position.x = 0;
+  r.vrm.scene.rotation.order = 'XYZ'; r.vrm.scene.rotation.set(0, state.look.x * .12, 0); r.vrm.scene.position.x = 0; r.vrm.scene.position.z = 0;
   B('hips').rotation.z = sw * .025; B('leftUpperLeg').rotation.z = -sw * .025; B('rightUpperLeg').rotation.z = -sw * .025;
   B('spine').rotation.set(.02 * br, 0, -sw * .02); B('chest').rotation.x = .015 * br;
   B('leftUpperArm').rotation.set(-.08, 0, -1.4 - .02 * br); B('rightUpperArm').rotation.set(-.08, 0, 1.4 + .02 * br);
@@ -378,20 +403,30 @@ function standPose(r, t, dt, sleepy, gym) {
 }
 function sleepPose(r, t) {
   const { B } = r, br = Math.sin(t * 1.1);
-  r.vrm.scene.rotation.set(0, -.35, 0); r.vrm.scene.position.x = 0;
-  // dozing on a log by the fire: knees bent, forearms on his knees, head dropped
-  B('leftUpperLeg').rotation.set(-1.5, 0, .1); B('rightUpperLeg').rotation.set(-1.5, 0, -.1);
-  B('leftLowerLeg').rotation.x = 1.5; B('rightLowerLeg').rotation.x = 1.5;
-  B('spine').rotation.x = .32 + .015 * br; B('chest').rotation.x = .14 + .015 * br; B('neck').rotation.x = .25; B('head').rotation.set(.5, .08, .12);
-  B('leftUpperArm').rotation.set(-.4, 0, -1.38); B('rightUpperArm').rotation.set(-.4, 0, 1.38);
-  B('leftLowerArm').rotation.set(0, -1.25, 0); B('rightLowerArm').rotation.set(0, 1.25, 0);
-  B('leftHand').rotation.set(-.6, 0, -.5); B('rightHand').rotation.set(-.6, 0, .5); fists(r.vrm, .35);
-  expr(r.vrm, { blink: 1, relaxed: .6 });
+  // asleep on his back on the blanket: one knee up, hands folded on his stomach, head turned to the fire
+  r.vrm.scene.rotation.order = 'YXZ'; r.vrm.scene.rotation.set(-Math.PI / 2, SLEEP_YAW, 0);
+  B('rightUpperLeg').rotation.set(-.75, 0, -.05); B('rightLowerLeg').rotation.x = 1.35; B('rightFoot').rotation.x = -.55;
+  B('leftUpperLeg').rotation.set(-.08, 0, .08); B('leftLowerLeg').rotation.x = .15; B('leftFoot').rotation.x = .35;
+  B('spine').rotation.x = -.03 + .02 * br; B('chest').rotation.x = .02 * br;
+  B('head').rotation.set(-.15, -.35, 0);   // turned a little toward the fire
+  B('leftUpperArm').rotation.set(-.18, 0, -1.32); B('rightUpperArm').rotation.set(-.18, 0, 1.32);
+  B('leftLowerArm').rotation.set(0, -.55, -1.25); B('rightLowerArm').rotation.set(0, .55, 1.25);   // forearms across his stomach
+  B('leftHand').rotation.z = -.2; B('rightHand').rotation.z = .2; fists(r.vrm, .3);
+  expr(r.vrm, { blink: 1, relaxed: .7 });
   return { air: 0 };
 }
 // sit the lowest foot (or the seat, when sitting) on the snow
 function ground(r, air, sit) {
-  r.vrm.scene.position.y = 0; r.vrm.scene.updateMatrixWorld(true);
+  r.vrm.scene.position.y = 0;
+  if (sit) {
+    r.vrm.scene.position.x = r.vrm.scene.position.z = 0; r.vrm.scene.updateMatrixWorld(true);
+    const hp = r.R('hips').getWorldPosition(_v);
+    r.vrm.scene.position.x = -hp.x; r.vrm.scene.position.z = -hp.z; r.vrm.scene.updateMatrixWorld(true);
+    const y = ['hips', 'chest', 'upperChest', 'head'].map(n => r.R(n) ? r.R(n).getWorldPosition(_w).y - (n === 'head' ? .1 : .11) : 9);
+    r.vrm.scene.position.y = .03 - Math.min(...y);   // on top of the blanket (and the pillow under his head)
+    return;
+  }
+  r.vrm.scene.updateMatrixWorld(true);
   let low = Math.min(r.R('leftFoot').getWorldPosition(_v).y, r.R('rightFoot').getWorldPosition(_w).y) - r.footRest;
   
   r.vrm.scene.position.y = -low + air;
@@ -488,10 +523,11 @@ function frame(now) {
   world.spray.p.visible = skiing;
   // camera: three-quarter view from the front, following him a little; drag swings it round
   if (!state.drag) state.orbit = damp(state.orbit, 0, 1.6, dt);
-  const dist = (state.camDist || camera.userData.dist || 7) * (sit ? .85 : 1), a = (skiing ? .5 : .32) + state.orbit, el = skiing ? .17 : .1;
-  const ty = state.camY || (sit ? .55 : skiing ? 1.02 : .92), tx = skiing ? state.x * .55 : 0;
-  camera.position.set(tx + Math.sin(a) * Math.cos(el) * dist, ty + Math.sin(el) * dist, Math.cos(a) * Math.cos(el) * dist);
-  camera.lookAt(tx, ty - .05, 0);
+  const dist = (state.camDist || camera.userData.dist || 7) * (sit ? .78 : 1), a = (skiing ? .5 : sit ? .95 : .32) + state.orbit, el = skiing ? .17 : sit ? .5 : .1;
+  const ty = state.camY || (sit ? .25 : skiing ? 1.02 : .92), tx = skiing ? state.x * .55 : 0;
+  const tz = sit ? -.4 : 0;
+  camera.position.set(tx + Math.sin(a) * Math.cos(el) * dist, ty + Math.sin(el) * dist, tz + Math.cos(a) * Math.cos(el) * dist);
+  camera.lookAt(tx, ty - .05, tz);
   renderer.render(scene, camera);
   placeBubble();
   zEl.classList.toggle('on', sit);

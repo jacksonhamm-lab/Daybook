@@ -15,12 +15,15 @@
     the six-pack, on the flanks and the delt V, with thin ink lines on the top edges; skin
     shadow tone deepened. Athletic stance with fists; tap for a double-biceps flex.
   - **Work** (clocked in): `Work.vrm`, standing easy, breathing, eyes follow your finger.
-  - **Sleep** (11pm to 6am): `Sleep.vrm`, dozing on a log by the campfire (knees bent,
-    hands by his knees, head dropped), eyes closed, z's. A legs-out lean-back looked stiff; he said it was unnatural. Tapping wakes him for a minute.
+  - **Sleep** (11pm to 6am): `Sleep.vrm`, asleep on his back on a plaid blanket
+    (head on a rolled pillow, one knee up, hands on his stomach) by a campfire, with a tent,
+    lantern and mug of cocoa. He rejected a legs-out lean-back (stiff) and a log seat (he
+    didn't read as sitting on it); asked for cozy + blanket. Tapping wakes him for a minute.
 - **Each outfit has its own setting** (`SETTINGS` / `setEnv` in rider.js): ski = night slope;
   gym = warm-lit gym (rubber floor, power rack with a loaded bar, dumbbell rack, plates, dust);
   work = menswear shop floor (wood planks, rail of jackets, table of folded shirts, mirror);
-  sleep = snowy clearing at night with stars, moon and a flickering campfire that lights him.
+  sleep = cozy snowy camp at night: plaid blanket, pillow, tent glowing inside, lantern, cocoa,
+  a big flickering campfire with a warm glow on the snow, stars and moon.
   Lighting and the sky behind (a gradient layer under the canvas) change with it.
 - Tap: hop (ski) or wave (standing) and say the next useful line. Double-tap: a 360.
   Drag sideways: swing the camera round (springs back).
