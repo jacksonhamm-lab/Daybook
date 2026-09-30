@@ -34,6 +34,14 @@
 - **Awake at the night camp** (tap him while he sleeps): yawns and stretches first, then warms his
   hands at the fire (walks over and crouches), sips cocoa (the mug moves to his hand), looks up
   at the stars, until he dozes off again after a minute. The camera follows him when he walks.
+- **Motion feel** (his note: it can look animated, just not stiff and robotic):
+  - every joint eases to its new angle (`smoothPose`), legs quickly, head and hands trailing
+    (`LAG`), so changes blend and extremities overlap;
+  - a real walk cycle (`gait`): knee bend in the swing, heel-to-toe roll, pelvis twist and drop,
+    chest counter-rotation, arms swinging opposite with soft elbows, fading in and out;
+  - idle life: visible breath in chest and shoulders, weight that settles on one foot then
+    shifts, drifting head and loose arms;
+  - anticipation: a dip before hops and 360s. At the fire he leans in (no squat, his call).
 - **Camera:** drag sideways to walk it round him; it stays where you leave it (remembered per
   device; Reset camera is in Customise). Left alone for 6s it slowly circles him (~90s a turn),
   pausing while you touch the scene or have the wardrobe open.

@@ -451,8 +451,8 @@ function skiPose(r, t, dt) {
   const p = state.phase, s = Math.sin(p), c = Math.cos(p);
   state.x = .55 * s * amp;
   let air = 0, flexAir = 0, spin = 0;
-  if (a === 'hop') { air = .42 * Math.sin(Math.PI * u); flexAir = .45 * Math.sin(Math.PI * u); }
-  if (a === 'spin') { air = .62 * Math.sin(Math.PI * u); flexAir = .6 * Math.sin(Math.PI * u); spin = Math.PI * 2 * ease(clamp((u - .08) / .84, 0, 1)); }
+  if (a === 'hop') { const dip = u < .22 ? Math.sin(Math.PI * u / .22) : 0, v = clamp((u - .16) / .84, 0, 1); air = .42 * Math.sin(Math.PI * v); flexAir = .45 * Math.sin(Math.PI * v) + .35 * dip; }
+  if (a === 'spin') { const dip = u < .18 ? Math.sin(Math.PI * u / .18) : 0, v = clamp((u - .12) / .88, 0, 1); air = .62 * Math.sin(Math.PI * v); flexAir = .6 * Math.sin(Math.PI * v) + .4 * dip; spin = Math.PI * 2 * ease(clamp((u - .08) / .84, 0, 1)); }
   const lean = .42 * s * amp * (1 - smooth(0, .15, air)), yaw = .38 * c * amp;
   r.vrm.scene.rotation.order = 'XYZ'; r.vrm.scene.rotation.set(0, yaw + spin, lean);
   r.vrm.scene.position.x = state.x;
@@ -475,15 +475,34 @@ function skiPose(r, t, dt) {
   expr(r.vrm, { happy: a ? .6 : 0 });
   return { air, lean, s };
 }
+// A walk: legs swing with the knee bending through the swing and the foot rolling heel to
+// toe, the pelvis twists and drops a little each step, the chest counter-rotates, arms
+// swing opposite the legs with a soft elbow. a = 0..1 fades it in and out at the ends.
+function gait(B, p, a) {
+  const s = Math.sin(p), c = Math.cos(p), swingL = Math.max(0, Math.sin(p - .9)), swingR = Math.max(0, -Math.sin(p - .9));
+  const R = (n, x, y, z) => { const o = B(n).rotation; o.x += x * a; o.y += y * a; o.z += z * a; };
+  R('leftUpperLeg', -.44 * s, 0, 0); R('rightUpperLeg', .44 * s, 0, 0);
+  R('leftLowerLeg', .12 + .62 * swingL, 0, 0); R('rightLowerLeg', .12 + .62 * swingR, 0, 0);
+  R('leftFoot', .22 * Math.sin(p + .7), 0, 0); R('rightFoot', -.22 * Math.sin(p + .7), 0, 0);
+  R('hips', 0, .09 * s, .035 * c); R('spine', .04, -.1 * s, -.02 * c); R('chest', 0, -.05 * s, 0);
+  R('leftUpperArm', .3 * s, 0, 0); R('rightUpperArm', -.3 * s, 0, 0);
+  R('leftLowerArm', 0, -(.18 + .16 * Math.max(0, s)), 0); R('rightLowerArm', 0, .18 + .16 * Math.max(0, -s), 0);
+  R('head', 0, .04 * s, 0);
+}
+const ramp = (k, a, b, e = .35) => clamp(Math.min((k - a) / e, (b - k) / e), 0, 1);   // 0 → 1 → 0 over [a, b]
 function standPose(r, t, dt, sleepy, gym) {
-  const { B } = r, a = state.act, u = a ? clamp(state.actT / ACTS[a], 0, 1) : 0, br = Math.sin(t * 1.6), sw = Math.sin(t * .5);
+  const { B } = r, a = state.act, u = a ? clamp(state.actT / ACTS[a], 0, 1) : 0, br = Math.sin(t * 1.35);
+  // weight settles on one foot, holds, then shifts to the other (not a constant sway)
+  const sw = Math.tanh(2.2 * Math.sin(t * .42)), n1 = Math.sin(t * .71) + .5 * Math.sin(t * 1.93), n2 = Math.sin(t * .53 + 1) + .5 * Math.sin(t * 1.47);
   r.vrm.scene.rotation.order = 'XYZ'; r.vrm.scene.rotation.set(0, state.look.x * .12, 0); r.vrm.scene.position.x = 0; r.vrm.scene.position.z = 0;
-  B('hips').rotation.z = sw * .025; B('leftUpperLeg').rotation.z = -sw * .025; B('rightUpperLeg').rotation.z = -sw * .025;
-  B('spine').rotation.set(.02 * br, 0, -sw * .02); B('chest').rotation.x = .015 * br;
-  B('leftUpperArm').rotation.set(-.08, 0, -1.4 - .02 * br); B('rightUpperArm').rotation.set(-.08, 0, 1.4 + .02 * br);
-  B('leftLowerArm').rotation.set(0, -.3, 0); B('rightLowerArm').rotation.set(0, .3, 0);
+  B('hips').rotation.z = sw * .045; B('leftUpperLeg').rotation.z = -sw * .045; B('rightUpperLeg').rotation.z = -sw * .045;
+  B(sw > 0 ? 'rightLowerLeg' : 'leftLowerLeg').rotation.x = .12 * Math.abs(sw);   // the relaxed leg softens at the knee
+  B('spine').rotation.set(.03 * br, .025 * n1, -sw * .035); B('chest').rotation.set(.025 * br, .015 * n2, 0);
+  B('leftShoulder') && (B('leftShoulder').rotation.z = .025 * br); B('rightShoulder') && (B('rightShoulder').rotation.z = -.025 * br);
+  B('leftUpperArm').rotation.set(-.08 + .045 * n2, 0, -1.4 - .03 * br - .03 * sw); B('rightUpperArm').rotation.set(-.08 - .045 * n1, 0, 1.4 + .03 * br - .03 * sw);   // loose arms
+  B('leftLowerArm').rotation.set(0, -.3 - .08 * n1, 0); B('rightLowerArm').rotation.set(0, .3 + .08 * n2, 0);
   B('leftHand').rotation.z = -.15; B('rightHand').rotation.z = .15;
-  B('head').rotation.set(-state.look.y * .18, state.look.x * .4, sw * .02);
+  B('head').rotation.set(-state.look.y * .18 + .03 * n2, state.look.x * .4 + .06 * n1, sw * .04 + .02 * n2);
   if (a === 'wave') {
     const W = ease(Math.min(clamp(state.actT / .3, 0, 1), clamp((ACTS.wave - state.actT) / .35, 0, 1)));
     B('rightUpperArm').rotation.set(-.08 * (1 - W), 0, lerp(1.4, -1.1, W)); B('rightLowerArm').rotation.set(0, lerp(.12, 0, W), lerp(0, -.5 + .45 * Math.sin(state.actT * 11), W));
@@ -552,29 +571,25 @@ function standPose(r, t, dt, sleepy, gym) {
     else if (k < 5.6) { walk(1, to, to); face = lerp(Math.atan2(to.x, to.z), Math.PI + .25, ease(clamp((k - 2.2) / .6, 0, 1))); const reach = Math.sin(clamp((k - 3) / 2, 0, 1) * Math.PI); mixR('rightUpperArm', -1.1 * reach, 0, 1.4 - .25 * reach); mixR('head', -.05, .2 * Math.sin(k * 1.5), 0); }
     else { const u = ease((k - 5.6) / 2.4); walk(u, to, { x: 0, z: 0 }); g = k; face = lerp(Math.atan2(-to.x, -to.z), 0, ease(clamp((k - 7.4) / .6, 0, 1))); }
     r.vrm.scene.rotation.y = face;
-    if (g) { const s = Math.sin(g * 6.5), c = Math.cos(g * 6.5);
-      B('leftUpperLeg').rotation.x = -.38 * s; B('rightUpperLeg').rotation.x = .38 * s;
-      B('leftLowerLeg').rotation.x = .5 * Math.max(0, c); B('rightLowerLeg').rotation.x = .5 * Math.max(0, -c);
-      B('leftUpperArm').rotation.x = .28 * s; B('rightUpperArm').rotation.x = -.28 * s; }
+    if (g) gait(B, g * 5.8, k < 2.2 ? ramp(k, 0, 2.2) : ramp(k, 5.6, 8));
   }
   if (r.mug) { const has = !!T && T.name === 'cocoa' && k > .5 && k < TASK_LEN.cocoa - .5; r.mug.visible = has; world.campMug.visible = !has; }
   let yawn = 0;
   if (T && T.name === 'warm') {
-    // walks over to the fire, crouches and warms his hands, then comes back to the blanket
-    const f = world.fire.position, to = { x: f.x * .5, z: f.z * .5 }, len = TASK_LEN.warm, face = Math.atan2(f.x - to.x, f.z - to.z);
+    // walks over to the fire, leans in and warms his hands, then comes back to the blanket
+    const f = world.fire.position, to = { x: f.x - .62, z: f.z + .12 }, len = TASK_LEN.warm, face = Math.atan2(f.x - to.x, f.z - to.z);
     const go = (u, a, b) => { r.vrm.scene.position.x = lerp(a.x, b.x, u); r.vrm.scene.position.z = lerp(a.z, b.z, u); };
     let g = 0, c = 0;
     if (k < 1.8) { go(ease(k / 1.8), { x: 0, z: 0 }, to); g = k; r.vrm.scene.rotation.y = face * Math.min(1, k / .4); }
     else if (k < len - 1.8) { go(1, to, to); r.vrm.scene.rotation.y = face; c = Math.min(1, (k - 1.8) / .6, (len - 1.8 - k) / .6); }
     else { go(ease((k - (len - 1.8)) / 1.8), to, { x: 0, z: 0 }); g = k; r.vrm.scene.rotation.y = lerp(face, 0, ease(clamp((k - len + .6) / .6, 0, 1))); }
-    if (g) { const s = Math.sin(g * 6.5), co = Math.cos(g * 6.5);
-      B('leftUpperLeg').rotation.x = -.38 * s; B('rightUpperLeg').rotation.x = .38 * s; B('leftLowerLeg').rotation.x = .5 * Math.max(0, co); B('rightLowerLeg').rotation.x = .5 * Math.max(0, -co);
-      B('leftUpperArm').rotation.x = .28 * s; B('rightUpperArm').rotation.x = -.28 * s; }
+    if (g) gait(B, g * 5.8, k < 1.8 ? ramp(k, 0, 1.8) : ramp(k, len - 1.8, len));
     if (c > 0) {
       const rub = Math.sin(k * 9) * .12, R = n => B(n).rotation, mixC = (n, x, y, z) => { const o = R(n); o.set(lerp(o.x, x, c), lerp(o.y, y, c), lerp(o.z, z, c)); };
-      mixC('leftUpperLeg', -1.0, 0, .12); mixC('rightUpperLeg', -1.0, 0, -.12); mixC('leftLowerLeg', 1.45, 0, 0); mixC('rightLowerLeg', 1.45, 0, 0); mixC('leftFoot', -.45, 0, 0); mixC('rightFoot', -.45, 0, 0);
-      mixC('spine', .3, 0, 0); mixC('head', .1, 0, 0);
-      mixC('leftUpperArm', -1.25, 0, -1.2); mixC('rightUpperArm', -1.25, 0, 1.2); mixC('leftLowerArm', 0, -.55 + rub, 0); mixC('rightLowerArm', 0, .55 + rub, 0);
+      // standing, leaning in over the fire with his hands out (no squat)
+      mixC('leftUpperLeg', -.12, 0, .08); mixC('rightUpperLeg', -.12, 0, -.08); mixC('leftLowerLeg', .18, 0, 0); mixC('rightLowerLeg', .18, 0, 0); mixC('leftFoot', -.06, 0, 0); mixC('rightFoot', -.06, 0, 0);
+      mixC('spine', .38, 0, 0); mixC('chest', .12, 0, 0); mixC('head', .05, 0, 0);
+      mixC('leftUpperArm', -1.05, 0, -1.28); mixC('rightUpperArm', -1.05, 0, 1.28); mixC('leftLowerArm', 0, -.55 + rub, 0); mixC('rightLowerArm', 0, .55 + rub, 0);
     }
   }
   if (T && T.name === 'cocoa') {
@@ -613,6 +628,26 @@ function sleepPose(r, t) {
   B('leftHand').rotation.z = -.2; B('rightHand').rotation.z = .2; fists(r.vrm, .3);
   expr(r.vrm, { blink: 1, relaxed: .7 });
   return { air: 0 };
+}
+// Follow-through: each joint (and his heading) moves toward this frame's pose at a rate
+// instead of jumping to it, which blends every change of move and softens the mechanical look.
+// how quickly each part catches up: legs are quick (no sliding feet), head and hands trail
+const LAG = { hips: 1.3, leftUpperLeg: 1.6, rightUpperLeg: 1.6, leftLowerLeg: 1.6, rightLowerLeg: 1.6, leftFoot: 1.6, rightFoot: 1.6, neck: .8, head: .65, leftUpperArm: .85, rightUpperArm: .85, leftLowerArm: .7, rightLowerArm: .7, leftHand: .5, rightHand: .5 };
+const SMOOTH = ['hips', 'spine', 'chest', 'upperChest', 'neck', 'head', 'leftShoulder', 'rightShoulder', 'leftUpperArm', 'rightUpperArm', 'leftLowerArm', 'rightLowerArm', 'leftHand', 'rightHand', 'leftUpperLeg', 'rightUpperLeg', 'leftLowerLeg', 'rightLowerLeg', 'leftFoot', 'rightFoot'];
+function smoothPose(r, dt, k) {
+  if (REDUCED) return;
+  r.prevQ = r.prevQ || new Map();
+  for (const n of SMOOTH) {
+    const b = r.B(n); if (!b) continue;
+    const a = 1 - Math.exp(-k * (LAG[n] || 1) * dt);
+    const p = r.prevQ.get(n);
+    if (!p) { r.prevQ.set(n, b.quaternion.clone()); continue; }
+    p.slerp(b.quaternion, a); b.quaternion.copy(p);
+  }
+  if (r.key !== 'ski' && r.vrm.scene.rotation.order === 'XYZ') {   // his heading turns, it doesn't snap
+    const y = r.vrm.scene.rotation.y; r.yawS = r.yawS ?? y;
+    r.yawS += Math.atan2(Math.sin(y - r.yawS), Math.cos(y - r.yawS)) * (1 - Math.exp(-7 * dt)); r.vrm.scene.rotation.y = r.yawS;
+  }
 }
 // sit the lowest foot (or the seat, when sitting) on the snow
 function ground(r, air, sit) {
@@ -713,6 +748,7 @@ function frame(now) {
     else if (sit) res = sleepPose(r, t);
     else { stepTask(r.key, dt); res = standPose(r, t, dt, r.key === 'sleep', r.key === 'gym'); }
     if (state.act) { state.actT += dt; if (state.actT > ACTS[state.act]) state.act = null; }
+    smoothPose(r, dt, r.key === 'ski' ? 16 : state.act || (state.task && state.task.name === 'jacks') ? 18 : sit ? 5 : 9);
     r.vrm.update(dt);
     ground(r, res.air, sit);
     if (r.key === 'ski') {
