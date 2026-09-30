@@ -207,7 +207,7 @@ async function runReminders(hash, env) {
   // Done or Tomorrow is tapped. It stops at 10:30pm. The app icon badge shows how many are open.
   const mins = s => (+s.slice(0, 2)) * 60 + (+s.slice(3, 5));
   const open = (S.tasks || []).filter(t => t.remind && occursOn(t, now.date) && !isDone(t, now.date) && mins(t.remind) <= mins(now.hm));
-  const nag = Math.max(0, +st.nag || 0);
+  const nag = Math.max(0, st.nag == null ? 240 : +st.nag || 0);   // minutes; default every 4 hours
   sent.last = sent.last || {};
   (S.tasks || []).forEach(t => {
     if (!t.remind || !occursOn(t, now.date) || isDone(t, now.date)) return;

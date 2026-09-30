@@ -34,10 +34,10 @@
 app-specific password (he has to set that up himself; not done). An .ics feed can't help:
 iOS strips alarms from subscribed calendars.
 
-- **Nag mode:** Settings → Reminders → "Keep reminding until it's done" (off / 10 / 15 /
-  30 min, saved as `settings.nag`). The cron re-sends an open reminder every N minutes with
+- **Nag mode:** Settings → Reminders → "Keep reminding until it's done" (off / every 2 hours /
+  every 4 hours, saved as `settings.nag` in minutes; default 4 hours, his call). The cron re-sends an open reminder every N minutes with
   the same tag (replaces the last one and alerts again) until Done or Tomorrow, stopping at
   10:30pm. `sent.last[taskId]` holds when it last went out.
 - **Badge:** every reminder push carries the open count; the service worker sets the app
   icon badge, and the app keeps it right whenever it renders.
-- Tested with a simulated cron: fires at the time, nags every 15 min, stops once done.
+- Tested with a simulated cron: fires at the time, nags on the interval, stops once done.

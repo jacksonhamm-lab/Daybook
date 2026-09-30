@@ -1200,7 +1200,7 @@ const defaults = () => ({
   tasks: [], shifts: {}, workouts: {}, jobs: [], clock: null,
   template: ['D1','D2','REST','D3','D4','HIIT','REST'],
   extra: {},
-  settings: { name: 'Jackson', rate: 20, extraHours: 0, payCutoff: 1, paySubmitDays: 4, remindSubmit: true, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
+  settings: { name: 'Jackson', rate: 20, extraHours: 0, payCutoff: 1, paySubmitDays: 4, remindSubmit: true, nag: 240, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
   ui: { tab: 'today', jobFilter: 'All', selDay: null },
 });
 function load() {
@@ -2790,7 +2790,7 @@ const SHEETS = {
         <p class="sub" id="pushStatus" style="margin:8px 0 0">${esc(pushLabel())}</p>
         <div class="row" style="margin-top:12px;align-items:center"><button class="chip ${st.remindDaily ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="toggle-brief">Morning rundown</button><input type="time" data-sf="remindAt" value="${esc(st.remindAt || '08:00')}" style="width:130px"></div>
         <div class="lbl" style="margin-top:14px">Keep reminding until it's done</div>
-        <div class="chips">${[[0, 'Off'], [10, 'Every 10 min'], [15, 'Every 15 min'], [30, 'Every 30 min']].map(([m, l]) => `<button class="chip ${(+st.nag || 0) === m ? 'on' : ''}" style="--c:var(--orange);--on:#fff" data-act="set-nag" data-v="${m}">${l}</button>`).join('')}</div>
+        <div class="chips">${[[0, 'Off'], [120, 'Every 2 hours'], [240, 'Every 4 hours']].map(([m, l]) => `<button class="chip ${(st.nag == null ? 240 : +st.nag) === m ? 'on' : ''}" style="--c:var(--orange);--on:#fff" data-act="set-nag" data-v="${m}">${l}</button>`).join('')}</div>
         <p class="sub" style="margin:6px 0 0">A reminder you haven't ticked off comes back, like Apple Reminders, until you tap Done or Tomorrow. Stops at 10:30pm.</p>`)}
       ${grp('Sync', SYNC.code ? 'Connected' : 'Off', `
         <p class="sub" style="margin-top:0">Same sync code on your laptop and phone and they stay in step. Changes merge, so editing both offline is fine.</p>
