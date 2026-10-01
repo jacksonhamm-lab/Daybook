@@ -720,7 +720,8 @@ input[type=number]{-moz-appearance:textfield}
 
 /* ===== v4: studio stage, buddy, arc navigation, halos ===== */
 :root{--display:"Unbounded",var(--font);--mint1:#9ff5d6;--mint2:#18c29c}
-body{background:radial-gradient(120% 80% at 70% -10%,#1a2350 0%,#0a0e22 45%,#05060a 100%) fixed}
+/* the gradient lives on the fixed .ambient layer: background-attachment:fixed repaints every scroll frame on iOS */
+.ambient{background:radial-gradient(120% 80% at 70% -10%,#1a2350 0%,#0a0e22 45%,#05060a 100%)}
 .ambient .beam{height:60%;top:-18%;background:linear-gradient(90deg,transparent 0,rgba(80,150,255,.20) 28%,rgba(255,150,200,.16) 58%,transparent 100%);filter:blur(46px)}
 .ambient .beam+.beam{top:30%;left:-40%;transform:rotate(-24deg);opacity:.6;animation-duration:24s;animation-direction:alternate-reverse}
 .hero h1{font-weight:300;letter-spacing:-.045em}
@@ -1047,6 +1048,8 @@ button.hchip:active{transform:scale(.95)}
 .arc-bed,.arc-it{pointer-events:auto;touch-action:pan-y}
 /* 4: clip sideways overflow in a way iPhone Safari respects */
 html,body{overflow-x:clip}
+html{overscroll-behavior-y:none}
+.top{transform:translateZ(0)}
 .main{overflow-x:clip}
 /* 5: the page stays pinned under an open sheet */
 body.locked{position:fixed;left:0;right:0;width:100%}
@@ -1056,7 +1059,7 @@ body.locked{position:fixed;left:0;right:0;width:100%}
 .arc{display:none!important}
 @media(max-width:900px){.main{padding-bottom:calc(48px + env(safe-area-inset-bottom))}}
 @media(min-width:901px){.main{padding-left:28px}.top{padding-left:28px}}
-.pgbar{position:sticky;top:calc(64px + env(safe-area-inset-top));z-index:20;display:flex;align-items:center;gap:10px;margin:10px 0 4px;padding:6px 0}
+.pgbar{position:sticky;top:calc(64px + env(safe-area-inset-top));z-index:20;transform:translateZ(0);display:flex;align-items:center;gap:10px;margin:10px 0 4px;padding:6px 0}
 .pg-back{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);color:#fff;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);transition:transform .2s var(--spring)}
 .pg-back:active{transform:scale(.9)}
 .pg-back .ico{width:20px;height:20px}
