@@ -225,16 +225,17 @@ async function runReminders(hash, env) {
   // open is sent again every N minutes, replacing the last one and alerting again, until
   // Done or Tomorrow is tapped. It stops at 10:30pm. The app icon badge shows how many are open.
   const mins = s => (+s.slice(0, 2)) * 60 + (+s.slice(3, 5));
-  const open = (S.tasks || []).filter(t => t.remind && occursOn(t, now.date) && !isDone(t, now.date) && mins(t.remind) <= mins(now.hm));
+  const at = t => t.snooze && t.snooze.d === now.date ? t.snooze.at : t.remind;   // +2h on a repeating task moves only today's
+  const open = (S.tasks || []).filter(t => t.remind && occursOn(t, now.date) && !isDone(t, now.date) && mins(at(t)) <= mins(now.hm));
   const nag = Math.max(0, st.nag == null ? 240 : +st.nag || 0);   // minutes; default every 4 hours
   sent.last = sent.last || {};
   (S.tasks || []).forEach(t => {
     if (!t.remind || !occursOn(t, now.date) || isDone(t, now.date)) return;
     const payload = { title: t.title, body: 'Due now · swipe for Done or Tomorrow', tag: 't:' + t.id, url: '/', id: t.id, date: now.date, badge: open.length };
-    const k = 't:' + t.id + '@' + t.remind;
-    if (dueNow(now.hm, t.remind) && !already(k)) { outgoing.push({ key: k, payload, stamp: t.id }); return; }
+    const k = 't:' + t.id + '@' + at(t);
+    if (dueNow(now.hm, at(t)) && !already(k)) { outgoing.push({ key: k, payload, stamp: t.id }); return; }
     if (!nag || !already(k) || mins(now.hm) > mins('22:30')) return;
-    const late = mins(now.hm) - mins(t.remind), last = sent.last[t.id] || 0;
+    const late = mins(now.hm) - mins(at(t)), last = sent.last[t.id] || 0;
     if (Date.now() - last < nag * 60000 - 20000) return;
     payload.body = `Still open · ${late < 60 ? late + ' min' : Math.floor(late / 60) + 'h ' + (late % 60) + 'm'} overdue · Done or Tomorrow`;
     outgoing.push({ key: null, payload, stamp: t.id });

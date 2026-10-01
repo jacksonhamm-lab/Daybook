@@ -385,9 +385,10 @@ function want() {
   // night beats work beats training; otherwise he's skiing
   return state.mode === 'sleep' ? 'sleep' : state.mode === 'work' ? 'work' : state.ctx.training ? 'gym' : 'ski';
 }
+const failedAt = {};   // outfit -> don't retry before this time
 function ensureRider() {
   const k = want();
-  if ((rider && rider.key === k && !state.reload) || loading === k || failed) return;
+  if ((rider && rider.key === k && !state.reload) || loading === k || failed || performance.now() < (failedAt[k] || 0)) return;
   state.reload = false;
   loading = k;
   load(k).then(r => {
@@ -399,7 +400,7 @@ function ensureRider() {
       cv.style.opacity = 1; wake();
     };
     if (rider) { cv.style.opacity = 0; setTimeout(swap, 280); } else swap();
-  }).catch(e => { loading = null; console.warn('Dex model failed to load', e); if (!rider) fallback(); });
+  }).catch(e => { loading = null; failedAt[k] = performance.now() + 60000; console.warn('Dex model failed to load', e); if (!rider) fallback(); });
 }
 // the models aren't reachable (offline first run, or not uploaded): hand over to the old code-built Dex
 function fallback() {

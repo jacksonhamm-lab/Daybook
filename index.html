@@ -251,7 +251,7 @@ input[type=number]{-moz-appearance:textfield}
 .btn:hover{background:rgba(255,255,255,.15)}
 .btn:active{transform:scale(.95)}
 .btn.icon{width:38px;padding:0;font-size:20px}
-.btn.sm{height:30px;padding:0 12px;font-size:13px}
+.btn.sm{height:34px;padding:0 13px;font-size:13px}
 .btn.lg{height:54px;padding:0 26px;font-size:17px}
 .btn.fill{background:var(--c,var(--blue));border-color:transparent;color:#fff}
 .btn.fill:hover{filter:brightness(1.1)}
@@ -521,7 +521,7 @@ input[type=number]{-moz-appearance:textfield}
 /* sheets */
 .ov{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .4s ease}
 .ov.on{opacity:1;pointer-events:auto}
-.sheet{position:fixed;z-index:71;left:50%;bottom:0;width:min(640px,100%);max-height:92dvh;overflow:auto;overscroll-behavior:contain;transform:translate(-50%,105%);background:rgba(28,28,32,.9);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid var(--stroke2);border-bottom:0;border-radius:30px 30px 0 0;padding:8px 22px calc(26px + env(safe-area-inset-bottom));transition:transform .6s var(--ios);visibility:hidden}
+.sheet{position:fixed;z-index:71;left:50%;bottom:0;width:min(640px,100%);max-height:92dvh;overflow:auto;overscroll-behavior:contain;transform:translate(-50%,105%);background:rgba(28,28,32,.9);backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);border:1px solid var(--stroke2);border-bottom:0;border-radius:30px 30px 0 0;padding:8px 22px calc(26px + env(safe-area-inset-bottom));transition:transform .6s var(--ios),visibility .6s;visibility:hidden}
 .sheet.on{transform:translate(-50%,0);visibility:visible}
 .sheet.dragging{transition:none}
 @media(min-width:761px){
@@ -1110,6 +1110,8 @@ body.home .main{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
 /* Dex riding along on the pages */
 .dexpip{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:50;width:120px;height:164px;padding:0;border-radius:26px;overflow:hidden;background:radial-gradient(90% 80% at 50% 35%,#4a5580,#1b2037 75%,#121626);box-shadow:0 22px 44px -14px rgba(0,0,0,.75),inset 0 0 0 1px rgba(255,255,255,.14);opacity:0;transform:translateY(24px) scale(.88);pointer-events:none;transition:opacity .35s,transform .5s var(--spring)}
 .dexpip.on{opacity:1;transform:none;pointer-events:auto}
+body:has(.dexpip.on) .main{padding-bottom:calc(200px + env(safe-area-inset-bottom))}
+body.typing .dexpip{opacity:0;transform:translateY(24px) scale(.88);pointer-events:none}
 .dexpip .bd{position:absolute;inset:0;pointer-events:none}
 .dexpip .bd-say,.dexpip .bd-z{display:none}
 .pip-t{position:absolute;z-index:2;left:8px;right:8px;bottom:8px;height:24px;display:grid;place-items:center;border-radius:999px;background:rgba(8,10,16,.62);color:#fff;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
@@ -1243,6 +1245,8 @@ function load() {
       const d = defaults();
       const s = { ...d, ...raw, settings: { ...d.settings, ...raw.settings }, ui: { ...d.ui, ...raw.ui } };
       if (s.ui.tab === 'notes') s.ui.tab = 'week';   // Notes now lives under Plan
+      ['tomb', 'extra', 'shakes', 'meals', 'grocery', 'snacks'].forEach(k => { s[k] = s[k] || {}; });   // older backups lack newer keys
+      s.notes = s.notes || []; s.tasks = s.tasks || []; s.jobs = s.jobs || []; s.shifts = s.shifts || {}; s.workouts = s.workouts || {};
       if (!TABS.some(t => t.k === s.ui.tab)) s.ui.tab = 'today';
       return s;
     } catch (e) {}
@@ -1336,8 +1340,8 @@ function mergeState(local, remote) {
 const forServer = s => { const c = JSON.parse(JSON.stringify(s)); delete c.ui; return c; };
 // Order-blind fingerprint (lists of items with ids compare as sets), so a sync only
 // writes when this device actually has something the server doesn't.
-const sig = v => Array.isArray(v) ? (x => v.every(e => e && e.id != null) ? x.sort() : x)(v.map(sig)).join('')
-  : v && typeof v === 'object' ? Object.keys(v).filter(k => v[k] !== undefined).sort().map(k => k + '' + sig(v[k])).join('') + ''
+const sig = v => Array.isArray(v) ? '[' + (x => v.every(e => e && e.id != null) ? x.sort() : x)(v.map(sig)).join(',') + ']'
+  : v && typeof v === 'object' ? '{' + Object.keys(v).filter(k => v[k] !== undefined).sort().map(k => JSON.stringify(k) + ':' + sig(v[k])).join(',') + '}'
   : JSON.stringify(v);
 function syncSoon() { if (!SYNC.code) return; clearTimeout(SYNC.timer); SYNC.timer = setTimeout(() => syncNow(), 1200); }
 // hiding: the app is being backgrounded, so the write goes out as keepalive and survives the suspend
@@ -1592,7 +1596,7 @@ function syncAuto() {
     if (/^D\d$/.test(s)) { const p = sessProgress(s); auto = !!(p && p.total && p.done >= p.total); }
     else if (s === 'HIIT') auto = cardioOn(d).length > 0;
     if (auto && !o.done) { S.workouts[d] = { ...o, done: true, auto: true }; changed = true; }
-    else if (!auto && o.done && o.auto && /^Dd$/.test(s) && wState()[s.toLowerCase()]) { S.workouts[d] = { ...o, done: false, auto: false }; changed = true; }
+    else if (!auto && o.done && o.auto && /^D\d$/.test(s) && wState()[s.toLowerCase()]) { S.workouts[d] = { ...o, done: false, auto: false }; changed = true; }
   });
   if (changed) save();
 }
@@ -1608,7 +1612,9 @@ const isDone = (t, d) => t.repeat ? !!(t.doneOn && t.doneOn[d]) : !!t.done;
 const tasksOn = d => sortTasks(S.tasks.filter(t => occurs(t, d)), d);
 const sortTasks = (arr, d) => arr.slice().sort((a, b) => (isDone(a, d) - isDone(b, d)) || CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat) || (a.created || 0) - (b.created || 0));
 const nowHM = () => { const n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); };
-const slipped = () => S.tasks.filter(t => t.remind && occurs(t, today()) && !isDone(t, today()) && t.remind <= nowHM());
+// a snooze (+2h) on a repeating task only moves that day's reminder
+const remAt = (t, d) => t.snooze && t.snooze.d === d ? t.snooze.at : t.remind;
+const slipped = () => S.tasks.filter(t => t.remind && occurs(t, today()) && !isDone(t, today()) && remAt(t, today()) <= nowHM());
 const overdue = () => S.tasks.filter(t => !t.repeat && t.date && t.date < today() && !t.done);
 const repeatLabel = r => !r ? '' : r.t === 'daily' ? 'Daily' : r.t === 'weekdays' ? 'Weekdays' : `Every ${DOW[r.dow]}`;
 
@@ -1636,7 +1642,7 @@ function periodFor(date) {
   const cyc = Math.max(1, +S.settings.payCycle || 14);
   const anchor = parse(S.settings.payAnchor || '2026-09-25');
   const gap = Math.max(0, +S.settings.payCutoff ?? 1); // days between cut-off and payday
-  const k = Math.ceil((parse(date) - addDays(anchor, -gap)) / 864e5 / cyc);
+  const k = Math.ceil(Math.round((parse(date) - addDays(anchor, -gap)) / 864e5) / cyc);   // round: DST makes one day 23 or 25h
   const payday = addDays(anchor, k * cyc);
   const end = addDays(payday, -gap);
   return { start: iso(addDays(end, -(cyc - 1))), end: iso(end), payday: iso(payday), cyc };
@@ -1958,7 +1964,7 @@ function xpTotal() {
   Object.values(S.workouts).forEach(w => { if (w.done) n += XP.session; });
   n += cardioLogs().length * XP.cardio;
   n += Object.keys(S.shifts).filter(d => shiftHours(S.shifts[d]) > 0).length * XP.shiftDay;
-  S.jobs.forEach(j => { n += XP.applied; if (j.status === 'Interview') n += XP.interview; if (j.status === 'Offer') n += XP.offer; });
+  S.jobs.forEach(j => { if (j.status !== 'Wishlist') n += XP.applied; if (j.status === 'Interview') n += XP.interview; if (j.status === 'Offer') n += XP.offer; });
   n += (S.clearDays || []).length * XP.clearDay;
   return n;
 }
@@ -2402,7 +2408,7 @@ function renderToday(part) {
   if (!part) return stage;
   const M = [];
   if (slip.length) M.push(mod('decide', { title: 'Needs a decision', value: slip.length, sub: 'Reminder passed', icon: IC.bell, c: 'var(--red)', alert: true, open: true, i: 1,
-    body: `<div class="decs">${slip.map(t => `<div class="dec" style="--c:${CATS[t.cat].color}"><div class="dec-h"><span class="dec-i">${I.bell}</span><div class="dec-t"><b>${esc(t.title)}</b><span>Was due ${t12(t.remind)}</span></div></div>
+    body: `<div class="decs">${slip.map(t => `<div class="dec" style="--c:${CATS[t.cat].color}"><div class="dec-h"><span class="dec-i">${I.bell}</span><div class="dec-t"><b>${esc(t.title)}</b><span>Was due ${t12(remAt(t, today()))}</span></div></div>
       <div class="dec-b"><button class="btn sm tint" style="--c:var(--green)" data-act="rm-done" data-id="${t.id}">Done</button><button class="btn sm" data-act="rm-later" data-id="${t.id}">+2h</button><button class="btn sm" data-act="rm-tomorrow" data-id="${t.id}">Tomorrow</button></div></div>`).join('')}</div>` }));
   M.push(mod('tasks', { title: 'Tasks', value: `${nk('mt', done)}<small>/${list.length}</small>`, sub: !list.length ? 'Nothing yet' : left ? `${left} left` : 'All done', icon: IC.tasks, c: 'var(--blue)', open: !slip.length, i: 2, live: !!left,
     body: `${ov.length ? `<div class="banner"><span>${ov.length} overdue from earlier</span><button class="btn sm tint" style="--c:var(--red)" data-act="rollover">Move to today</button></div>` : ''}
@@ -2598,7 +2604,7 @@ function payCard() {
     <div class="sub" style="margin:-8px 0 10px">Paid ${DOW_LONG[dowIdx(p.payday)]} ${short(p.payday)}</div>
     <div class="big">${rate ? money(total * rate) : `${nk('ph', total, 1)}<small>h</small>`}</div>
     <div class="sub" style="margin-top:6px">${rate ? `${fh(total)} hours · ${money(rate)}/h` : 'Add your hourly rate in Settings to see pay'}</div>
-    <div class="exrow"><span>${fh(hrs)}h worked <i>+</i></span><input type="number" inputmode="decimal" min="0" step="0.5" data-extra="${p.end}" value="${ex || ''}" placeholder="0" aria-label="Subscription hours"><span>h subscriptions</span></div>
+    <div class="exrow"><span>${fh(hrs)}h worked <i>+</i></span><input type="number" inputmode="decimal" min="0" step="0.5" data-extra="${p.payday}" value="${ex || ''}" placeholder="0" aria-label="Subscription hours"><span>h subscriptions</span></div>
     ${pbar('pp', p.cyc ? Math.min(elapsed, p.cyc) / p.cyc : 0, 'var(--teal)')}
     <div class="sub" style="margin-top:8px">${when} · ${worked} day${worked === 1 ? '' : 's'} worked</div>
     ${sub.length ? `<div class="submitbox">
@@ -2664,7 +2670,7 @@ function composeStep(step, dir) {
 function addDraft() {
   const d = DRAFT; if (!d || !d.title.trim()) return closeSheet();
   const t = { id: uid(), created: Date.now(), title: d.title.trim(), cat: d.cat, date: d.date, done: false, repeat: null, doneOn: {}, remind: d.remind || null };
-  S.tasks.push(t); FX.added = t.id; DRAFT = null; closeSheet();
+  S.tasks.push(t); FX.added = t.id; DRAFT = null; save(); closeSheet();
   island.toast(`Added to ${rel(t.date)}${t.remind ? ' · ' + t12(t.remind) : ''}`, { icon: I.check, color: CATS[t.cat].color });
 }
 const WHENS = () => { const td = parse(today()); return [['today', 'Today', today()], ['tomorrow', 'Tomorrow', iso(addDays(td, 1))], ['weekend', 'Weekend', iso(addDays(td, (5 - dowIdx(today()) + 7) % 7))], ['nextweek', 'Next week', iso(addDays(mondayOf(td), 7))]]; };
@@ -2693,7 +2699,7 @@ const SHEETS = {
         <div class="cmp-hint">${q.hint}</div>
         <div class="row end"><button class="btn" data-act="close-sheet">Cancel</button>${step === 2
           ? `<button class="btn white" data-act="df-add">Add task</button>`
-          : `<button class="btn" data-act="df-skip">Skip</button>`}</div>
+          : `<button class="btn" data-act="df-skip">${step === 1 ? 'Next' : 'Skip'}</button>`}</div>
       </div>`;
   },
   task({ id, d }) {
@@ -2902,7 +2908,7 @@ function openSheet(type, arg) {
   SHEET = { type, arg };
   // the wardrobe keeps Dex in view (no blur, shorter sheet, camera lifts him up)
   document.body.classList.toggle('sheet-dex', type === 'dex'); window.Buddy && Buddy.wardrobe && Buddy.wardrobe(type === 'dex');
-  const sh = $('#sheet'); sh.innerHTML = SHEETS[type](arg); sh.scrollTop = 0; sh.style.transform = '';
+  const sh = $('#sheet'); sh.classList.toggle('compose', type === 'compose'); sh.innerHTML = SHEETS[type](arg); sh.scrollTop = 0; sh.style.transform = '';
   // rAF never fires while the app is backgrounded, and a locked page with no
   // sheet on it looks frozen, so make sure it opens either way.
   $('#ov').classList.add('on'); const show = () => { if (SHEET && SHEET.type === type) sh.classList.add('on'); }; requestAnimationFrame(show); setTimeout(show, 80);
@@ -2911,7 +2917,7 @@ function openSheet(type, arg) {
 }
 function refreshSheet() { if (!SHEET) return; const sh = $('#sheet'), sc = sh.scrollTop, open = [...sh.querySelectorAll('details')].map(d => d.open); sh.innerHTML = SHEETS[SHEET.type](SHEET.arg); sh.querySelectorAll('details').forEach((d, i) => { if (open[i]) d.open = true; }); sh.scrollTop = sc; afterSheet(); }
 function afterSheet() { $$('#sheet .seg').forEach(s => placeInd(s, true)); animateValues($('#sheet')); }
-function closeSheet() { if (!SHEET) return; SHEET = null; document.body.classList.remove('sheet-dex'); window.Buddy && Buddy.wardrobe && Buddy.wardrobe(false); const sh = $('#sheet'); sh.classList.remove('on'); sh.style.transform = ''; $('#ov').classList.remove('on'); unlockPage(); render(); }
+function closeSheet() { if (!SHEET) return; const f = document.activeElement; if (f && $('#sheet').contains(f)) f.blur(); SHEET = null; document.body.classList.remove('sheet-dex'); window.Buddy && Buddy.wardrobe && Buddy.wardrobe(false); const sh = $('#sheet'); sh.classList.remove('on'); sh.style.transform = ''; $('#ov').classList.remove('on'); unlockPage(); render(); }
 
 /* ---------- spotlight ---------- */
 const EXAMPLES = ['call dentist fri', 'work 9-5 tomorrow 30m break', 'applied Patagonia - Campaigns Associate', 'stretch every day #gym', 'email Len about promo #work', 'gym done'];
@@ -3121,7 +3127,11 @@ function clockOut() {
   if (c.breakTs) { c.brkMs += Date.now() - c.breakTs; c.breakTs = null; }
   const start = hm(new Date(c.startTs)), end = hm(new Date()), brk = Math.round(c.brkMs / 6e4);
   if (clockElapsed() < 60000 || start === end) { S.clock = null; commit(); return island.toast('Under a minute, nothing logged'); }
-  withUndo(`Clocked out · ${fh(shiftHours({ start, end, brk }))}h logged`, () => { S.shifts[c.date] = { ...(S.shifts[c.date] || {}), start, end, brk }; S.clock = null; });
+  if (clockElapsed() > 14 * 3600e3 && !confirm(`You've been on the clock ${Math.round(clockElapsed() / 3600e3)}h. Forgot to clock out?\n\nOK logs it anyway. Cancel drops it so you can enter the shift on Work.`)) { S.clock = null; commit(); return island.toast('Clock cleared, nothing logged'); }
+  // a second stint the same day ("Clock in again") extends the shift; the time between counts as break
+  const was = S.shifts[c.date], mins = t => +t.slice(0, 2) * 60 + +t.slice(3, 5);
+  const add = was && was.start && was.end && was.end !== end ? { start: was.start, end, brk: (+was.brk || 0) + brk + Math.max(0, mins(start) - mins(was.end)) } : { start, end, brk };
+  withUndo(`Clocked out · ${fh(shiftHours({ start, end, brk }))}h logged`, () => { S.shifts[c.date] = { ...(was || {}), ...add }; S.clock = null; });
 }
 function logCardio(form) {
   const min = parseInt(form.min.value), dist = parseFloat(form.dist.value) || null; if (!min || min < 1) { form.min.focus(); return; }
@@ -3152,6 +3162,7 @@ async function copy(text) {
 document.addEventListener('click', e => {
   if (e.target.closest('[data-il]')) { e.stopPropagation(); const fn = island.action; island.action = null; island.mode = null; clearTimeout(island.timer); fn && fn(); island.live(); return; }
   if (e.target.closest('#island') && !e.target.closest('[data-act]')) { if (island.key === 'clock' || island.key === 'break') switchTab('today'); return; }
+  const link = e.target.closest('a[href]'); if (link && !link.dataset.act && !link.dataset.tab) return;   // e.g. a job's link icon, not the row
   const el = e.target.closest('[data-act],[data-tab]'); if (!el) return;
   if (el.dataset.tab && !el.dataset.act) { closeSheet(); return switchTab(el.dataset.tab, el.dataset.sel); }
   const a = el.dataset.act, v = el.dataset.v;
@@ -3226,7 +3237,7 @@ document.addEventListener('click', e => {
     case 'jfilter': S.ui.jobFilter = v; FX.seg = true; save(); return render();
     case 'jadd-status': el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); return placeInd(el.parentElement);
     case 'open-job': return openSheet('job', el.dataset.id);
-    case 'job-status': { const j = job(); j.status = v; (j.history = j.history || []).push({ s: v, d: today() }); save(); refreshSheet(); return v === 'Offer' && celebrate(`Offer from ${j.company}`, '#30d158'); }
+    case 'job-status': { const j = job(); if (v === 'Applied' && j.status === 'Wishlist') j.date = today(); j.status = v; (j.history = j.history || []).push({ s: v, d: today() }); save(); refreshSheet(); return v === 'Offer' && celebrate(`Offer from ${j.company}`, '#30d158'); }
     case 'job-del': { const j = job(); closeSheet(); return withUndo(`${j.company} removed`, () => { S.jobs = S.jobs.filter(x => x !== j); }); }
     case 'followed': { e.stopPropagation(); const j = S.jobs.find(x => x.id === el.dataset.id); j.follow = [...(j.follow || []), today()]; j.nudge = iso(addDays(parse(today()), 7)); commit(); return island.toast(`Follow-up logged · next nudge in a week`, { icon: I.bell, color: '#ff9f0a' }); }
     case 'push-on': return enablePush();
@@ -3246,7 +3257,10 @@ document.addEventListener('click', e => {
     case 'toggle-brief': S.settings.remindDaily = !S.settings.remindDaily; commit(); return refreshSheet();
     case 'tm-remind': { const t = task(); t.remind = v || null; save(); return refreshSheet(); }
     case 'rm-done': { const t = S.tasks.find(x => x.id === el.dataset.id); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } else t.done = true; commit(); return island.toast('Done', { icon: I.check, color: '#30d158' }); }
-    case 'rm-later': { const t = S.tasks.find(x => x.id === el.dataset.id); const n = new Date(Date.now() + 2 * 3600e3); t.remind = pad(n.getHours()) + ':' + pad(n.getMinutes()); if (iso(n) !== today() && !t.repeat) t.date = iso(n); commit(); return island.toast('Back at ' + t12(t.remind), { icon: I.bell, color: '#ff9f0a' }); }
+    case 'rm-later': { const t = S.tasks.find(x => x.id === el.dataset.id); const n = new Date(Date.now() + 2 * 3600e3), at = pad(n.getHours()) + ':' + pad(n.getMinutes());
+      if (t.repeat) { if (iso(n) !== today()) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; commit(); return island.toast('Skipped for tonight', { icon: I.bell, color: '#ff9f0a' }); } t.snooze = { d: today(), at }; }
+      else { t.remind = at; if (iso(n) !== today()) t.date = iso(n); }
+      commit(); return island.toast('Back at ' + t12(at), { icon: I.bell, color: '#ff9f0a' }); }
     case 'rm-tomorrow': { const t = S.tasks.find(x => x.id === el.dataset.id); t.date = iso(addDays(parse(today()), 1)); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } commit(); return island.toast('Moved to tomorrow', { icon: I.arrow, color: '#0a84ff' }); }
     case 'df-cat': DRAFT.cat = v; return composeStep(1);
     case 'df-when': DRAFT.date = v; return composeStep(2);
@@ -3259,7 +3273,9 @@ document.addEventListener('click', e => {
     case 'sync-now': return syncNow();
     case 'progress': return openSheet('progress');
     case 'settings': return openSheet('settings');
-    case 'export': { const blob = new Blob([JSON.stringify({ daybook: S, workout: { state: readLS(W_STATE, {}), cardio: cardioLogs(), pushups: benchLogs('pushups'), plank: benchLogs('plank'), row: benchLogs('row') } }, null, 2)], { type: 'application/json' }); const a2 = document.createElement('a'); a2.href = URL.createObjectURL(blob); a2.download = `daybook-backup-${today()}.json`; a2.click(); return URL.revokeObjectURL(a2.href); }
+    case 'export': { const blob = new Blob([JSON.stringify({ daybook: S, workout: { state: readLS(W_STATE, {}), cardio: cardioLogs(), pushups: benchLogs('pushups'), plank: benchLogs('plank'), row: benchLogs('row') } }, null, 2)], { type: 'application/json' }); const name = `daybook-backup-${today()}.json`, file = typeof File === 'function' && new File([blob], name, { type: 'application/json' });
+      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer:coarse)').matches) return navigator.share({ files: [file], title: 'Daybook backup' }).catch(() => {});
+      const a2 = document.createElement('a'); a2.href = URL.createObjectURL(blob); a2.download = name; a2.click(); return setTimeout(() => URL.revokeObjectURL(a2.href), 4000); }
     case 'import': return $('#importFile').click();
     case 'close-sheet': return closeSheet();
     case 'close-all': closeSpot(); return closeSheet();
@@ -3304,13 +3320,13 @@ document.addEventListener('input', e => {
   if (el.id === 'spotInput') return spotPreview();
   if (el.id === 'capText') { NOTE_DRAFT = el.value; el.style.height = 'auto'; el.style.height = Math.min(360, el.scrollHeight + 2) + 'px'; return; }
   if (el.id === 'noteQ') return filterNotes(el.value);
+  if (!SHEET && (el.dataset.nf || el.dataset.tf || el.dataset.jf)) return;
   if (el.dataset.nf) { const n = S.notes.find(x => x.id === SHEET.arg); if (!n) return; n.text = el.value; n.edited = Date.now(); const h = $('#sheet h2'); if (h) h.textContent = noteTitle(n); return save(); }
   if (el.name === 'link' && el.form && el.form.id === 'jadd' && !el.form.company.value.trim()) { const c = companyFromUrl(el.value.trim()); if (c) { el.form.company.value = c; pop(el.form.company); } }
   if (el.dataset.df) {
     DRAFT[el.dataset.df] = el.value || (el.dataset.df === 'remind' ? null : DRAFT[el.dataset.df]);
-    if (el.dataset.df === 'date') return composeStep(2);
-    if (el.dataset.df === 'remind') return addDraft();
-    return;
+    $$(`#sheet [data-act="df-${el.dataset.df === 'date' ? 'when' : 'remind'}"]`).forEach(b => b.classList.toggle('on', b.dataset.v === el.value));
+    return;   // the Next/Add button moves on, so a half-spun picker doesn't
   }
   if (el.dataset.tf === 'title') { const t = S.tasks.find(x => x.id === SHEET.arg.id); t.title = el.value.replace(/\n/g, ' '); return save(); }
   if (el.dataset.jf) { const j = S.jobs.find(x => x.id === SHEET.arg); j[el.dataset.jf] = el.value; return save(); }
@@ -3324,9 +3340,9 @@ document.addEventListener('change', e => {
     if (!s.start && !s.end && !s.note && !s.brk) delete S.shifts[d];
     save(); return updateShiftDisplays(d);
   }
-  if (el.dataset.tf === 'remind') { const t = S.tasks.find(x => x.id === SHEET.arg.id); t.remind = el.value || null; save(); return refreshSheet(); }
-  if (el.dataset.tf === 'date') { const t = S.tasks.find(x => x.id === SHEET.arg.id); t.date = el.value || null; if (t.repeat && t.repeat.t === 'weekly' && t.date) t.repeat.dow = dowIdx(t.date); save(); return refreshSheet(); }
-  if (el.dataset.extra) { setExtra({ end: el.dataset.extra }, el.value); return render(); }
+  if (el.dataset.tf === 'remind') { if (!SHEET) return; const t = S.tasks.find(x => x.id === SHEET.arg.id); t.remind = el.value || null; save(); $$('#sheet [data-act="tm-remind"]').forEach(b => b.classList.toggle('on', b.dataset.v === (t.remind || ''))); return; }
+  if (el.dataset.tf === 'date') { if (!SHEET) return; const t = S.tasks.find(x => x.id === SHEET.arg.id); t.date = el.value || null; if (t.repeat && t.repeat.t === 'weekly' && t.date) t.repeat.dow = dowIdx(t.date); save(); return refreshSheet(); }
+  if (el.dataset.extra) { setExtra({ payday: el.dataset.extra }, el.value); return render(); }
   if (el.dataset.act === 'set-tpl') { S.template[+el.dataset.i] = el.value; commit(); return island.toast(`${DOW[+el.dataset.i]} → ${el.value === 'REST' ? 'Rest' : el.value}`, { icon: I.training, color: '#ff9f0a' }); }
 });
 // Shift edits don't re-render (keeps focus); refresh everything once focus leaves the editor.
@@ -3342,7 +3358,7 @@ $('#importFile').addEventListener('change', async e => {
     if (!db || !Array.isArray(db.tasks)) throw 0;
     if (!confirm('Replace everything in Daybook with this backup?')) return;
     localStorage.setItem(KEY, JSON.stringify(db));
-    if (data.workout) { writeLS(W_CARDIO, data.workout.cardio || []); ['pushups', 'plank', 'row'].forEach(k => data.workout[k] && writeLS(W_LOGS[k], data.workout[k])); }
+    if (data.workout) { if (data.workout.state) writeLS(W_STATE, data.workout.state); writeLS(W_CARDIO, data.workout.cardio || []); ['pushups', 'plank', 'row'].forEach(k => data.workout[k] && writeLS(W_LOGS[k], data.workout[k])); }
     S = load(); closeSheet(); render(); island.toast('Backup restored', { icon: I.check, color: '#30d158' });
   } catch (err) { island.toast('That isn’t a Daybook backup'); }
   e.target.value = '';
@@ -3444,6 +3460,16 @@ function tick() {
   }
 }
 setInterval(() => { tick(); island.live(); }, 1000);
+// left open overnight or past a reminder: catch up once a minute (not mid-edit)
+let lastSlip = -1;
+setInterval(() => {
+  if (document.hidden || SHEET) return;
+  const a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+  const n = slipped().length, day = today();
+  if (day !== lastDay) { lastDay = day; weekStart = mondayOf(new Date()); PAY.date = null; render(); }
+  else if (n !== lastSlip && lastSlip !== -1) render();
+  lastSlip = n;
+}, 60000);
 let lastDay = today();
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { if (SYNC.timer) syncNow(0, true); return; }

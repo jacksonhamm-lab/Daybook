@@ -76,3 +76,30 @@ _None right now. Add new ones here with what you did, what happened, and on whic
 
 Still worth watching on the phone: backdrop blur on the chips and the grain overlay sit on top of
 a 60fps canvas; check Safari's profiler if the scene ever feels heavy.
+
+## Audit 2 (Oct 1)
+
+- **Sync:** state moved from KV to a Durable Object (KV served stale copies to the other device,
+  which then overwrote newer changes); idle syncs no longer write; a pending change flushes when
+  the app is backgrounded; clock-in syncs; the laptop no longer un-ticks workouts done on the phone.
+- **Service worker never installed:** the manifest and app icons had been deleted, so precaching
+  failed (no offline copy, notifications couldn't turn on). Restored.
+- **Pay period off by one** on cut-off Thursdays across a DST change (day count wasn't rounded).
+- **Quick-add tasks weren't saved**; custom time/date in the compose card filed the task on the
+  first wheel tick (now Next/Add moves on).
+- **Subscription hours box** wrote to the wrong key and snapped back.
+- **"Clock in again"** replaced the day's first stint; it now extends the shift (gap = break).
+  Over 14h on the clock asks before logging.
+- **+2h on a repeating task** changed its reminder for good; now it's a one-day `snooze` (client
+  `remAt()`, worker `at()`).
+- Wishlist → Applied counts from the day you applied; wishlist jobs give no XP.
+- Restoring an older backup no longer crashes (missing keys backfilled in `load()`), and restores
+  the workout app's state.
+- Dex's window no longer covers the bottom of pages or floats over the keyboard.
+- A failed outfit load waits a minute before retrying (was every frame).
+- Left open overnight or past a reminder, the app catches up once a minute.
+- Smaller: phone sheets slide closed; Export uses the share sheet on iPhone; a job's link icon
+  doesn't also open the job; closing a sheet mid-edit can't throw; compose chips and small
+  buttons are bigger.
+- Not fixed: the session sheet for a past week shows this week's ticks (the workout app only
+  keeps the current week).
