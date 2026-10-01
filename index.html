@@ -1299,6 +1299,7 @@ function stampChanges() {
   });
   if (!same(prev.settings, S.settings)) S.settingsU = now;
   if (JSON.stringify(prev.template) !== JSON.stringify(S.template)) S.templateU = now;
+  if (JSON.stringify(prev.clock || null) !== JSON.stringify(S.clock || null)) S.clockU = now;
   LAST = JSON.parse(JSON.stringify(S));
 }
 function mergeState(local, remote) {
@@ -1325,16 +1326,24 @@ function mergeState(local, remote) {
   });
   if ((remote.settingsU || 0) > (out.settingsU || 0)) { out.settings = { ...out.settings, ...remote.settings }; out.settingsU = remote.settingsU; }
   if ((remote.templateU || 0) > (out.templateU || 0)) { out.template = remote.template; out.templateU = remote.templateU; }
+  if ((remote.clockU || 0) > (out.clockU || 0)) { out.clock = remote.clock || null; out.clockU = remote.clockU; }   // clocked in on the other device
   if (remote.since && (!out.since || remote.since < out.since)) out.since = remote.since;
   const cutoff = Date.now() - 30 * 864e5;
   Object.keys(out.tomb).forEach(k => { if (out.tomb[k] < cutoff) delete out.tomb[k]; });
   out.tasks.forEach(t => { if (!t.date) t.date = today(); }); // never let a task arrive dateless and vanish
   return out;
 }
-const forServer = s => { const c = JSON.parse(JSON.stringify(s)); delete c.ui; delete c.clock; return c; };
-function syncSoon() { if (!SYNC.code) return; clearTimeout(SYNC.timer); SYNC.timer = setTimeout(() => syncNow(), 2500); }
-async function syncNow(depth = 0) {
+const forServer = s => { const c = JSON.parse(JSON.stringify(s)); delete c.ui; return c; };
+// Order-blind fingerprint (lists of items with ids compare as sets), so a sync only
+// writes when this device actually has something the server doesn't.
+const sig = v => Array.isArray(v) ? (x => v.every(e => e && e.id != null) ? x.sort() : x)(v.map(sig)).join('')
+  : v && typeof v === 'object' ? Object.keys(v).filter(k => v[k] !== undefined).sort().map(k => k + '' + sig(v[k])).join('') + ''
+  : JSON.stringify(v);
+function syncSoon() { if (!SYNC.code) return; clearTimeout(SYNC.timer); SYNC.timer = setTimeout(() => syncNow(), 1200); }
+// hiding: the app is being backgrounded, so the write goes out as keepalive and survives the suspend
+async function syncNow(depth = 0, hiding = false) {
   if (!SYNC.code || SYNC.busy || depth > 2) return;
+  clearTimeout(SYNC.timer); SYNC.timer = null;
   SYNC.busy = true; SYNC.state = 'syncing'; paintSync();
   try {
     const head = { 'x-sync-key': SYNC.code };
@@ -1345,12 +1354,14 @@ async function syncNow(depth = 0) {
     const before = JSON.stringify(forServer(S));
     const merged = mergeState(S, remote.data);
     const body = JSON.stringify(forServer(merged));
-    const put = await fetch('api/state', { method: 'PUT', headers: { ...head, 'content-type': 'application/json', 'if-match': String(remote.rev || 0) }, body });
-    if (put.status === 409) { SYNC.busy = false; return syncNow(depth + 1); }
-    if (put.status === 401) throw new Error(codeDetail('PUT', put));
-    if (!put.ok) throw new Error('Server said ' + put.status);
-    const next = { ...merged, ui: S.ui, clock: S.clock };
-    if (JSON.stringify(forServer(S)) !== before) { S = { ...mergeState(S, merged), ui: S.ui, clock: S.clock }; LAST = JSON.parse(JSON.stringify(next)); syncSoon(); }   // you changed something mid-sync: keep it
+    if (!remote.data || sig(forServer(merged)) !== sig(remote.data)) {
+      const put = await fetch('api/state', { method: 'PUT', keepalive: hiding && body.length < 60000, headers: { ...head, 'content-type': 'application/json', 'if-match': String(remote.rev || 0) }, body });
+      if (put.status === 409) { SYNC.busy = false; return syncNow(depth + 1, hiding); }
+      if (put.status === 401) throw new Error(codeDetail('PUT', put));
+      if (!put.ok) throw new Error('Server said ' + put.status);
+    }
+    const next = { ...merged, ui: S.ui };
+    if (JSON.stringify(forServer(S)) !== before) { S = { ...mergeState(S, merged), ui: S.ui }; LAST = JSON.parse(JSON.stringify(next)); syncSoon(); }   // you changed something mid-sync: keep it
     else { S = next; LAST = JSON.parse(JSON.stringify(S)); }
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
     SYNC.at = Date.now(); SYNC.state = 'ok'; SYNC.err = '';
@@ -1581,7 +1592,7 @@ function syncAuto() {
     if (/^D\d$/.test(s)) { const p = sessProgress(s); auto = !!(p && p.total && p.done >= p.total); }
     else if (s === 'HIIT') auto = cardioOn(d).length > 0;
     if (auto && !o.done) { S.workouts[d] = { ...o, done: true, auto: true }; changed = true; }
-    else if (!auto && o.done && o.auto) { S.workouts[d] = { ...o, done: false, auto: false }; changed = true; }
+    else if (!auto && o.done && o.auto && /^Dd$/.test(s) && wState()[s.toLowerCase()]) { S.workouts[d] = { ...o, done: false, auto: false }; changed = true; }
   });
   if (changed) save();
 }
@@ -3435,7 +3446,7 @@ function tick() {
 setInterval(() => { tick(); island.live(); }, 1000);
 let lastDay = today();
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) return;
+  if (document.hidden) { if (SYNC.timer) syncNow(0, true); return; }
   haloWake();
   if (today() !== lastDay) { lastDay = today(); weekStart = mondayOf(new Date()); }
   render(); // picks up anything done in the workout app meanwhile

@@ -10,7 +10,7 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (url.pathname.endsWith('/api/state')) return;
+  if (url.pathname.includes('/api/')) return;   // live data is never cached
   if (e.request.method !== 'GET' || url.origin !== location.origin || !url.pathname.startsWith(new URL('./', location).pathname)) return;
   // Dex's models are big and only change with a new ?v=, so serve them from the cache first
   if (url.pathname.includes('/models/')) {

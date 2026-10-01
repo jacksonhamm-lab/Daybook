@@ -5,6 +5,7 @@ const WORKOUT_SRC = 'https://raw.githubusercontent.com/jacksonhamm-lab/Jackson-W
 const TYPES = { html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', json: 'application/json', webmanifest: 'application/manifest+json', png: 'image/png', svg: 'image/svg+xml', ico: 'image/x-icon' };
 
 import { sendPush } from './push.js';
+import { DurableObject } from 'cloudflare:workers';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 
@@ -12,6 +13,34 @@ async function sha256(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
+
+// Each sync code's state lives in its own Durable Object. It's strongly consistent:
+// KV could hand the other device a minute-old copy, which then overwrote newer changes.
+// Every read and compare-and-write runs one at a time inside the object.
+export class Store extends DurableObject {
+  async read() { return (await this.ctx.storage.get('state')) || null; }
+  // first use: carry over the copy that used to live in KV
+  async seed(old) {
+    const cur = await this.ctx.storage.get('state');
+    if (cur) return cur;
+    const start = old && old.data ? old : { rev: 0, data: null };
+    if (start.data) await this.ctx.storage.put('state', start);
+    return start;
+  }
+  async write(rev, data) {
+    const cur = (await this.ctx.storage.get('state')) || { rev: 0 };
+    if ((cur.rev || 0) !== rev) return { ok: false, rev: cur.rev || 0 };
+    const next = { rev: rev + 1, at: Date.now(), data };
+    await this.ctx.storage.put('state', next);
+    return { ok: true, rev: next.rev, at: next.at };
+  }
+}
+const storeFor = (hash, env) => env.STORE.get(env.STORE.idFromName(hash));
+async function readState(hash, env) {
+  const stub = storeFor(hash, env);
+  return (await stub.read()) || stub.seed(await env.SYNC.get('state:' + hash, 'json'));
+}
+const writeState = (hash, env, rev, data) => storeFor(hash, env).write(rev, data);
 
 // Sync store: one JSON blob per sync code, keyed by the hash of the code so the
 // code itself is never written down. SYNC_KEYS (a secret) lists the allowed hashes.
@@ -21,24 +50,17 @@ async function syncApi(request, env) {
   const hash = await sha256(code);
   const allowed = (env.SYNC_KEYS || '').split(',').map(s => s.trim()).filter(Boolean);
   if (!allowed.includes(hash)) return json({ error: 'unknown code' }, 401);
-  const id = 'state:' + hash;
 
-  if (request.method === 'GET') {
-    const raw = await env.SYNC.get(id);
-    return json(raw ? JSON.parse(raw) : { rev: 0, data: null });
-  }
+  if (request.method === 'GET') return json(await readState(hash, env));
   if (request.method === 'PUT') {
     const body = await request.text();
     if (body.length > 2000000) return json({ error: 'too large' }, 413);
     let data;
     try { data = JSON.parse(body); } catch (e) { return json({ error: 'bad json' }, 400); }
-    const raw = await env.SYNC.get(id);
-    const rev = raw ? (JSON.parse(raw).rev || 0) : 0;
-    const expected = +(request.headers.get('if-match') || 0);
-    if (expected !== rev) return json({ error: 'conflict', rev }, 409); // caller re-reads and merges
-    const next = { rev: rev + 1, at: Date.now(), data };
-    await env.SYNC.put(id, JSON.stringify(next));
-    return json({ rev: next.rev, at: next.at });
+    await readState(hash, env);   // makes sure the KV copy has been carried over first
+    const res = await writeState(hash, env, +(request.headers.get('if-match') || 0), data);
+    if (!res.ok) return json({ error: 'conflict', rev: res.rev }, 409); // caller re-reads and merges
+    return json({ rev: res.rev, at: res.at });
   }
   return json({ error: 'method not allowed' }, 405);
 }
@@ -84,17 +106,14 @@ async function pushApi(request, env, url) {
   return json({ error: 'not found' }, 404);
 }
 
-// KV has no compare-and-set, so re-read and retry a couple of times.
+// Read, change, compare-and-write; retry if a device synced in between.
 async function mutateState(hash, env, fn) {
   for (let i = 0; i < 3; i++) {
-    const cur = (await env.SYNC.get('state:' + hash, 'json')) || { rev: 0, data: null };
+    const cur = await readState(hash, env);
     if (!cur.data) return false;
     const next = fn(JSON.parse(JSON.stringify(cur.data)));
     if (!next) return false;
-    const again = (await env.SYNC.get('state:' + hash, 'json')) || { rev: 0 };
-    if ((again.rev || 0) !== (cur.rev || 0)) continue;
-    await env.SYNC.put('state:' + hash, JSON.stringify({ rev: (cur.rev || 0) + 1, at: Date.now(), data: next }));
-    return true;
+    if ((await writeState(hash, env, cur.rev || 0, next)).ok) return true;
   }
   return false;
 }
@@ -162,7 +181,7 @@ export const dueNow = (hm, target) => {
 async function runReminders(hash, env) {
   const subs = (await env.SYNC.get('push:' + hash, 'json')) || [];
   if (!subs.length) return;
-  const stored = await env.SYNC.get('state:' + hash, 'json');
+  const stored = await readState(hash, env);
   const S = stored && stored.data;
   if (!S) return;
   const st = S.settings || {};

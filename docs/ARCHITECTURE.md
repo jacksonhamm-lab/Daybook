@@ -18,7 +18,7 @@ Start here before touching code.
 | `sw.js` | Service worker. Network-first cache, push notifications, notification buttons. |
 | `src/worker.js` | Cloudflare Worker: sync API, push API, reminder cron, `/workout/` proxy. |
 | `src/push.js` | Web Push encryption (RFC 8291) and VAPID signing (RFC 8292), no libraries. |
-| `wrangler.jsonc` | Worker config: custom domain, KV binding, cron, VAPID public key. |
+| `wrangler.jsonc` | Worker config: custom domain, KV binding, Durable Object `Store` (synced state), cron, VAPID public key. |
 | `icons/`, `manifest.webmanifest` | Home-screen app icons and manifest. |
 | `docs/` | These notes. |
 
@@ -42,9 +42,11 @@ Everything is one object, `S`, saved to `localStorage.daybook_v1` and synced.
 | `tomb{}` | Deletions, kept 30 days so other devices learn about them. |
 | `settings` | Name, pay rate, payday anchor and cycle, cut-off, goals, reminders, workout link. |
 | `template[7]` | The weekly training split (D1–D4, HIIT, REST). |
+| `clock` | The running shift timer. Synced (stamped `clockU`), so clocking in on the phone shows on the laptop. |
 | `ui` | Per-device view state (tab, open modules). **Never synced.** |
 
 Workout logs (`workout_state_v3`, `log_*_v1`) belong to the workout app and are read from localStorage.
+They only exist on the device that ran it, so `syncAuto()` only un-ticks an auto-done session on a device that has that session's log.
 
 ## Pay periods
 
@@ -58,8 +60,11 @@ Workout logs (`workout_state_v3`, `log_*_v1`) belong to the workout app and are 
 
 ## Sync
 
-- `save()` stamps whatever changed, then syncs a few seconds later.
-- The Worker stores state in KV under a hash of the sync code; the code itself stays on the device.
+- `save()` stamps whatever changed, then syncs ~1s later. Backgrounding the app flushes a pending change at once (keepalive).
+- The Worker stores state in a **Durable Object** (`Store`, one per sync-code hash), not KV. KV reads can be ~60s stale
+  in another location, which let one device overwrite the other's newer changes. The old KV copy (`state:<hash>`) is
+  carried over on first read and is no longer written.
+- A sync only PUTs when the merged state differs from the server's (`sig()`, order-blind), so idle devices don't write.
 - Devices merge item by item (newest `u` wins, tombstones win over older items), and a `409` triggers a re-merge.
 - **A new keyed map or list must be added to both lists in `stampChanges()` and `mergeState()`**, or it won't sync.
 
