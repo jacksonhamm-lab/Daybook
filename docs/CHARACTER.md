@@ -145,6 +145,40 @@ the repo, see below).
   - Jacket front hem takes a little upper-leg weight so it rides on the thighs in a
     ski stance (otherwise the pants poke through).
 
+## Motion (2026-10-02: motion capture, motion.js)
+
+He kept asking for movement that isn't stiff or robotic. Hand-coded joint angles never got there, so
+every look except skiing now runs on **Mixamo motion capture**.
+
+- **Pipeline:**
+  - Jackson downloads clips from mixamo.com (FBX Binary, Without Skin, 30fps, In Place where offered)
+    into `Downloads/Animations`.
+  - `node tools/convert-clips.mjs <dir> out.json` (needs `npm i three@0.169.0`) retargets each one onto
+    the VRM humanoid bones, using the same maths as three-vrm's loadMixamoAnimation.
+  - The clips we use are trimmed into `models/anims.json`, gzipped, and uploaded to KV as
+    `model:anims.json`. Bump `URL_` in motion.js after an upload.
+  - **Never commit the clips:** Mixamo's licence doesn't allow sharing the raw files, and the repo is public.
+- **Routines:**
+  - `ROUTINES` in motion.js is a script per look: `go` (walk to a spot), `face`, `play` (a clip,
+    n times or `cut` seconds) and `idle`.
+  - Every trip is home -> spot -> home along clear straight lines. The spots in `S` must match the props in
+    `buildSettings()`; the shop mirror moved to the left wall for this.
+  - **Work:** browses the jacket rail, sorts at the shirt table, then checks the fit in the mirror.
+  - **Gym:** walks to the dumbbell rack, takes the bells, curls, puts them back, then squats, jumping jacks
+    and push-ups, and finishes with a flex.
+  - **Camp (awake):** stretches, kneels to warm up at the fire, crouches for the cocoa, drinks, and puts it back.
+- **Mechanics:**
+  - **Feet don't slide:** walking travels at the clip's own stride speed (taken from its root motion,
+    which is then removed).
+  - **Floor contact:** each clip gets a floor offset from its lowest point (feet, knees, seat or back).
+  - **Props:** dumbbells and the mug appear in his hands only during their steps.
+  - **Taps:** a tap plays a reaction (wave, cheer, nod, flex) and then he resumes the step he was on.
+- **Still hand-posed (rider.js):** skiing, and asleep at camp. A fresh mixer is made when coming back
+  from those, because the mixer only writes a bone whose value changed. For the same reason, clip mode
+  never calls `resetNormalizedPose()`: a reset would leave every still bone in T-pose.
+- **Clips that would help next:** a sit-down / stand-up pair for the blanket (a crossfade to the floor
+  kicks his legs up), and a pick-up-from-floor clip (for now a crouch clip is cut short).
+
 ## Customise (the hanger button on the scene)
 
 Saved as `settings.dex` (synced); defaults = his real kit (`DEX_DEFAULTS`, in both index.html and

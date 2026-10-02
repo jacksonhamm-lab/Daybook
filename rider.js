@@ -16,6 +16,7 @@ import { VRMLoaderPlugin, VRMUtils } from './vendor/three-vrm.module.min.js';
 import { dress, toon, INK } from './dress.js';
 import { gear, fists, hands } from './gear.js';
 import { physique } from './physique.js';
+import { loadAnims, animsReady, setupMotion, direct, react } from './motion.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const V = 2;   // bump to make phones fetch new model files (2: unused face blendshapes stripped)
@@ -173,7 +174,7 @@ function buildSettings() {
   [0x1f2a44, 0x3a3d42, 0xb8864e, 0x2f3b2f, 0x6b2b2b, 0x1f2a44, 0x8a8f96].forEach((c, i) => { const j = box(rail, .44, .74, .07, c, -.72 + i * .24, 1.26, .02 * (i % 2), .9); j.rotation.z = (i % 3 - 1) * .03; });
   box(shop, 1.2, .72, .62, 0x4a3322, 1.55, .36, -.75, -.4);
   [[0xf2efe8, -.35], [0xbcd3ea, 0], [0x9aa0a8, .35]].forEach(([c, dx]) => { for (let k = 0; k < 3; k++) box(shop, .3, .045, .24, c, 1.55 + dx * Math.cos(.4), .745 + k * .048, -.75 + dx * Math.sin(.4), -.4); });
-  box(shop, .72, 1.9, .05, 0xb08d57, 2.15, .95, -1.7, -.6); box(shop, .6, 1.76, .02, 0x9fb3c8, 2.15, .95, -1.67, -.6);
+  box(shop, .72, 1.9, .05, 0xb08d57, -2.3, .95, -.2, .9); box(shop, .6, 1.76, .02, 0x9fb3c8, -2.3 + Math.sin(.9) * .03, .95, -.2 + Math.cos(.9) * .03, .9);   // mirror (motion.js walks him to it)
   // camp: stars, a moon and a small fire in the snow for the late-night look
   const camp = world.camp = new THREE.Group(); scene.add(camp);
   const fire = world.fire = new THREE.Group(); fire.position.set(.95, 0, -1.05); camp.add(fire);
@@ -354,10 +355,12 @@ function load(key) {
   return (cache[key] = loader.loadAsync(MODELS[key]).then(gltf => prepare(key, gltf.userData.vrm)).catch(e => { delete cache[key]; throw e; }));
 }
 function prepare(key, vrm) {
+  if (key !== 'ski') loadAnims().catch(e => report('dex', e));
   vrm.scene.traverse(o => { o.frustumCulled = false; });
   const h = vrm.humanoid, B = n => h.getNormalizedBoneNode(n), R = n => h.getRawBoneNode(n);
   vrm.scene.updateMatrixWorld(true);
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
+  r.toesRest = R('leftToes') ? R('leftToes').getWorldPosition(new THREE.Vector3()).y : r.footRest;
   if (key === 'sleep') r.mug = holdInFist(vrm, 'right', cocoaMug());
   if (key === 'gym') { r.build = dexPrefs().build; physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
   if (key === 'ski') {
@@ -832,16 +835,30 @@ function draw(now) {
   stepWorld(dt, skiing);
   stepSettings(dt, t);
   if (rider) {
-    const r = rider; r.vrm.humanoid.resetNormalizedPose();
-    autonomous(dt);
+    const r = rider;
     let res;
-    if (r.key === 'ski') res = skiPose(r, t, dt);
-    else if (sit) res = sleepPose(r, t);
-    else { stepTask(r.key, dt); res = standPose(r, t, dt, r.key === 'sleep', r.key === 'gym'); }
-    if (state.act) { state.actT += dt; if (state.actT > ACTS[state.act]) state.act = null; }
-    smoothPose(r, dt, r.key === 'ski' ? 16 : state.act || (state.task && state.task.name === 'jacks') ? 18 : sit ? 5 : 9);
-    r.vrm.update(dt);
-    ground(r, res.air, sit);
+    // (no resetNormalizedPose here: the mixer only writes a bone when its value changes, so a reset
+    // would leave every bone that's holding still in the clip in T-pose)
+    if (r.key !== 'ski' && !sit && !REDUCED && animsReady() && setupMotion(r)) {
+      // mocap: motion.js runs his routine; a tap or celebration plays a reaction on top
+      if (state.act) { react(r, state.act, world); state.act = null; }
+      state.task = null;
+      const ex = direct(r, r.key, dt, world, state.look);
+      expr(r.vrm, { ...ex, blink: blinkAmount(dt) });
+      r.vrm.update(dt);
+      res = { air: 0, clips: true }; r.clipMode = true;
+    }
+    else {
+      // hand-posed: skiing, asleep at camp, and the fallback until the clips have loaded
+      r.vrm.humanoid.resetNormalizedPose(); r.clipMode = false; autonomous(dt);
+      if (r.key === 'ski') res = skiPose(r, t, dt);
+      else if (sit) res = sleepPose(r, t);
+      else { stepTask(r.key, dt); res = standPose(r, t, dt, r.key === 'sleep', r.key === 'gym'); }
+      if (state.act) { state.actT += dt; if (state.actT > ACTS[state.act]) state.act = null; }
+      smoothPose(r, dt, r.key === 'ski' ? 16 : state.act || (state.task && state.task.name === 'jacks') ? 18 : sit ? 5 : 9);
+      r.vrm.update(dt);
+      ground(r, res.air, sit);
+    }
     if (r.key === 'ski') {
       layTracks(res.air < .02);
       // spray off the outside ski, hardest at the apex of the turn

@@ -257,12 +257,13 @@ async function runReminders(hash, env) {
 // Upload: npx wrangler kv key put --binding SYNC --remote "model:ski.vrm" --path models/ski.vrm.gz
 async function modelApi(url, env) {
   const name = url.pathname.slice('/models/'.length);
-  if (!/^[a-z]+.vrm$/.test(name)) return new Response('Not found', { status: 404 });
+  // the .vrm models, and anims.json: Dex's Mixamo clips (also private: the licence doesn't allow sharing them raw)
+  if (!/^([a-z]+\.vrm|anims\.json)$/.test(name)) return new Response('Not found', { status: 404 });
   const body = await env.SYNC.get('model:' + name, 'arrayBuffer');
   if (!body) return new Response('Not found', { status: 404 });
   return new Response(body, {
     encodeBody: 'manual',
-    headers: { 'content-type': 'model/gltf-binary', 'content-encoding': 'gzip', 'cache-control': 'private, max-age=2592000, immutable', 'x-content-type-options': 'nosniff' },
+    headers: { 'content-type': name.endsWith('.json') ? 'application/json' : 'model/gltf-binary', 'content-encoding': 'gzip', 'cache-control': 'private, max-age=2592000, immutable', 'x-content-type-options': 'nosniff' },
   });
 }
 
