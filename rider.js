@@ -18,7 +18,7 @@ import { gear, fists, hands } from './gear.js';
 import { physique } from './physique.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const V = 1;   // bump to make phones fetch new model files
+const V = 2;   // bump to make phones fetch new model files (2: unused face blendshapes stripped)
 const MODELS = { ski: `models/ski.vrm?v=${V}`, work: `models/work.vrm?v=${V}`, sleep: `models/sleep.vrm?v=${V}`, gym: `models/gym.vrm?v=${V}` };
 const SPEED = REDUCED ? 0 : 7.5;   // metres a second down the hill
 const TURN = 1.05;                 // carving rhythm, radians a second (one left+right every ~6s)
@@ -29,7 +29,42 @@ const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const bump = (p, at, w) => { const d = Math.atan2(Math.sin(p - at), Math.cos(p - at)); return Math.exp(-d * d / w); };
 
-let renderer, scene, camera, wrap, cv, sayEl, zEl, raf = 0, last = 0, inView = true, ok = true, failed = false;
+let renderer, scene, camera, wrap, cv, sayEl, zEl, raf = 0, last = 0, inView = true, ok = true, failed = false, lost = false, errs = 0;
+
+/* ---------- performance ----------
+   Per device (localStorage daybook_perf): auto | smooth | balanced | saver. Auto starts on
+   balanced (saver on a weak machine) and drops to saver if the frame rate can't keep up,
+   e.g. under Opera's CPU limiter. Lofi motion reads fine at 30fps. */
+const PERF = { smooth: { fps: 60, dpr: 2 }, balanced: { fps: 30, dpr: 1.5 }, saver: { fps: 20, dpr: 1 } };
+const weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
+let perfPick = (() => { try { return localStorage.getItem('daybook_perf') || 'auto'; } catch (e) { return 'auto'; } })();
+let perfLevel = PERF[perfPick] ? perfPick : weak ? 'saver' : 'balanced';
+const perfMon = { n: 0, t0: 0 };
+document.documentElement.dataset.perf = perfLevel;
+function applyPerf() {
+  document.documentElement.dataset.perf = perfLevel; perfMon.n = 0;
+  if (renderer) { renderer.setPixelRatio(Math.min(PERF[perfLevel].dpr, devicePixelRatio || 1)); size(); }
+}
+function perf(pick) {
+  if (pick === undefined) return { pick: perfPick, level: perfLevel };
+  perfPick = PERF[pick] ? pick : 'auto';
+  try { localStorage.setItem('daybook_perf', perfPick); } catch (e) {}
+  perfLevel = PERF[perfPick] ? perfPick : weak ? 'saver' : 'balanced';
+  applyPerf(); return { pick: perfPick, level: perfLevel };
+}
+// auto: measure the frame rate he actually gets over 4s windows (not while an outfit loads)
+function watchPerf(now) {
+  if (perfPick !== 'auto' || perfLevel === 'saver' || loading || document.hidden || REDUCED) { perfMon.n = 0; return; }
+  if (perfMon.n && now - perfMon.prev > 500) perfMon.n = 0;   // paused (hidden, scrolled away): start over
+  perfMon.prev = now;
+  if (!perfMon.n) perfMon.t0 = now;
+  if (++perfMon.n < 2) return;
+  const span = now - perfMon.t0;
+  if (span < 4000) return;
+  const fps = (perfMon.n - 1) / span * 1000; perfMon.n = 0;
+  if (fps < PERF[perfLevel].fps * .7) { perfLevel = 'saver'; applyPerf(); report('dex', 'slow device, switched to saver (' + fps.toFixed(0) + 'fps)'); }
+}
+const report = (where, e) => { try { window.logProblem ? window.logProblem(where, e) : console.warn(where, e); } catch (x) {} };
 let rider = null, loading = null, pointScale = 800;
 const state = {
   mode: 'idle', act: null, actT: 0, next: 8, ctx: {}, lineI: 0, sayUntil: 0,
@@ -42,9 +77,12 @@ const world = {};
 const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
 function buildScene() {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+  renderer.setPixelRatio(Math.min(PERF[perfLevel].dpr, devicePixelRatio || 1));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   cv = renderer.domElement;
+  // the GPU can drop the context (driver reset, sleep, memory pressure): pause, then carry on when it's back
+  cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; if (raf) cancelAnimationFrame(raf); raf = 0; report('dex', 'graphics context lost'); });
+  cv.addEventListener('webglcontextrestored', () => { lost = false; wake(); });
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(30, 1, .1, 90);
   world.hemi = new THREE.HemisphereLight(0xdfe8ff, 0x2a2f48, 1.2); scene.add(world.hemi);
@@ -89,6 +127,9 @@ function buildScene() {
   world.spray = pool(320, 0xf7faff);
   world.pool = pool;
   buildSettings();
+  // the camp's point lights hang off the scene root and go dark instead of hidden: a light that
+  // disappears changes every material's shader, and rebuilding them all froze the page on swaps
+  scene.updateMatrixWorld(true); [world.fireLight, world.lanternLight].forEach(l => scene.attach(l));
 
   // ski tracks: two fading ribbons laid behind the skis
   world.tracks = ['l', 'r'].map(() => {
@@ -195,6 +236,7 @@ function setEnv(key) {
   world.ground.material.color.set(key === 'ski' ? S.snow : 0x9aabc8);
   world.outdoor.visible = outdoor; world.flakes.p.visible = outdoor;
   world.gym.visible = key === 'gym'; world.shop.visible = key === 'work'; world.camp.visible = key === 'sleep';
+  if (key !== 'sleep') world.fireLight.intensity = world.lanternLight.intensity = 0;
   world.stars.p.visible = world.sparks.p.visible = world.steam.p.visible = key === 'sleep'; world.dust.p.visible = key === 'gym' || key === 'work';
   world.hemi.color.set(S.sky); world.hemi.groundColor.set(S.ground); world.hemi.intensity = S.hemi; world.key.color.set(S.key); world.key.intensity = S.keyI;
   if (bgEl) { bgEl.style.opacity = S.bg ? 1 : 0; if (S.bg) bgEl.style.background = S.bg; }
@@ -386,12 +428,28 @@ function want() {
   return state.mode === 'sleep' ? 'sleep' : state.mode === 'work' ? 'work' : state.ctx.training ? 'gym' : 'ski';
 }
 const failedAt = {};   // outfit -> don't retry before this time
+// The first draw of an outfit builds its shaders, which on Windows blocked the page for 2-3s.
+// Build them in the background, then draw it a piece at a time off camera, a frame apart.
+async function warm(r) {
+  const root = r.vrm.scene, meshes = [], tick = () => new Promise(q => setTimeout(q, 16));
+  root.traverse(o => { if (o.isMesh) meshes.push([o, o.visible]); });
+  meshes.forEach(([m]) => { m.visible = false; });
+  root.position.y -= 200; scene.add(root);
+  try {
+    try { await renderer.compileAsync(root, camera, scene); } catch (e) {}
+    for (const [m, vis] of meshes) { if (!vis) continue; m.visible = true; if (!lost) renderer.render(scene, camera); await tick(); }
+  } catch (e) { report('dex', e); }
+  meshes.forEach(([m, vis]) => { m.visible = vis; });
+  scene.remove(root); root.position.y += 200;
+}
 function ensureRider() {
   const k = want();
   if ((rider && rider.key === k && !state.reload) || loading === k || failed || performance.now() < (failedAt[k] || 0)) return;
   state.reload = false;
   loading = k;
-  load(k).then(r => {
+  load(k).then(async r => {
+    if (loading !== k) return;
+    await warm(r);
     if (loading !== k) return;
     loading = null;
     const swap = () => {
@@ -750,13 +808,20 @@ function size() {
   [world.flakes, world.spray, world.stars, world.sparks, world.dust, world.steam].forEach(f => { if (f) f.p.material.uniforms.scale.value = pointScale; });
   // draw once now, replacing any pending frame so there's never more than one loop running
   if (raf) { cancelAnimationFrame(raf); raf = 0; }
-  frame(performance.now());
+  frame(performance.now(), true);
 }
-const live = () => ok && wrap && wrap.isConnected && !document.hidden && inView;
+const live = () => ok && !lost && wrap && wrap.isConnected && !document.hidden && inView;
 function wake() { if (!raf && live()) { last = 0; raf = requestAnimationFrame(frame); } }
-function frame(now) {
-  raf = 0; if (!renderer || !ok) return;
-  const dt = last ? clamp((now - last) / 1000, 0, .05) : 1 / 60; last = Math.max(last, now);
+function frame(now, force) {
+  raf = 0; if (!renderer || !ok || lost) return;
+  // capped frame rate: skip this vsync if it's too soon (the canvas keeps its last picture)
+  if (!force && last && now - last < 1000 / PERF[perfLevel].fps - 3) { if (live()) raf = requestAnimationFrame(frame); return; }
+  try { draw(now); errs = 0; watchPerf(now); }
+  catch (e) { last = now; if (errs++ < 3 || errs % 100 === 0) report('dex', e); }   // one bad frame never stops him
+  if (live() && (!REDUCED || state.act || state.drag || loading)) raf = requestAnimationFrame(frame);
+}
+function draw(now) {
+  const dt = last ? clamp((now - last) / 1000, 0, .07) : 1 / 60; last = Math.max(last, now);
   const t = now / 1000;
   state.mode = state.ctx.mode || 'idle';
   ensureRider();
@@ -803,7 +868,6 @@ function frame(now) {
   renderer.render(scene, camera);
   placeBubble();
   zEl.classList.toggle('on', sit);
-  if (live() && (!REDUCED || state.act || state.drag || loading)) raf = requestAnimationFrame(frame);
 }
 
 function mount(slot) {
@@ -838,5 +902,5 @@ function update(ctx) {
 }
 function wardrobe(on) { state.wardrobe = !!on; wake(); }
 function resetView() { state.orbit = 0; try { localStorage.removeItem('daybook_orbit'); } catch (e) {} wake(); }
-window.Buddy = { mount, update, say, play, wardrobe, resetView, get _() { return { camera, scene, state, world, rider: () => rider, frame }; } };
+window.Buddy = { mount, update, say, play, wardrobe, resetView, perf, get _() { return { camera, scene, state, world, rider: () => rider, frame, renderer, warm }; } };
 const slot0 = document.querySelector('#buddySlot'); if (slot0) mount(slot0);

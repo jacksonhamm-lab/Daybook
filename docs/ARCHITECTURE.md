@@ -29,7 +29,7 @@ Start here before touching code.
 - Check a deploy is live: `curl -s "https://apps.jacksonhamm.ca/?cb=$RANDOM" | grep -c <something new>`.
 - Secrets live in the Cloudflare dashboard, not the repo: `SYNC_KEYS` (allowed sync-code hashes) and `VAPID_PRIVATE_JWK`.
 - `/workout/*` is proxied from the Jackson-Workout-Plan repo so both apps share one origin and one localStorage.
-- `/models/<name>.vrm` is served by the Worker from KV key `model:<name>.vrm` (stored gzipped, sent with `content-encoding: gzip`). To update a model: slim it (textures over 1024px halved, thumbnail shrunk, then gzip), run `npx wrangler kv key put --binding SYNC --remote "model:ski.vrm" --path models/ski.vrm.gz`, and bump `V` in `rider.js` so phones fetch the new file. The service worker caches models cache-first.
+- `/models/<name>.vrm` is served by the Worker from KV key `model:<name>.vrm` (stored gzipped, sent with `content-encoding: gzip`). To update a model: slim it (textures over 1024px halved, thumbnail shrunk, then `node tools/strip-morphs.js in.vrm out.vrm` to drop the face blendshapes no expression uses, then gzip), run `npx wrangler kv key put --binding SYNC --remote "model:ski.vrm" --path models/ski.vrm.gz`, and bump `V` in `rider.js` so phones fetch the new file. The service worker caches models cache-first.
 
 ## Data
 
@@ -114,3 +114,23 @@ Line numbers drift, so search for the section comment instead.
 - The preview pane throttles animation when hidden. To inspect Dex, step frames by hand: `Buddy._.frame(t)`. Move the camera with `Buddy._.state.camDist` and `camY`; swing it with `state.orbit` (hold it with `state.drag = {x:0,y:0,orbit:0,moved:0}`).
 - To see another outfit, override the context: `window.buddyContext = () => ({ ...orig(), mode: 'work' })` then `Buddy.update(buddyContext())`.
 - Screenshots right after a programmatic scroll are sometimes blank; take a second one.
+
+## Performance
+
+- **Quality levels** (per device, `localStorage.daybook_perf`, Settings > Performance):
+  - Smooth: 60fps.
+  - Balanced: 30fps, 1.5x pixels.
+  - Saver: 20fps, 1x pixels, no backdrop blur, grain or moving beams.
+  - Auto starts on Balanced (Saver on a machine with 4 cores or less, or 4GB or less). It drops to Saver if it measures under
+    70% of the target frame rate, e.g. under Opera's CPU limiter.
+  - `html[data-perf]` carries the level for CSS, and the halo rings follow it.
+- **No big main-thread blocks:** a new outfit is warmed up before it's shown (`warm()`: `compileAsync`, then each mesh drawn
+  off camera, a frame apart).
+  - Before this, the first draw blocked the page for 2-3s on Windows. ANGLE compiles shaders at draw time, and all 57 face
+    blendshapes were being packed (now stripped to 14).
+  - Lights are never hidden. The camp's point lights sit on the scene root and go to intensity 0, because a light appearing or
+    disappearing rebuilds every shader.
+- **Resilience:** a frame that throws is skipped and logged, and the loop keeps going. A WebGL context loss pauses the loop and
+  resumes it when the context comes back.
+- **Problem log:** `window.logProblem(where, err)` keeps the last 40 errors in `localStorage.daybook_log`. Settings >
+  Performance > "Copy problem log" copies them with the browser, level, DPR and window size.
