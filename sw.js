@@ -22,7 +22,9 @@ self.addEventListener('fetch', e => {
     return;
   }
   e.respondWith(
-    fetch(e.request).then(res => {
+    // always ask the server (a cheap 304 when nothing changed), never the browser's HTTP cache:
+    // after a deploy that cache could hand back an old rider.js next to a new index.html
+    fetch(e.request.mode === 'navigate' ? e.request : new Request(e.request, { cache: 'no-cache' })).then(res => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }   // never replace a good offline copy with an error
       return res;
     }).catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
