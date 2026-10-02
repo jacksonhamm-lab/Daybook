@@ -553,6 +553,7 @@ function gait(B, p, a) {
 }
 const ramp = (k, a, b, e = .35) => clamp(Math.min((k - a) / e, (b - k) / e), 0, 1);   // 0 → 1 → 0 over [a, b]
 function standPose(r, t, dt, sleepy, gym) {
+  let air = 0, hl = gym ? .85 : .06 * Math.sin(t * .8), hr = gym ? .85 : .06 * Math.sin(t * .8 + 1.3);   // hands: relaxed, or fists in the gym
   const { B } = r, a = state.act, u = a ? clamp(state.actT / ACTS[a], 0, 1) : 0, br = Math.sin(t * 1.35);
   // weight settles on one foot, holds, then shifts to the other (not a constant sway)
   const sw = Math.tanh(2.2 * Math.sin(t * .42)), n1 = Math.sin(t * .71) + .5 * Math.sin(t * 1.93), n2 = Math.sin(t * .53 + 1) + .5 * Math.sin(t * 1.47);
@@ -581,7 +582,6 @@ function standPose(r, t, dt, sleepy, gym) {
       B('head').rotation.y += .35 * W; B('spine').rotation.x -= .05 * W; hl = hr = lerp(.85, 1, W);
     }
   }
-  let air = 0, hl = gym ? .85 : .06 * Math.sin(t * .8), hr = gym ? .85 : .06 * Math.sin(t * .8 + 1.3);   // hands: relaxed, or fists in the gym
   const T = !a && state.task, k = T ? T.t : 0, W = T ? ease(Math.min(clamp(k / .5, 0, 1), clamp((TASK_LEN[T.name] - k) / .5, 0, 1))) : 0;
   const mixR = (n, x, y, z) => { const R = B(n).rotation; R.set(lerp(R.x, x, W), lerp(R.y, y, W), lerp(R.z, z, W)); };
   if (r.dumbbells) r.dumbbells.forEach(d => { d.visible = !!T && T.name === 'curl' && W > .05; });
