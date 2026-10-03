@@ -1,9 +1,12 @@
 // Mixamo FBX (Without Skin) -> compact clips retargeted to VRM humanoid bones.
 // Rotations are converted into the VRM *normalized* bone space (same maths as three-vrm's
 // loadMixamoAnimation example); hips position is divided by the motion's hips height so the
-// app can scale it to the model. Clips downloaded on a custom character get their arms straightened to
-// a T-pose rest first. Usage, in a folder with `npm i three@0.169.0`: node convert-clips.mjs <fbx dir> <out.json>
+// app can scale it to the model. usage: node convert.mjs <fbx dir> <out.json>
 import fs from 'fs';
+// clips downloaded "with skin" carry embedded textures; give the loader a do-nothing image so it skips them
+globalThis.window ??= globalThis;
+globalThis.self ??= globalThis;
+globalThis.document ??= { createElementNS: () => ({ addEventListener() {}, removeEventListener() {}, setAttribute() {}, style: {} }) };
 import path from 'path';
 import * as THREE from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';

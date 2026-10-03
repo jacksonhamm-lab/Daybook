@@ -213,6 +213,29 @@ every look except skiing now runs on **Mixamo motion capture**.
 - **Clips that would help next:** a sit-down / stand-up pair for the blanket (a crossfade to the floor
   kicks his legs up), and a pick-up-from-floor clip (for now a crouch clip is cut short).
 
+## Scenes (2026-10-03: lofi 2.5D sets)
+
+Lots of detail at almost no cost: paint what he doesn't touch, model only what he does.
+- **Back wall:** one painted lofi image per scene (`scenes/<look>.jpg`), generated in the style of his lofi reference and outpainted wide.
+  - `backdrop()` in rider.js puts it on a plane facing the camera's resting angle (CAM_YAW), drawn first without depth,
+    with the painted floor line on y = 0.
+  - The 3D floor is solid and stops exactly at the wall (`floor(..., { wall })`).
+- **Painted cut-outs** (`sprite()`) for detailed props he stands at: the shop's jackets and mirror (`scenes/work-*.webp`).
+- **3D only for what he touches:** cel-shaded and ink-outlined. `stage()` in motion.js lays out the desk, stool, shoe stack and
+  bench from where his body actually goes in the clips.
+- **Depth for free:**
+  - per-look haze (`SETTINGS[look].fog`);
+  - soft contact shadows (`blob()`) under him and the props.
+- **Camera:** sways ±25° instead of circling, and dragging is clamped to that arc, so the painted walls always read.
+- **Shop routine:**
+  1. Browse the rail.
+  2. Sit back onto the stool (`sitting` keeps its travel; TRAVEL clips hand it to his position).
+  3. Write in the ledger.
+  4. Get up (`stand_up2`).
+  5. Carry a shoe box from the stack to the bench (lifting, then putting_down).
+  6. Check the mirror.
+- **Next:** gym, camp and ski get the same treatment.
+
 ## Customise (the hanger button on the scene)
 
 Saved as `settings.dex` (synced); defaults = his real kit (`DEX_DEFAULTS`, in both index.html and

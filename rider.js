@@ -70,7 +70,7 @@ const report = (where, e) => { try { window.logProblem ? window.logProblem(where
 let rider = null, loading = null, pointScale = 800;
 const state = {
   mode: 'idle', act: null, actT: 0, next: 8, ctx: {}, lineI: 0, sayUntil: 0,
-  phase: 0, x: 0, tuck: 0, tuckT: 0, orbit: (() => { try { return +localStorage.getItem('daybook_orbit') || 0; } catch (e) { return 0; } })(), drag: null, taps: [], touchAt: performance.now(),
+  phase: 0, x: 0, tuck: 0, tuckT: 0, orbit: (() => { try { return Math.max(-.44, Math.min(.44, +localStorage.getItem('daybook_orbit') || 0)); } catch (e) { return 0; } })(), drag: null, taps: [], touchAt: performance.now(),
   look: { x: 0, y: 0 }, lookT: { x: 0, y: 0 }, pointerAt: 0, blink: 0, blinkAt: 2, wokeAt: 0,
 };
 const world = {};
@@ -149,8 +149,40 @@ function buildScene() {
 /* ---------- settings for the other outfits ---------- */
 const box = (parent, w, h, d, color, x, y, z, ry = 0) => { const g = new THREE.BoxGeometry(w, h, d), m = new THREE.Group(); m.add(new THREE.Mesh(g, toon(color)), new THREE.Mesh(g, INK)); m.position.set(x, y, z); m.rotation.y = ry; parent.add(m); return m; };
 const cyl = (parent, r, len, color, x, y, z, rot = [0, 0, 0], seg = 16) => { const g = new THREE.CylinderGeometry(r, r, len, seg), m = new THREE.Group(); m.add(new THREE.Mesh(g, toon(color)), new THREE.Mesh(g, INK)); m.position.set(x, y, z); m.rotation.set(...rot); parent.add(m); return m; };
-function floor(parent, draw) {
-  const t = canvasTex(512, 512, draw); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(4, 4); t.anisotropy = 8;
+// A painted back wall: one unlit image behind everything (drawn first, no depth), facing the camera's
+// resting angle, with the painted floor line on y = 0 so the 3D floor runs into it. Cheap and detailed.
+const CAM_YAW = .32;
+function backdrop(parent, url, { aspect, H, base, D }) {
+  const W = H * aspect, m = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false, depthWrite: false, toneMapped: false }));
+  m.renderOrder = -3; m.rotation.y = CAM_YAW; m.position.set(-Math.sin(CAM_YAW) * D, (base - .5) * H, -Math.cos(CAM_YAW) * D);
+  new THREE.TextureLoader().load(url, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; m.material.map = t; m.material.needsUpdate = true; });
+  parent.add(m); return m;
+}
+// A painted cut-out (lofi detail at the cost of one quad): hung from its top edge at (x, top, z)
+function sprite(parent, url, w, h, x, top, z) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, alphaTest: .35, side: THREE.DoubleSide }));
+  m.position.set(x, top - h / 2, z);
+  new THREE.TextureLoader().load(url, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; m.material.map = t; m.material.needsUpdate = true; });
+  parent.add(m); return m;
+}
+// a soft contact shadow on the floor (a radial texture, no real shadows): grounds props and Dex
+let blobTex = null;
+function blob(parent, x, z, w, d, ry = 0, opacity = .32) {
+  blobTex = blobTex || canvasTex(128, 128, (c, W, H) => { const g = c.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W / 2); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(.55, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(0, 0, W, H); });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, opacity, depthWrite: false, color: 0x1a0f08 }));
+  m.rotation.set(-Math.PI / 2, 0, ry); m.position.set(x, .004, z); m.renderOrder = -1; parent.add(m); return m;
+}
+// wall: a painted back wall this far along the camera's resting direction. The floor is then solid and
+// stops exactly at it (anything beyond would paint over the backdrop, which draws first without depth).
+function floor(parent, draw, { wall } = {}) {
+  const t = canvasTex(512, 512, draw); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+  if (wall) {
+    const near = 9, depth = wall + near; t.repeat.set(30 / 2.2, depth / 2.2);   // narrower planks, closer to the painted floor
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(30, depth), new THREE.MeshLambertMaterial({ map: t }));
+    m.rotation.set(-Math.PI / 2, 0, CAM_YAW); const c = (near - wall) / 2; m.position.set(Math.sin(CAM_YAW) * c, -.003, Math.cos(CAM_YAW) * c); m.renderOrder = -2; parent.add(m);
+    return m;
+  }
+  t.repeat.set(4, 4);
   const m = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), new THREE.MeshLambertMaterial({ map: t, alphaMap: world.fade, transparent: true, depthWrite: false }));
   m.rotation.x = -Math.PI / 2; m.position.set(0, -.003, -2); m.renderOrder = -1; parent.add(m);
 }
@@ -167,13 +199,15 @@ function buildSettings() {
   [0, .05, .1].forEach((y, i) => cyl(gym, .225 - i * .03, .045, 0x17181c, 1.2, .025 + y, .75, [0, 0, 0], 28));
   // shop: wood floor, a rail of jackets and a table of folded shirts (Thomas Jeffery vibes)
   const shop = world.shop = new THREE.Group(); scene.add(shop);
-  floor(shop, (x, W, H) => { for (let i = 0; i < 8; i++) { const c = ['#7a5a3c', '#6f5135', '#836243', '#74553a'][i % 4]; x.fillStyle = c; x.fillRect(i * W / 8, 0, W / 8, H); x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect(i * W / 8, 0, 2, H); const cut = Math.random() * H; x.fillRect(i * W / 8, cut, W / 8, 2); } for (let i = 0; i < 90; i++) { x.strokeStyle = 'rgba(40,24,12,.18)'; x.lineWidth = 1; x.beginPath(); const px = Math.random() * W; x.moveTo(px, Math.random() * H); x.lineTo(px + (Math.random() - .5) * 4, Math.random() * H); x.stroke(); } });
+  floor(shop, (x, W, H) => { for (let i = 0; i < 8; i++) { const c = ['#7a5a3c', '#6f5135', '#836243', '#74553a'][i % 4]; x.fillStyle = c; x.fillRect(i * W / 8, 0, W / 8, H); x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect(i * W / 8, 0, 2, H); const cut = Math.random() * H; x.fillRect(i * W / 8, cut, W / 8, 2); } for (let i = 0; i < 90; i++) { x.strokeStyle = 'rgba(40,24,12,.18)'; x.lineWidth = 1; x.beginPath(); const px = Math.random() * W; x.moveTo(px, Math.random() * H); x.lineTo(px + (Math.random() - .5) * 4, Math.random() * H); x.stroke(); } }, { wall: 4.6 });
   const rail = new THREE.Group(); rail.position.set(-1.25, 0, -1.55); rail.rotation.y = .25; shop.add(rail);
   [-.85, .85].forEach(x => cyl(rail, .018, 1.7, 0xb08d57, x, .85, 0)); cyl(rail, .016, 1.75, 0xb08d57, 0, 1.68, 0, [0, 0, Math.PI / 2]);
-  [0x1f2a44, 0x3a3d42, 0xb8864e, 0x2f3b2f, 0x6b2b2b, 0x1f2a44, 0x8a8f96].forEach((c, i) => { const j = box(rail, .44, .74, .07, c, -.72 + i * .24, 1.26, .02 * (i % 2), .9); j.rotation.z = (i % 3 - 1) * .03; });
-  box(shop, 1.2, .72, .62, 0x4a3322, 1.55, .36, -.75, -.4);
-  [[0xf2efe8, -.35], [0xbcd3ea, 0], [0x9aa0a8, .35]].forEach(([c, dx]) => { for (let k = 0; k < 3; k++) box(shop, .3, .045, .24, c, 1.55 + dx * Math.cos(.4), .745 + k * .048, -.75 + dx * Math.sin(.4), -.4); });
-  box(shop, .72, 1.9, .05, 0xb08d57, -2.3, .95, -.2, .9); box(shop, .6, 1.76, .02, 0x9fb3c8, -2.3 + Math.sin(.9) * .03, .95, -.2 + Math.cos(.9) * .03, .9);   // mirror (motion.js walks him to it)
+  sprite(rail, 'scenes/work-jackets.webp', 1.66, 1.66 * 1032 / 1408, 0, 1.69, .02);   // painted jackets on their hangers, hooks on the bar
+  // the back wall is a painting (lofi, see docs/CHARACTER.md "Scenes"); 3D is only what he touches
+  backdrop(shop, 'scenes/work.jpg?v=1', { aspect: 4552 / 1536, H: 6.4, base: .75, D: 4.6 });
+  blob(shop, -1.25, -1.55, 1.9, .5, .25);   // under the rail
+  { const mir = new THREE.Group(); mir.position.set(-2.3, 0, -.2); mir.rotation.y = .9; shop.add(mir); sprite(mir, 'scenes/work-mirror.webp', .86, .86 * 2421 / 1028, 0, .86 * 2421 / 1028, 0); blob(shop, -2.3, -.2, .9, .4, -.9); }   // painted tailor's mirror (motion.js walks him to it)
+    world.makeShoeBox = shoeBox; world.box = box; world.cyl = cyl; world.blob = blob;
   // camp: stars, a moon and a small fire in the snow for the late-night look
   const camp = world.camp = new THREE.Group(); scene.add(camp);
   const fire = world.fire = new THREE.Group(); fire.position.set(.95, 0, -1.05); camp.add(fire);
@@ -222,7 +256,7 @@ const SETTINGS = {
   ski: { sky: 0xdfe8ff, ground: 0x2a2f48, hemi: 1.2, key: 0xffffff, keyI: 2.2, bg: '' },
   sleep: { sky: 0x8fa6d8, ground: 0x241a1c, hemi: .7, key: 0xa9bcff, keyI: .9, bg: 'radial-gradient(90% 70% at 50% 30%,#1c2645 0%,#0e1427 55%,#070a13 100%)' },
   gym: { sky: 0xffe2c4, ground: 0x4a3a2c, hemi: 1.35, key: 0xffd9a8, keyI: 2.5, bg: 'radial-gradient(80% 70% at 50% 28%,#5e4837 0%,#34281f 45%,#16110d 100%)' },
-  work: { sky: 0xfff0dc, ground: 0x3a2e22, hemi: 1.15, key: 0xfff1de, keyI: 2.0, bg: 'radial-gradient(80% 70% at 50% 28%,#7d6852 0%,#473b2f 45%,#1c1611 100%)' },
+  work: { sky: 0xfff0dc, ground: 0x3a2e22, hemi: 1.25, key: 0xffe6c4, keyI: 2.1, fog: [0x8a6446, 6.5, 17], bg: 'radial-gradient(80% 70% at 50% 28%,#7d6852 0%,#473b2f 45%,#1c1611 100%)' },
 };
 const SKY = {
   night: { ...SETTINGS.ski, snow: 0x9aabc8 },
@@ -240,6 +274,7 @@ function setEnv(key) {
   world.stars.p.visible = world.sparks.p.visible = world.steam.p.visible = key === 'sleep'; world.dust.p.visible = key === 'gym' || key === 'work';
   world.hemi.color.set(S.sky); world.hemi.groundColor.set(S.ground); world.hemi.intensity = S.hemi; world.key.color.set(S.key); world.key.intensity = S.keyI;
   if (bgEl) { bgEl.style.opacity = S.bg ? 1 : 0; if (S.bg) bgEl.style.background = S.bg; }
+  scene.fog = S.fog ? new THREE.Fog(...S.fog) : null;   // haze toward the painted wall: depth for free
 }
 function stepSettings(dt, t) {
   if (envKey === 'sleep') {
@@ -406,6 +441,7 @@ function prepare(key, vrm) {
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
   r.toesRest = R('leftToes') ? R('leftToes').getWorldPosition(new THREE.Vector3()).y : r.footRest;
   if (key === 'sleep') r.mug = holdInFist(vrm, 'right', cocoaMug());
+  if (key === 'work') r.carry = holdInFist(vrm, 'right', shoeBox());
   if (key === 'gym') { r.build = dexPrefs().build; if (!vrm.plain) physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
   if (key === 'ski') {
     const D = dexPrefs();
@@ -424,6 +460,11 @@ function dumbbell() {
   g.add(new THREE.Mesh(bar, toon(0x9a9ca3)));
   [-1, 1].forEach(k => { const h = new THREE.Mesh(head, toon(0x1b1c21)); h.position.z = k * .12; g.add(h, Object.assign(new THREE.Mesh(head, INK), {})); g.children[g.children.length - 1].position.z = k * .12; });
   g.visible = false; return g;
+}
+// a shoe box, carried by its end in one hand
+function shoeBox(visible = false) {
+  const g = new THREE.Group(), b = box(g, .32, .12, .2, 0xc9a879, 0, 0, 0); box(g, .335, .03, .215, 0x5a3b26, 0, .05, 0);   // kraft box, dark lid
+  b.position.y = 0; g.visible = visible; return g;
 }
 // the cocoa mug, standing up along the fist (thumb side up)
 function cocoaMug() {
@@ -845,7 +886,7 @@ function bind() {
     const r = cv.getBoundingClientRect(); state.pointerAt = performance.now();
     state.lookT.x = clamp(((e.clientX - r.left) / r.width - .5) * 2.2, -1, 1); state.lookT.y = clamp(((e.clientY - r.top) / r.height - .35) * 2, -1, 1);
     const d = state.drag;
-    if (d) { state.touchAt = performance.now(); const dx = e.clientX - d.x; d.moved = Math.max(d.moved, Math.abs(dx), Math.abs(e.clientY - d.y)); if (d.moved > 8) state.orbit = d.orbit - dx * .008; }   // all the way round if you like
+    if (d) { state.touchAt = performance.now(); const dx = e.clientX - d.x; d.moved = Math.max(d.moved, Math.abs(dx), Math.abs(e.clientY - d.y)); if (d.moved > 8) state.orbit = clamp(d.orbit - dx * .008, -.44, .44); }   // all the way round if you like
     wake();
   });
   cv.addEventListener('pointerdown', e => { state.touchAt = performance.now(); state.drag = { x: e.clientX, y: e.clientY, orbit: state.orbit, moved: 0 }; wake(); });
@@ -924,11 +965,18 @@ function draw(now) {
       if (SPEED && k > .35) { const out = res.s > 0 ? 1 : -1, tail = rider.tails[out > 0 ? 0 : 1]; tail.getWorldPosition(_v); emitSpray(_v, out, Math.floor((k - .3) * 300 * dt + Math.random())); }
     }
   }
+  if (rider) {
+    world.me = world.me || blob(scene, 0, 0, .9, .9, 0, .38);
+    const h = rider.R('hips').getWorldPosition(_v), lying = sit;
+    world.me.position.set(h.x, .005, h.z); world.me.scale.set(lying ? 1.9 : 1, lying ? 1.1 : 1, 1); world.me.rotation.z = lying ? rider.vrm.scene.rotation.y : 0;
+    world.me.material.opacity = .38 * Math.max(.2, 1 - Math.max(0, h.y - rider.hipsRest.y) * 1.5);   // fainter in the air
+  }
   world.tracks.forEach(tr => { tr.m.visible = skiing; });
   world.spray.p.visible = skiing;
   // camera: three-quarter view from the front, following him a little; drag swings it round
   // left alone for a few seconds, the camera slowly walks round him (a turn every ~90s)
-  if (!REDUCED && !state.drag && !state.wardrobe && !camera.userData.small && now - state.touchAt > 6000) state.orbit += dt * .07;
+  // left alone, the camera sways gently either side of the front (±25°, a cycle every ~60s); it no longer circles
+  if (!REDUCED && !state.drag && !state.wardrobe && !camera.userData.small && now - state.touchAt > 6000) state.orbit = damp(state.orbit, .3 * Math.sin(t * .105), .35, dt);
   const dist = (state.camDist || camera.userData.dist || 7) * (sit ? (camera.aspect < 1 ? 1.05 : .78) : 1) * (camera.userData.small ? .62 : 1), a = (skiing ? .5 : sit ? .95 : .32) + state.orbit, el = skiing ? .17 : sit ? .5 : .1;
   const lift = state.wardrobe && innerWidth <= 760 ? .62 : 0;   // wardrobe open: frame him in the top half, above the sheet
   const ty = -lift + (state.camY || (sit ? .25 : skiing ? 1.02 : .92)), tx0 = rider ? rider.vrm.scene.position.x : 0, tz0 = rider && !sit ? rider.vrm.scene.position.z : 0;
