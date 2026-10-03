@@ -132,6 +132,7 @@ function buildScene() {
   // the camp's point lights hang off the scene root and go dark instead of hidden: a light that
   // disappears changes every material's shader, and rebuilding them all froze the page on swaps
   scene.updateMatrixWorld(true); [world.fireLight, world.lanternLight].forEach(l => scene.attach(l));
+  world.makeDumbbell = dumbbell; world.toon = toon;   // motion.js lays out the dumbbell cradle and mug stump around his reach
 
   // ski tracks: two fading ribbons laid behind the skis
   world.tracks = ['l', 'r'].map(() => {
@@ -162,10 +163,7 @@ function buildSettings() {
   [-.5, .5].forEach(z => box(rack, 1.27, .07, .07, 0x1c1d22, 0, 2.28, z)); [-.6, .6].forEach(x => box(rack, .07, .07, 1.07, 0x1c1d22, x, 2.28, 0));
   cyl(rack, .015, 2.1, 0x9a9ca3, 0, 1.38, .5, [0, 0, Math.PI / 2]);
   [-1, 1].forEach(k => { cyl(rack, .225, .05, 0x17181c, k * .82, 1.38, .5, [0, 0, Math.PI / 2], 28); cyl(rack, .17, .04, 0xc0392b, k * .87, 1.38, .5, [0, 0, Math.PI / 2], 24); });
-  const dbr = new THREE.Group(); dbr.position.set(1.8, 0, -1.2); dbr.rotation.y = -.55; gym.add(dbr);
-  box(dbr, 1.5, .06, .36, 0x1c1d22, 0, .55, 0); box(dbr, 1.5, .06, .36, 0x1c1d22, 0, .3, .12);
-  [-.72, .72].forEach(x => box(dbr, .06, .6, .4, 0x1c1d22, x, .3, .05));
-  for (let i = 0; i < 5; i++) { const x = -.56 + i * .28, s = .8 + i * .07; cyl(dbr, .012, .2, 0x9a9ca3, x, .63, 0, [Math.PI / 2, 0, 0]); [-1, 1].forEach(k => box(dbr, .09 * s, .09 * s, .06, 0x17181c, x, .63, k * .1)); }
+  // dumbbells: a low cradle laid out by motion.js stage(), right where his hands land in picking_up
   [0, .05, .1].forEach((y, i) => cyl(gym, .225 - i * .03, .045, 0x17181c, 1.2, .025 + y, .75, [0, 0, 0], 28));
   // shop: wood floor, a rail of jackets and a table of folded shirts (Thomas Jeffery vibes)
   const shop = world.shop = new THREE.Group(); scene.add(shop);
@@ -223,7 +221,7 @@ function buildSettings() {
 const SETTINGS = {
   ski: { sky: 0xdfe8ff, ground: 0x2a2f48, hemi: 1.2, key: 0xffffff, keyI: 2.2, bg: '' },
   sleep: { sky: 0x8fa6d8, ground: 0x241a1c, hemi: .7, key: 0xa9bcff, keyI: .9, bg: 'radial-gradient(90% 70% at 50% 30%,#1c2645 0%,#0e1427 55%,#070a13 100%)' },
-  gym: { sky: 0xffe2c4, ground: 0x2a2018, hemi: 1.05, key: 0xffd9a8, keyI: 2.3, bg: 'radial-gradient(80% 70% at 50% 28%,#5e4837 0%,#34281f 45%,#16110d 100%)' },
+  gym: { sky: 0xffe2c4, ground: 0x4a3a2c, hemi: 1.35, key: 0xffd9a8, keyI: 2.5, bg: 'radial-gradient(80% 70% at 50% 28%,#5e4837 0%,#34281f 45%,#16110d 100%)' },
   work: { sky: 0xfff0dc, ground: 0x3a2e22, hemi: 1.15, key: 0xfff1de, keyI: 2.0, bg: 'radial-gradient(80% 70% at 50% 28%,#7d6852 0%,#473b2f 45%,#1c1611 100%)' },
 };
 const SKY = {

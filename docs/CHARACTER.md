@@ -188,6 +188,16 @@ every look except skiing now runs on **Mixamo motion capture**.
 - **Still hand-posed (rider.js):** skiing, and asleep at camp. A fresh mixer is made when coming back
   from those, because the mixer only writes a bone whose value changed. For the same reason, clip mode
   never calls `resetNormalizedPose()`: a reset would leave every still bone in T-pose.
+- **Grabbing things (2026-10-03):** `picking_up` and `putting_down` are one-handed, right-hand clips; a name ending in
+  `~m` plays the mirror image (left hand). `grab()` finds when and where his hand is lowest, and `stage()` lays the props
+  out under that point for the current model:
+  - **Gym:** a low oak cradle with a dumbbell under each hand.
+  - **Camp:** a log stump with the cocoa.
+  - A step's `fx` swaps the prop between the world and his hand at the moment of the grab, so nothing pops in or out.
+  - The old waist-high dumbbell rack is gone.
+- **Custom-rig rest pose:** Tripo/Mixamo models (and clips downloaded on them) can rest with the arms hanging.
+  - Everything assumes a T-pose rest, so `wrapPlain()` in rider.js and convert-clips straighten the arms first.
+  - Without this the gym arms bent backwards, about 70 degrees off.
 - **Clips that would help next:** a sit-down / stand-up pair for the blanket (a crossfade to the floor
   kicks his legs up), and a pick-up-from-floor clip (for now a crouch clip is cut short).
 

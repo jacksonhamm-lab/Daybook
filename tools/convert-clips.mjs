@@ -1,7 +1,8 @@
 // Mixamo FBX (Without Skin) -> compact clips retargeted to VRM humanoid bones.
 // Rotations are converted into the VRM *normalized* bone space (same maths as three-vrm's
 // loadMixamoAnimation example); hips position is divided by the motion's hips height so the
-// app can scale it to the model. usage: node convert.mjs <fbx dir> <out.json>
+// app can scale it to the model. Clips downloaded on a custom character get their arms straightened to
+// a T-pose rest first. Usage, in a folder with `npm i three@0.169.0`: node convert-clips.mjs <fbx dir> <out.json>
 import fs from 'fs';
 import path from 'path';
 import * as THREE from 'three';
@@ -38,6 +39,24 @@ for (const file of fs.readdirSync(dir).filter(f => /\.fbx$/i.test(f))) {
   try { asset = loader.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), ''); } catch (e) { console.log('skip', file, e.message); continue; }
   const clip = (asset.animations || []).find(a => a.name === 'mixamo.com') || (asset.animations || [])[0];
   if (!clip) { console.log('skip (no animation)', file); continue; }
+  asset.updateMatrixWorld(true);
+  // clips downloaded on a custom character can rest with the arms hanging; rotations are stored
+  // relative to a T-pose rest, so straighten the arms first (+x is the character's left)
+  const _a = new THREE.Vector3(), _c = new THREE.Vector3(), _q = new THREE.Quaternion(), _p = new THREE.Quaternion(), _w = new THREE.Quaternion();
+  const aim = (bone, child, dir) => {
+    if (!bone || !child) return;
+    asset.updateMatrixWorld(true);
+    const cur = child.getWorldPosition(_c).sub(bone.getWorldPosition(_a)).normalize();
+    _q.setFromUnitVectors(cur, dir); bone.parent.getWorldQuaternion(_p); bone.getWorldQuaternion(_w);
+    bone.quaternion.copy(_p.invert().multiply(_q.multiply(_w)));
+  };
+  const nb = n => asset.getObjectByName('mixamorig' + n);
+  const sideX = Math.sign(nb('LeftArm').getWorldPosition(_a).x - nb('Hips').getWorldPosition(_c).x) || 1;
+  for (const [s, x] of [['Left', sideX], ['Right', -sideX]]) {
+    const dir = new THREE.Vector3(x, 0, 0);
+    aim(nb(s + 'Arm'), nb(s + 'ForeArm'), dir); aim(nb(s + 'ForeArm'), nb(s + 'Hand'), dir);
+    aim(nb(s + 'Hand'), nb(s + 'HandMiddle1') || nb(s + 'HandIndex1'), dir);
+  }
   asset.updateMatrixWorld(true);
   const hipsNode = asset.getObjectByName('mixamorigHips');
   const hipsH = hipsNode.position.y;
