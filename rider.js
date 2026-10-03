@@ -376,6 +376,24 @@ function wrapPlain(gltf) {
       const ink = new THREE.SkinnedMesh(o.geometry, INK); ink.bind(o.skeleton, o.bindMatrix); ink.frustumCulled = false; o.parent.add(ink);
     }
   });
+  // Tripo/Mixamo exports can rest with the arms hanging (an A-pose). Every pose here, clips included,
+  // assumes a T-pose rest, so straighten each arm bone to point straight out first (+x is his left).
+  const _a = new THREE.Vector3(), _c = new THREE.Vector3(), _q = new THREE.Quaternion(), _p = new THREE.Quaternion(), _w = new THREE.Quaternion();
+  const aim = (bone, child, dir) => {
+    if (!bone || !child) return;
+    scene.updateMatrixWorld(true);
+    const cur = child.getWorldPosition(_c).sub(bone.getWorldPosition(_a)).normalize();
+    _q.setFromUnitVectors(cur, dir);   // the world-space turn that lines the bone up
+    bone.parent.getWorldQuaternion(_p); bone.getWorldQuaternion(_w);
+    bone.quaternion.copy(_p.invert().multiply(_q.multiply(_w)));
+  };
+  for (const [s, x] of [['Left', 1], ['Right', -1]]) {
+    const dir = new THREE.Vector3(x, 0, 0);
+    aim(bones[s + 'Arm'], bones[s + 'ForeArm'], dir);
+    aim(bones[s + 'ForeArm'], bones[s + 'Hand'], dir);
+    aim(bones[s + 'Hand'], bones[s + 'HandMiddle1'] || bones[s + 'HandIndex1'], dir);
+  }
+  scene.updateMatrixWorld(true);
   const human = {}; for (const [vrm, mx] of Object.entries(MIXAMO)) if (bones[mx]) human[vrm] = { node: bones[mx] };
   const humanoid = new VRMHumanoid(human, { autoUpdateHumanBones: true });
   scene.add(humanoid.normalizedHumanBonesRoot);
