@@ -132,7 +132,7 @@ function buildScene() {
   // the camp's point lights hang off the scene root and go dark instead of hidden: a light that
   // disappears changes every material's shader, and rebuilding them all froze the page on swaps
   scene.updateMatrixWorld(true); [world.fireLight, world.lanternLight].forEach(l => scene.attach(l));
-  world.makeDumbbell = dumbbell; world.makeBottle = waterBottle; world.toon = toon;   // motion.js lays out the dumbbell cradle and mug stump around his reach
+  world.makeDumbbell = dumbbell; world.makeBottle = waterBottle; world.makeLog = makeLog; world.sleepYaw = SLEEP_YAW; world.toon = toon;   // motion.js lays out the dumbbell cradle and mug stump around his reach
 
   // ski tracks: two fading ribbons laid behind the skis
   world.tracks = ['l', 'r'].map(() => {
@@ -210,6 +210,8 @@ function buildSettings() {
     world.makeShoeBox = shoeBox; world.box = box; world.cyl = cyl; world.blob = blob;
   // camp: stars, a moon and a small fire in the snow for the late-night look
   const camp = world.camp = new THREE.Group(); scene.add(camp);
+  floor(camp, (x, W, H) => { x.fillStyle = '#e3ebfa'; x.fillRect(0, 0, W, H); for (let i = 0; i < 2600; i++) { x.fillStyle = ['rgba(150,170,215,.22)', 'rgba(255,255,255,.55)', 'rgba(120,140,195,.14)'][i % 3]; const s = 1 + Math.random() * 3; x.fillRect(Math.random() * W, Math.random() * H, s, s); } }, { wall: 5.2 });
+  backdrop(camp, 'scenes/camp.jpg?v=1', { aspect: 4552 / 1536, H: 6.4, base: .65, D: 5.2 });   // snowy pines, mountains, moon, aurora
   const fire = world.fire = new THREE.Group(); fire.position.set(.95, 0, -1.05); camp.add(fire);
   // where he sleeps: a plaid blanket on the snow, a rolled pillow, cocoa and a lantern within reach
   const bed = new THREE.Group(); bed.rotation.y = SLEEP_YAW; camp.add(bed);   // bed space: +z runs toward his feet
@@ -230,19 +232,21 @@ function buildSettings() {
   { const glass = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .16, 14), new THREE.MeshBasicMaterial({ color: 0xffd08a })); glass.position.y = .108; lantern.add(glass); }
   world.lanternLight = new THREE.PointLight(0xffc27a, 1.1, 2.5, 1.8); world.lanternLight.position.y = .25; lantern.add(world.lanternLight);
   // a small A-frame tent glowing from inside
-  const tent = new THREE.Group(); tent.position.set(-1.5, 0, -2.6); tent.rotation.y = .35; camp.add(tent);
-  { const W = 1.5, Hh = 1.2, D = 1.8, shape = new THREE.Shape([new THREE.Vector2(-W / 2, 0), new THREE.Vector2(W / 2, 0), new THREE.Vector2(0, Hh)]);
-    const body = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: D, bevelEnabled: false }), toon(0x3f6b5a)); body.position.z = -D / 2; tent.add(body); { const ink = new THREE.Mesh(body.geometry, INK); ink.position.copy(body.position); tent.add(ink); }
-    const door = new THREE.Mesh(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-.32, 0), new THREE.Vector2(.32, 0), new THREE.Vector2(0, .78)])), new THREE.MeshBasicMaterial({ color: 0xffc37a })); door.position.z = D / 2 + .005; tent.add(door); }
+  { const tent = new THREE.Group(); tent.position.set(-1.5, 0, -2.6); tent.rotation.y = CAM_YAW; camp.add(tent);
+    sprite(tent, 'scenes/camp-tent.webp', 1.9, 1.9 * 512 / 800, 0, 1.9 * 512 / 800, 0); blob(camp, -1.5, -2.6, 1.9, .9, -CAM_YAW, .4); }
   // the fire's warm pool of light on the snow
   { const glowTex = canvasTex(128, 128, (x, W, H) => { const g = x.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W / 2); g.addColorStop(0, 'rgba(255,170,90,.9)'); g.addColorStop(.4, 'rgba(255,130,60,.35)'); g.addColorStop(1, 'rgba(255,120,50,0)'); x.fillStyle = g; x.fillRect(0, 0, W, H); });
     const glow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); glow.rotation.x = -Math.PI / 2; glow.position.set(.95, .006, -1.05); camp.add(glow); world.glow = glow; }
   for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, st = new THREE.Mesh(new THREE.DodecahedronGeometry(.07 + (i % 3) * .015), toon(0x6d7280)); st.position.set(Math.cos(a) * .3, .04, Math.sin(a) * .3); fire.add(st); }
   [0, .8, 1.6, 2.4].forEach(a => cyl(fire, .05, .6, 0x5b3a22, 0, .12, 0, [Math.PI / 2 - .5, a, 0], 8));
-  world.flames = [[.22, .62, 0xff7a1a], [.15, .5, 0xffb347], [.08, .32, 0xffe7a0]].map(([r, h, c]) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 10), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: .92, blending: THREE.AdditiveBlending, depthWrite: false })); m.position.y = .1 + h / 2; m.userData.h = h; fire.add(m); return m; });
+  { const tex = canvasTex(64, 128, (x, W, H) => {
+      const g = x.createRadialGradient(W / 2, H * .8, 1, W / 2, H * .72, H * .6);
+      g.addColorStop(0, 'rgba(255,252,225,1)'); g.addColorStop(.28, 'rgba(255,205,95,.95)'); g.addColorStop(.62, 'rgba(255,115,35,.6)'); g.addColorStop(1, 'rgba(255,60,10,0)');
+      x.fillStyle = g; x.beginPath(); x.moveTo(W / 2, 0); x.bezierCurveTo(W * .96, H * .42, W, H * .96, W / 2, H * .99); x.bezierCurveTo(0, H * .96, W * .04, H * .42, W / 2, 0); x.fill(); });
+    world.flames = [[.62, .9, 0xff7a2a, 0], [.34, .62, 0xff9a3a, -.13], [.3, .55, 0xff9a3a, .12], [.4, .62, 0xffc46a, .02], [.22, .36, 0xfff2c0, 0]].map(([w, h, c, x]) => {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+      m.userData = { w, h, x }; m.scale.set(w, h, 1); m.position.set(x, .06 + h / 2, 0); fire.add(m); return m; }); }
   world.fireLight = new THREE.PointLight(0xff9a4a, 4, 8, 1.5); world.fireLight.position.set(0, .5, 0); fire.add(world.fireLight);
-  const moon = new THREE.Mesh(new THREE.CircleGeometry(1.3, 40), new THREE.MeshBasicMaterial({ color: 0xf4f1e2, fog: false })); moon.position.set(3.2, 7.2, -30); camp.add(moon);
-  const halo = new THREE.Mesh(new THREE.CircleGeometry(3.2, 40), new THREE.MeshBasicMaterial({ color: 0xbfd0ff, transparent: true, opacity: .12, depthWrite: false })); halo.position.set(3.2, 7.2, -30.1); camp.add(halo);
   world.stars = world.pool(160, 0xffffff);
   { const f = world.stars, P = f.g.attributes.position.array; for (let i = 0; i < f.n; i++) { P[i * 3] = (Math.random() - .5) * 60; P[i * 3 + 1] = 3 + Math.random() * 16; P[i * 3 + 2] = -34 + Math.random() * 10; f.g.attributes.size.array[i] = .08 + Math.random() * .14; f.max[i] = Math.random() * 6; } }
   world.sparks = world.pool(50, 0xffa04a);
@@ -254,7 +258,7 @@ function buildSettings() {
 // what each outfit's world looks like: which props show, the light, and the sky behind
 const SETTINGS = {
   ski: { sky: 0xdfe8ff, ground: 0x2a2f48, hemi: 1.2, key: 0xffffff, keyI: 2.2, bg: '' },
-  sleep: { sky: 0x8fa6d8, ground: 0x241a1c, hemi: .7, key: 0xa9bcff, keyI: .9, bg: 'radial-gradient(90% 70% at 50% 30%,#1c2645 0%,#0e1427 55%,#070a13 100%)' },
+  sleep: { sky: 0x8fa6d8, ground: 0x241a1c, hemi: .9, key: 0xa9bcff, keyI: 1.1, fog: [0x1d2748, 5.5, 16], bg: 'radial-gradient(90% 70% at 50% 30%,#1c2645 0%,#0e1427 55%,#070a13 100%)' },
   gym: { sky: 0xffe2c4, ground: 0x4a3a2c, hemi: 1.35, key: 0xffd9a8, keyI: 2.5, fog: [0xc89a6a, 6.5, 17], bg: 'radial-gradient(80% 70% at 50% 28%,#5e4837 0%,#34281f 45%,#16110d 100%)' },
   work: { sky: 0xfff0dc, ground: 0x3a2e22, hemi: 1.25, key: 0xffe6c4, keyI: 2.1, fog: [0x8a6446, 6.5, 17], bg: 'radial-gradient(80% 70% at 50% 28%,#7d6852 0%,#473b2f 45%,#1c1611 100%)' },
 };
@@ -268,17 +272,17 @@ function setEnv(key) {
   if (key === envKey) return; envKey = key;
   const S = key === 'ski' ? (SKY[dexPrefs().time] || SKY.night) : SETTINGS[key], outdoor = key === 'ski' || key === 'sleep';
   world.ground.material.color.set(key === 'ski' ? S.snow : 0x9aabc8);
-  world.outdoor.visible = outdoor; world.flakes.p.visible = outdoor;
+  world.outdoor.visible = key === 'ski'; world.flakes.p.visible = outdoor;
   world.gym.visible = key === 'gym'; world.shop.visible = key === 'work'; world.camp.visible = key === 'sleep';
   if (key !== 'sleep') world.fireLight.intensity = world.lanternLight.intensity = 0;
-  world.stars.p.visible = world.sparks.p.visible = world.steam.p.visible = key === 'sleep'; world.dust.p.visible = key === 'gym' || key === 'work';
+  world.stars.p.visible = false; world.sparks.p.visible = world.steam.p.visible = key === 'sleep'; world.dust.p.visible = key === 'gym' || key === 'work';
   world.hemi.color.set(S.sky); world.hemi.groundColor.set(S.ground); world.hemi.intensity = S.hemi; world.key.color.set(S.key); world.key.intensity = S.keyI;
   if (bgEl) { bgEl.style.opacity = S.bg ? 1 : 0; if (S.bg) bgEl.style.background = S.bg; }
   scene.fog = S.fog ? new THREE.Fog(...S.fog) : null;   // haze toward the painted wall: depth for free
 }
 function stepSettings(dt, t) {
   if (envKey === 'sleep') {
-    world.flames.forEach((m, i) => { const k = 1 + .18 * Math.sin(t * (9 + i * 3)) + .1 * Math.sin(t * (23 + i * 5)); m.scale.set(1 + .08 * Math.sin(t * 13 + i), k, 1 + .08 * Math.cos(t * 11 + i)); m.position.y = .1 + m.userData.h * k / 2; });
+    world.flames.forEach((m, i) => { const u = m.userData, k = 1 + .16 * Math.sin(t * (9 + i * 3)) + .08 * Math.sin(t * (23 + i * 5)); m.scale.set(u.w * (1 + .07 * Math.sin(t * 13 + i)), u.h * k, 1); m.position.set(u.x + .015 * Math.sin(t * 7 + i * 2), .06 + u.h * k / 2, 0); });
     world.fireLight.intensity = 3.6 + .7 * Math.sin(t * 11) + .5 * Math.sin(t * 27);
     world.glow.material.opacity = .85 + .12 * Math.sin(t * 9); world.lanternLight.intensity = 1.05 + .08 * Math.sin(t * 5);
     const f = world.sparks, P = f.g.attributes.position.array, A = f.g.attributes.alpha.array, S = f.g.attributes.size.array, o = world.fire.position;
@@ -469,7 +473,7 @@ function prepare(key, vrm) {
   vrm.scene.updateMatrixWorld(true);
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
   r.toesRest = R('leftToes') ? R('leftToes').getWorldPosition(new THREE.Vector3()).y : r.footRest;
-  if (key === 'sleep') r.mug = holdInFist(vrm, 'left', cocoaMug());   // left: the drinking clip drinks left-handed
+  if (key === 'sleep') { r.mug = holdInFist(vrm, 'left', cocoaMug()); r.log = holdInFist(vrm, 'right', makeLog(true)); }   // mug left: the drinking clip drinks left-handed
   if (key === 'work') r.carry = holdInFist(vrm, 'right', shoeBox());
   if (key === 'gym') { r.build = dexPrefs().build; if (!vrm.plain) physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); r.bottle = holdInFist(vrm, 'left', waterBottle(true)); }   // leaner and more defined, Luffy-style
   if (key === 'ski') {
@@ -494,6 +498,13 @@ function dumbbell() {
 function shoeBox(visible = false) {
   const g = new THREE.Group(), b = box(g, .32, .12, .2, 0xc9a879, 0, 0, 0); box(g, .335, .03, .215, 0x5a3b26, 0, .05, 0);   // kraft box, dark lid
   b.position.y = 0; g.visible = visible; return g;
+}
+// a split log, bark sides and pale cut rings: along x, or held (along the palm's normal, so it spans both hands in a carry)
+let LOGM = null;
+function makeLog(inHand = false, len = .42, rad = .055) {
+  LOGM = LOGM || [toon(0x5b3a22), toon(0xd9b483), toon(0xd9b483)];
+  const geo = new THREE.CylinderGeometry(rad, rad * 1.08, len, 12); if (inHand) geo.translate(0, -.16, 0); else geo.rotateZ(Math.PI / 2);
+  const g = new THREE.Group(); g.add(new THREE.Mesh(geo, LOGM), new THREE.Mesh(geo, INK)); g.visible = !inHand; return g;
 }
 // his water bottle: in the fist (along its axis, like the mug) or standing on the crate
 function waterBottle(inHand = false) {
@@ -965,7 +976,9 @@ function draw(now) {
   state.mode = state.ctx.mode || 'idle';
   ensureRider();
   const look = want(), skiing = !!rider && rider.key === 'ski', woke = state.wokeAt && now - state.wokeAt < 60000;
-  const sit = !!rider && rider.key === 'sleep' && (state.mode === 'sleep' || dexPrefs().look === 'sleep') && !woke;
+  const rest = !!rider && rider.key === 'sleep' && (state.mode === 'sleep' || dexPrefs().look === 'sleep') && !woke;   // bedtime at camp
+  if (rider && rider.key === 'sleep') rider.bedtime = rest;
+  const sit = rest && !(rider.camping && !(rider.mo && rider.mo.inBed));   // up and about (clips): he walks back and lies down first
   if (performance.now() - state.pointerAt > 2600) { state.lookT.x = Math.sin(t * .35) * .25; state.lookT.y = 0; }
   state.look.x = damp(state.look.x, state.lookT.x, 6, dt); state.look.y = damp(state.look.y, state.lookT.y, 6, dt);
   stepWorld(dt, skiing);
@@ -979,6 +992,7 @@ function draw(now) {
       // mocap: motion.js runs his routine; a tap or celebration plays a reaction on top
       if (state.act) { react(r, state.act, world); state.act = null; }
       state.task = null;
+      if (r.key === 'sleep') r.camping = true;
       const ex = direct(r, r.key, dt, world, state.look);
       expr(r.vrm, { ...ex, blink: blinkAmount(dt) });
       r.vrm.update(dt);
@@ -988,7 +1002,7 @@ function draw(now) {
       // hand-posed: skiing, asleep at camp, and the fallback until the clips have loaded
       r.vrm.humanoid.resetNormalizedPose(); r.clipMode = false; autonomous(dt);
       if (r.key === 'ski') res = skiPose(r, t, dt);
-      else if (sit) res = sleepPose(r, t);
+      else if (sit) { if (r.camping) { r.camping = false; r.prevQ = null; } r.asleep = true; res = sleepPose(r, t); }   // asleep: the next wake gets him up out of bed
       else { stepTask(r.key, dt); res = standPose(r, t, dt, r.key === 'sleep', r.key === 'gym'); }
       if (state.act) { state.actT += dt; if (state.actT > ACTS[state.act]) state.act = null; }
       smoothPose(r, dt, r.key === 'ski' ? 16 : state.act || (state.task && state.task.name === 'jacks') ? 18 : sit ? 5 : 9);

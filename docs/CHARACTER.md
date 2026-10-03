@@ -22,8 +22,8 @@
 - **Each outfit has its own setting** (`SETTINGS` / `setEnv` in rider.js): ski = night slope;
   gym = his home workout room (sunny painted wall, honey wood floor, his mat, kettlebell, dumbbells, water bottle);
   work = menswear shop floor (wood planks, rail of jackets, table of folded shirts, mirror);
-  sleep = cozy snowy camp at night: plaid blanket, pillow, tent glowing inside, lantern, cocoa,
-  a big flickering campfire with a warm glow on the snow, stars and moon.
+  sleep = cozy snowy camp at night: painted pine forest, mountains, moon and aurora; plaid blanket, pillow,
+  a painted tent glowing inside, lantern, cocoa on a stump, a woodpile, and a campfire of soft painted flames.
   Lighting and the sky behind (a gradient layer under the canvas) change with it.
 - **Routines so the standing looks stay busy** (`TASKS` / `stepTask` in rider.js, one after another):
   gym = alternating dumbbell curls (dumbbells appear in his fists), squats, jumping jacks, a flex;
@@ -190,7 +190,13 @@ every look except skiing now runs on **Mixamo motion capture**.
   - **Work:** browses the jacket rail, sorts at the shirt table, then checks the fit in the mirror.
   - **Gym:** walks to the dumbbell cradle, takes the bells, curls, puts them back, then squats and jumping jacks,
     wipes his brow, drinks from his water bottle, does push-ups on his mat, and finishes with a flex.
-  - **Camp (awake):** stretches, kneels to warm up at the fire, crouches for the cocoa, drinks, and puts it back.
+  - **Camp (awake):** a tap gets him up out of bed (`stand_up`). He carries a log from the woodpile to the fire, kneels to warm up,
+    drinks his cocoa, and sits on the blanket (`standing_up` backwards). At bedtime (the minute is up) he finishes what's in his
+    hands, gets up if he's sitting, walks back and lies down (`stand_up` backwards), then the hand-posed sleeping pose takes over.
+    - Steps can play backwards (`rate: -1`); a travel clip played backwards first steps back by its travel.
+    - `WAKE` and `BED` are queued ahead of the routine (`mo.queue`); rider.js keeps him awake (`camping`) until `mo.inBed`.
+    - Clips are measured with him upright: `stage()` used to run while he was still rotated flat from sleeping, which threw
+      off the floor offsets and the stump height.
 - **Mechanics:**
   - **Feet don't slide:** walking travels at the clip's own stride speed (taken from its root motion,
     which is then removed).
@@ -246,7 +252,13 @@ Lots of detail at almost no cost: paint what he doesn't touch, model only what h
   - 3D: the kettlebell (fixed), and from `stage()`: the dumbbell cradle, a wooden crate with his water bottle (front left,
     so he turns three-quarters to the camera to drink), and the mat, sized to his hands and feet in `push_up`.
   - Routine adds `wiping_sweat` after the jumping jacks, then the water bottle, then push-ups on the mat.
-- **Next:** camp and ski get the same treatment.
+- **Camp:**
+  - Painted night wall `scenes/camp.jpg` (snowy pines, mountains, moon, aurora) and a painted tent cut-out (`scenes/camp-tent.webp`).
+    The 3D moon, star field and ski-slope trees are off here; a solid snow floor runs to the wall, with blue night haze.
+  - Flames are soft painted teardrops (sprites, additive) that flicker, instead of cones.
+  - 3D for what he touches: the woodpile (top log under his hand in `lifting`, cut ends to the camera), the log he lays on the
+    fire (he feeds it from behind, facing the camera), the cocoa stump (in front of him, so he drinks facing the camera).
+- **Next:** ski gets the same treatment.
 
 ## Customise (the hanger button on the scene)
 

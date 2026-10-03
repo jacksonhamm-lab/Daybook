@@ -30,8 +30,12 @@ const S = {
   bells: spot(1.8, -1.2, -.55, .58),         // dumbbell cradle
   bottle: spot(-1.3, .3, 2.53, .61),         // water bottle on a crate, front left: he turns three-quarters to the camera
   blanket: { x: -.02, z: -.05, yaw: .8 },    // sitting on the plaid, the fire off to his right
-  fire: { x: 1.6, z: -.55, yaw: Math.atan2(.95 - 1.6, -1.05 + .55) },   // kneeling three-quarters on to the fire, path clear of it
-  mug: { x: .42, z: -.24, yaw: 2.7 },        // crouch distance from the cocoa
+  fire: { x: .3, z: -1.2, yaw: Math.atan2(.95 - .3, -1.05 + 1.2) },    // kneeling at the fire's left, three-quarters to the camera
+  mug: { x: .95, z: -.15, yaw: .5 },         // the cocoa stump is in front of him, so he faces the camera
+  wood: { x: 1.2, z: -1.5, yaw: 1.88 },      // side-on to the woodpile
+  feed: { x: 1, z: -1.75, yaw: -.1 },        // behind the fire, facing the camera over it (set by stage())
+  sit: { x: -.15, z: .3, yaw: .7 },          // sitting on the blanket
+  bed: { x: .26, z: .7, yaw: .35 },          // where he stands to lie back down (set by stage())
   till: { x: 1.35, z: -.3, yaw: Math.PI / 2 },   // stands at the desk side-on to the camera; sits back onto the stool
   shoes: { x: .15, z: -1.4, yaw: Math.PI },      // the stack of shoe boxes on the floor
   bench: { x: .95, z: -1.25, yaw: Math.PI * .82 }, // the low display bench
@@ -47,7 +51,7 @@ const disc = (x, z, r) => ({ x, z, r });
 const OBST = {   // fixed props (rider.js buildSettings)
   work: [box_(-1.25, -1.55, .9, .16, .25), box_(-2.3, -.2, .46, .16, .9)],          // rail, mirror
   gym: [disc(.8, .5, .15)],                                                           // kettlebell
-  sleep: [disc(.95, -1.05, .38), box_(-1.5, -2.6, .78, .92, .35), disc(-1.04, -.52, .1)],   // fire, tent, lantern
+  sleep: [disc(.95, -1.05, .38), box_(-1.5, -2.6, .85, .7, .32), disc(-1.04, -.52, .1)],    // fire, tent, lantern
 };
 const STAGED = {};   // laid out by stage() for the current model
 function poly(o, grow) {   // the footprint as a convex polygon, grown by `grow`
@@ -84,7 +88,7 @@ function plan(kind, from, to) {
   return path;
 }
 // clips that move him (sitting back onto a stool, getting up): their travel is kept, then handed to his position
-const TRAVEL = new Set(['sitting', 'stand_up2', 'stand_up', 'standing_up']);
+const TRAVEL = new Set(['sitting', 'stand_up2', 'stand_up', 'standing_up']);   // (played backwards too: lying and sitting back down)
 
 /* ---------- the scripts ----------
    steps: { go: 'spot' } walk there | { face: 'spot' } turn to its yaw | { idle: seconds, clip }
@@ -116,12 +120,17 @@ const ROUTINES = {
     { go: 'home' }, { face: 'home' }, { idle: 2 },
     { play: 'idle_to_push_up' }, { play: 'push_up', n: 4 }, { play: 'push_up_to_idle' }, { play: 'being_cocky' },
   ],
-  sleep: [   // up at camp (asleep is procedural): sit, stretch, warm up by the fire, cocoa
-    { go: 'blanket' }, { face: 'blanket' }, { idle: 3 }, { play: 'neck_stretching' },
+  sleep: [   // up at camp (asleep is procedural; WAKE and BED get him up and back down): a log on the fire, warm up, cocoa, sit
+    { go: 'wood' }, { face: 'wood' }, { play: 'lifting', cut: 4.4, fx: 'log+' },
+    { go: 'feed' }, { face: 'feed' }, { play: 'putting_down', from: 3.8, cut: 3.4, fx: 'log-' },
     { go: 'fire' }, { face: 'fire' }, { play: 'kneel', cut: 9, fade: .7 },
     { go: 'mug' }, { face: 'mug' }, { play: 'picking_up~m', from: 1, cut: 3.2, fx: 'mug+' }, { play: 'drinking' }, { play: 'putting_down~m', from: 3.8, cut: 3.4, fx: 'mug-' },   // left hand: drinking is left-handed
+    { go: 'sit' }, { face: 'sit' }, { play: 'standing_up', rate: -1, still: true }, { play: 'sitting_idle', n: 3, still: true, sitting: true }, { play: 'standing_up', still: true },
   ],
 };
+// getting up out of bed when he's woken, and lying back down when it's bedtime (stand_up played backwards)
+const WAKE = [{ play: 'stand_up', still: true }];
+const BED = [{ go: 'bed' }, { face: 'bed' }, { play: 'stand_up', rate: -1, still: true, bed: true }];
 // tap reactions and celebrations
 const REACT = { hop: 'jumping', spin: 'cheering', wave: 'happy_hand_gesture', flex: 'being_cocky', nod: 'head_nod_yes', flip: 'backflip' };
 const HAPPY = new Set(['cheering', 'happy_hand_gesture', 'being_cocky', 'acknowledging']);
@@ -217,6 +226,10 @@ function props(r, fx, world) {
   if (fx === 'bells-') { bell(0, false); bell(1, false); }
   if (fx === 'bellL+' || fx === 'bellL-') bell(0, fx === 'bellL+');
   if (fx === 'bellR+' || fx === 'bellR-') bell(1, fx === 'bellR+');
+  if (fx === 'log+') { if (r.log) r.log.visible = true; if (world.pileTop) world.pileTop.visible = false; }
+  if (fx === 'log-') { if (r.log) r.log.visible = false; if (world.fireLog) world.fireLog.visible = true; }
+  if (fx === 'log-reset') { if (r.log) r.log.visible = false; if (world.pileTop) world.pileTop.visible = true; if (world.fireLog) world.fireLog.visible = false; }
+  if (r.mo) { if (/^(log|mug)\+$/.test(fx)) r.mo.holding = true; if (/^(log|mug)-$/.test(fx)) r.mo.holding = false; }
   if (fx === 'bottle+' || fx === 'bottle-') { if (r.bottle) r.bottle.visible = fx === 'bottle+'; if (world.gymBottle) world.gymBottle.visible = fx === 'bottle-'; }
   if (fx === 'mug+' || fx === 'mug-') { if (r.mug) r.mug.visible = fx === 'mug+'; if (world.campMug) world.campMug.visible = fx === 'mug-'; }
   if (fx === 'box+') { if (r.carry) r.carry.visible = true; if (world.stackTop) world.stackTop.visible = false; }
@@ -329,21 +342,52 @@ function stage(r, kind, world) {
     if (!world.stump) { world.stump = new THREE.Mesh(new THREE.CylinderGeometry(.13, .15, 1, 12), world.toon(0x6b4a2f)); world.camp.add(world.stump); }
     world.stump.scale.y = top; world.stump.position.set(p.x, top / 2, p.z); STAGED.sleep = [disc(p.x, p.z, .16)];
     const mp = world.campMug.parent.worldToLocal(new THREE.Vector3(p.x, top, p.z)); world.campMug.position.copy(mp);
+    world.mugTop.set(p.x, top + .11, p.z);   // the steam follows the cup
+    const camp = world.camp; (world.campProps || []).forEach(o => camp.remove(o)); const mk = world.campProps = [];
+    // the woodpile: a little pyramid of logs whose top log is right under his hand in lifting
+    build(r, 'lifting'); build(r, 'putting_down'); build(r, 'stand_up');
+    const Lf = r.mo.contact.lifting, Pd = r.mo.contact.putting_down;
+    if (Lf && world.makeLog) {
+      const wp = at('wood', { x: Lf.pos.x, y: 0, z: Lf.pos.z + .06 }), topY = Math.max(.055, Lf.pos.y - .03), rows = Math.max(3, Math.round((topY - .055) / .1) + 1);
+      const pile = new THREE.Group(); pile.position.set(wp.x, 0, wp.z); pile.rotation.y = S.wood.yaw; camp.add(pile); mk.push(pile);
+      for (let k = 0; k < rows; k++) for (let j = 0; j < rows - k + (k === rows - 1 ? 0 : 1); j++) {
+        const n = rows - k + (k === rows - 1 ? 0 : 1), lg = world.makeLog(false, .46, .055); lg.rotation.set((Math.random() - .5) * 2, (Math.random() - .5) * .2, 0);   // logs run across in front of him (cut ends to the camera), a little uneven
+        lg.position.set(k === rows - 1 ? 0 : (Math.random() - .5) * .06, .055 + k * (topY - .055) / Math.max(1, rows - 1), (j - (n - 1) / 2) * .112); pile.add(lg);
+        if (k === rows - 1) world.pileTop = lg;
+      }
+      mk.push(world.blob(camp, wp.x, wp.z, .7, .6, -S.wood.yaw, .35));
+      STAGED.sleep.push(box_(wp.x, wp.z, .26, .28, S.wood.yaw));
+    }
+    // feeding the fire: he stands behind it so the hand he puts the log down with lands on its near edge
+    if (Pd && world.makeLog) {
+      const y = S.feed.yaw, n = Math.sin(y), c = Math.cos(y), f = world.fire.position, k = .2;
+      S.feed.x = f.x - n * k - (Pd.pos.x * c + Pd.pos.z * n); S.feed.z = f.z - c * k - (-Pd.pos.x * n + Pd.pos.z * c);
+      if (!world.fireLog) { world.fireLog = world.makeLog(false, .44, .05); camp.add(world.fireLog); }
+      const lp = at('feed', Pd.pos); world.fireLog.position.set(lp.x, .07, lp.z); world.fireLog.rotation.set(0, y, .25);
+    }
+    // lying back down: stand where getting up leaves him
+    const T = r.mo.travel.stand_up, Y = world.sleepYaw ?? .35;
+    if (T) { S.bed.yaw = Y; S.bed.x = T.x * Math.cos(Y) + T.z * Math.sin(Y); S.bed.z = -T.x * Math.sin(Y) + T.z * Math.cos(Y); }
     world.stagedFor = r;
   }
 }
 
 function startStep(r, kind, world) {
   const mo = r.mo, list = ROUTINES[kind];
-  mo.i = (mo.i + 1) % list.length;
-  const s = mo.step = { ...list[mo.i], t: 0, left: 0 };
+  if (kind === 'sleep' && r.bedtime && !mo.toBed && !mo.holding) { mo.toBed = true; mo.queue = (mo.ground ? [{ play: 'standing_up', still: true }] : []).concat(BED); }
+  let next;
+  if (mo.queue && mo.queue.length) next = mo.queue.shift();
+  else { mo.i = (mo.i + 1) % list.length; next = list[mo.i]; }
+  const s = mo.step = { ...next, t: 0, left: 0 };
   if (s.go) { s.path = plan(kind, mo.pos, S[s.go]); s.k = 0; fade(r, WALK, { rate: WALK_RATE, fadeT: .35 }); }
   else if (s.face || s.idle != null) { fade(r, s.clip || IDLE[kind], { fadeT: .45 }); if (s.fx) props(r, s.fx, world); }
   else if (s.play) {
     const d = DATA[s.play.replace(/~m$/, '')];
     if (!d) { s.left = 0; return; }
-    fade(r, s.play, { loop: true, fadeT: s.fade || .35, from: s.from || 0 });
-    s.left = s.cut || d.dur * (s.n || 1);
+    const back = (s.rate || 1) < 0; build(r, s.play); const tr = mo.travel[s.play];
+    if (back && tr) { const c = Math.cos(mo.yaw), n = Math.sin(mo.yaw); mo.pos.x -= tr.x * c + tr.z * n; mo.pos.z -= -tr.x * n + tr.z * c; mo.cutNext = true; }
+    fade(r, s.play, { loop: true, fadeT: s.fade || .35, from: back ? d.dur - .02 : s.from || 0, rate: s.rate || 1 });
+    s.left = s.cut || (back ? d.dur - .06 : d.dur * (s.n || 1));
     const c = r.mo.contact[s.play]; s.fxAt = s.fx ? (c ? Math.max(0, c.t - (s.from || 0)) : 0) : null;
   }
 }
@@ -351,16 +395,23 @@ function startStep(r, kind, world) {
 // One frame of the routine. Returns the expression weights for the face.
 export function direct(r, kind, dt, world, look) {
   const mo = r.mo;
+  r.vrm.scene.rotation.order = 'XYZ'; r.vrm.scene.rotation.set(0, mo.yaw, 0);   // upright before stage() measures any clip (he may have been lying asleep)
   if (r.mo.kind !== kind) {   // a new look (or a fresh model): start the script from home
     mo.kind = kind; mo.i = -1; mo.step = null; mo.pos = { x: 0, z: 0 }; mo.yaw = 0;
-    stage(r, kind, world); props(r, 'bells-', world); props(r, 'mug-', world); props(r, 'bottle-', world);
+    stage(r, kind, world); props(r, 'bells-', world); props(r, 'mug-', world); props(r, 'bottle-', world); props(r, 'log-reset', world);
     if (kind === 'sleep') { mo.pos = { x: S.blanket.x, z: S.blanket.z }; }
   }
   if (!ROUTINES[kind]) return {};
+  if (kind === 'sleep' && !r.bedtime && mo.toBed) { mo.toBed = false; mo.queue = mo.inBed ? [...WAKE] : []; mo.inBed = false; }
+  if (kind === 'sleep' && r.bedtime && mo.step && mo.step.sitting && mo.step.t < mo.step.left - .5) mo.step.left = mo.step.t + .5;
   r.vrm.scene.rotation.order = 'XYZ'; r.vrm.scene.rotation.set(0, mo.yaw, 0);   // upright before any clip is measured (he may have been lying down)
   if (r.clipMode === false) {
     mo.mixer.stopAllAction(); mo.mixer.uncacheRoot(r.vrm.scene); mo.mixer = new THREE.AnimationMixer(r.vrm.scene); mo.cur = null; mo.curName = '';
     if (mo.step) { mo.i--; mo.step = null; } mo.headBase = null;
+  }
+  if (r.asleep) {   // woken at camp: he gets up out of bed, from where he was lying (hips at the origin)
+    r.asleep = false; mo.step = null; mo.i = -1; mo.queue = [...WAKE]; mo.pos = { x: 0, z: 0 }; mo.yaw = world.sleepYaw ?? .35; mo.cutNext = true;
+    mo.inBed = mo.toBed = mo.holding = mo.ground = false; props(r, 'log-reset', world); props(r, 'mug-', world);
   }
   let s = mo.step;
   if (mo.react) {
@@ -393,7 +444,9 @@ export function direct(r, kind, dt, world, look) {
       const tr = mo.travel[s.play];
       if (s.t > s.left - (tr ? .05 : .3)) {
         if (s.fxAt != null) props(r, s.fx, world);
-        if (tr) { const c = Math.cos(mo.yaw), n = Math.sin(mo.yaw); mo.pos.x += tr.x * c + tr.z * n; mo.pos.z += -tr.x * n + tr.z * c; mo.cutNext = true; }   // he has moved (onto the stool, or back up)
+        if (tr && (s.rate || 1) > 0) { const c = Math.cos(mo.yaw), n = Math.sin(mo.yaw); mo.pos.x += tr.x * c + tr.z * n; mo.pos.z += -tr.x * n + tr.z * c; mo.cutNext = true; }   // he has moved (onto the stool, or back up)
+        if (s.play === 'standing_up') mo.ground = (s.rate || 1) < 0;   // sat down on the blanket / got back up
+        if (s.bed) mo.inBed = true;   // lying down: rider.js takes over with the sleeping pose
         mo.step = null;
       }
     }
@@ -416,7 +469,7 @@ export function direct(r, kind, dt, world, look) {
 export function react(r, name, world) {
   const mo = r.mo; if (!mo) return false;
   const clip = REACT[name] || name; if (!DATA[clip]) return false;
-  if (mo.step && (mo.step.seated || mo.step.play === 'writing' || TRAVEL.has(mo.step.play))) return false;   // not while sitting down, seated, or getting up
+  if (mo.step && (mo.step.seated || mo.step.still || mo.step.play === 'writing' || TRAVEL.has(mo.step.play))) return false;   // not while sitting down, seated, or getting up
   fade(r, clip, { loop: false, fadeT: .25 });
   mo.react = { t: 0, len: DATA[clip].dur };
   return true;
