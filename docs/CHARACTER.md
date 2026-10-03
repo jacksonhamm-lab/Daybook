@@ -234,6 +234,11 @@ Lots of detail at almost no cost: paint what he doesn't touch, model only what h
   4. Get up (`stand_up2`).
   5. Carry a shoe box from the stack to the bench (lifting, then putting_down).
   6. Check the mirror.
+- **Not walking through things:**
+  - Every prop has a footprint (`OBST` fixed, `STAGED` laid out per model) in motion.js.
+  - `plan()` routes each walk over the footprint corners, grown by his body radius (shrunk only as far as needed when he's starting or stopping right next to one).
+  - At the desk he stands clear, sits back, then scoots in to write (`world.deskShift`), like pulling a chair in, and scoots out before getting up.
+  - Shoe boxes and the bench sit just past his hand so his feet stay out of them.
 - **Next:** gym, camp and ski get the same treatment.
 
 ## Customise (the hanger button on the scene)

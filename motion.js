@@ -35,6 +35,53 @@ const S = {
   shoes: { x: .15, z: -1.4, yaw: Math.PI },      // the stack of shoe boxes on the floor
   bench: { x: .95, z: -1.25, yaw: Math.PI * .82 }, // the low display bench
 };
+/* ---------- not walking through things ----------
+   Every prop has a footprint (a box or a circle, world metres; boxes rotate like three's rotation.y).
+   A walk plans a path over the corners of the footprints, grown by his body's radius, so he steps round
+   the stool instead of through it. Footprints that contain his start or the spot he's walking to are
+   ignored (he's meant to be right up against those: the desk he writes at, the cradle he lifts from). */
+const BODY = .2;
+const box_ = (x, z, hw, hd, yaw = 0) => ({ x, z, hw, hd, yaw });
+const disc = (x, z, r) => ({ x, z, r });
+const OBST = {   // fixed props (rider.js buildSettings)
+  work: [box_(-1.25, -1.55, .9, .16, .25), box_(-2.3, -.2, .46, .16, .9)],          // rail, mirror
+  gym: [box_(-2.2, -2.3, .7, .6, .45), disc(1.2, .75, .26)],                          // power rack, plates
+  sleep: [disc(.95, -1.05, .38), box_(-1.5, -2.6, .78, .92, .35), disc(-1.04, -.52, .1)],   // fire, tent, lantern
+};
+const STAGED = {};   // laid out by stage() for the current model
+function poly(o, grow) {   // the footprint as a convex polygon, grown by `grow`
+  if (o.r != null) { const R = (o.r + grow) / Math.cos(Math.PI / 8); return Array.from({ length: 8 }, (_, k) => { const a = k * Math.PI / 4 + Math.PI / 8; return [o.x + Math.cos(a) * R, o.z + Math.sin(a) * R]; }); }
+  const c = Math.cos(o.yaw), s = Math.sin(o.yaw), hw = o.hw + grow, hd = o.hd + grow;
+  return [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]].map(([x, z]) => [o.x + x * c + z * s, o.z - x * s + z * c]);
+}
+const inside = (P, p) => { let sign = 0; for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length], cr = (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]); if (Math.abs(cr) < 1e-9) continue; if (!sign) sign = Math.sign(cr); else if (Math.sign(cr) !== sign) return false; } return true; };
+const cross = (a, b, c, d) => { const o = (p, q, r) => (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]); return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0; };
+function clear(a, b, polys) {
+  for (const P of polys) {
+    if (inside(P, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2])) return false;
+    for (let i = 0; i < P.length; i++) if (cross(a, b, P[i], P[(i + 1) % P.length])) return false;
+  }
+  return true;
+}
+function plan(kind, from, to) {
+  const a = [from.x, from.z], b = [to.x, to.z];
+  // grow each footprint by his body radius, less if he's already standing closer than that (so he can still
+  // step out of it); a footprint that holds his start or goal even at its true size is the thing he's at: skip it
+  const polys = [...(OBST[kind] || []), ...(STAGED[kind] || [])].map(o => { for (const g of [BODY, .14, .08, .03]) { const P = poly(o, g); if (!inside(P, a) && !inside(P, b)) return P; } return null; }).filter(Boolean);
+  if (clear(a, b, polys)) return [to];
+  // shortest path over the (slightly pushed-out) corners: a tiny visibility graph
+  const nodes = [a, b, ...polys.flatMap(P => { const cx = P.reduce((s, p) => s + p[0], 0) / P.length, cz = P.reduce((s, p) => s + p[1], 0) / P.length; return P.map(p => [cx + (p[0] - cx) * 1.04, cz + (p[1] - cz) * 1.04]); })]
+    .filter((p, i) => i < 2 || !polys.some(P => inside(P, p)));
+  const n = nodes.length, dist = new Array(n).fill(Infinity), prev = new Array(n).fill(-1), done = new Array(n).fill(false); dist[0] = 0;
+  for (let it = 0; it < n; it++) {
+    let u = -1; for (let i = 0; i < n; i++) if (!done[i] && (u < 0 || dist[i] < dist[u])) u = i;
+    if (u < 0 || dist[u] === Infinity) break; done[u] = true; if (u === 1) break;
+    for (let v = 0; v < n; v++) { if (done[v] || v === u) continue; const d = dist[u] + Math.hypot(nodes[v][0] - nodes[u][0], nodes[v][1] - nodes[u][1]); if (d < dist[v] && clear(nodes[u], nodes[v], polys)) { dist[v] = d; prev[v] = u; } }
+  }
+  if (prev[1] < 0) return [to];   // boxed in: walk straight (better than standing still)
+  const path = []; for (let v = 1; v !== 0; v = prev[v]) path.unshift(v === 1 ? to : { x: nodes[v][0], z: nodes[v][1] });
+  return path;
+}
 // clips that move him (sitting back onto a stool, getting up): their travel is kept, then handed to his position
 const TRAVEL = new Set(['sitting', 'stand_up2', 'stand_up', 'standing_up']);
 
@@ -49,7 +96,7 @@ const ROUTINES = {
   work: [
     { idle: 4, fx: 'box-reset' }, { go: 'rail' }, { face: 'rail' }, { play: 'rummaging', n: 2 }, { play: 'searching_files_high', cut: 5 },
     { go: 'home' }, { face: 'home' }, { play: 'acknowledging' },
-    { go: 'till' }, { face: 'till' }, { play: 'sitting' }, { play: 'writing', n: 3, seated: true }, { play: 'stand_up2' },
+    { go: 'till' }, { face: 'till' }, { play: 'sitting' }, { play: 'writing', n: 3, seated: true }, { play: 'writing', cut: 1.6 }, { play: 'stand_up2' },
     { go: 'home' }, { face: 'home' }, { idle: 3 },
     { go: 'shoes' }, { face: 'shoes' }, { play: 'lifting', cut: 4.4, fx: 'box+' }, { go: 'bench' }, { face: 'bench' }, { play: 'putting_down', from: 3.8, cut: 3.4, fx: 'box-' },
     { go: 'mirror' }, { face: 'mirror' }, { play: 'thoughtful_head_shake' }, { play: 'head_nod_yes' },
@@ -185,6 +232,7 @@ function stage(r, kind, world) {
     const w = pr.distanceTo(pl) + .34, mat = world.toon(0x9a7048);   // light oak, so the dark dumbbells read on it
     const slab = new THREE.Mesh(new THREE.BoxGeometry(w, .04, .26), mat); slab.position.y = top - .02; cradle.add(slab);
     [-1, 1].forEach(k => { const leg = new THREE.Mesh(new THREE.BoxGeometry(.05, top - .04, .22), mat); leg.position.set(k * (w / 2 - .06), (top - .04) / 2, 0); cradle.add(leg); });
+    STAGED.gym = [box_(cradle.position.x, cradle.position.z, w / 2, .13, yaw)];
     world.restBells = [pl, pr].map(p => { const b = world.makeDumbbell(); b.visible = true; b.position.set(p.x, top + .05, p.z); b.rotation.y = yaw; world.gym.add(b); return b; });
     world.stagedFor = r;
   }
@@ -197,18 +245,23 @@ function stage(r, kind, world) {
     const T = r.mo.travel.sitting || { x: 0, z: -.45 };
     const [hips] = sample(r, r.mo.clips.sitting, r.mo.clips.sitting.duration, ['hips']);
     const [lh, rh] = sample(r, r.mo.clips.writing, r.mo.clips.writing.duration * .5, ['leftHand', 'rightHand']);
-    const seat = at('till', { x: T.x, y: 0, z: T.z }), seatTop = Math.max(.35, hips.y - .12);
+    // He stands just clear of the desk's front edge. Seated, his hands only reach ~0.3m ahead of his hips,
+    // so for writing he scoots in (mo.shift, eased) and back out before standing up, like pulling a chair in.
+    // The stool sits halfway between his landing spot and the scooted-in spot so he's on it throughout.
+    const handZ = (lh.z + rh.z) / 2, edge = .06, need = edge + .1 - handZ, shift = Math.max(0, need - T.z);
+    world.deskShift = shift;
+    const seat = at('till', { x: T.x, y: 0, z: T.z + shift / 2 - .04 }), seatTop = Math.max(.35, hips.y - .12);
     const stool = keep(new THREE.Group()); stool.position.set(seat.x, 0, seat.z); stool.rotation.y = rot; shop.add(stool);
-    world.cyl(stool, .19, .05, 0x6b4630, 0, seatTop - .025, 0, [0, 0, 0], 20);
-    [0, 1, 2, 3].forEach(k => { const a = k * Math.PI / 2 + Math.PI / 4; world.cyl(stool, .016, seatTop - .05, 0x2a1d14, Math.cos(a) * .13, (seatTop - .05) / 2, Math.sin(a) * .13); });
+    world.cyl(stool, .17, .05, 0x6b4630, 0, seatTop - .025, 0, [0, 0, 0], 20);
+    [0, 1, 2, 3].forEach(k => { const a = k * Math.PI / 2 + Math.PI / 4; world.cyl(stool, .016, seatTop - .05, 0x2a1d14, Math.cos(a) * .115, (seatTop - .05) / 2, Math.sin(a) * .115); });
     keep(world.blob(shop, seat.x, seat.z, .5, .5, 0, .3));
-    const hand = { x: T.x + (lh.x + rh.x) / 2, z: T.z + (lh.z + rh.z) / 2 }, topY = Math.max(.62, Math.min(lh.y, rh.y) - .03);
-    const deskC = at('till', { x: hand.x, y: 0, z: hand.z + .22 }), desk = keep(new THREE.Group());
+    const topY = Math.max(.62, Math.min(lh.y, rh.y) - .03);
+    const deskC = at('till', { x: T.x + (lh.x + rh.x) / 2, y: 0, z: edge + .31 }), desk = keep(new THREE.Group());
     desk.position.set(deskC.x, 0, deskC.z); desk.rotation.y = rot; shop.add(desk);
     world.box(desk, 1.25, .05, .62, 0x5b3a26, 0, topY - .025, 0);                       // walnut top
     [[-.56, -.25], [.56, -.25], [-.56, .25], [.56, .25]].forEach(([x, z]) => world.box(desk, .05, topY - .05, .05, 0x3a2618, x, (topY - .05) / 2, z));
-    world.box(desk, .42, .012, .3, 0xf1e6cf, 0, topY + .006, -.12, .05);                 // the open ledger
-    world.box(desk, .006, .014, .3, 0x8a6a48, 0, topY + .008, -.12, .05);                 // its spine
+    world.box(desk, .42, .012, .3, 0xf1e6cf, 0, topY + .006, -.17, .05);                 // the open ledger, under his hands
+    world.box(desk, .006, .014, .3, 0x8a6a48, 0, topY + .008, -.17, .05);                 // its spine
     world.box(desk, .24, .14, .2, 0x2b2f36, .42, topY + .07, .08);                      // the till
     world.box(desk, .2, .03, .12, 0xc9a24a, .42, topY + .155, .02);                      // brass keys
     world.cyl(desk, .012, .3, 0xc9a24a, -.45, topY + .15, .12);                          // lamp stem
@@ -219,7 +272,8 @@ function stage(r, kind, world) {
     build(r, 'lifting'); build(r, 'putting_down');
     const L = r.mo.contact.lifting, P = r.mo.contact.putting_down;
     if (L && P) {
-      const sp = at('shoes', L.pos), bp = at('bench', P.pos), boxH = .12;
+      const out = (c, k) => { const l = Math.hypot(c.pos.x, c.pos.z) || 1; return { x: c.pos.x + c.pos.x / l * k, y: c.pos.y, z: c.pos.z + c.pos.z / l * k }; };   // pushed away from him
+      const sp = at('shoes', out(L, .11)), bp = at('bench', out(P, .15)), boxH = .12;
       const n = Math.max(1, Math.round((L.pos.y - .06) / boxH));
       for (let k = 0; k < n; k++) { const b = keep(world.makeShoeBox(true)); b.position.set(sp.x, boxH / 2 + k * boxH, sp.z); b.rotation.y = S.shoes.yaw + (k % 2) * .08; shop.add(b); if (k === n - 1) world.stackTop = b; }
       keep(world.blob(shop, sp.x, sp.z, .5, .4, -S.shoes.yaw, .3));
@@ -228,13 +282,15 @@ function stage(r, kind, world) {
       world.benchBox = keep(world.makeShoeBox(false)); world.benchBox.position.set(bp.x, bTop + .06, bp.z); world.benchBox.rotation.y = S.bench.yaw; shop.add(world.benchBox);
       keep(world.blob(shop, bp.x, bp.z, 1.1, .5, -S.bench.yaw, .3));
     }
+    STAGED.work = [box_(deskC.x, deskC.z, .63, .31, rot), disc(seat.x, seat.z, .18)];
+    if (L && P) { const sp = world.stackTop ? world.stackTop.position : at('shoes', L.pos), bp = world.benchBox ? world.benchBox.position : at('bench', P.pos); STAGED.work.push(disc(sp.x, sp.z, .2), box_(bp.x, bp.z, .45, .18, S.bench.yaw)); }
     world.workProps = mk; world.stagedFor = r;
   }
   if (kind === 'sleep' && world.camp && world.campMug && world.stagedFor !== r) {
     build(r, 'picking_up'); const R = r.mo.contact.picking_up; if (!R) return;
     const p = at('mug', R.pos), top = Math.max(.08, p.y - .06);
     if (!world.stump) { world.stump = new THREE.Mesh(new THREE.CylinderGeometry(.13, .15, 1, 12), world.toon(0x6b4a2f)); world.camp.add(world.stump); }
-    world.stump.scale.y = top; world.stump.position.set(p.x, top / 2, p.z);
+    world.stump.scale.y = top; world.stump.position.set(p.x, top / 2, p.z); STAGED.sleep = [disc(p.x, p.z, .16)];
     const mp = world.campMug.parent.worldToLocal(new THREE.Vector3(p.x, top, p.z)); world.campMug.position.copy(mp);
     world.stagedFor = r;
   }
@@ -244,7 +300,7 @@ function startStep(r, kind, world) {
   const mo = r.mo, list = ROUTINES[kind];
   mo.i = (mo.i + 1) % list.length;
   const s = mo.step = { ...list[mo.i], t: 0, left: 0 };
-  if (s.go) fade(r, WALK, { rate: WALK_RATE, fadeT: .35 });
+  if (s.go) { s.path = plan(kind, mo.pos, S[s.go]); s.k = 0; fade(r, WALK, { rate: WALK_RATE, fadeT: .35 }); }
   else if (s.face || s.idle != null) { fade(r, s.clip || IDLE[kind], { fadeT: .45 }); if (s.fx) props(r, s.fx, world); }
   else if (s.play) {
     const d = DATA[s.play.replace(/~m$/, '')];
@@ -279,9 +335,10 @@ export function direct(r, kind, dt, world, look) {
     if (!s) { startStep(r, kind, world); s = mo.step; }
     s.t += dt;
     if (s.go) {
-      const to = S[s.go], dx = to.x - mo.pos.x, dz = to.z - mo.pos.z, dist = Math.hypot(dx, dz);
+      const last = !s.path || s.k >= s.path.length - 1, to = s.path ? s.path[s.k] : S[s.go], dx = to.x - mo.pos.x, dz = to.z - mo.pos.z, dist = Math.hypot(dx, dz);
       const w = mo.cur ? mo.cur.getEffectiveWeight() : 1, v = (mo.speed[WALK] || 1.3) * WALK_RATE * w;
-      if (dist < .06 || s.t > 12) { mo.pos.x = to.x; mo.pos.z = to.z; mo.step = null; }
+      if (!last && dist < .14) s.k++;   // round a corner without stopping
+      else if (dist < .06 || s.t > 16) { mo.pos.x = to.x; mo.pos.z = to.z; mo.step = null; }
       else {
         const head = Math.atan2(dx, dz); mo.yaw += ang(head - mo.yaw) * (1 - Math.exp(-9 * dt));
         // only travel once he's roughly facing the way he's going (turns on the spot first)
@@ -311,7 +368,8 @@ export function direct(r, kind, dt, world, look) {
   mo.mixer.update(dt);
   if (head) { mo.headBase = (mo.headBase || new THREE.Quaternion()).copy(head.quaternion); if (look) { _e.set(-look.y * .12, look.x * .3, 0); head.quaternion.multiply(_q.setFromEuler(_e)); } }
   const scene = r.vrm.scene;
-  scene.rotation.order = 'XYZ'; scene.rotation.set(0, mo.yaw, 0); scene.position.x = mo.pos.x; scene.position.z = mo.pos.z;
+  const want = mo.step && mo.step.seated && !mo.react ? (world.deskShift || 0) : 0; mo.shift = damp(mo.shift || 0, want, 2.2, dt);   // scoot in / out
+  scene.rotation.order = 'XYZ'; scene.rotation.set(0, mo.yaw, 0); scene.position.x = mo.pos.x + Math.sin(mo.yaw) * mo.shift; scene.position.z = mo.pos.z + Math.cos(mo.yaw) * mo.shift;
   // the floor offset blends with the clips: settles into a kneel instead of dropping
   const fl = mo.floor[mo.curName] ?? 0; mo.y = damp(mo.y, fl, 8, dt); scene.position.y = mo.y;
   return { happy: HAPPY.has(mo.curName) ? .8 : 0, relaxed: mo.curName === 'kneel' || mo.curName === 'sitting_idle' ? .5 : 0 };
@@ -321,7 +379,7 @@ export function direct(r, kind, dt, world, look) {
 export function react(r, name, world) {
   const mo = r.mo; if (!mo) return false;
   const clip = REACT[name] || name; if (!DATA[clip]) return false;
-  if (mo.step && (mo.step.seated || TRAVEL.has(mo.step.play))) return false;   // not while sitting down, seated, or getting up
+  if (mo.step && (mo.step.seated || mo.step.play === 'writing' || TRAVEL.has(mo.step.play))) return false;   // not while sitting down, seated, or getting up
   fade(r, clip, { loop: false, fadeT: .25 });
   mo.react = { t: 0, len: DATA[clip].dur };
   return true;
