@@ -145,6 +145,18 @@ the repo, see below).
   - Jacket front hem takes a little upper-leg weight so it rides on the thighs in a
     ski stance (otherwise the pants poke through).
 
+## Concept B (2026-10-02: the target look)
+
+- **What B is:** One Piece Wano-style, with his messy black hair and magenta eyes, an athletic build, and Zoro-style ink-line muscles. The reference is .
+- **Gym look:** B, as , uploaded to KV as .
+  - Built with Tripo image-to-3D from B. Tripo's own rig was broken (every vertex was weighted to the hips).
+  - Re-rigged in Mixamo with the light skeleton (thumb and index fingers only), then exported in the browser to an indexed GLB with a 1024px JPEG texture, scaled to 1.75m.
+- **wrapPlain() in rider.js** puts three-vrm's VRMHumanoid over the mixamorig bones, so clips, props and the camera treat it like a VRM.
+  - No face shapes, so no blinking.
+  - Material: toon plus a self-lit painted texture (emissive .42), with an INK outline mesh sharing the skeleton.
+  - physique.js is skipped for it.
+- **Other looks (ski, work, sleep):** still the VRoid models. Next step: B-style sheets per outfit, then Tripo, then Mixamo, the same route.
+
 ## Motion (2026-10-02: motion capture, motion.js)
 
 He kept asking for movement that isn't stiff or robotic. Hand-coded joint angles never got there, so

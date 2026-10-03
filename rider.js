@@ -12,7 +12,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/jsm/utils/BufferGeometryUtils.js';
-import { VRMLoaderPlugin, VRMUtils } from './vendor/three-vrm.module.min.js';
+import { VRMLoaderPlugin, VRMUtils, VRMHumanoid } from './vendor/three-vrm.module.min.js';
 import { dress, toon, INK } from './dress.js';
 import { gear, fists, hands } from './gear.js';
 import { physique } from './physique.js';
@@ -20,7 +20,8 @@ import { loadAnims, animsReady, setupMotion, direct, react } from './motion.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const V = 2;   // bump to make phones fetch new model files (2: unused face blendshapes stripped)
-const MODELS = { ski: `models/ski.vrm?v=${V}`, work: `models/work.vrm?v=${V}`, sleep: `models/sleep.vrm?v=${V}`, gym: `models/gym.vrm?v=${V}` };
+// gym is concept B (Tripo mesh, rigged in Mixamo): a plain .glb that wrapPlain() gives the same humanoid API as a VRM
+const MODELS = { ski: `models/ski.vrm?v=${V}`, work: `models/work.vrm?v=${V}`, sleep: `models/sleep.vrm?v=${V}`, gym: 'models/gym.glb?v=1' };
 const SPEED = REDUCED ? 0 : 7.5;   // metres a second down the hill
 const TURN = 1.05;                 // carving rhythm, radians a second (one left+right every ~6s)
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -352,7 +353,33 @@ const cache = {};
 function load(key) {
   if (cache[key]) return cache[key];
   const loader = new GLTFLoader(); loader.register(p => new VRMLoaderPlugin(p));
-  return (cache[key] = loader.loadAsync(MODELS[key]).then(gltf => prepare(key, gltf.userData.vrm)).catch(e => { delete cache[key]; throw e; }));
+  return (cache[key] = loader.loadAsync(MODELS[key]).then(gltf => prepare(key, gltf.userData.vrm || wrapPlain(gltf))).catch(e => { delete cache[key]; throw e; }));
+}
+// A Mixamo-rigged .glb (no VRM data): three-vrm's humanoid rig over its mixamorig bones, so poses,
+// clips and props drive it exactly like a VRM. It has no face shapes, so no blinking (expressionManager null).
+const MIXAMO = { hips: 'Hips', spine: 'Spine', chest: 'Spine1', upperChest: 'Spine2', neck: 'Neck', head: 'Head' };
+for (const s of ['Left', 'Right']) {
+  const l = s.toLowerCase();
+  Object.assign(MIXAMO, { [l + 'Shoulder']: s + 'Shoulder', [l + 'UpperArm']: s + 'Arm', [l + 'LowerArm']: s + 'ForeArm', [l + 'Hand']: s + 'Hand', [l + 'UpperLeg']: s + 'UpLeg', [l + 'LowerLeg']: s + 'Leg', [l + 'Foot']: s + 'Foot', [l + 'Toes']: s + 'ToeBase',
+    [l + 'ThumbMetacarpal']: s + 'HandThumb1', [l + 'ThumbProximal']: s + 'HandThumb2', [l + 'ThumbDistal']: s + 'HandThumb3' });
+  [['Index', 'Index'], ['Middle', 'Middle'], ['Ring', 'Ring'], ['Little', 'Pinky']].forEach(([f, m]) => ['Proximal', 'Intermediate', 'Distal'].forEach((p, i) => { MIXAMO[l + f + p] = s + 'Hand' + m + (i + 1); }));
+}
+function wrapPlain(gltf) {
+  const scene = gltf.scene, bones = {};
+  scene.updateMatrixWorld(true);
+  scene.traverse(o => {
+    if (/^mixamorig/.test(o.name)) bones[o.name.replace(/^mixamorig:?/, '')] = o;   // by name: joints without skin weights (hips) aren't flagged as bones
+    if (o.isSkinnedMesh) {
+      // cel shading over the painted texture, and an ink outline like the props
+      // the texture already has its shading painted in, so it lights itself part-way and the cel bands just deepen it
+      const map = o.material.map; o.material = Object.assign(toon(0xffffff), { map, emissive: new THREE.Color(0xffffff), emissiveMap: map, emissiveIntensity: .42, side: THREE.FrontSide }); o.material.name = 'dex_skin';
+      const ink = new THREE.SkinnedMesh(o.geometry, INK); ink.bind(o.skeleton, o.bindMatrix); ink.frustumCulled = false; o.parent.add(ink);
+    }
+  });
+  const human = {}; for (const [vrm, mx] of Object.entries(MIXAMO)) if (bones[mx]) human[vrm] = { node: bones[mx] };
+  const humanoid = new VRMHumanoid(human, { autoUpdateHumanBones: true });
+  scene.add(humanoid.normalizedHumanBonesRoot);
+  return { scene, humanoid, expressionManager: null, meta: { metaVersion: '1' }, plain: true, update() { humanoid.update(); } };
 }
 function prepare(key, vrm) {
   if (key !== 'ski') loadAnims().catch(e => report('dex', e));
@@ -362,7 +389,7 @@ function prepare(key, vrm) {
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
   r.toesRest = R('leftToes') ? R('leftToes').getWorldPosition(new THREE.Vector3()).y : r.footRest;
   if (key === 'sleep') r.mug = holdInFist(vrm, 'right', cocoaMug());
-  if (key === 'gym') { r.build = dexPrefs().build; physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
+  if (key === 'gym') { r.build = dexPrefs().build; if (!vrm.plain) physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
   if (key === 'ski') {
     const D = dexPrefs();
     r.outfit = dress(vrm, { jacket: D.jacket, pants: D.pants, boots: D.boots, gloves: D.gloves }); r.kit = gear(vrm, r.outfit, { frame: D.frame, pole: D.poles }, { lens: D.lens, skis: D.skis });
@@ -387,12 +414,15 @@ function cocoaMug() {
 }
 // parent a prop to a hand so it sits in the closed fist (built in the bind pose, like the ski poles)
 function holdInFist(vrm, side, obj) {
-  let skin; vrm.scene.traverse(o => { if (o.isSkinnedMesh && o.name === 'Body_(merged)') skin = o; });
+  let skin; vrm.scene.traverse(o => { if (o.isSkinnedMesh && (o.name === 'Body_(merged)' || (!skin && o.material !== INK))) skin = o; });
   const bones = skin.skeleton.bones, bi = n => bones.indexOf(vrm.humanoid.getRawBoneNode(n)), bind = n => skin.skeleton.boneInverses[bi(n)].clone().invert();
-  const hand = new THREE.Vector3().setFromMatrixPosition(bind(side + 'Hand')), mid = new THREE.Vector3().setFromMatrixPosition(bind(side + 'MiddleProximal'));
+  const knuckle = bi(side + 'MiddleProximal') >= 0 ? side + 'MiddleProximal' : side + 'IndexProximal';   // lighter Mixamo skeletons have thumb + index only
+  const hand = new THREE.Vector3().setFromMatrixPosition(bind(side + 'Hand')), mid = new THREE.Vector3().setFromMatrixPosition(bind(knuckle));
   obj.position.copy(hand.lerp(mid, .95)); obj.position.y -= .022;
   const m = skin.skeleton.boneInverses[bi(side + 'Hand')].clone().multiply(new THREE.Matrix4().compose(obj.position, obj.quaternion, obj.scale));
-  m.decompose(obj.position, obj.quaternion, obj.scale); bones[bi(side + 'Hand')].add(obj); return obj;
+  m.decompose(obj.position, obj.quaternion, obj.scale); bones[bi(side + 'Hand')].add(obj);
+  vrm.scene.updateMatrixWorld(true); obj.scale.divideScalar(bones[bi(side + 'Hand')].getWorldScale(new THREE.Vector3()).x);   // a scaled-up model (gym .glb) mustn't scale the prop
+  return obj;
 }
 // his look, chosen in the Customise sheet (settings.dex); the defaults are Jackson's real kit
 export const DEX_DEFAULTS = { look: 'auto', time: 'night', jacket: '#b8863b', pants: '#1c1d22', boots: '#b8a276', gloves: '#16171d', poles: '#1a1b20', head: 'mask', mask: '#1a1b21', beanie: '#16171d', frame: '#d5d0c1', lens: 'gold', skis: 'bent', skin: 'default', build: 'athletic' };
@@ -412,7 +442,7 @@ function applyDex() {
   if (!rider) return;
   applySkin(rider, D.skin);
   if (envKey) { const k = envKey; envKey = ''; setEnv(k); }   // slope time may have changed
-  if (rider.key === 'gym' && rider.build !== D.build) { delete cache.gym; state.reload = true; }
+  if (rider.key === 'gym' && !rider.vrm.plain && rider.build !== D.build) { delete cache.gym; state.reload = true; }
   if (rider.key !== 'ski') return;
   ['jacket', 'pants', 'boots', 'gloves'].forEach(k => rider.outfit.recolor(k, D[k]));
   const K = rider.kit, was = rider.dexWas || {};

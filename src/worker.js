@@ -258,7 +258,7 @@ async function runReminders(hash, env) {
 async function modelApi(url, env) {
   const name = url.pathname.slice('/models/'.length);
   // the .vrm models, and anims.json: Dex's Mixamo clips (also private: the licence doesn't allow sharing them raw)
-  if (!/^([a-z]+\.vrm|anims\.json)$/.test(name)) return new Response('Not found', { status: 404 });
+  if (!/^([a-z]+\.(vrm|glb)|anims\.json)$/.test(name)) return new Response('Not found', { status: 404 });
   const body = await env.SYNC.get('model:' + name, 'arrayBuffer');
   if (!body) return new Response('Not found', { status: 404 });
   return new Response(body, {
