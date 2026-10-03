@@ -155,7 +155,19 @@ the repo, see below).
   - No face shapes, so no blinking.
   - Material: toon plus a self-lit painted texture (emissive .42), with an INK outline mesh sharing the skeleton.
   - physique.js is skipped for it.
-- **Other looks (ski, work, sleep):** still the VRoid models. Next step: B-style sheets per outfit, then Tripo, then Mixamo, the same route.
+- **All four looks are concept B now (2026-10-03):** gym, work, ski and camp (key `sleep`) are Tripo models rigged in Mixamo.
+  - **Pipeline per outfit:**
+    1. Reference sheet, then front/back/right views generated one at a time, with left mirrored, into `Documents/Dex/<Look>/`.
+    2. Tripo multiview.
+    3. Tripo's rig is always broken, so the mesh goes through Mixamo (light skeleton: thumb and index fingers only).
+    4. Convert in the browser (scratchpad make.html): the original Tripo textures go back on (2048 colour + 1024 normal map), the
+       hard dark strip Tripo paints under the jaw is repainted to a soft skin shade, the result is scaled to 1.75m, and exported to
+       `models/<look>.glb` and KV.
+  - **Ski kit:** the jacket, mask and goggles are part of the model; `plainSkiKit()` (gear.js) adds the skis and poles, built at
+    the T-pose rest and attached in place. Customising colours only reaches the skis and poles now.
+  - **Props in the fist** (holdInFist) on plain models are placed at the T-pose rest too. Their bind pose hangs the arms, so bind
+    matrices would tilt the props.
+  - The VRoid .vrm files, dress.js, physique.js and the rest of gear() are no longer loaded. They're kept for the record.
 
 ## Motion (2026-10-02: motion capture, motion.js)
 

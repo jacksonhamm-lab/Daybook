@@ -14,14 +14,14 @@ import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/jsm/utils/BufferGeometryUtils.js';
 import { VRMLoaderPlugin, VRMUtils, VRMHumanoid } from './vendor/three-vrm.module.min.js';
 import { dress, toon, INK } from './dress.js';
-import { gear, fists, hands } from './gear.js';
+import { gear, plainSkiKit, fists, hands } from './gear.js';
 import { physique } from './physique.js';
 import { loadAnims, animsReady, setupMotion, direct, react } from './motion.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const V = 2;   // bump to make phones fetch new model files (2: unused face blendshapes stripped)
 // gym is concept B (Tripo mesh, rigged in Mixamo): a plain .glb that wrapPlain() gives the same humanoid API as a VRM
-const MODELS = { ski: `models/ski.vrm?v=${V}`, work: `models/work.vrm?v=${V}`, sleep: `models/sleep.vrm?v=${V}`, gym: 'models/gym.glb?v=1' };
+const MODELS = { ski: 'models/ski.glb?v=1', work: 'models/work.glb?v=1', sleep: 'models/camp.glb?v=1', gym: 'models/gym.glb?v=1' };   // all concept B now (Tripo + Mixamo)
 const SPEED = REDUCED ? 0 : 7.5;   // metres a second down the hill
 const TURN = 1.05;                 // carving rhythm, radians a second (one left+right every ~6s)
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -370,7 +370,8 @@ function wrapPlain(gltf) {
     if (o.isSkinnedMesh) {
       // cel shading over the painted texture, and an ink outline like the props
       // the texture already has its shading painted in, so it lights itself part-way and the cel bands just deepen it
-      const map = o.material.map; o.material = Object.assign(toon(0xffffff), { map, emissive: new THREE.Color(0xffffff), emissiveMap: map, emissiveIntensity: .42, side: THREE.FrontSide }); o.material.name = 'dex_skin';
+      const { map, normalMap, normalScale } = o.material; o.material = Object.assign(toon(0xffffff), { map, emissive: new THREE.Color(0xffffff), emissiveMap: map, emissiveIntensity: .42, side: THREE.FrontSide }); o.material.name = 'dex_skin';
+      if (normalMap) { o.material.normalMap = normalMap; o.material.normalScale = normalScale.clone(); }   // Tripo's surface detail (folds, creases)
       const ink = new THREE.SkinnedMesh(o.geometry, INK); ink.bind(o.skeleton, o.bindMatrix); ink.frustumCulled = false; o.parent.add(ink);
     }
   });
@@ -408,8 +409,11 @@ function prepare(key, vrm) {
   if (key === 'gym') { r.build = dexPrefs().build; if (!vrm.plain) physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
   if (key === 'ski') {
     const D = dexPrefs();
+    if (vrm.plain) { r.kit = plainSkiKit(vrm, { skis: D.skis, pole: D.poles }); r.dexWas = { ...D }; }   // jacket, mask and goggles are part of the model
+    else {
     r.outfit = dress(vrm, { jacket: D.jacket, pants: D.pants, boots: D.boots, gloves: D.gloves }); r.kit = gear(vrm, r.outfit, { frame: D.frame, pole: D.poles }, { lens: D.lens, skis: D.skis });
     r.kit.setMask(D.mask); r.kit.setBeanie(D.head === 'beanie', D.beanie); r.dexWas = { ...D };
+    }
     r.tails = ['l', 'r'].map(s => { const o = new THREE.Object3D(); o.position.set(0, .01, -.8); r.kit.skis[s].add(o); return o; });
   }
   return r;
@@ -430,6 +434,13 @@ function cocoaMug() {
 }
 // parent a prop to a hand so it sits in the closed fist (built in the bind pose, like the ski poles)
 function holdInFist(vrm, side, obj) {
+  if (vrm.plain) {   // Tripo/Mixamo: build at the straightened T-pose rest and attach in place (their bind pose hangs the arms)
+    vrm.scene.updateMatrixWorld(true);
+    const R = n => vrm.humanoid.getRawBoneNode(n), hand = R(side + 'Hand').getWorldPosition(new THREE.Vector3());
+    const knuckle = (R(side + 'MiddleProximal') || R(side + 'IndexProximal')).getWorldPosition(new THREE.Vector3());
+    obj.position.copy(hand.lerp(knuckle, .95)); obj.position.y -= .022; obj.quaternion.identity();
+    R(side + 'Hand').attach(obj); return obj;
+  }
   let skin; vrm.scene.traverse(o => { if (o.isSkinnedMesh && (o.name === 'Body_(merged)' || (!skin && o.material !== INK))) skin = o; });
   const bones = skin.skeleton.bones, bi = n => bones.indexOf(vrm.humanoid.getRawBoneNode(n)), bind = n => skin.skeleton.boneInverses[bi(n)].clone().invert();
   const knuckle = bi(side + 'MiddleProximal') >= 0 ? side + 'MiddleProximal' : side + 'IndexProximal';   // lighter Mixamo skeletons have thumb + index only
@@ -460,13 +471,14 @@ function applyDex() {
   if (envKey) { const k = envKey; envKey = ''; setEnv(k); }   // slope time may have changed
   if (rider.key === 'gym' && !rider.vrm.plain && rider.build !== D.build) { delete cache.gym; state.reload = true; }
   if (rider.key !== 'ski') return;
-  ['jacket', 'pants', 'boots', 'gloves'].forEach(k => rider.outfit.recolor(k, D[k]));
+  if (rider.outfit) ['jacket', 'pants', 'boots', 'gloves'].forEach(k => rider.outfit.recolor(k, D[k]));
   const K = rider.kit, was = rider.dexWas || {};
-  if (was.lens !== D.lens) K.setLens(D.lens);
+  // the Tripo ski model wears its mask, goggles and jacket; only the skis and poles are props
+  if (was.lens !== D.lens && K.setLens) K.setLens(D.lens);
   if (was.skis !== D.skis) K.setSkis(D.skis);
-  if (was.mask !== D.mask) K.setMask(D.mask);
-  if (was.head !== D.head || was.beanie !== D.beanie) K.setBeanie(D.head === 'beanie', D.beanie);
-  K.setFrame(D.frame); K.setPoles(D.poles);
+  if (was.mask !== D.mask && K.setMask) K.setMask(D.mask);
+  if ((was.head !== D.head || was.beanie !== D.beanie) && K.setBeanie) K.setBeanie(D.head === 'beanie', D.beanie);
+  K.setFrame && K.setFrame(D.frame); K.setPoles(D.poles);
   rider.dexWas = { ...D };
 }
 function want() {

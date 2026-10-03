@@ -77,6 +77,55 @@ const bentTex = (seed, name = 'bent') => canvasTex(256, 2048, (x, W, H) => {
   x.fillStyle = '#10131f'; x.fillRect(0, 0, 6, H); x.fillRect(W - 6, 0, 6, H);
 });
 
+// Skis under each boot and poles in each fist. Works on any rig: positions come from bindPos (bind or
+// rest pose, in the same space attach expects) and boots is the boot vertices' bounds source.
+function skisAndPoles({ bindPos, attach, hasBone, boots, C, skiTex, skiName }) {
+  // ── skis: twin tips with a sidecut and rocker, bindings under each boot ──
+  const skis = {};
+  const skiGeo = (() => {
+    const L = 1.84, tipW = .068, waist = .052, tailW = .065, hw = t => { const w = t > 0 ? waist + (tipW - waist) * t * t : waist + (tailW - waist) * t * t, e = Math.abs(t); return e > .93 ? w * Math.sqrt(Math.max(0, 1 - ((e - .93) / .07) ** 2)) : w; };
+    const sh = new THREE.Shape(), N = 90; for (let k = 0; k <= N; k++) { const t = -1 + 2 * k / N; k ? sh.lineTo(hw(t), -t * L / 2) : sh.moveTo(hw(t), -t * L / 2); } for (let k = N; k >= 0; k--) { const t = -1 + 2 * k / N; sh.lineTo(-hw(t), -t * L / 2); }
+    const g = new THREE.ExtrudeGeometry(sh, { depth: .014, bevelEnabled: false, curveSegments: 4 }); g.rotateX(-Math.PI / 2);   // length now runs along +z (tip forward), thickness up
+    const P = g.attributes.position, uv = new Float32Array(P.count * 2), rock = .3;
+    for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i), e = Math.max(0, Math.abs(z) - (L / 2 - rock)) / rock; P.setY(i, P.getY(i) - .014 + .075 * e * e); uv[i * 2] = .5 - x / (2 * tipW); uv[i * 2 + 1] = z / L + .5; }   // photo: tip at the top, skier's left on the left
+    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.computeVertexNormals(); return g;
+  })();
+  const loader = new THREE.TextureLoader();
+  const topFor = s => { const m = toon(0xffffff); m.side = THREE.FrontSide; if (skiTex && skiTex[s]) { const t = loader.load(skiTex[s]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; m.map = t; } else m.map = bentTex(s === 'l' ? 1234567 : 7654321, skiName); skiTops[s] = m; return m; };
+  const skiTops = {};
+  [['l', 'leftFoot'], ['r', 'rightFoot']].forEach(([s, bone]) => {
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, z0 = Infinity, z1 = -Infinity;
+    if (boots) for (let v = 0; v < boots.n; v++) { const x = boots.pos[v * 3], y = boots.pos[v * 3 + 1], z = boots.pos[v * 3 + 2]; if ((x > 0) !== (s === 'l')) continue; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+    else { const f = bindPos(bone); x0 = f.x - .05; x1 = f.x + .05; y0 = 0; z0 = f.z - .1; z1 = f.z + .18; }
+    const g = new THREE.Group(); g.name = 'ski_' + s;
+    const bh = .022, cxs = (x0 + x1) / 2, czs = (z0 + z1) / 2;
+    g.position.set(cxs, y0 - bh, czs + .03);
+    const ski = new THREE.Mesh(skiGeo, [topFor(s), toon(0x2a2b30)]); g.add(ski); g.add(new THREE.Mesh(skiGeo, INK));
+    const blk = (w, h, d, x, y, z, c) => { const b = inked(new THREE.BoxGeometry(w, h, d), toon(c), INK_FINE); b.position.set(x, y, z); g.add(b); };
+    const bl = z1 - z0;
+    blk(.07, bh, bl * .9, 0, bh / 2, -.03, C.binding);                  // plate
+    blk(.075, .03, .06, 0, bh + .012, bl / 2 - .03 + .01, C.binding);    // toe piece
+    blk(.075, .045, .07, 0, bh + .02, -bl / 2 - .03 - .01, C.binding);   // heel piece
+    blk(.077, .008, .02, 0, bh + .034, -bl / 2 - .03 - .01, C.accent);   // heel accent
+    skis[s] = attach(g, bone);
+  });
+
+  // ── poles: in a closed fist, running out of the little-finger side ──
+  const poles = {}, poleMat = toon(C.pole);
+  [['l', 'left'], ['r', 'right']].forEach(([s, side]) => {
+    const hand = bindPos(side + 'Hand'), mid = bindPos(hasBone(side + 'MiddleProximal') ? side + 'MiddleProximal' : side + 'IndexProximal'), grip = hand.clone().lerp(mid, .95); grip.y -= .022;
+    const g = new THREE.Group(); g.name = 'pole_' + s; g.position.copy(grip);
+    const L = 1.22, part = (geo, c, y) => { const m = inked(geo, c.isMaterial ? c : toon(c), INK_FINE); m.position.y = y; g.add(m); };
+    part(new THREE.CylinderGeometry(.0085, .0085, L, 10), poleMat, -L / 2 + .02);
+    part(new THREE.CylinderGeometry(.015, .013, .16, 14), C.grip, -.03);
+    part(new THREE.CylinderGeometry(.018, .018, .012, 14), C.grip, .054);
+    part(new THREE.CylinderGeometry(.05, .05, .006, 20), C.grip, -L + .1);
+    part(new THREE.ConeGeometry(.007, .03, 8).rotateX(Math.PI), C.accent, -L + .005);
+    g.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));   // shaft leaves the fist toward the back (the little-finger side)
+    poles[s] = attach(g, side + 'Hand');
+  });
+  return { skis, poles, poleMat, skiTops };
+}
 export function gear(vrm, outfit = {}, colors = {}, { skiTex, lens: lensTint = 'gold', skis: skiName = 'bent' } = {}) {
   const C = { mask: 0x15161b, frame: 0xd5d0c1, strap: 0x8e857c, pole: 0x1a1b20, grip: 0x0e0f12, binding: 0x15161b, accent: 0xd9a441, ...colors };
   let skin, face; const hair = [];
@@ -171,50 +220,7 @@ export function gear(vrm, outfit = {}, colors = {}, { skiTex, lens: lensTint = '
   }
   attach(goggles, 'head');
 
-  // ── skis: twin tips with a sidecut and rocker, bindings under each boot ──
-  const skis = {}, boots = outfit.boots && outfit.boots.userData.bind;
-  const skiGeo = (() => {
-    const L = 1.84, tipW = .068, waist = .052, tailW = .065, hw = t => { const w = t > 0 ? waist + (tipW - waist) * t * t : waist + (tailW - waist) * t * t, e = Math.abs(t); return e > .93 ? w * Math.sqrt(Math.max(0, 1 - ((e - .93) / .07) ** 2)) : w; };
-    const sh = new THREE.Shape(), N = 90; for (let k = 0; k <= N; k++) { const t = -1 + 2 * k / N; k ? sh.lineTo(hw(t), -t * L / 2) : sh.moveTo(hw(t), -t * L / 2); } for (let k = N; k >= 0; k--) { const t = -1 + 2 * k / N; sh.lineTo(-hw(t), -t * L / 2); }
-    const g = new THREE.ExtrudeGeometry(sh, { depth: .014, bevelEnabled: false, curveSegments: 4 }); g.rotateX(-Math.PI / 2);   // length now runs along +z (tip forward), thickness up
-    const P = g.attributes.position, uv = new Float32Array(P.count * 2), rock = .3;
-    for (let i = 0; i < P.count; i++) { const x = P.getX(i), z = P.getZ(i), e = Math.max(0, Math.abs(z) - (L / 2 - rock)) / rock; P.setY(i, P.getY(i) - .014 + .075 * e * e); uv[i * 2] = .5 - x / (2 * tipW); uv[i * 2 + 1] = z / L + .5; }   // photo: tip at the top, skier's left on the left
-    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.computeVertexNormals(); return g;
-  })();
-  const loader = new THREE.TextureLoader();
-  const topFor = s => { const m = toon(0xffffff); m.side = THREE.FrontSide; if (skiTex && skiTex[s]) { const t = loader.load(skiTex[s]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; m.map = t; } else m.map = bentTex(s === 'l' ? 1234567 : 7654321, skiName); skiTops[s] = m; return m; };
-  const skiTops = {};
-  [['l', 'leftFoot'], ['r', 'rightFoot']].forEach(([s, bone]) => {
-    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, z0 = Infinity, z1 = -Infinity;
-    if (boots) for (let v = 0; v < boots.n; v++) { const x = boots.pos[v * 3], y = boots.pos[v * 3 + 1], z = boots.pos[v * 3 + 2]; if ((x > 0) !== (s === 'l')) continue; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
-    else { const f = bindPos(bone); x0 = f.x - .05; x1 = f.x + .05; y0 = 0; z0 = f.z - .1; z1 = f.z + .18; }
-    const g = new THREE.Group(); g.name = 'ski_' + s;
-    const bh = .022, cxs = (x0 + x1) / 2, czs = (z0 + z1) / 2;
-    g.position.set(cxs, y0 - bh, czs + .03);
-    const ski = new THREE.Mesh(skiGeo, [topFor(s), toon(0x2a2b30)]); g.add(ski); g.add(new THREE.Mesh(skiGeo, INK));
-    const blk = (w, h, d, x, y, z, c) => { const b = inked(new THREE.BoxGeometry(w, h, d), toon(c), INK_FINE); b.position.set(x, y, z); g.add(b); };
-    const bl = z1 - z0;
-    blk(.07, bh, bl * .9, 0, bh / 2, -.03, C.binding);                  // plate
-    blk(.075, .03, .06, 0, bh + .012, bl / 2 - .03 + .01, C.binding);    // toe piece
-    blk(.075, .045, .07, 0, bh + .02, -bl / 2 - .03 - .01, C.binding);   // heel piece
-    blk(.077, .008, .02, 0, bh + .034, -bl / 2 - .03 - .01, C.accent);   // heel accent
-    skis[s] = attach(g, bone);
-  });
-
-  // ── poles: in a closed fist, running out of the little-finger side ──
-  const poles = {}, poleMat = toon(C.pole);
-  [['l', 'left'], ['r', 'right']].forEach(([s, side]) => {
-    const hand = bindPos(side + 'Hand'), mid = bindPos(side + 'MiddleProximal'), grip = hand.clone().lerp(mid, .95); grip.y -= .022;
-    const g = new THREE.Group(); g.name = 'pole_' + s; g.position.copy(grip);
-    const L = 1.22, part = (geo, c, y) => { const m = inked(geo, c.isMaterial ? c : toon(c), INK_FINE); m.position.y = y; g.add(m); };
-    part(new THREE.CylinderGeometry(.0085, .0085, L, 10), poleMat, -L / 2 + .02);
-    part(new THREE.CylinderGeometry(.015, .013, .16, 14), C.grip, -.03);
-    part(new THREE.CylinderGeometry(.018, .018, .012, 14), C.grip, .054);
-    part(new THREE.CylinderGeometry(.05, .05, .006, 20), C.grip, -L + .1);
-    part(new THREE.ConeGeometry(.007, .03, 8).rotateX(Math.PI), C.accent, -L + .005);
-    g.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));   // shaft leaves the fist toward the back (the little-finger side)
-    poles[s] = attach(g, side + 'Hand');
-  });
+  const { skis, poles, poleMat, skiTops } = skisAndPoles({ bindPos, attach, hasBone: n => bi(n) >= 0, boots: outfit.boots && outfit.boots.userData.bind, C, skiTex, skiName });
   // live restyling from the customise sheet
   const setLens = t => { const old = lens.material.map; lens.material.map = lensTex(lensPts, LW, LH, t); lens.material.needsUpdate = true; old && old.dispose(); };
   const setSkis = n => Object.entries(skiTops).forEach(([s, m]) => { const old = m.map; m.map = bentTex(s === 'l' ? 1234567 : 7654321, n); m.needsUpdate = true; old && old.dispose(); });
@@ -231,6 +237,22 @@ export function gear(vrm, outfit = {}, colors = {}, { skiTex, lens: lensTint = '
 // Hands. 0 = relaxed (a natural curl, looser at the index, tighter at the little finger,
 // thumb resting in), 1 = a closed fist, negative = opening toward flat (-1). One value per hand.
 // Called every frame, so the bone list is looked up once per model and reused.
+// Skis and poles for a plain (Tripo/Mixamo) model, built in world space at its T-pose rest and attached
+// in place. Their bind pose has the arms hanging, so bind matrices would point the poles the wrong way.
+export function plainSkiKit(vrm, { skis: skiName = 'bent', pole } = {}) {
+  const C = { pole: 0x1a1b20, grip: 0x0e0f12, binding: 0x15161b, accent: 0xd9a441, ...(pole ? { pole } : {}) };
+  vrm.scene.updateMatrixWorld(true);
+  const R = n => vrm.humanoid.getRawBoneNode(n), bindPos = n => R(n).getWorldPosition(new THREE.Vector3());
+  const attach = (obj, n) => { R(n).attach(obj); return obj; };
+  // boot bounds: the body's vertices below the ankle, in world space at rest (the legs aren't re-posed)
+  let skin; vrm.scene.traverse(o => { if (!skin && o.isSkinnedMesh) skin = o; });
+  const P = skin.geometry.attributes.position, footY = Math.max(bindPos('leftFoot').y, bindPos('rightFoot').y) + .03, v = new THREE.Vector3(), pos = [];
+  for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(skin.matrixWorld); if (v.y < footY) pos.push(v.x, v.y, v.z); }
+  const kit = skisAndPoles({ bindPos, attach, hasBone: n => !!R(n), boots: { n: pos.length / 3, pos }, C, skiName });
+  const setSkis = n => Object.entries(kit.skiTops).forEach(([s, m]) => { const old = m.map; m.map = bentTex(s === 'l' ? 1234567 : 7654321, n); m.needsUpdate = true; old && old.dispose(); });
+  const setPoles = c => kit.poleMat.color.set(c);
+  return { skis: kit.skis, poles: kit.poles, setSkis, setPoles };
+}
 const FIST = [1.35, 1.55, 1.1], RELAX = { Index: [.2, .3, .2], Middle: [.3, .4, .26], Ring: [.4, .46, .3], Little: [.5, .5, .36] }, FINGER_BONES = new WeakMap();
 export function hands(vrm, L = 0, R = 0) {
   let F = FINGER_BONES.get(vrm);
