@@ -147,8 +147,8 @@ the repo, see below).
 
 ## Concept B (2026-10-02: the target look)
 
-- **What B is:** One Piece Wano-style, with his messy black hair and magenta eyes, an athletic build, and Zoro-style ink-line muscles. The reference is .
-- **Gym look:** B, as , uploaded to KV as .
+- **What B is:** One Piece Wano-style, with his messy black hair and magenta eyes, an athletic build, and Zoro-style ink-line muscles. The reference is `Documents/Dex/Dex concept B (target look).png`.
+- **Gym look:** B, as `models/gym.glb`, uploaded to KV as `model:gym.glb`.
   - Built with Tripo image-to-3D from B. Tripo's own rig was broken (every vertex was weighted to the hips).
   - Re-rigged in Mixamo with the light skeleton (thumb and index fingers only), then exported in the browser to an indexed GLB with a 1024px JPEG texture, scaled to 1.75m.
 - **wrapPlain() in rider.js** puts three-vrm's VRMHumanoid over the mixamorig bones, so clips, props and the camera treat it like a VRM.
