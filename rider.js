@@ -132,7 +132,7 @@ function buildScene() {
   // the camp's point lights hang off the scene root and go dark instead of hidden: a light that
   // disappears changes every material's shader, and rebuilding them all froze the page on swaps
   scene.updateMatrixWorld(true); [world.fireLight, world.lanternLight].forEach(l => scene.attach(l));
-  world.makeDumbbell = dumbbell; world.toon = toon;   // motion.js lays out the dumbbell cradle and mug stump around his reach
+  world.makeDumbbell = dumbbell; world.makeBottle = waterBottle; world.toon = toon;   // motion.js lays out the dumbbell cradle and mug stump around his reach
 
   // ski tracks: two fading ribbons laid behind the skis
   world.tracks = ['l', 'r'].map(() => {
@@ -187,16 +187,16 @@ function floor(parent, draw, { wall } = {}) {
   m.rotation.x = -Math.PI / 2; m.position.set(0, -.003, -2); m.renderOrder = -1; parent.add(m);
 }
 function buildSettings() {
-  // gym: rubber floor, a power rack with a loaded bar, a dumbbell rack, plates, dust in the light
+  // gym: his home setup (10kg dumbbells, a kettlebell, a mat, a water bottle) in a sunny painted workout room.
+  // 3D only for what he uses: the kettlebell here; the dumbbell cradle, bottle crate and mat are laid out
+  // around his reach by motion.js stage()
   const gym = world.gym = new THREE.Group(); scene.add(gym);
-  floor(gym, (x, W, H) => { x.fillStyle = '#2c2d31'; x.fillRect(0, 0, W, H); for (let i = 0; i < 4000; i++) { x.fillStyle = ['#3a3b40', '#232428', '#4a3f35'][i % 3]; x.fillRect(Math.random() * W, Math.random() * H, 2, 2); } x.strokeStyle = 'rgba(0,0,0,.45)'; x.lineWidth = 3; x.strokeRect(0, 0, W, H); });
-  const rack = new THREE.Group(); rack.position.set(-2.2, 0, -2.3); rack.rotation.y = .45; gym.add(rack);
-  [[-.6, -.5], [.6, -.5], [-.6, .5], [.6, .5]].forEach(([x, z]) => box(rack, .07, 2.3, .07, 0x1c1d22, x, 1.15, z));
-  [-.5, .5].forEach(z => box(rack, 1.27, .07, .07, 0x1c1d22, 0, 2.28, z)); [-.6, .6].forEach(x => box(rack, .07, .07, 1.07, 0x1c1d22, x, 2.28, 0));
-  cyl(rack, .015, 2.1, 0x9a9ca3, 0, 1.38, .5, [0, 0, Math.PI / 2]);
-  [-1, 1].forEach(k => { cyl(rack, .225, .05, 0x17181c, k * .82, 1.38, .5, [0, 0, Math.PI / 2], 28); cyl(rack, .17, .04, 0xc0392b, k * .87, 1.38, .5, [0, 0, Math.PI / 2], 24); });
-  // dumbbells: a low cradle laid out by motion.js stage(), right where his hands land in picking_up
-  [0, .05, .1].forEach((y, i) => cyl(gym, .225 - i * .03, .045, 0x17181c, 1.2, .025 + y, .75, [0, 0, 0], 28));
+  floor(gym, (x, W, H) => { for (let i = 0; i < 8; i++) { x.fillStyle = ['#e3b47e', '#dbab75', '#e8bb85', '#dfb07a'][i % 4]; x.fillRect(i * W / 8, 0, W / 8, H); x.fillStyle = 'rgba(70,38,14,.3)'; x.fillRect(i * W / 8, 0, 2, H); x.fillRect(i * W / 8, Math.random() * H, W / 8, 2); } for (let i = 0; i < 90; i++) { x.strokeStyle = 'rgba(90,50,20,.14)'; x.lineWidth = 1; x.beginPath(); const px = Math.random() * W; x.moveTo(px, Math.random() * H); x.lineTo(px + (Math.random() - .5) * 4, Math.random() * H); x.stroke(); } }, { wall: 4.6 });
+  backdrop(gym, 'scenes/gym.jpg?v=1', { aspect: 4552 / 1536, H: 6.4, base: .776, D: 4.6 });
+  { const kb = new THREE.Group(); kb.position.set(.8, 0, .5); kb.rotation.y = -.4; gym.add(kb);   // the kettlebell, by the mat
+    const ball = new THREE.SphereGeometry(.1, 18, 14), handle = new THREE.TorusGeometry(.065, .016, 8, 20, Math.PI);
+    [[ball, .095], [handle, .17]].forEach(([g, y]) => { const m = new THREE.Mesh(g, toon(0x1d1e22)), k = new THREE.Mesh(g, INK); m.position.y = k.position.y = y; kb.add(m, k); });
+    blob(gym, .8, .5, .36, .36, 0, .35); }
   // shop: wood floor, a rail of jackets and a table of folded shirts (Thomas Jeffery vibes)
   const shop = world.shop = new THREE.Group(); scene.add(shop);
   floor(shop, (x, W, H) => { for (let i = 0; i < 8; i++) { const c = ['#7a5a3c', '#6f5135', '#836243', '#74553a'][i % 4]; x.fillStyle = c; x.fillRect(i * W / 8, 0, W / 8, H); x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect(i * W / 8, 0, 2, H); const cut = Math.random() * H; x.fillRect(i * W / 8, cut, W / 8, 2); } for (let i = 0; i < 90; i++) { x.strokeStyle = 'rgba(40,24,12,.18)'; x.lineWidth = 1; x.beginPath(); const px = Math.random() * W; x.moveTo(px, Math.random() * H); x.lineTo(px + (Math.random() - .5) * 4, Math.random() * H); x.stroke(); } }, { wall: 4.6 });
@@ -255,7 +255,7 @@ function buildSettings() {
 const SETTINGS = {
   ski: { sky: 0xdfe8ff, ground: 0x2a2f48, hemi: 1.2, key: 0xffffff, keyI: 2.2, bg: '' },
   sleep: { sky: 0x8fa6d8, ground: 0x241a1c, hemi: .7, key: 0xa9bcff, keyI: .9, bg: 'radial-gradient(90% 70% at 50% 30%,#1c2645 0%,#0e1427 55%,#070a13 100%)' },
-  gym: { sky: 0xffe2c4, ground: 0x4a3a2c, hemi: 1.35, key: 0xffd9a8, keyI: 2.5, bg: 'radial-gradient(80% 70% at 50% 28%,#5e4837 0%,#34281f 45%,#16110d 100%)' },
+  gym: { sky: 0xffe2c4, ground: 0x4a3a2c, hemi: 1.35, key: 0xffd9a8, keyI: 2.5, fog: [0xc89a6a, 6.5, 17], bg: 'radial-gradient(80% 70% at 50% 28%,#5e4837 0%,#34281f 45%,#16110d 100%)' },
   work: { sky: 0xfff0dc, ground: 0x3a2e22, hemi: 1.25, key: 0xffe6c4, keyI: 2.1, fog: [0x8a6446, 6.5, 17], bg: 'radial-gradient(80% 70% at 50% 28%,#7d6852 0%,#473b2f 45%,#1c1611 100%)' },
 };
 const SKY = {
@@ -397,8 +397,36 @@ for (const s of ['Left', 'Right']) {
     [l + 'ThumbMetacarpal']: s + 'HandThumb1', [l + 'ThumbProximal']: s + 'HandThumb2', [l + 'ThumbDistal']: s + 'HandThumb3' });
   [['Index', 'Index'], ['Middle', 'Middle'], ['Ring', 'Ring'], ['Little', 'Pinky']].forEach(([f, m]) => ['Proximal', 'Intermediate', 'Distal'].forEach((p, i) => { MIXAMO[l + f + p] = s + 'Hand' + m + (i + 1); }));
 }
+// The ink outline for a Tripo model: an inflated black copy drawn behind it. Their faces have deep creases
+// (lips, jaw) and spiky hair, where a plain inflate pokes through as black blobs and streaks. So it's
+// inflated along normals smoothed across UV seams, thinner overall, and faded almost to nothing across the
+// front of the face and fringe (the head's silhouette still gets its line from the sides and back).
+const INK_W = .0035;
+function outline(o, bones) {
+  const g = o.geometry, P = g.attributes.position, N = g.attributes.normal, n = P.count;
+  const sum = new Map(), key = i => `${Math.round(P.getX(i) * 1e4)},${Math.round(P.getY(i) * 1e4)},${Math.round(P.getZ(i) * 1e4)}`;
+  for (let i = 0; i < n; i++) { const k = key(i), s = sum.get(k) || [0, 0, 0]; s[0] += N.getX(i); s[1] += N.getY(i); s[2] += N.getZ(i); sum.set(k, s); }
+  const inkN = new Float32Array(n * 3), inkW = new Float32Array(n);
+  // "front of the head" is judged in world space (the mesh's own axes needn't be upright); he faces +z at load
+  o.updateMatrixWorld(true);
+  const mw = o.matrixWorld, nm = new THREE.Matrix3().getNormalMatrix(mw), v = new THREE.Vector3(), w = new THREE.Vector3();
+  const neckY = bones.Neck ? bones.Neck.getWorldPosition(new THREE.Vector3()).y : Infinity;
+  for (let i = 0; i < n; i++) {
+    const s = sum.get(key(i)), l = Math.hypot(s[0], s[1], s[2]) || 1;
+    inkN[i * 3] = s[0] / l; inkN[i * 3 + 1] = s[1] / l; inkN[i * 3 + 2] = s[2] / l;   // inflate in the mesh's own space
+    v.fromBufferAttribute(P, i).applyMatrix4(mw); w.set(s[0] / l, s[1] / l, s[2] / l).applyMatrix3(nm).normalize();
+    const face = v.y > neckY ? THREE.MathUtils.smoothstep(w.z, .05, .45) : 0;   // front of the head: fade the line out
+    inkW[i] = 1 - .9 * face;
+  }
+  g.setAttribute('inkN', new THREE.BufferAttribute(inkN, 3)); g.setAttribute('inkW', new THREE.BufferAttribute(inkW, 1));
+  const mat = new THREE.MeshBasicMaterial({ color: 0x0b0c12, side: THREE.BackSide });
+  mat.onBeforeCompile = sh => {
+    sh.vertexShader = 'attribute vec3 inkN;\nattribute float inkW;\n' + sh.vertexShader.replace('#include <begin_vertex>', `vec3 transformed = position + inkN * inkW * ${INK_W.toFixed(5)};`);
+  };
+  const ink = new THREE.SkinnedMesh(g, mat); ink.bind(o.skeleton, o.bindMatrix); ink.frustumCulled = false; ink.name = 'ink'; o.parent.add(ink);
+}
 function wrapPlain(gltf) {
-  const scene = gltf.scene, bones = {};
+  const scene = gltf.scene, bones = {}, skins = [];
   scene.updateMatrixWorld(true);
   scene.traverse(o => {
     if (/^mixamorig/.test(o.name)) bones[o.name.replace(/^mixamorig:?/, '')] = o;   // by name: joints without skin weights (hips) aren't flagged as bones
@@ -407,9 +435,10 @@ function wrapPlain(gltf) {
       // the texture already has its shading painted in, so it lights itself part-way and the cel bands just deepen it
       const { map, normalMap, normalScale } = o.material; o.material = Object.assign(toon(0xffffff), { map, emissive: new THREE.Color(0xffffff), emissiveMap: map, emissiveIntensity: .42, side: THREE.FrontSide }); o.material.name = 'dex_skin';
       if (normalMap) { o.material.normalMap = normalMap; o.material.normalScale = normalScale.clone(); }   // Tripo's surface detail (folds, creases)
-      const ink = new THREE.SkinnedMesh(o.geometry, INK); ink.bind(o.skeleton, o.bindMatrix); ink.frustumCulled = false; o.parent.add(ink);
+      skins.push(o);
     }
   });
+  skins.forEach(o => outline(o, bones));
   // Tripo/Mixamo exports can rest with the arms hanging (an A-pose). Every pose here, clips included,
   // assumes a T-pose rest, so straighten each arm bone to point straight out first (+x is his left).
   const _a = new THREE.Vector3(), _c = new THREE.Vector3(), _q = new THREE.Quaternion(), _p = new THREE.Quaternion(), _w = new THREE.Quaternion();
@@ -440,9 +469,9 @@ function prepare(key, vrm) {
   vrm.scene.updateMatrixWorld(true);
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
   r.toesRest = R('leftToes') ? R('leftToes').getWorldPosition(new THREE.Vector3()).y : r.footRest;
-  if (key === 'sleep') r.mug = holdInFist(vrm, 'right', cocoaMug());
+  if (key === 'sleep') r.mug = holdInFist(vrm, 'left', cocoaMug());   // left: the drinking clip drinks left-handed
   if (key === 'work') r.carry = holdInFist(vrm, 'right', shoeBox());
-  if (key === 'gym') { r.build = dexPrefs().build; if (!vrm.plain) physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); }   // leaner and more defined, Luffy-style
+  if (key === 'gym') { r.build = dexPrefs().build; if (!vrm.plain) physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); r.bottle = holdInFist(vrm, 'left', waterBottle(true)); }   // leaner and more defined, Luffy-style
   if (key === 'ski') {
     const D = dexPrefs();
     if (vrm.plain) { r.kit = plainSkiKit(vrm, { skis: D.skis, pole: D.poles }); r.dexWas = { ...D }; }   // jacket, mask and goggles are part of the model
@@ -466,6 +495,14 @@ function shoeBox(visible = false) {
   const g = new THREE.Group(), b = box(g, .32, .12, .2, 0xc9a879, 0, 0, 0); box(g, .335, .03, .215, 0x5a3b26, 0, .05, 0);   // kraft box, dark lid
   b.position.y = 0; g.visible = visible; return g;
 }
+// his water bottle: in the fist (along its axis, like the mug) or standing on the crate
+function waterBottle(inHand = false) {
+  const g = new THREE.Group(), body = new THREE.CylinderGeometry(.035, .035, .2, 14), cap = new THREE.CylinderGeometry(.025, .028, .045, 12);
+  if (inHand) { body.rotateX(Math.PI / 2); cap.rotateX(Math.PI / 2); }
+  const at = (m, h) => { if (inHand) m.position.set(-.03, 0, h - .05); else m.position.y = h; return m; };
+  g.add(at(new THREE.Mesh(body, toon(0x4f8a8b)), .1), at(new THREE.Mesh(body, INK), .1), at(new THREE.Mesh(cap, toon(0x1b1c21)), .222), at(new THREE.Mesh(cap, INK), .222));
+  g.visible = !inHand; return g;
+}
 // the cocoa mug, standing up along the fist (thumb side up)
 function cocoaMug() {
   const g = new THREE.Group(), body = new THREE.CylinderGeometry(.045, .042, .1, 16).rotateX(Math.PI / 2), m = new THREE.Mesh(body, toon(0xd9573b));
@@ -482,7 +519,7 @@ function holdInFist(vrm, side, obj) {
     obj.position.copy(hand.lerp(knuckle, .95)); obj.position.y -= .022; obj.quaternion.identity();
     R(side + 'Hand').attach(obj); return obj;
   }
-  let skin; vrm.scene.traverse(o => { if (o.isSkinnedMesh && (o.name === 'Body_(merged)' || (!skin && o.material !== INK))) skin = o; });
+  let skin; vrm.scene.traverse(o => { if (o.isSkinnedMesh && (o.name === 'Body_(merged)' || (!skin && o.material !== INK && o.name !== 'ink'))) skin = o; });
   const bones = skin.skeleton.bones, bi = n => bones.indexOf(vrm.humanoid.getRawBoneNode(n)), bind = n => skin.skeleton.boneInverses[bi(n)].clone().invert();
   const knuckle = bi(side + 'MiddleProximal') >= 0 ? side + 'MiddleProximal' : side + 'IndexProximal';   // lighter Mixamo skeletons have thumb + index only
   const hand = new THREE.Vector3().setFromMatrixPosition(bind(side + 'Hand')), mid = new THREE.Vector3().setFromMatrixPosition(bind(knuckle));

@@ -245,7 +245,7 @@ export function plainSkiKit(vrm, { skis: skiName = 'bent', pole } = {}) {
   const R = n => vrm.humanoid.getRawBoneNode(n), bindPos = n => R(n).getWorldPosition(new THREE.Vector3());
   const attach = (obj, n) => { R(n).attach(obj); return obj; };
   // boot bounds: the body's vertices below the ankle, in world space at rest (the legs aren't re-posed)
-  let skin; vrm.scene.traverse(o => { if (!skin && o.isSkinnedMesh) skin = o; });
+  let skin; vrm.scene.traverse(o => { if (!skin && o.isSkinnedMesh && o.name !== 'ink') skin = o; });
   const P = skin.geometry.attributes.position, footY = Math.max(bindPos('leftFoot').y, bindPos('rightFoot').y) + .03, v = new THREE.Vector3(), pos = [];
   for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(skin.matrixWorld); if (v.y < footY) pos.push(v.x, v.y, v.z); }
   const kit = skisAndPoles({ bindPos, attach, hasBone: n => !!R(n), boots: { n: pos.length / 3, pos }, C, skiName });

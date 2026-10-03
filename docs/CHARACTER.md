@@ -20,7 +20,7 @@
     lantern and mug of cocoa. He rejected a legs-out lean-back (stiff) and a log seat (he
     didn't read as sitting on it); asked for cozy + blanket. Tapping wakes him for a minute.
 - **Each outfit has its own setting** (`SETTINGS` / `setEnv` in rider.js): ski = night slope;
-  gym = warm-lit gym (rubber floor, power rack with a loaded bar, dumbbell rack, plates, dust);
+  gym = his home workout room (sunny painted wall, honey wood floor, his mat, kettlebell, dumbbells, water bottle);
   work = menswear shop floor (wood planks, rail of jackets, table of folded shirts, mirror);
   sleep = cozy snowy camp at night: plaid blanket, pillow, tent glowing inside, lantern, cocoa,
   a big flickering campfire with a warm glow on the snow, stars and moon.
@@ -188,8 +188,8 @@ every look except skiing now runs on **Mixamo motion capture**.
   - Every trip is home -> spot -> home along clear straight lines. The spots in `S` must match the props in
     `buildSettings()`; the shop mirror moved to the left wall for this.
   - **Work:** browses the jacket rail, sorts at the shirt table, then checks the fit in the mirror.
-  - **Gym:** walks to the dumbbell rack, takes the bells, curls, puts them back, then squats, jumping jacks
-    and push-ups, and finishes with a flex.
+  - **Gym:** walks to the dumbbell cradle, takes the bells, curls, puts them back, then squats and jumping jacks,
+    wipes his brow, drinks from his water bottle, does push-ups on his mat, and finishes with a flex.
   - **Camp (awake):** stretches, kneels to warm up at the fire, crouches for the cocoa, drinks, and puts it back.
 - **Mechanics:**
   - **Feet don't slide:** walking travels at the clip's own stride speed (taken from its root motion,
@@ -205,6 +205,8 @@ every look except skiing now runs on **Mixamo motion capture**.
   out under that point for the current model:
   - **Gym:** a low oak cradle with a dumbbell under each hand.
   - **Camp:** a log stump with the cocoa.
+  - **Cups are left-handed:** the drinking clip drinks with the left hand, so the cocoa and the water bottle are picked up and
+    put down with the mirrored clips (`picking_up~m`) and held in the left fist.
   - A step's `fx` swaps the prop between the world and his hand at the moment of the grab, so nothing pops in or out.
   - The old waist-high dumbbell rack is gone.
 - **Custom-rig rest pose:** Tripo/Mixamo models (and clips downloaded on them) can rest with the arms hanging.
@@ -239,7 +241,12 @@ Lots of detail at almost no cost: paint what he doesn't touch, model only what h
   - `plan()` routes each walk over the footprint corners, grown by his body radius (shrunk only as far as needed when he's starting or stopping right next to one).
   - At the desk he stands clear, sits back, then scoots in to write (`world.deskShift`), like pulling a chair in, and scoots out before getting up.
   - Shoe boxes and the bench sit just past his hand so his feet stay out of them.
-- **Next:** gym, camp and ski get the same treatment.
+- **Gym (his real home setup: 10kg dumbbells, a kettlebell, a mat, no bench or bar):**
+  - Painted wall `scenes/gym.jpg`: a sunny home workout room (window, plants, shelves, ski poster, string lights).
+  - 3D: the kettlebell (fixed), and from `stage()`: the dumbbell cradle, a wooden crate with his water bottle (front left,
+    so he turns three-quarters to the camera to drink), and the mat, sized to his hands and feet in `push_up`.
+  - Routine adds `wiping_sweat` after the jumping jacks, then the water bottle, then push-ups on the mat.
+- **Next:** camp and ski get the same treatment.
 
 ## Customise (the hanger button on the scene)
 

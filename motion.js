@@ -27,7 +27,8 @@ const S = {
   rail: spot(-1.25, -1.55, .25, .62),        // jacket rail
   table: spot(1.55, -.75, -.4, .7),          // shirt table
   mirror: spot(-2.3, -.2, .9, .75),          // full-length mirror
-  bells: spot(1.8, -1.2, -.55, .58),         // dumbbell rack
+  bells: spot(1.8, -1.2, -.55, .58),         // dumbbell cradle
+  bottle: spot(-1.3, .3, 2.53, .61),         // water bottle on a crate, front left: he turns three-quarters to the camera
   blanket: { x: -.02, z: -.05, yaw: .8 },    // sitting on the plaid, the fire off to his right
   fire: { x: 1.6, z: -.55, yaw: Math.atan2(.95 - 1.6, -1.05 + .55) },   // kneeling three-quarters on to the fire, path clear of it
   mug: { x: .42, z: -.24, yaw: 2.7 },        // crouch distance from the cocoa
@@ -45,7 +46,7 @@ const box_ = (x, z, hw, hd, yaw = 0) => ({ x, z, hw, hd, yaw });
 const disc = (x, z, r) => ({ x, z, r });
 const OBST = {   // fixed props (rider.js buildSettings)
   work: [box_(-1.25, -1.55, .9, .16, .25), box_(-2.3, -.2, .46, .16, .9)],          // rail, mirror
-  gym: [box_(-2.2, -2.3, .7, .6, .45), disc(1.2, .75, .26)],                          // power rack, plates
+  gym: [disc(.8, .5, .15)],                                                           // kettlebell
   sleep: [disc(.95, -1.05, .38), box_(-1.5, -2.6, .78, .92, .35), disc(-1.04, -.52, .1)],   // fire, tent, lantern
 };
 const STAGED = {};   // laid out by stage() for the current model
@@ -110,13 +111,15 @@ const ROUTINES = {
     { play: 'putting_down', from: 3.8, cut: 3.4, fx: 'bellR-' }, { play: 'putting_down~m', from: 3.8, cut: 3.4, fx: 'bellL-' },
     { go: 'home' }, { face: 'home' },
     { play: 'air_squat', n: 3 }, { idle: 3 },
-    { play: 'start_jumping_jacks' }, { play: 'jumping_jacks', n: 6 }, { play: 'stop_jumping_jacks' }, { idle: 4 },
+    { play: 'start_jumping_jacks' }, { play: 'jumping_jacks', n: 6 }, { play: 'stop_jumping_jacks' }, { play: 'wiping_sweat' },
+    { go: 'bottle' }, { face: 'bottle' }, { play: 'picking_up~m', from: 1, cut: 3.2, fx: 'bottle+' }, { play: 'drinking' }, { play: 'putting_down~m', from: 3.8, cut: 3.4, fx: 'bottle-' },
+    { go: 'home' }, { face: 'home' }, { idle: 2 },
     { play: 'idle_to_push_up' }, { play: 'push_up', n: 4 }, { play: 'push_up_to_idle' }, { play: 'being_cocky' },
   ],
   sleep: [   // up at camp (asleep is procedural): sit, stretch, warm up by the fire, cocoa
     { go: 'blanket' }, { face: 'blanket' }, { idle: 3 }, { play: 'neck_stretching' },
     { go: 'fire' }, { face: 'fire' }, { play: 'kneel', cut: 9, fade: .7 },
-    { go: 'mug' }, { face: 'mug' }, { play: 'picking_up', from: 1, cut: 3.2, fx: 'mug+' }, { play: 'drinking' }, { play: 'putting_down', from: 3.8, cut: 3.4, fx: 'mug-' },
+    { go: 'mug' }, { face: 'mug' }, { play: 'picking_up~m', from: 1, cut: 3.2, fx: 'mug+' }, { play: 'drinking' }, { play: 'putting_down~m', from: 3.8, cut: 3.4, fx: 'mug-' },   // left hand: drinking is left-handed
   ],
 };
 // tap reactions and celebrations
@@ -214,6 +217,7 @@ function props(r, fx, world) {
   if (fx === 'bells-') { bell(0, false); bell(1, false); }
   if (fx === 'bellL+' || fx === 'bellL-') bell(0, fx === 'bellL+');
   if (fx === 'bellR+' || fx === 'bellR-') bell(1, fx === 'bellR+');
+  if (fx === 'bottle+' || fx === 'bottle-') { if (r.bottle) r.bottle.visible = fx === 'bottle+'; if (world.gymBottle) world.gymBottle.visible = fx === 'bottle-'; }
   if (fx === 'mug+' || fx === 'mug-') { if (r.mug) r.mug.visible = fx === 'mug+'; if (world.campMug) world.campMug.visible = fx === 'mug-'; }
   if (fx === 'box+') { if (r.carry) r.carry.visible = true; if (world.stackTop) world.stackTop.visible = false; }
   if (fx === 'box-') { if (r.carry) r.carry.visible = false; if (world.benchBox) world.benchBox.visible = true; }
@@ -226,7 +230,7 @@ function stage(r, kind, world) {
   if (kind === 'gym' && world.gym && world.makeDumbbell && world.stagedFor !== r) {
     build(r, 'picking_up'); build(r, 'picking_up~m');
     const R = r.mo.contact.picking_up, L = r.mo.contact['picking_up~m']; if (!R || !L) return;
-    if (world.cradle) { world.gym.remove(world.cradle); world.restBells.forEach(b => world.gym.remove(b)); }
+    if (world.cradle) world.restBells.forEach(b => world.gym.remove(b));
     const pr = at('bells', R.pos), pl = at('bells', L.pos), top = Math.max(.06, Math.min(pr.y, pl.y) - .07), yaw = S.bells.yaw;
     const cradle = world.cradle = new THREE.Group(); cradle.position.set((pr.x + pl.x) / 2, 0, (pr.z + pl.z) / 2); cradle.rotation.y = yaw; world.gym.add(cradle);
     const w = pr.distanceTo(pl) + .34, mat = world.toon(0x9a7048);   // light oak, so the dark dumbbells read on it
@@ -234,6 +238,20 @@ function stage(r, kind, world) {
     [-1, 1].forEach(k => { const leg = new THREE.Mesh(new THREE.BoxGeometry(.05, top - .04, .22), mat); leg.position.set(k * (w / 2 - .06), (top - .04) / 2, 0); cradle.add(leg); });
     STAGED.gym = [box_(cradle.position.x, cradle.position.z, w / 2, .13, yaw)];
     world.restBells = [pl, pr].map(p => { const b = world.makeDumbbell(); b.visible = true; b.position.set(p.x, top + .05, p.z); b.rotation.y = yaw; world.gym.add(b); return b; });
+    (world.gymProps || []).forEach(o => world.gym.remove(o)); const mk = world.gymProps = [cradle, world.blob(world.gym, cradle.position.x, cradle.position.z, w + .2, .45, -yaw, .3)];
+    // the water bottle stands on a wooden crate where his left hand closes on it (he drinks left-handed)
+    const bp = at('bottle', L.pos), cTop = Math.max(.1, bp.y - .1), crate = new THREE.Group(); crate.position.set(bp.x, 0, bp.z); crate.rotation.y = S.bottle.yaw; world.gym.add(crate); mk.push(crate);
+    world.box(crate, .36, cTop, .28, 0xa8794a, 0, cTop / 2, 0); [-.1, .1].forEach(y => world.box(crate, .365, .012, .285, 0x7a5434, 0, cTop / 2 + y * cTop, 0));
+    if (!world.gymBottle) { world.gymBottle = world.makeBottle(false); world.gym.add(world.gymBottle); }
+    world.gymBottle.position.set(bp.x, cTop, bp.z); mk.push(world.blob(world.gym, bp.x, bp.z, .5, .42, -S.bottle.yaw, .3));
+    STAGED.gym.push(box_(bp.x, bp.z, .18, .14, S.bottle.yaw));
+    // his mat, under his hands and feet in a push-up
+    build(r, 'push_up');
+    if (r.mo.clips.push_up) {
+      const pts = sample(r, r.mo.clips.push_up, 0, ['leftHand', 'rightHand', 'leftFoot', 'rightFoot']).map(p => at('home', p));
+      const z0 = Math.min(...pts.map(p => p.z)) - .22, z1 = Math.max(...pts.map(p => p.z)) + .22, x0 = Math.min(...pts.map(p => p.x)), x1 = Math.max(...pts.map(p => p.x));
+      mk.push(world.box(world.gym, Math.max(.62, x1 - x0 + .2), .008, z1 - z0, 0x6f8f7a, (x0 + x1) / 2, .004, (z0 + z1) / 2));
+    }
     world.stagedFor = r;
   }
   if (kind === 'work' && world.shop && world.box && world.stagedFor !== r) {
@@ -287,8 +305,8 @@ function stage(r, kind, world) {
     world.workProps = mk; world.stagedFor = r;
   }
   if (kind === 'sleep' && world.camp && world.campMug && world.stagedFor !== r) {
-    build(r, 'picking_up'); const R = r.mo.contact.picking_up; if (!R) return;
-    const p = at('mug', R.pos), top = Math.max(.08, p.y - .06);
+    build(r, 'picking_up~m'); const L = r.mo.contact['picking_up~m']; if (!L) return;
+    const p = at('mug', L.pos), top = Math.max(.08, p.y - .06);
     if (!world.stump) { world.stump = new THREE.Mesh(new THREE.CylinderGeometry(.13, .15, 1, 12), world.toon(0x6b4a2f)); world.camp.add(world.stump); }
     world.stump.scale.y = top; world.stump.position.set(p.x, top / 2, p.z); STAGED.sleep = [disc(p.x, p.z, .16)];
     const mp = world.campMug.parent.worldToLocal(new THREE.Vector3(p.x, top, p.z)); world.campMug.position.copy(mp);
@@ -316,7 +334,7 @@ export function direct(r, kind, dt, world, look) {
   const mo = r.mo;
   if (r.mo.kind !== kind) {   // a new look (or a fresh model): start the script from home
     mo.kind = kind; mo.i = -1; mo.step = null; mo.pos = { x: 0, z: 0 }; mo.yaw = 0;
-    stage(r, kind, world); props(r, 'bells-', world); props(r, 'mug-', world);
+    stage(r, kind, world); props(r, 'bells-', world); props(r, 'mug-', world); props(r, 'bottle-', world);
     if (kind === 'sleep') { mo.pos = { x: S.blanket.x, z: S.blanket.z }; }
   }
   if (!ROUTINES[kind]) return {};
