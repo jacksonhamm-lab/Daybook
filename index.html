@@ -1180,10 +1180,11 @@ body.typing .dexpip{opacity:0;transform:translateY(24px) scale(.88);pointer-even
 <script>
 /* ============================================================
    Daybook — work hours, tasks, training, job applications.
-   Training data comes from Jackson-Workout-Plan, served at /workout/
-   on the same origin, so its localStorage keys are shared.
+   The training program lives here in program.json (five days, D1-D5); it used to be
+   read out of the old workout app. Set ticks and benchmark logs are per device (localStorage).
    ============================================================ */
 const KEY = 'daybook_v1';
+const PROGRAM_V = 2, SPLIT = ['D1', 'D2', 'D3', 'HIIT', 'D4', 'D5', 'REST'];   // program 2: five lifting days, one conditioning, one rest
 const CATS = {
   work: { label: 'Work',     color: '#0a84ff' },
   gym:  { label: 'Training', color: '#ff9f0a' },
@@ -1193,9 +1194,10 @@ const CATS = {
 const CAT_ORDER = ['work', 'gym', 'jobs', 'life'];
 const SESS = {
   D1:   { color: '#64d2ff', art: 'linear-gradient(140deg,#062a4a 0%,#0a6fd6 55%,#64d2ff 100%)' },
-  D2:   { color: '#ff9f0a', art: 'linear-gradient(140deg,#3d1402 0%,#e0620a 55%,#ffc46b 100%)' },
-  D3:   { color: '#30d158', art: 'linear-gradient(140deg,#032b16 0%,#159447 55%,#8ef0b0 100%)' },
+  D2:   { color: '#30d158', art: 'linear-gradient(140deg,#032b16 0%,#159447 55%,#8ef0b0 100%)' },
+  D3:   { color: '#ff9f0a', art: 'linear-gradient(140deg,#3d1402 0%,#e0620a 55%,#ffc46b 100%)' },
   D4:   { color: '#ffd60a', art: 'linear-gradient(140deg,#332700 0%,#c79a00 55%,#fff08a 100%)' },
+  D5:   { color: '#bf5af2', art: 'linear-gradient(140deg,#1e0a36 0%,#7a2fc4 55%,#dba6ff 100%)' },
   HIIT: { color: '#ff375f', art: 'linear-gradient(140deg,#3a0414 0%,#e0204a 55%,#ff9fb5 100%)' },
   REST: { color: '#8e8e93', art: 'linear-gradient(140deg,#121217 0%,#26262e 60%,#3a3a44 100%)' },
 };
@@ -1251,7 +1253,7 @@ const TABS = [
 /* ---------- state ---------- */
 const defaults = () => ({
   tasks: [], shifts: {}, workouts: {}, jobs: [], clock: null,
-  template: ['D1','D2','REST','D3','D4','HIIT','REST'],
+  template: SPLIT.slice(),
   extra: {},
   settings: { name: 'Jackson', rate: 20, extraHours: 0, payCutoff: 1, paySubmitDays: 4, remindSubmit: true, nag: 240, dex: {}, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
   ui: { tab: 'today', jobFilter: 'All', selDay: null },
@@ -1543,31 +1545,23 @@ const writeLS = (k, v) => { MEMO.clear(); try { localStorage.setItem(k, JSON.str
 const MEMO = new Map();
 const memo = (k, fn) => { if (!MEMO.has(k)) MEMO.set(k, fn()); return MEMO.get(k); };
 
-/* ---------- workout app integration ---------- */
-const W_STATE = 'workout_state_v3', W_WEEK = 'workout_week_start', W_CARDIO = 'log_cardio_v1';
+/* ---------- training program and logs ---------- */
+const W_STATE = 'workout_state_v4', W_WEEK = 'workout_week_start', W_CARDIO = 'log_cardio_v1';
 const W_LOGS = { pushups: 'log_pushups_v1', plank: 'log_plank_v1', row: 'log_row_v1' };
 let PROGRAM = null, PROGRAM_AT = 0, PROGRAM_LIVE = false;
 (() => { const c = readLS('daybook_program', null); if (c && c.p) { PROGRAM = c.p; PROGRAM_AT = c.t; } })();
 async function loadProgram() {
-  const urls = [];
-  if (location.protocol.startsWith('http')) urls.push(new URL('/workout/index.html', location.origin).href, new URL('../Jackson-Workout-Plan/index.html', location.href).href);
-  urls.push('https://raw.githubusercontent.com/jacksonhamm-lab/Jackson-Workout-Plan/main/index.html');
-  for (const u of urls) {
-    try {
-      const r = await fetch(u, { cache: 'no-store' });
-      if (!r.ok) continue;
-      const m = (await r.text()).match(/const PROGRAM\s*=\s*(\{[\s\S]*?\r?\n\});/);
-      if (!m) continue;
-      const p = Function('"use strict";return (' + m[1] + ')')();
-      if (!p || !p.d1) continue;
-      PROGRAM = p; PROGRAM_AT = Date.now(); PROGRAM_LIVE = true;
-      writeLS('daybook_program', { p, t: PROGRAM_AT });
-      render();
-      return;
-    } catch (e) {}
-  }
+  try {
+    const r = await fetch('program.json', { cache: 'no-store' });
+    if (!r.ok) return;
+    const p = await r.json();
+    if (!p || !p.d1) return;
+    PROGRAM = p; PROGRAM_AT = Date.now(); PROGRAM_LIVE = true;
+    writeLS('daybook_program', { p, t: PROGRAM_AT });
+    render();
+  } catch (e) {}   // offline: the cached copy stands
 }
-// Mirrors the workout app's Monday reset so both apps agree on the week.
+// Set ticks clear every Monday.
 function wState() {
   return memo('wstate', () => {
     const cur = mondayOf(new Date()).getTime();
@@ -1621,6 +1615,15 @@ function syncAuto() {
     else if (!auto && o.done && o.auto && /^D\d$/.test(s) && wState()[s.toLowerCase()]) { S.workouts[d] = { ...o, done: false, auto: false }; changed = true; }
   });
   if (changed) save();
+}
+
+// Program 2 (2026-10-05) is a different split. Move the week onto it once (after that the split is his to edit),
+// and pin the old split onto the days already behind him so past weeks keep their history and streak.
+function migrateProgram() {
+  if (S.settings.programV === PROGRAM_V) return;
+  const old = S.template.slice(), t = today();
+  for (let d = addDays(parse(S.since || t), -7); iso(d) < t; d = addDays(d, 1)) { const k = iso(d), o = S.workouts[k] || {}; if (!o.s) S.workouts[k] = { ...o, s: old[dowIdx(k)] || 'REST' }; }
+  S.template = SPLIT.slice(); S.settings.programV = PROGRAM_V; save();
 }
 
 /* ---------- tasks ---------- */
@@ -2522,8 +2525,8 @@ function renderTraining() {
   if (!BOOK) loadBook().then(() => { if (S.ui.tab === 'training') render(); }).catch(() => {});
   const streak = weekStreak();
   const hist = (() => { let full = 0, n = 0; for (let i = 1; i <= 8; i++) { const ds = datesOf(addDays(mondayOf(new Date()), -7 * i)); if (ds[6] < S.since) continue; n++; const pl = ds.filter(x => wo(x).s !== 'REST'); if (pl.length && pl.every(x => wo(x).done)) full++; } return { full, n }; })();
-  const lib = ['D1', 'D2', 'D3', 'D4'].map((k, i) => `<button class="focusable" data-act="open-session" data-s="${k}"><div class="art" style="background:${SESS[k].art}"><span class="wm">${k}</span><span class="code">${k} · ${flatEx(k.toLowerCase()).length} exercises</span><div class="nm">${esc(sessName(k))}</div><div class="ds">${esc(sessSub(k))}</div></div></button>`).join('');
-  return hero('Training', plan.length - sDone > 0 ? `${plan.length - sDone} session${plan.length - sDone === 1 ? '' : 's'} to go` : 'Week complete', weekLabel(weekStart), `<a class="btn" href="${esc(S.settings.workoutUrl)}" target="_blank" rel="noopener">Workout app ${I.link}</a>${weekNav()}`, orb('tr', sDone, `of ${plan.length}`, plan.length ? sDone / plan.length : 0, '#ff9f0a'), [[`${streak}<small>wk</small>`, 'Full-week streak']]) + `
+  const lib = SESS_KEYS.filter(k => /^D\d$/.test(k)).map((k, i) => `<button class="focusable" data-act="open-session" data-s="${k}"><div class="art" style="background:${SESS[k].art}"><span class="wm">${k}</span><span class="code">${k} · ${flatEx(k.toLowerCase()).length} exercises</span><div class="nm">${esc(sessName(k))}</div><div class="ds">${esc(sessSub(k))}</div></div></button>`).join('');
+  return hero('Training', plan.length - sDone > 0 ? `${plan.length - sDone} session${plan.length - sDone === 1 ? '' : 's'} to go` : 'Week complete', weekLabel(weekStart), weekNav(), orb('tr', sDone, `of ${plan.length}`, plan.length ? sDone / plan.length : 0, '#ff9f0a'), [[`${streak}<small>wk</small>`, 'Full-week streak']]) + `
     <div class="wtiles">${tiles}</div>
     <div class="mods" style="margin-top:16px">
       ${mod('fuel', { title: 'Fuel', value: `${skN}<small>/${SHAKES.length}</small>`, sub: `Shakes · ${pk.m.length ? pk.m.length + ' meal' + (pk.m.length === 1 ? '' : 's') : 'no meals'}`, icon: IC.fuel, c: 'var(--green)', live: skN < SHAKES.length, i: 8,
@@ -2924,9 +2927,8 @@ const SHEETS = {
         <div class="row"><input id="syncCode" placeholder="Sync code" value="${esc(SYNC.code)}" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" inputmode="text" onfocus="this.select()">
           ${SYNC.code ? `<button class="btn" data-act="sync-off">Turn off</button><button class="btn white" data-act="sync-now">Sync now</button>` : `<button class="btn white" data-act="sync-on">Connect</button>`}</div>
         <p class="sub" id="syncStatus" style="margin:8px 0 0">${esc(syncLabel())}</p>`)}
-      ${grp('More', 'Backup, install, workout link', `
+      ${grp('More', 'Backup, install', `
         <div class="row"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Import backup</button></div>
-        <label class="field" style="margin-top:14px"><span>Workout app link</span><input data-sf="workoutUrl" value="${esc(st.workoutUrl)}"></label>
         <p class="sub" style="margin:0">Install: iPhone Share → Add to Home Screen. Android / Chrome: menu → Install app.</p>`)}
       <div class="row end"><button class="btn white" data-act="close-sheet">Done</button></div>`;
   },
@@ -3510,7 +3512,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) { if (SYNC.timer) syncNow(0, true); return; }
   haloWake();
   if (today() !== lastDay) { lastDay = today(); weekStart = mondayOf(new Date()); }
-  render(); // picks up anything done in the workout app meanwhile
+  render();
   syncNow();
 });
 setInterval(() => { if (!document.hidden) syncNow(); }, 60000);
@@ -3543,6 +3545,7 @@ island.el = $('#island');
 })();
 
 FX.enter = 'enter';
+migrateProgram();
 render();
 loadProgram();
 if (SYNC.code) { stashCode(SYNC.code); syncNow(); }

@@ -45,7 +45,14 @@ Everything is one object, `S`, saved to `localStorage.daybook_v1` and synced.
 | `clock` | The running shift timer. Synced (stamped `clockU`), so clocking in on the phone shows on the laptop. |
 | `ui` | Per-device view state (tab, open modules). **Never synced.** |
 
-Workout logs (`workout_state_v3`, `log_*_v1`) belong to the workout app and are read from localStorage.
+**Training program (2026-10-05):** lives in `program.json` (days `d1`-`d5`: sections of exercises with sets). Edit that file
+to change the program. It used to be parsed out of the old workout app, which Daybook no longer needs.
+- Program 2 is five lifting days (Push, Pull, Legs, Max Day, Upper), one conditioning day and one rest day (`SPLIT`).
+- `migrateProgram()` moves the weekly split onto it once (`settings.programV`) and pins the old split onto past days,
+  so earlier weeks keep their history and streak.
+- If the exercise list of a day changes mid-week, bump `W_STATE` so old ticks don't land on the wrong exercises.
+
+Workout logs (`workout_state_v4`, `log_*_v1`) are per device, in localStorage.
 They only exist on the device that ran it, so `syncAuto()` only un-ticks an auto-done session on a device that has that session's log.
 
 ## Pay periods

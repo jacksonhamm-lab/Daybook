@@ -1,0 +1,166 @@
+{
+  "d1": {
+    "badge": "Day 1 · Push",
+    "title": "Chest · Shoulders · Triceps · Abs",
+    "sections": [
+      { "label": "Warm Up", "accent": "warmup", "exercises": [
+        { "name": "Arm circles · 30 sec each direction", "sets": 1 },
+        { "name": "Walkout to plank · 5 reps", "sets": 1 },
+        { "name": "Wall angels · 10", "sets": 2 }
+      ]},
+      { "label": "Chest (Heavy)", "accent": "push", "exercises": [
+        { "name": "Dumbbell floor press · 8–10", "detail": "5 sec down, 1 sec up. Last set to failure. Rest 90 sec.", "sets": 4 },
+        { "name": "Incline floor press · 10–12", "detail": "Torso propped on the ottoman at 30–45°. Upper chest. 3 sec down.", "sets": 4 },
+        { "name": "Dumbbell floor fly · 12–15", "detail": "Slow. Pause 2 sec in the stretch.", "sets": 3 },
+        { "name": "Slow push-ups · near failure", "detail": "3 sec down, pause at the bottom. Grip the dumbbell handles to keep wrists neutral.", "sets": 3 }
+      ]},
+      { "label": "Shoulders", "accent": "push", "exercises": [
+        { "name": "Dumbbell overhead press · 10–12", "detail": "Seated on the ottoman. Slow down, full lockout.", "sets": 4 },
+        { "name": "Dumbbell lateral raise · 12–15", "detail": "Strict. On the last set, finish with half reps until you can't lift.", "sets": 4 }
+      ]},
+      { "label": "Triceps", "accent": "push", "exercises": [
+        { "name": "Overhead tricep extension · 10–12", "detail": "Both hands on one dumbbell. Deep stretch, slow down.", "sets": 3 },
+        { "name": "Tricep kickbacks · 12–15", "detail": "Hinge forward, elbow pinned high. Squeeze 1 sec at the top.", "sets": 3 },
+        { "name": "Diamond push-ups · to failure", "detail": "Finisher.", "sets": 2 }
+      ]},
+      { "label": "Abs", "accent": "abs", "exercises": [
+        { "name": "Weighted crunches · 15", "detail": "Dumbbell on chest. Slow.", "sets": 3 },
+        { "name": "Lying leg raises · 15", "detail": "Legs straight. Lower slow, don't let your back arch.", "sets": 3 },
+        { "name": "Plank · 60 sec", "sets": 2 }
+      ]}
+    ],
+    "cardio": "Optional 15–20 min hill climb later in the day."
+  },
+
+  "d2": {
+    "badge": "Day 2 · Pull",
+    "title": "Back · Biceps · Posture · Abs",
+    "sections": [
+      { "label": "Warm Up", "accent": "warmup", "exercises": [
+        { "name": "Wall angels · 10", "sets": 2 },
+        { "name": "Prone cobra hold · 20 sec", "sets": 2 },
+        { "name": "Arm circles · 30 sec each direction", "sets": 1 }
+      ]},
+      { "label": "Back", "accent": "pull", "exercises": [
+        { "name": "Single-arm dumbbell row · 12–15 each side", "detail": "Hand and knee on the ottoman. 3 sec down, pause 1 sec at the top.", "sets": 4 },
+        { "name": "Bent-over two-arm row · 12–15", "detail": "Hinge at the hips, back flat, pull to the ribs.", "sets": 4 },
+        { "name": "Dumbbell pullover · 12", "detail": "Across the ottoman. Both hands on one dumbbell. Big stretch for the lats.", "sets": 3 },
+        { "name": "Reverse fly · 15", "detail": "Bent over, arms out like wings. Rear delts. Light and strict.", "sets": 3 },
+        { "name": "Dumbbell shrug · 15", "detail": "Hold 2 sec at the top. Traps.", "sets": 3 }
+      ]},
+      { "label": "Biceps", "accent": "pull", "exercises": [
+        { "name": "Dumbbell curl · 10–12", "detail": "3 sec down. No swinging.", "sets": 4 },
+        { "name": "Hammer curl · 10–12", "detail": "Palms facing in. Brachialis and forearm.", "sets": 3 },
+        { "name": "Concentration curl · 10 each side", "detail": "Elbow braced on the inner thigh. Squeeze at the top.", "sets": 2 }
+      ]},
+      { "label": "Posture", "accent": "pull", "exercises": [
+        { "name": "YTW raises (prone) · 8 each letter", "detail": "Face down. Arms in a Y, then T, then W.", "sets": 3 },
+        { "name": "Superman swim · 30 sec", "sets": 2 }
+      ]},
+      { "label": "Abs", "accent": "abs", "exercises": [
+        { "name": "Russian twist with dumbbell · 20 total", "detail": "Lean back, feet up if you can. Obliques.", "sets": 3 },
+        { "name": "Side plank reach-through · 10 each side", "sets": 2 }
+      ]}
+    ],
+    "cardio": "Optional 15–20 min hill climb later in the day."
+  },
+
+  "d3": {
+    "badge": "Day 3 · Legs",
+    "title": "Legs · Ski Prep · Core",
+    "sections": [
+      { "label": "Warm Up", "accent": "warmup", "exercises": [
+        { "name": "Leg swings · 10 each leg, each direction", "sets": 1 },
+        { "name": "Hip circles · 10 each direction", "sets": 1 },
+        { "name": "Bodyweight squats · 15", "sets": 2 }
+      ]},
+      { "label": "Quads", "accent": "legs", "exercises": [
+        { "name": "Bulgarian split squats · 10 each side", "detail": "Rear foot on the ottoman, dumbbells in hand. 3 sec down.", "sets": 4 },
+        { "name": "Kettlebell goblet squats · 12", "detail": "Deep. Every rep is one and a half: down, half up, down, all the way up.", "sets": 4 },
+        { "name": "Wall sit · 60 sec", "detail": "Thighs parallel. Hold the dumbbells on your thighs when 60 sec gets easy.", "sets": 3 }
+      ]},
+      { "label": "Posterior + Power", "accent": "legs", "exercises": [
+        { "name": "Single-leg Romanian deadlift · 10 each side", "detail": "Dumbbell in each hand. Hinge, flat back, slow down. Hamstrings and balance.", "sets": 3 },
+        { "name": "Kettlebell swings · 20", "detail": "Hip hinge, not a squat. Explosive.", "sets": 4 },
+        { "name": "Jump squats · 10", "detail": "Land soft, reset each rep.", "sets": 3 },
+        { "name": "Skater bounds · 20 total", "detail": "Side to side, stick each landing for 1 sec. Edge-to-edge ski power.", "sets": 3 },
+        { "name": "Single-leg calf raise · 15 each side", "detail": "On a step. Dumbbell in one hand, full stretch at the bottom.", "sets": 3 }
+      ]},
+      { "label": "Core", "accent": "abs", "exercises": [
+        { "name": "Hollow body hold · 30 sec", "detail": "Lower back pressed into the floor.", "sets": 3 },
+        { "name": "Plank · 60 sec", "sets": 2 }
+      ]}
+    ],
+    "cardio": "This session counts as ski conditioning. Log it as cardio too if you want."
+  },
+
+  "d4": {
+    "badge": "Day 4 · Max Day",
+    "title": "Benchmarks · Ski Legs · Abs",
+    "sections": [
+      { "label": "Warm Up", "accent": "warmup", "exercises": [
+        { "name": "Arm circles · 30 sec each direction", "sets": 1 },
+        { "name": "Bodyweight squats · 15", "sets": 1 },
+        { "name": "Easy push-ups · 8", "sets": 1 }
+      ]},
+      { "label": "Weekly Benchmarks · Log All", "accent": "gold", "exercises": [
+        { "name": "Max consecutive pushups", "detail": "Standard form. Log it.", "sets": 1 },
+        { "name": "Max single-arm row reps (at 10 kg)", "detail": "Strict reps. Log it.", "sets": 1 },
+        { "name": "Max plank hold", "detail": "Time it. New PR.", "sets": 1 }
+      ]},
+      { "label": "Ski Legs (second hit)", "accent": "legs", "exercises": [
+        { "name": "Wall sit · 60 sec", "sets": 3 },
+        { "name": "Bulgarian split squats · 12 each side", "detail": "Lighter and faster than Day 3. Burn, not grind.", "sets": 3 },
+        { "name": "Kettlebell goblet squats · 15", "sets": 3 },
+        { "name": "Kettlebell swings · 20", "sets": 3 },
+        { "name": "Skater bounds · 20 total", "sets": 3 }
+      ]},
+      { "label": "Shoulders (weak point)", "accent": "push", "exercises": [
+        { "name": "Dumbbell lateral raise · 15", "detail": "Light and strict. Shoulder width.", "sets": 3 }
+      ]},
+      { "label": "Abs", "accent": "abs", "exercises": [
+        { "name": "Weighted crunches · 12", "detail": "Heavier and slower than Day 1.", "sets": 3 },
+        { "name": "Side plank reach-through · 10 each side", "sets": 2 },
+        { "name": "Hollow body hold · 30 sec", "sets": 2 }
+      ]}
+    ],
+    "cardio": "No extra cardio needed today."
+  },
+
+  "d5": {
+    "badge": "Day 5 · Upper",
+    "title": "Chest · Back · Shoulders · Arms · Abs",
+    "sections": [
+      { "label": "Warm Up", "accent": "warmup", "exercises": [
+        { "name": "Arm circles · 30 sec each direction", "sets": 1 },
+        { "name": "Wall angels · 10", "sets": 2 },
+        { "name": "Walkout to plank · 5 reps", "sets": 1 }
+      ]},
+      { "label": "Chest (second hit)", "accent": "push", "exercises": [
+        { "name": "Incline floor press · 10–12", "detail": "Upper chest first today. 3 sec down.", "sets": 3 },
+        { "name": "Dumbbell floor press · 10–12", "detail": "Pause 2 sec with elbows on the floor, then drive up.", "sets": 3 },
+        { "name": "Dumbbell squeeze press · 12", "detail": "Dumbbells pressed together the whole rep. Constant tension.", "sets": 3 }
+      ]},
+      { "label": "Back (second hit)", "accent": "pull", "exercises": [
+        { "name": "Single-arm dumbbell row · 12–15 each side", "sets": 3 },
+        { "name": "Dumbbell pullover · 12", "sets": 3 },
+        { "name": "Reverse fly · 15", "sets": 3 }
+      ]},
+      { "label": "Shoulders", "accent": "push", "exercises": [
+        { "name": "Dumbbell overhead press · 10–12", "sets": 3 },
+        { "name": "Dumbbell lateral raise · 15", "sets": 3 }
+      ]},
+      { "label": "Arms (supersets)", "accent": "pull", "exercises": [
+        { "name": "Dumbbell curl · 10–12", "detail": "Superset: go straight into the tricep extension, then rest 60 sec.", "sets": 3 },
+        { "name": "Overhead tricep extension · 12", "sets": 3 },
+        { "name": "Hammer curl · 12", "detail": "Superset with the diamond push-ups.", "sets": 2 },
+        { "name": "Diamond push-ups · to failure", "sets": 2 }
+      ]},
+      { "label": "Abs", "accent": "abs", "exercises": [
+        { "name": "Lying leg raises · 15", "sets": 3 },
+        { "name": "Russian twist with dumbbell · 20 total", "sets": 3 }
+      ]}
+    ],
+    "cardio": "Rest day tomorrow."
+  }
+}
