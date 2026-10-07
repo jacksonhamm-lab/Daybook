@@ -236,23 +236,35 @@ function props(r, fx, world) {
   if (fx === 'box-') { if (r.carry) r.carry.visible = false; if (world.benchBox) world.benchBox.visible = true; }
   if (fx === 'box-reset') { if (r.carry) r.carry.visible = false; if (world.stackTop) world.stackTop.visible = true; if (world.benchBox) world.benchBox.visible = false; }
 }
-// The drinking clip is a cup clip: the fist comes up in front of the mouth. A bottle held straight out of the
-// fist would then cover his face, so it's angled in the hand to point at his mouth at the top of the sip:
-// gripped near the neck, cap at his lips, the body tipped up and away like a real swig.
-function fitBottle(r) {
-  const b = r.bottle, clip = build(r, 'drinking'); if (!b || !clip || b.userData.fit) return;
-  const scene = r.vrm.scene, mx = new THREE.AnimationMixer(scene), a = mx.clipAction(clip); a.play();
-  const hand = r.R('leftHand'), head = r.R('head');
-  let best = null;
-  for (let t = 0; t <= clip.duration; t += .1) { mx.setTime(t); r.vrm.humanoid.update(); scene.updateMatrixWorld(true); const y = hand.getWorldPosition(_a).y; if (!best || y > best.y) best = { t, y }; }
-  mx.setTime(best.t); r.vrm.humanoid.update(); scene.updateMatrixWorld(true);
-  const mouth = scene.localToWorld(scene.worldToLocal(head.getWorldPosition(_a)).add(_b.set(0, .03, .09)));   // just ahead of the head joint
-  const M = hand.worldToLocal(mouth.clone()), G = b.position.clone(), d = M.clone().sub(G), L = Math.min(.13, Math.max(.05, d.length() / b.scale.x));   // the bottle's own units are metres (the hand bone can be scaled)
-  a.stop(); mx.uncacheRoot(scene);
-  b.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), d.normalize());
-  const [body, bodyInk, cap, capInk] = b.children;
-  body.position.set(0, 0, L - .145); bodyInk.position.copy(body.position); cap.position.set(0, 0, L - .0225); capInk.position.copy(cap.position);
-  b.userData.fit = true;
+// The clips' hands are open. Whatever is showing in a hand (r.held, from rider.js), its fingers close round it,
+// eased in and out. The clip's own finger pose is put back before each mixer update (the mixer only rewrites a
+// bone whose value changed, so an override would otherwise stick).
+const FINGERS = ['Index', 'Middle', 'Ring', 'Little'], JOINTS = ['Proximal', 'Intermediate', 'Distal'];
+function gripBones(r) {
+  if (r.mo.fingers) return r.mo.fingers;
+  const F = { left: [], right: [] };
+  for (const side of ['left', 'right']) {
+    const k = side === 'left' ? -1 : 1;
+    FINGERS.forEach(f => JOINTS.forEach((j, n) => { const bn = r.B(side + f + j); if (bn) F[side].push({ bn, axis: 'z', k, n, base: new THREE.Quaternion() }); }));
+    const t = r.B(side + 'ThumbProximal'), t2 = r.B(side + 'ThumbDistal');
+    if (t) F[side].push({ bn: t, axis: 'y', k, thumb: -.45, base: new THREE.Quaternion() }); if (t2) F[side].push({ bn: t2, axis: 'z', k, thumb: .55, base: new THREE.Quaternion() });
+  }
+  return r.mo.fingers = F;
+}
+function gripRestore(r) { const mo = r.mo; if (!mo.gripOn) return; const F = gripBones(r); for (const side of ['left', 'right']) if (mo.gripOn[side]) for (const f of F[side]) f.bn.quaternion.copy(f.base); }
+function gripApply(r, dt) {
+  const mo = r.mo, F = gripBones(r); mo.gripW = mo.gripW || { left: 0, right: 0 }; mo.gripOn = mo.gripOn || {}; mo.gripCurl = mo.gripCurl || {};
+  for (const side of ['left', 'right']) {
+    const h = (r.held || []).find(x => x.side === side && x.obj.visible);
+    if (h) mo.gripCurl[side] = h.curl;
+    const w = mo.gripW[side] = damp(mo.gripW[side], h ? 1 : 0, 16, dt), c = mo.gripCurl[side];
+    mo.gripOn[side] = w > .003 && !!c; if (!mo.gripOn[side]) continue;
+    for (const f of F[side]) {
+      f.base.copy(f.bn.quaternion);
+      _e.set(0, 0, 0); _e[f.axis] = f.k * (f.thumb != null ? f.thumb : c[f.n]);
+      f.bn.quaternion.slerp(_q.setFromEuler(_e), w);
+    }
+  }
 }
 // Lay the scene out around his reach: the dumbbells rest on a low cradle exactly where his hands land
 // in picking_up (both sides), and the cocoa on a stump where his right hand lands. Redone per model.
@@ -270,7 +282,6 @@ function stage(r, kind, world) {
     STAGED.gym = [box_(cradle.position.x, cradle.position.z, w / 2, .13, yaw)];
     world.restBells = [pl, pr].map(p => { const b = world.makeDumbbell(); b.visible = true; b.position.set(p.x, top + .05, p.z); b.rotation.y = yaw; world.gym.add(b); return b; });
     (world.gymProps || []).forEach(o => world.gym.remove(o)); const mk = world.gymProps = [cradle, world.blob(world.gym, cradle.position.x, cradle.position.z, w + .2, .45, -yaw, .3)];
-    fitBottle(r);
     // the water bottle stands on a wooden crate where his left hand closes on it (he drinks left-handed)
     const bp = at('bottle', L.pos), cTop = Math.max(.1, bp.y - .1), crate = new THREE.Group(); crate.position.set(bp.x, 0, bp.z); crate.rotation.y = S.bottle.yaw; world.gym.add(crate); mk.push(crate);
     world.box(crate, .36, cTop, .28, 0xa8794a, 0, cTop / 2, 0); [-.1, .1].forEach(y => world.box(crate, .365, .012, .285, 0x7a5434, 0, cTop / 2 + y * cTop, 0));
@@ -455,7 +466,9 @@ export function direct(r, kind, dt, world, look) {
   // pose is put back first (the mixer won't rewrite a value that hasn't changed)
   const head = r.B('head');
   if (head && mo.headBase) head.quaternion.copy(mo.headBase);
+  gripRestore(r);
   mo.mixer.update(dt);
+  gripApply(r, dt);
   if (head) { mo.headBase = (mo.headBase || new THREE.Quaternion()).copy(head.quaternion); if (look) { _e.set(-look.y * .12, look.x * .3, 0); head.quaternion.multiply(_q.setFromEuler(_e)); } }
   const scene = r.vrm.scene;
   const want = mo.step && mo.step.seated && !mo.react ? (world.deskShift || 0) : 0; mo.shift = damp(mo.shift || 0, want, 2.2, dt);   // scoot in / out

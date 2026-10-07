@@ -1240,8 +1240,8 @@ const I = {
 };
 // Home is Dex's stage; the other four are pages opened from his stat chips (docs/NAV.md).
 // Keys are the old tab names so existing links keep working; notes render under Plan.
-// Dex's wardrobe defaults = Jackson's real kit (mirrors DEX_DEFAULTS in rider.js)
-const DEX_DEFAULTS = { look: 'auto', time: 'night', jacket: '#b8863b', pants: '#1c1d22', boots: '#b8a276', gloves: '#16171d', poles: '#1a1b20', head: 'mask', mask: '#1a1b21', beanie: '#16171d', frame: '#d5d0c1', lens: 'gold', skis: 'bent', skin: 'default', build: 'athletic' };
+// Dex's defaults (mirrors DEX_DEFAULTS in rider.js). His clothes are part of each model now; only the skis and poles are props.
+const DEX_DEFAULTS = { look: 'auto', time: 'night', poles: '#1a1b20', skis: 'bent' };
 const TABS = [
   { k: 'today',    label: 'Home',  color: '#0a84ff' },
   { k: 'week',     label: 'Plan',  color: '#5e5ce6', attr: 'focus' },
@@ -2843,37 +2843,23 @@ const SHEETS = {
       <div class="lbl">Containers</div><p class="sub">${esc(BOOK.containers)}</p>
       <p class="sub" style="margin-top:18px;opacity:.7">${esc(BOOK.fine)}</p>`;
   },
-  // Customise Dex: his look, the scene, every piece of the ski kit, and his body
+  // Customise Dex: his look, the scene, his skis and poles
   dex() {
     const D = { ...DEX_DEFAULTS, ...(S.settings.dex || {}) };
     const sw = (k, list) => `<div class="swatches">${list.map(([v, name, show]) => `<button class="swt ${D[k] === v ? 'on' : ''}" style="--c:${show || v}" data-act="dex" data-k="${k}" data-v="${v}"><i></i><span>${name}</span></button>`).join('')}</div>`;
     const grad = (k, list) => `<div class="swatches">${list.map(([v, name, x, y]) => `<button class="swt ${D[k] === v ? 'on' : ''}" style="--g:linear-gradient(135deg,${x},${y})" data-act="dex" data-k="${k}" data-v="${v}"><i class="grad"></i><span>${name}</span></button>`).join('')}</div>`;
     const chips = (k, list) => `<div class="chips">${list.map(([v, l]) => `<button class="chip ${D[k] === v ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="dex" data-k="${k}" data-v="${v}">${l}</button>`).join('')}</div>`;
     const grp = (title, hint, body, open) => `<details class="sgrp"${open ? ' open' : ''}><summary>${title}<span>${hint}</span></summary><div class="sg-in">${body}</div></details>`;
-    const DARKS = [['#1a1b21', 'Black'], ['#3b3e45', 'Charcoal'], ['#243251', 'Navy'], ['#4d5638', 'Olive'], ['#8e2a24', 'Red'], ['#d9652b', 'Orange'], ['#d8d1c0', 'Cream']];
     return `<div class="grab"></div><h2 style="margin:0 0 4px">Customise Dex</h2><p class="shp">Changes show on him right away and sync to your other devices.</p>
       ${grp('Look &amp; scene', D.look === 'auto' ? 'Follows your day' : D.look, `
         <div class="lbl" style="margin-top:0">Look</div>${chips('look', [['auto', 'Follows your day'], ['ski', 'Ski'], ['gym', 'Gym'], ['work', 'Work'], ['sleep', 'Night camp']])}
         <p class="sub" style="margin:6px 0 0">${D.look === 'auto' ? 'Ski by default, gym on training days, work clothes on the clock, night camp after 11pm.' : 'He stays in this look until you set it back to Follows your day.'}</p>
         <div class="lbl">Ski slope</div>${chips('time', [['night', 'Night'], ['sunset', 'Sunset'], ['day', 'Day']])}
         <div class="lbl">Camera</div><p class="sub" style="margin:0 0 8px">Drag sideways on the scene to walk the camera round him; it stays where you leave it.</p><button class="btn sm" data-act="dex-view">Reset camera</button>`, true)}
-      ${grp('Ski kit', 'Jacket, pants, boots, gloves, poles', `
-        <div class="lbl" style="margin-top:0">Jacket</div>${sw('jacket', [['#b8863b', 'Golden'], ['#e0a526', 'Mustard'], ['#d9652b', 'Orange'], ['#a8322a', 'Red'], ['#243251', 'Navy'], ['#56603f', 'Olive'], ['#1e1f24', 'Black'], ['#e6dfcf', 'Cream']])}
-        <div class="lbl">Pants</div>${sw('pants', [['#1c1d22', 'Black'], ['#3b3e45', 'Charcoal'], ['#222b45', 'Navy'], ['#4d5638', 'Olive'], ['#b39f74', 'Khaki'], ['#dedcd6', 'White']])}
-        <div class="lbl">Boots</div>${sw('boots', [['#b8a276', 'Khaki'], ['#9a6b43', 'Tan'], ['#1b1c21', 'Black'], ['#6c7078', 'Grey'], ['#e4e2dc', 'White']])}
-        <div class="lbl">Gloves</div>${sw('gloves', [['#16171d', 'Black'], ['#9a6b43', 'Tan'], ['#a8322a', 'Red'], ['#6c7078', 'Grey'], ['#e4e2dc', 'White']])}
+      ${grp('Skis &amp; poles', ({ bent: 'Bents', midnight: 'Midnight', glacier: 'Glacier', lava: 'Lava' })[D.skis] || '', `
+        <div class="lbl" style="margin-top:0">Skis</div>${grad('skis', [['bent', 'Bents', '#f0406a', '#2376c8'], ['midnight', 'Midnight', '#2a2f5e', '#d9a441'], ['glacier', 'Glacier', '#f4f8fb', '#3f93b8'], ['lava', 'Lava', '#ffcf5a', '#7a1616']])}
         <div class="lbl">Poles</div>${sw('poles', [['#1a1b20', 'Black'], ['#a9adb5', 'Silver'], ['#c9a24e', 'Gold'], ['#b3261e', 'Red'], ['#2f6fc0', 'Blue']])}`)}
-      ${grp('Head', D.head === 'beanie' ? 'Mask + beanie' : 'Ski mask', `
-        <div class="lbl" style="margin-top:0">Headwear</div>${chips('head', [['mask', 'Ski mask'], ['beanie', 'Mask + beanie']])}
-        <div class="lbl">Mask</div>${sw('mask', DARKS)}
-        ${D.head === 'beanie' ? `<div class="lbl">Beanie</div>${sw('beanie', DARKS.map(([v, n]) => [v === '#1a1b21' ? '#16171d' : v, n]))}` : ''}
-        <div class="lbl">Goggle frame</div>${sw('frame', [['#d5d0c1', 'Bone'], ['#f2f2f2', 'White'], ['#1b1c21', 'Black'], ['#c9a24e', 'Gold'], ['#b3261e', 'Red']])}
-        <div class="lbl">Lens</div>${grad('lens', [['gold', 'Gold', '#e6d3a2', '#5a4420'], ['ice', 'Ice', '#dff4ff', '#1f4f86'], ['rose', 'Rose', '#ffe0e8', '#7d2c4a'], ['smoke', 'Smoke', '#cfd2d9', '#353941'], ['emerald', 'Emerald', '#dcf7e6', '#1f5c40']])}`)}
-      ${grp('Skis', ({ bent: 'Bents', midnight: 'Midnight', glacier: 'Glacier', lava: 'Lava' })[D.skis] || '', grad('skis', [['bent', 'Bents', '#f0406a', '#2376c8'], ['midnight', 'Midnight', '#2a2f5e', '#d9a441'], ['glacier', 'Glacier', '#f4f8fb', '#3f93b8'], ['lava', 'Lava', '#ffcf5a', '#7a1616']]))}
-      ${grp('Body', 'Skin tone, gym build', `
-        <div class="lbl" style="margin-top:0">Skin tone</div>${sw('skin', [['default', 'Default', '#f6e3d8'], ['warm', 'Warm', '#efcfb4'], ['tan', 'Tan', '#d7a37c'], ['deep', 'Deep', '#a8744f']])}
-        <div class="lbl">Build in the gym</div>${chips('build', [['lean', 'Lean'], ['athletic', 'Athletic'], ['jacked', 'Jacked']])}`)}
-      <div class="row end" style="margin-top:18px"><button class="btn" data-act="dex-reset">Back to his real kit</button><button class="btn white" data-act="close-sheet">Done</button></div>`;
+      <div class="row end" style="margin-top:18px"><button class="btn" data-act="dex-reset">Reset</button><button class="btn white" data-act="close-sheet">Done</button></div>`;
   },
   progress() {
     const xp = xpTotal(), { lvl, into, need } = levelFor(xp), got = earnedTrophies().map(t => t.id);

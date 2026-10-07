@@ -145,7 +145,41 @@ the repo, see below).
   - Jacket front hem takes a little upper-leg weight so it rides on the thighs in a
     ski stance (otherwise the pants poke through).
 
-## Concept B (2026-10-02: the target look)
+## Models v5 (2026-10-06: what's live now)
+
+The four looks were regenerated in **Tripo Smart Mesh** and rigged by Tripo. This replaced the Concept B models below.
+- **Why:** the old meshes had lighting painted into their textures (it stayed put while he moved, so he always looked
+  "off"), dense messy geometry, and Mixamo auto-rigs that stretched at the shoulders and ballooned the trousers.
+- **What they are:** about 10,000 triangles each, flat colours with no painted shading, a 65-bone `mixamorig:` skeleton
+  with real fingers, T-pose (ski is an A-pose; `wrapPlain()` straightens it). About 0.9 MB each with a 2K texture.
+- **Outfits:** work is a double-breasted navy suit; ski, gym and camp as before. He wants a relaxed, drapey fit everywhere.
+- **Pipeline** (`tools/blender/`, run with Blender headless: `blender --background --factory-startup --python <script> -- <name>`):
+  - `tripo.py <name> [A]`: a Tripo-rigged FBX in, scaled to 1.75 m, texture wired up, pose-test renders out, GLB out.
+  - `rig.py <name>`: rigs an *unrigged* Smart Mesh FBX from scratch (measures the mesh, builds the skeleton, skins it
+    through a voxel-remesh proxy). About as good as Tripo's rig; kept as a fallback and repair tool.
+  - `dexlib.py`: shared loading, rendering and the pose tests (arms down, arms up, elbows, squat, lunge, bend, fist).
+  - Then gzip, `wrangler kv key put model:<name>.glb`, and bump `MODELS` (`?v=`) in rider.js.
+- **Known:** the work model's face doesn't match the others (black eyes, paler skin). The generated skis model
+  (`skis.zip`) isn't wired in; the skis, bindings and poles are still built in code (gear.js).
+
+### Props in his hands
+- `holdInFist(vrm, side, obj, { r })` (rider.js) seats a prop of handle radius `r` from the palm itself: `palmOf()`
+  finds the knuckle row and the palm's underside on the skin at the T-pose rest, and the prop sits tucked under the
+  knuckles, touching both. Props are built around that grip point, axis along the knuckle row, thumb side +z.
+- The clips' hands are open, so motion.js closes his fingers round whatever is showing in a hand (`r.held`):
+  `gripApply()` after the mixer, `gripRestore()` before it (the mixer only rewrites a bone that changed).
+  How far they close comes from the handle's radius (`curlFor`): a fist on a dumbbell, a clasp on the mug.
+- The bottle is held near its top with the cap just above his thumb; the mug with its rim there. The drink is a
+  cup clip, so the bottle is an approximation.
+- The log and shoe box still use the old placement (no `r`); his fingers close on them at a fixed curl.
+
+### Cleanup (2026-10-06)
+Everything that only served the VRoid .vrm models is gone: `physique.js`, the code-built clothes (`dress()`),
+the mask, goggles and beanie (`gear()`), skin tone and gym build. `dress.js` is now just the cel materials;
+`gear.js` is skis, poles and finger poses. Customise offers only what still does something: look, slope time,
+skis and poles. Sections further down that describe the VRoid pipeline are history.
+
+## Concept B (2026-10-02: superseded by Models v5)
 
 - **What B is:** One Piece Wano-style, with his messy black hair and magenta eyes, an athletic build, and Zoro-style ink-line muscles. The reference is `Documents/Dex/Dex concept B (target look).png`.
 - **Gym look:** B, as `models/gym.glb`, uploaded to KV as `model:gym.glb`.

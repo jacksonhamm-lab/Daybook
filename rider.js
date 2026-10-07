@@ -1,27 +1,25 @@
-/* Dex v6: Jackson's own VRoid model on the Today stage.
-   - Most of the day he skis downhill in his real kit (clothes from dress.js, hard gear from
-     gear.js): steady carved turns, snow spraying off the tails, tracks behind him, pines
-     and falling snow streaming past. Tuck runs on training days, a 360 when the list is clear.
-   - On the clock he's in his Work outfit, standing easy. From 11pm to 6am he's in his Sleep
-     outfit, sitting in the snow hugging his knees.
+/* Dex v7: four Tripo models (ski, gym, work, camp), rigged with a Mixamo-named skeleton, on the Today stage.
+   - Most of the day he skis downhill: steady carved turns, snow spraying off the tails, tracks behind him,
+     pines and falling snow streaming past. Skis and poles are props from gear.js.
+   - Training days, on the clock and at night he's in the gym, the shop or at camp, where motion.js runs
+     his routine from motion-captured clips.
    - Tap him to hop (or wave) and hear something useful; double-tap for a 360; drag sideways
      to swing the camera round.
    Keeps the window.Buddy API (mount, update, say, play) so index.html doesn't care which Dex
    is loaded. If the models can't load, the old code-built Dex in buddy.js takes over.
-   The .vrm files are private: served by the Worker from KV, never committed (public repo). */
+   The models are private: served by the Worker from KV, never committed (public repo). */
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/jsm/utils/BufferGeometryUtils.js';
-import { VRMLoaderPlugin, VRMUtils, VRMHumanoid } from './vendor/three-vrm.module.min.js';
-import { dress, toon, INK } from './dress.js';
-import { gear, plainSkiKit, fists, hands } from './gear.js';
-import { physique } from './physique.js';
+import { VRMUtils, VRMHumanoid } from './vendor/three-vrm.module.min.js';   // only its humanoid rig (bone mapping) and disposal helper
+import { toon, INK } from './dress.js';
+import { plainSkiKit, fists, hands } from './gear.js';
 import { loadAnims, animsReady, setupMotion, direct, react } from './motion.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const V = 2;   // bump to make phones fetch new model files (2: unused face blendshapes stripped)
 // gym is concept B (Tripo mesh, rigged in Mixamo): a plain .glb that wrapPlain() gives the same humanoid API as a VRM
-const MODELS = { ski: 'models/ski.glb?v=1', work: 'models/work.glb?v=1', sleep: 'models/camp.glb?v=1', gym: 'models/gym.glb?v=1' };   // all concept B now (Tripo + Mixamo)
+const MODELS = { ski: 'models/ski.glb?v=2', work: 'models/work.glb?v=2', sleep: 'models/camp.glb?v=2', gym: 'models/gym.glb?v=2' };   // all concept B now (Tripo + Mixamo)
 const SPEED = REDUCED ? 0 : 7.5;   // metres a second down the hill
 const TURN = 1.05;                 // carving rhythm, radians a second (one left+right every ~6s)
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -389,8 +387,7 @@ function layTracks(on) {
 const cache = {};
 function load(key) {
   if (cache[key]) return cache[key];
-  const loader = new GLTFLoader(); loader.register(p => new VRMLoaderPlugin(p));
-  return (cache[key] = loader.loadAsync(MODELS[key]).then(gltf => prepare(key, gltf.userData.vrm || wrapPlain(gltf))).catch(e => { delete cache[key]; throw e; }));
+  return (cache[key] = new GLTFLoader().loadAsync(MODELS[key]).then(gltf => prepare(key, wrapPlain(gltf))).catch(e => { delete cache[key]; throw e; }));
 }
 // A Mixamo-rigged .glb (no VRM data): three-vrm's humanoid rig over its mixamorig bones, so poses,
 // clips and props drive it exactly like a VRM. It has no face shapes, so no blinking (expressionManager null).
@@ -473,18 +470,15 @@ function prepare(key, vrm) {
   vrm.scene.updateMatrixWorld(true);
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
   r.toesRest = R('leftToes') ? R('leftToes').getWorldPosition(new THREE.Vector3()).y : r.footRest;
-  if (key === 'sleep') { r.mug = holdInFist(vrm, 'left', cocoaMug()); r.log = holdInFist(vrm, 'right', makeLog(true)); }   // mug left: the drinking clip drinks left-handed
+  if (key === 'sleep') { r.mug = holdInFist(vrm, 'left', cocoaMug(), { r: .045 }); r.log = holdInFist(vrm, 'right', makeLog(true)); }   // mug left: the drinking clip drinks left-handed
   if (key === 'work') r.carry = holdInFist(vrm, 'right', shoeBox());
-  if (key === 'gym') { r.build = dexPrefs().build; if (!vrm.plain) physique(vrm, { amount: BUILD[r.build] || 1 }); r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell())); r.bottle = holdInFist(vrm, 'left', waterBottle(true)); }   // leaner and more defined, Luffy-style
+  if (key === 'gym') { r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell(), { r: .014 })); r.bottle = holdInFist(vrm, 'left', waterBottle(true), { r: .035 }); }
   if (key === 'ski') {
     const D = dexPrefs();
-    if (vrm.plain) { r.kit = plainSkiKit(vrm, { skis: D.skis, pole: D.poles }); r.dexWas = { ...D }; }   // jacket, mask and goggles are part of the model
-    else {
-    r.outfit = dress(vrm, { jacket: D.jacket, pants: D.pants, boots: D.boots, gloves: D.gloves }); r.kit = gear(vrm, r.outfit, { frame: D.frame, pole: D.poles }, { lens: D.lens, skis: D.skis });
-    r.kit.setMask(D.mask); r.kit.setBeanie(D.head === 'beanie', D.beanie); r.dexWas = { ...D };
-    }
+    r.kit = plainSkiKit(vrm, { skis: D.skis, pole: D.poles }); r.dexWas = { ...D };   // jacket, mask and goggles are part of the model; skis and poles are props
     r.tails = ['l', 'r'].map(s => { const o = new THREE.Object3D(); o.position.set(0, .01, -.8); r.kit.skis[s].add(o); return o; });
   }
+  r.held = vrm.scene.userData.held || [];   // what can be in his hands: motion.js closes his fingers round whichever is showing
   return r;
 }
 // a dumbbell: knurled handle along the fist's axis, a hex head each end
@@ -510,24 +504,55 @@ function makeLog(inHand = false, len = .42, rad = .055) {
 function waterBottle(inHand = false) {
   const g = new THREE.Group(), body = new THREE.CylinderGeometry(.035, .035, .2, 14), cap = new THREE.CylinderGeometry(.025, .028, .045, 12);
   if (inHand) { body.rotateX(Math.PI / 2); cap.rotateX(Math.PI / 2); }
-  const at = (m, h) => { if (inHand) m.position.set(-.03, 0, h - .05); else m.position.y = h; return m; };
+  // in the hand he holds it high, the cap just clear of his thumb, so it meets his lips when the fist comes up
+  const at = (m, h) => { if (inHand) m.position.set(0, 0, h - .195); else m.position.y = h; return m; };
   g.add(at(new THREE.Mesh(body, toon(0x4f8a8b)), .1), at(new THREE.Mesh(body, INK), .1), at(new THREE.Mesh(cap, toon(0x1b1c21)), .222), at(new THREE.Mesh(cap, INK), .222));
   g.visible = !inHand; return g;
 }
 // the cocoa mug, standing up along the fist (thumb side up)
 function cocoaMug() {
   const g = new THREE.Group(), body = new THREE.CylinderGeometry(.045, .042, .1, 16).rotateX(Math.PI / 2), m = new THREE.Mesh(body, toon(0xd9573b));
-  m.position.set(-.035, 0, .02); g.add(m, Object.assign(new THREE.Mesh(body, INK))); g.children[1].position.copy(m.position);
-  const top = new THREE.Mesh(new THREE.CircleGeometry(.04, 16), toon(0x5a3420)); top.position.set(-.035, 0, .071); g.add(top);
+  m.position.set(0, 0, .012); g.add(m, Object.assign(new THREE.Mesh(body, INK))); g.children[1].position.copy(m.position);   // rim just above his thumb
+  const top = new THREE.Mesh(new THREE.CircleGeometry(.04, 16), toon(0x5a3420)); top.position.set(0, 0, .058); g.add(top);
   g.visible = false; return g;
 }
 // parent a prop to a hand so it sits in the closed fist (built in the bind pose, like the ski poles)
-function holdInFist(vrm, side, obj) {
+// His palm at the T-pose rest, in world space: the knuckle row (which runs front to back, thumb side forward)
+// and the palm's underside, found from the skin itself.
+const PALMS = new WeakMap();
+function palmOf(vrm, side) {
+  let P = PALMS.get(vrm); if (!P) PALMS.set(vrm, P = {});
+  if (P[side]) return P[side];
+  vrm.scene.updateMatrixWorld(true);
+  const R = n => vrm.humanoid.getRawBoneNode(n), wp = n => R(n) ? R(n).getWorldPosition(new THREE.Vector3()) : null;
+  const hand = wp(side + 'Hand'), K = wp(side + 'MiddleProximal') || wp(side + 'IndexProximal'), next = wp(side + 'MiddleIntermediate');
+  const zi = (wp(side + 'IndexProximal') || K).z, zl = (wp(side + 'LittleProximal') || K).z, z0 = Math.min(zi, zl) - .008, z1 = Math.max(zi, zl) + .008;
+  let skin; vrm.scene.traverse(o => { if (!skin && o.isSkinnedMesh && o.name !== 'ink') skin = o; });
+  skin.skeleton.update();
+  const A = skin.geometry.attributes.position, v = new THREE.Vector3(); let low = K.y - .009;
+  for (let i = 0; i < A.count; i++) {   // the four fingers' bases only: the thumb hangs lower and would read as the palm
+    skin.getVertexPosition(i, v).applyMatrix4(skin.matrixWorld);
+    if (Math.abs(v.x - K.x) < .014 && v.z > z0 && v.z < z1 && Math.abs(v.y - K.y) < .04) low = Math.min(low, v.y);
+  }
+  return P[side] = { K, low, zc: (z0 + z1) / 2, seg: next ? next.distanceTo(K) : .035, dir: Math.sign(K.x - hand.x) || 1 };
+}
+// how far each finger joint closes to wrap a handle of radius rad (thin handle: a fist; a mug: an open clasp)
+const curlFor = (rad, seg) => { const a = clamp(seg / (rad + .011), .45, 1.4), b = clamp(seg * .68 / (rad + .011) * 1.05, .4, 1.55); return [a, b, clamp(b * .7, .3, 1.1)]; };
+function holdInFist(vrm, side, obj, grip) {
   if (vrm.plain) {   // Tripo/Mixamo: build at the straightened T-pose rest and attach in place (their bind pose hangs the arms)
     vrm.scene.updateMatrixWorld(true);
-    const R = n => vrm.humanoid.getRawBoneNode(n), hand = R(side + 'Hand').getWorldPosition(new THREE.Vector3());
-    const knuckle = (R(side + 'MiddleProximal') || R(side + 'IndexProximal')).getWorldPosition(new THREE.Vector3());
-    obj.position.copy(hand.lerp(knuckle, .95)); obj.position.y -= .022; obj.quaternion.identity();
+    const R = n => vrm.humanoid.getRawBoneNode(n), held = vrm.scene.userData.held || (vrm.scene.userData.held = []);
+    if (grip && R(side + 'MiddleProximal')) {
+      // a handle of radius rad tucked under the knuckles, touching the palm and the inside of the closed fingers
+      const p = palmOf(vrm, side), rad = grip.r;
+      obj.position.set(p.K.x - p.dir * (rad + .008), p.low - rad, p.zc + (grip.along || 0)); obj.quaternion.identity();
+      held.push({ obj, side, curl: curlFor(rad, p.seg) });
+    } else {
+      const hand = R(side + 'Hand').getWorldPosition(new THREE.Vector3());
+      const knuckle = (R(side + 'MiddleProximal') || R(side + 'IndexProximal')).getWorldPosition(new THREE.Vector3());
+      obj.position.copy(hand.lerp(knuckle, .95)); obj.position.y -= .022; obj.quaternion.identity();
+      held.push({ obj, side, curl: [.9, .8, .55] });
+    }
     R(side + 'Hand').attach(obj); return obj;
   }
   let skin; vrm.scene.traverse(o => { if (o.isSkinnedMesh && (o.name === 'Body_(merged)' || (!skin && o.material !== INK && o.name !== 'ink'))) skin = o; });
@@ -541,33 +566,16 @@ function holdInFist(vrm, side, obj) {
   return obj;
 }
 // his look, chosen in the Customise sheet (settings.dex); the defaults are Jackson's real kit
-export const DEX_DEFAULTS = { look: 'auto', time: 'night', jacket: '#b8863b', pants: '#1c1d22', boots: '#b8a276', gloves: '#16171d', poles: '#1a1b20', head: 'mask', mask: '#1a1b21', beanie: '#16171d', frame: '#d5d0c1', lens: 'gold', skis: 'bent', skin: 'default', build: 'athletic' };
+export const DEX_DEFAULTS = { look: 'auto', time: 'night', poles: '#1a1b20', skis: 'bent' };
 const dexPrefs = () => ({ ...DEX_DEFAULTS, ...(state.ctx.dex || {}) });
-const SKIN = { default: '#ffffff', warm: '#f6dcc6', tan: '#e2b08a', deep: '#b98460' }, BUILD = { lean: .55, athletic: 1, jacked: 1.45 };
-// skin tone tints the skin materials of whichever model is showing
-function applySkin(r, tone) {
-  const c = new THREE.Color(SKIN[tone] || SKIN.default);
-  r.vrm.scene.traverse(o => { if (!o.isMesh) return; [].concat(o.material).forEach(m => {
-    if (!m || !/SKIN/.test(m.name) || /Outline/.test(m.name) || !m.color) return;
-    if (!m.userData.baseShade && m.shadeColorFactor) m.userData.baseShade = m.shadeColorFactor.clone();
-    m.color.copy(c); if (m.userData.baseShade) m.shadeColorFactor.copy(m.userData.baseShade).multiply(c);
-  }); });
-}
 function applyDex() {
   const D = dexPrefs();
   if (!rider) return;
-  applySkin(rider, D.skin);
   if (envKey) { const k = envKey; envKey = ''; setEnv(k); }   // slope time may have changed
-  if (rider.key === 'gym' && !rider.vrm.plain && rider.build !== D.build) { delete cache.gym; state.reload = true; }
   if (rider.key !== 'ski') return;
-  if (rider.outfit) ['jacket', 'pants', 'boots', 'gloves'].forEach(k => rider.outfit.recolor(k, D[k]));
-  const K = rider.kit, was = rider.dexWas || {};
-  // the Tripo ski model wears its mask, goggles and jacket; only the skis and poles are props
-  if (was.lens !== D.lens && K.setLens) K.setLens(D.lens);
+  const K = rider.kit, was = rider.dexWas || {};   // he wears his mask, goggles and jacket; only the skis and poles are props
   if (was.skis !== D.skis) K.setSkis(D.skis);
-  if (was.mask !== D.mask && K.setMask) K.setMask(D.mask);
-  if ((was.head !== D.head || was.beanie !== D.beanie) && K.setBeanie) K.setBeanie(D.head === 'beanie', D.beanie);
-  K.setFrame && K.setFrame(D.frame); K.setPoles(D.poles);
+  K.setPoles(D.poles);
   rider.dexWas = { ...D };
 }
 function want() {
