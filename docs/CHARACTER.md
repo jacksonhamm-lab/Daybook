@@ -292,7 +292,18 @@ Lots of detail at almost no cost: paint what he doesn't touch, model only what h
   - Flames are soft painted teardrops (sprites, additive) that flicker, instead of cones.
   - 3D for what he touches: the woodpile (top log under his hand in `lifting`, cut ends to the camera), the log he lays on the
     fire (he feeds it from behind, facing the camera), the cocoa stump (in front of him, so he drinks facing the camera).
-- **Next:** ski gets the same treatment.
+- **Ski (2026-10-06):**
+  - One painted ski run (chairlift, hut, pines), repainted for each slope time: `scenes/ski-night.jpg`, `ski-sunset.jpg`,
+    `ski-day.jpg`. `SKY[time].back` names the image; `setEnv` swaps it onto `world.skiBack`.
+  - It stands `SKI_D` (30 m) up the run, facing the ski camera's resting angle (`SKI_YAW`, .5).
+  - The snow is solid up to it (it used to fade into a plain sky). The plane is turned to meet the painting, and the
+    texture is counter-rotated (`snow.rotation = -SKI_YAW`) so it still scrolls the way he skis.
+  - The pines streaming past are one painted cut-out (`scenes/ski-tree.webp`) reused sixteen times, scaled and
+    mirrored, tinted per time (`SKY[time].tree`). They replaced the green cones.
+  - Haze per time (`SKY[time].fog`) is the painted snow's colour at the horizon, so the 3D snow meets the painting.
+    Sunset's light and snow colours were measured against the painting for the same reason.
+  - `SKY[time].bg` is a plain sky behind the canvas for the rare gap at the painting's edges on very wide screens.
+- All four scenes are painted now.
 
 ## Customise (the hanger button on the scene)
 

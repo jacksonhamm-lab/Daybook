@@ -10,7 +10,6 @@
    The models are private: served by the Worker from KV, never committed (public repo). */
 import * as THREE from 'three';
 import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
-import { mergeGeometries } from './vendor/jsm/utils/BufferGeometryUtils.js';
 import { VRMUtils, VRMHumanoid } from './vendor/three-vrm.module.min.js';   // only its humanoid rig (bone mapping) and disposal helper
 import { toon, INK } from './dress.js';
 import { plainSkiKit, fists, hands } from './gear.js';
@@ -89,29 +88,30 @@ function buildScene() {
   const key = world.key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(1.5, 3, 2.5); scene.add(key);
   world.outdoor = new THREE.Group(); scene.add(world.outdoor);
 
-  // groomed snow with faint old tracks; it scrolls away under him, and fades out at the edges
+  // groomed snow with faint old tracks; it scrolls away under him and runs solid up to the painted run
   const snow = canvasTex(512, 512, (x, W, H) => {
     x.fillStyle = '#e6edf8'; x.fillRect(0, 0, W, H);
     for (let i = 0; i < 2600; i++) { x.fillStyle = `rgba(${150 + Math.random() * 40 | 0},${170 + Math.random() * 40 | 0},${215 + Math.random() * 30 | 0},${.12 + Math.random() * .18})`; x.fillRect(Math.random() * W, Math.random() * H, 1 + Math.random() * 2, 1 + Math.random() * 2); }
     for (let i = 0; i < 12; i++) { let px = Math.random() * W; x.strokeStyle = `rgba(140,160,205,${.1 + Math.random() * .12})`; x.lineWidth = 2 + Math.random() * 3; x.beginPath(); x.moveTo(px, 0); for (let y = 0; y <= H; y += 32) { px += (Math.random() - .5) * 6; x.lineTo(px, y); } x.stroke(); }
   });
-  snow.wrapS = snow.wrapT = THREE.RepeatWrapping; snow.repeat.set(5, 5); snow.anisotropy = 8;
+  snow.wrapS = snow.wrapT = THREE.RepeatWrapping; snow.anisotropy = 8;
+  const skiNear = 14, skiDepth = SKI_D + skiNear, skiWide = 120;
+  snow.repeat.set(skiWide / 5.2, skiDepth / 5.2); snow.rotation = -SKI_YAW;   // the plane is turned to meet the painting; the texture's own axis stays on world z, so it scrolls the way he skis
   const fade = canvasTex(256, 256, (x, W, H) => { const g = x.createRadialGradient(W / 2, H * .56, 0, W / 2, H * .56, W / 2); g.addColorStop(0, '#fff'); g.addColorStop(.3, '#ddd'); g.addColorStop(.75, '#333'); g.addColorStop(1, '#000'); x.fillStyle = g; x.fillRect(0, 0, W, H); });
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(26, 26), new THREE.MeshLambertMaterial({ color: 0x9aabc8, map: snow, alphaMap: fade, transparent: true, depthWrite: false }));
-  ground.rotation.x = -Math.PI / 2; ground.position.set(0, -.003, -3); ground.renderOrder = -1; world.outdoor.add(ground); world.fade = fade; world.ground = ground;
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(skiWide, skiDepth), new THREE.MeshLambertMaterial({ color: 0x9aabc8, map: snow }));
+  { const c = (skiNear - SKI_D) / 2; ground.rotation.set(-Math.PI / 2, 0, SKI_YAW); ground.position.set(Math.sin(SKI_YAW) * c, -.003, Math.cos(SKI_YAW) * c); }
+  ground.renderOrder = -2; world.outdoor.add(ground); world.fade = fade; world.ground = ground;
+  // the painted run behind him: one image per time of day, swapped in setEnv
+  world.skiBack = backdrop(world.outdoor, null, { aspect: 6352 / 1536, H: 13, base: .66, D: SKI_D, yaw: SKI_YAW }); world.skiTex = {};
   world.snow = snow;
 
   // pines streaming past on both sides
-  const pine = (() => {
-    const tiers = [[.95, 1.1, .5], [.75, .95, 1.05], [.52, .8, 1.6]];
-    const g = tiers.map(([r, h, y]) => new THREE.ConeGeometry(r, h, 9).translate(0, y + h / 2, 0));
-    const c = tiers.map(([r, h, y]) => new THREE.ConeGeometry(r * .56, h * .42, 9).translate(0, y + h * .79 + .012, 0));
-    const trunk = new THREE.CylinderGeometry(.09, .12, .6, 6).translate(0, .3, 0);
-    return mergeGeometries([trunk, mergeGeometries(g), mergeGeometries(c)], true);
-  })();
+  // (painted cut-outs facing the camera's resting angle; tinted for the time of day in setEnv)
+  const TW = 2.1, TH = TW * 817 / 480, pine = new THREE.PlaneGeometry(TW, TH).translate(0, TH / 2 - .1, 0);
+  const pineTex = new THREE.TextureLoader().load('scenes/ski-tree.webp?v=1', t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; });
   world.trees = Array.from({ length: 16 }, (_, i) => {
-    const mats = [toon(0x3b2c22), toon(0x1f4a3e), toon(0xeef3fb)]; mats.forEach(m => { m.transparent = true; m.side = THREE.FrontSide; });
-    const m = new THREE.Mesh(pine, mats); world.outdoor.add(m);
+    const mats = [new THREE.MeshBasicMaterial({ map: pineTex, transparent: true, alphaTest: .25, side: THREE.DoubleSide })];
+    const m = new THREE.Mesh(pine, mats[0]); m.rotation.y = SKI_YAW; world.outdoor.add(m);
     const t = { m, mats }; placeTree(t, -34 + i * 2.6); return t;
   });
 
@@ -149,11 +149,11 @@ const box = (parent, w, h, d, color, x, y, z, ry = 0) => { const g = new THREE.B
 const cyl = (parent, r, len, color, x, y, z, rot = [0, 0, 0], seg = 16) => { const g = new THREE.CylinderGeometry(r, r, len, seg), m = new THREE.Group(); m.add(new THREE.Mesh(g, toon(color)), new THREE.Mesh(g, INK)); m.position.set(x, y, z); m.rotation.set(...rot); parent.add(m); return m; };
 // A painted back wall: one unlit image behind everything (drawn first, no depth), facing the camera's
 // resting angle, with the painted floor line on y = 0 so the 3D floor runs into it. Cheap and detailed.
-const CAM_YAW = .32;
-function backdrop(parent, url, { aspect, H, base, D }) {
+const CAM_YAW = .32, SKI_YAW = .5, SKI_D = 30;   // the camera's resting angle indoors and on the slope; how far up the run the painting stands
+function backdrop(parent, url, { aspect, H, base, D, yaw = CAM_YAW }) {
   const W = H * aspect, m = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false, depthWrite: false, toneMapped: false }));
-  m.renderOrder = -3; m.rotation.y = CAM_YAW; m.position.set(-Math.sin(CAM_YAW) * D, (base - .5) * H, -Math.cos(CAM_YAW) * D);
-  new THREE.TextureLoader().load(url, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; m.material.map = t; m.material.needsUpdate = true; });
+  m.renderOrder = -3; m.rotation.y = yaw; m.position.set(-Math.sin(yaw) * D, (base - .5) * H, -Math.cos(yaw) * D);
+  if (url) new THREE.TextureLoader().load(url, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; m.material.map = t; m.material.needsUpdate = true; });
   parent.add(m); return m;
 }
 // A painted cut-out (lofi detail at the cost of one quad): hung from its top edge at (x, top, z)
@@ -261,9 +261,9 @@ const SETTINGS = {
   work: { sky: 0xfff0dc, ground: 0x3a2e22, hemi: 1.25, key: 0xffe6c4, keyI: 2.1, fog: [0x8a6446, 6.5, 17], bg: 'radial-gradient(80% 70% at 50% 28%,#7d6852 0%,#473b2f 45%,#1c1611 100%)' },
 };
 const SKY = {
-  night: { ...SETTINGS.ski, snow: 0x9aabc8 },
-  sunset: { sky: 0xffc9a8, ground: 0x3a2440, hemi: 1.15, key: 0xffb27a, keyI: 2.1, snow: 0xe6c3c6, bg: 'radial-gradient(90% 75% at 50% 25%,#ffb07a 0%,#c8607a 38%,#4a2a5c 72%,#1c1430 100%)' },
-  day: { sky: 0xeaf4ff, ground: 0x6d7f99, hemi: 1.35, key: 0xffffff, keyI: 2.4, snow: 0xeef3fb, bg: 'radial-gradient(90% 75% at 50% 20%,#dff1ff 0%,#8cc4ef 40%,#4a86c7 75%,#2b5a93 100%)' },
+  night: { ...SETTINGS.ski, snow: 0x9aabc8, back: 'scenes/ski-night.jpg?v=1', fog: [0x7688ba, 13, 42], tree: 0x8fa3d0, bg: 'linear-gradient(#1c2647 0%,#39437a 55%,#6f7fb4 100%)' },   // bg: night sky behind the painting, for the rare gap at its edges
+  sunset: { sky: 0xffd4c6, ground: 0x3a2440, hemi: 1.15, key: 0xffc8b4, keyI: 2.1, snow: 0xffe9e9, back: 'scenes/ski-sunset.jpg?v=1', fog: [0xc1939a, 13, 42], tree: 0xe0a9a4, bg: 'radial-gradient(90% 75% at 50% 25%,#ffb07a 0%,#c8607a 38%,#4a2a5c 72%,#1c1430 100%)' },
+  day: { sky: 0xeaf4ff, ground: 0x6d7f99, hemi: 1.35, key: 0xffffff, keyI: 2.4, snow: 0xeef3fb, back: 'scenes/ski-day.jpg?v=1', fog: [0xced5e3, 13, 42], tree: 0xffffff, bg: 'radial-gradient(90% 75% at 50% 20%,#dff1ff 0%,#8cc4ef 40%,#4a86c7 75%,#2b5a93 100%)' },
 };
 let bgEl = null, envKey = '';
 function setEnv(key) {
@@ -277,6 +277,14 @@ function setEnv(key) {
   world.hemi.color.set(S.sky); world.hemi.groundColor.set(S.ground); world.hemi.intensity = S.hemi; world.key.color.set(S.key); world.key.intensity = S.keyI;
   if (bgEl) { bgEl.style.opacity = S.bg ? 1 : 0; if (S.bg) bgEl.style.background = S.bg; }
   scene.fog = S.fog ? new THREE.Fog(...S.fog) : null;   // haze toward the painted wall: depth for free
+  if (key === 'ski') {
+    world.trees.forEach(t => t.mats[0].color.set(S.tree || 0xffffff));
+    const B = world.skiBack; B.visible = !!S.back;
+    if (S.back) {
+      const T = world.skiTex[S.back] || (world.skiTex[S.back] = new THREE.TextureLoader().load(S.back, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; }));
+      if (B.material.map !== T) { B.material.map = T; B.material.needsUpdate = true; }
+    }
+  }
 }
 function stepSettings(dt, t) {
   if (envKey === 'sleep') {
@@ -312,7 +320,7 @@ function stepSettings(dt, t) {
 function placeTree(t, z) {
   const side = Math.random() < .5 ? -1 : 1;
   t.x = side < 0 ? -(2.4 + Math.random() * 6) : 4.6 + Math.random() * 5; t.z = z;
-  const s = .8 + Math.random() * .9; t.m.scale.set(s, s * (.9 + Math.random() * .35), s); t.m.rotation.y = Math.random() * 6;
+  const s = .8 + Math.random() * .9; t.m.scale.set(s * (Math.random() < .5 ? -1 : 1), s * (.9 + Math.random() * .35), 1);   // some mirrored, so sixteen copies don't read as one tree
 }
 const _v = new THREE.Vector3(), _w = new THREE.Vector3();
 function stepWorld(dt, skiing) {
