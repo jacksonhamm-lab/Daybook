@@ -159,8 +159,17 @@ The four looks were regenerated in **Tripo Smart Mesh** and rigged by Tripo. Thi
     through a voxel-remesh proxy). About as good as Tripo's rig; kept as a fallback and repair tool.
   - `dexlib.py`: shared loading, rendering and the pose tests (arms down, arms up, elbows, squat, lunge, bend, fist).
   - Then gzip, `wrangler kv key put model:<name>.glb`, and bump `MODELS` (`?v=`) in rider.js.
-- **Known:** the work model's face doesn't match the others (black eyes, paler skin). The generated skis model
-  (`skis.zip`) isn't wired in; the skis, bindings and poles are still built in code (gear.js).
+- **Known:** the work model's face doesn't match the others (black eyes, paler skin).
+
+### His skis
+- The pair he generated in Tripo is the default ski choice, "Painted" (`skis: 'art'`). `tools/blender/skis.py` splits the
+  one mesh into `ski_l` and `ski_r`, lays them flat (tip forward, topsheet up, top surface at the boot), takes the
+  wobble out of their length while keeping the upturned tips, scales them to 1.84 m, and paints out a brand-like
+  mark near one tip (the skis have always been logo-free). Output: `models/skis.glb`, in KV as `model:skis.glb`.
+- `plainSkiKit()` (gear.js) still builds the bindings and poles in code. For 'art' it loads the model once
+  (`loadArtSkis`) and shows it in place of the code-drawn ski; the other choices (Bents, Midnight, Glacier, Lava) are
+  the code-drawn topsheets. If the model can't load, the code-drawn skis stand in.
+- index.html moved him onto the painted pair once (`settings.skisV`).
 
 ### Props in his hands
 - `holdInFist(vrm, side, obj, { r })` (rider.js) seats a prop of handle radius `r` from the palm itself: `palmOf()`

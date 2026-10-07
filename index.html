@@ -1241,7 +1241,7 @@ const I = {
 // Home is Dex's stage; the other four are pages opened from his stat chips (docs/NAV.md).
 // Keys are the old tab names so existing links keep working; notes render under Plan.
 // Dex's defaults (mirrors DEX_DEFAULTS in rider.js). His clothes are part of each model now; only the skis and poles are props.
-const DEX_DEFAULTS = { look: 'auto', time: 'night', poles: '#1a1b20', skis: 'bent' };
+const DEX_DEFAULTS = { look: 'auto', time: 'night', poles: '#1a1b20', skis: 'art' };
 const TABS = [
   { k: 'today',    label: 'Home',  color: '#0a84ff' },
   { k: 'week',     label: 'Plan',  color: '#5e5ce6', attr: 'focus' },
@@ -2856,8 +2856,8 @@ const SHEETS = {
         <p class="sub" style="margin:6px 0 0">${D.look === 'auto' ? 'Ski by default, gym on training days, work clothes on the clock, night camp after 11pm.' : 'He stays in this look until you set it back to Follows your day.'}</p>
         <div class="lbl">Ski slope</div>${chips('time', [['night', 'Night'], ['sunset', 'Sunset'], ['day', 'Day']])}
         <div class="lbl">Camera</div><p class="sub" style="margin:0 0 8px">Drag sideways on the scene to walk the camera round him; it stays where you leave it.</p><button class="btn sm" data-act="dex-view">Reset camera</button>`, true)}
-      ${grp('Skis &amp; poles', ({ bent: 'Bents', midnight: 'Midnight', glacier: 'Glacier', lava: 'Lava' })[D.skis] || '', `
-        <div class="lbl" style="margin-top:0">Skis</div>${grad('skis', [['bent', 'Bents', '#f0406a', '#2376c8'], ['midnight', 'Midnight', '#2a2f5e', '#d9a441'], ['glacier', 'Glacier', '#f4f8fb', '#3f93b8'], ['lava', 'Lava', '#ffcf5a', '#7a1616']])}
+      ${grp('Skis &amp; poles', ({ art: 'Painted', bent: 'Bents', midnight: 'Midnight', glacier: 'Glacier', lava: 'Lava' })[D.skis] || '', `
+        <div class="lbl" style="margin-top:0">Skis</div>${grad('skis', [['art', 'Painted', '#f29a2e', '#4a2a6a'], ['bent', 'Bents', '#f0406a', '#2376c8'], ['midnight', 'Midnight', '#2a2f5e', '#d9a441'], ['glacier', 'Glacier', '#f4f8fb', '#3f93b8'], ['lava', 'Lava', '#ffcf5a', '#7a1616']])}
         <div class="lbl">Poles</div>${sw('poles', [['#1a1b20', 'Black'], ['#a9adb5', 'Silver'], ['#c9a24e', 'Gold'], ['#b3261e', 'Red'], ['#2f6fc0', 'Blue']])}`)}
       <div class="row end" style="margin-top:18px"><button class="btn" data-act="dex-reset">Reset</button><button class="btn white" data-act="close-sheet">Done</button></div>`;
   },
@@ -3532,6 +3532,8 @@ island.el = $('#island');
 
 FX.enter = 'enter';
 migrateProgram();
+// the skis he generated became the default on 2026-10-06: move him onto them once (the others are still in Customise)
+if (S.settings.skisV !== 1) { if (S.settings.dex && (!S.settings.dex.skis || S.settings.dex.skis === 'bent')) S.settings.dex = { ...S.settings.dex, skis: 'art' }; S.settings.skisV = 1; save(); }
 render();
 loadProgram();
 if (SYNC.code) { stashCode(SYNC.code); syncNow(); }

@@ -1,6 +1,7 @@
 // Ski gear made in code and fixed to his bones: skis drawn in the colours of his Atomic Bents (no logos)
 // with bindings under each boot, and poles in closed fists. Also the finger poses (hands, fists).
 import * as THREE from 'three';
+import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
 import { toon, INK } from './dress.js';
 
 const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; };
@@ -42,7 +43,7 @@ const bentTex = (seed, name = 'bent') => canvasTex(256, 2048, (x, W, H) => {
 // rest pose, in the same space attach expects) and boots is the boot vertices' bounds source.
 function skisAndPoles({ bindPos, attach, hasBone, boots, C, skiTex, skiName }) {
   // ── skis: twin tips with a sidecut and rocker, bindings under each boot ──
-  const skis = {};
+  const skis = {}, built = {};   // built: the code-drawn ski and its outline, per side (hidden while the painted skis show)
   const skiGeo = (() => {
     const L = 1.84, tipW = .068, waist = .052, tailW = .065, hw = t => { const w = t > 0 ? waist + (tipW - waist) * t * t : waist + (tailW - waist) * t * t, e = Math.abs(t); return e > .93 ? w * Math.sqrt(Math.max(0, 1 - ((e - .93) / .07) ** 2)) : w; };
     const sh = new THREE.Shape(), N = 90; for (let k = 0; k <= N; k++) { const t = -1 + 2 * k / N; k ? sh.lineTo(hw(t), -t * L / 2) : sh.moveTo(hw(t), -t * L / 2); } for (let k = N; k >= 0; k--) { const t = -1 + 2 * k / N; sh.lineTo(-hw(t), -t * L / 2); }
@@ -61,7 +62,7 @@ function skisAndPoles({ bindPos, attach, hasBone, boots, C, skiTex, skiName }) {
     const g = new THREE.Group(); g.name = 'ski_' + s;
     const bh = .022, cxs = (x0 + x1) / 2, czs = (z0 + z1) / 2;
     g.position.set(cxs, y0 - bh, czs + .03);
-    const ski = new THREE.Mesh(skiGeo, [topFor(s), toon(0x2a2b30)]); g.add(ski); g.add(new THREE.Mesh(skiGeo, INK));
+    const ski = new THREE.Mesh(skiGeo, [topFor(s), toon(0x2a2b30)]), skiInk = new THREE.Mesh(skiGeo, INK); g.add(ski, skiInk); built[s] = [ski, skiInk];
     const blk = (w, h, d, x, y, z, c) => { const b = inked(new THREE.BoxGeometry(w, h, d), toon(c), INK_FINE); b.position.set(x, y, z); g.add(b); };
     const bl = z1 - z0;
     blk(.07, bh, bl * .9, 0, bh / 2, -.03, C.binding);                  // plate
@@ -85,8 +86,10 @@ function skisAndPoles({ bindPos, attach, hasBone, boots, C, skiTex, skiName }) {
     g.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));   // shaft leaves the fist toward the back (the little-finger side)
     poles[s] = attach(g, side + 'Hand');
   });
-  return { skis, poles, poleMat, skiTops };
+  return { skis, poles, poleMat, skiTops, built };
 }
+let ART_SKIS = null;   // loaded once and shared; private like the other models (KV, model:skis.glb)
+const loadArtSkis = () => ART_SKIS || (ART_SKIS = new GLTFLoader().loadAsync('models/skis.glb?v=1').then(g => { const out = {}; g.scene.traverse(o => { const m = o.isMesh && /^ski_([lr])/.exec(o.name); if (m) out[m[1]] = o; }); return out; }));
 // Skis and poles, built in world space at the model's T-pose rest and attached in place.
 export function plainSkiKit(vrm, { skis: skiName = 'bent', pole } = {}) {
   const C = { pole: 0x1a1b20, grip: 0x0e0f12, binding: 0x15161b, accent: 0xd9a441, ...(pole ? { pole } : {}) };
@@ -98,7 +101,24 @@ export function plainSkiKit(vrm, { skis: skiName = 'bent', pole } = {}) {
   const P = skin.geometry.attributes.position, footY = Math.max(bindPos('leftFoot').y, bindPos('rightFoot').y) + .03, v = new THREE.Vector3(), pos = [];
   for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(skin.matrixWorld); if (v.y < footY) pos.push(v.x, v.y, v.z); }
   const kit = skisAndPoles({ bindPos, attach, hasBone: n => !!R(n), boots: { n: pos.length / 3, pos }, C, skiName });
-  const setSkis = n => Object.entries(kit.skiTops).forEach(([s, m]) => { const old = m.map; m.map = bentTex(s === 'l' ? 1234567 : 7654321, n); m.needsUpdate = true; old && old.dispose(); });
+  // 'art' is the pair he generated in Tripo (tools/blender/skis.py lays them flat): the same bindings and poles,
+  // with the model in place of the code-drawn ski. The other names are code-drawn topsheets.
+  const art = {}; let want = skiName, failed = false;
+  const show = () => { const on = want === 'art' && !failed; for (const s of ['l', 'r']) { kit.built[s].forEach(m => { m.visible = !on; }); if (art[s]) art[s].visible = on; } };
+  const setSkis = n => {
+    want = n;
+    if (n !== 'art') Object.entries(kit.skiTops).forEach(([s, m]) => { const old = m.map; m.map = bentTex(s === 'l' ? 1234567 : 7654321, n); m.needsUpdate = true; old && old.dispose(); });
+    show();
+  };
+  show();   // nothing under his boots for the moment it takes the painted pair to arrive, rather than the wrong skis
+  loadArtSkis().then(A => {
+    for (const s of ['l', 'r']) {
+      if (!A[s]) throw new Error('skis model: no ski_' + s);
+      const mat = toon(0xffffff); mat.map = A[s].material.map; mat.side = THREE.FrontSide;
+      const grp = new THREE.Group(); grp.add(new THREE.Mesh(A[s].geometry, mat), new THREE.Mesh(A[s].geometry, INK)); kit.skis[s].add(grp); art[s] = grp;
+    }
+    show();
+  }).catch(() => { failed = true; show(); });   // no model: the code-drawn skis stand in
   const setPoles = c => kit.poleMat.color.set(c);
   return { skis: kit.skis, poles: kit.poles, setSkis, setPoles };
 }

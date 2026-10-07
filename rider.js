@@ -574,7 +574,7 @@ function holdInFist(vrm, side, obj, grip) {
   return obj;
 }
 // his look, chosen in the Customise sheet (settings.dex); the defaults are Jackson's real kit
-export const DEX_DEFAULTS = { look: 'auto', time: 'night', poles: '#1a1b20', skis: 'bent' };
+export const DEX_DEFAULTS = { look: 'auto', time: 'night', poles: '#1a1b20', skis: 'art' };
 const dexPrefs = () => ({ ...DEX_DEFAULTS, ...(state.ctx.dex || {}) });
 function applyDex() {
   const D = dexPrefs();
