@@ -12,13 +12,13 @@ import * as THREE from 'three';
 import { GLTFLoader } from './vendor/jsm/loaders/GLTFLoader.js';
 import { VRMUtils, VRMHumanoid } from './vendor/three-vrm.module.min.js';   // only its humanoid rig (bone mapping) and disposal helper
 import { toon, INK } from './dress.js';
-import { plainSkiKit, fists, hands } from './gear.js';
+import { plainSkiKit, fists, hands, palmOf } from './gear.js';
 import { loadAnims, animsReady, setupMotion, direct, react } from './motion.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const V = 2;   // bump to make phones fetch new model files (2: unused face blendshapes stripped)
 // gym is concept B (Tripo mesh, rigged in Mixamo): a plain .glb that wrapPlain() gives the same humanoid API as a VRM
-const MODELS = { ski: 'models/ski.glb?v=2', work: 'models/work.glb?v=2', sleep: 'models/camp.glb?v=2', gym: 'models/gym.glb?v=2' };   // all concept B now (Tripo + Mixamo)
+const MODELS = { ski: 'models/ski.glb?v=3', work: 'models/work.glb?v=3', sleep: 'models/camp.glb?v=3', gym: 'models/gym.glb?v=3' };   // all concept B now (Tripo + Mixamo)
 const SPEED = REDUCED ? 0 : 7.5;   // metres a second down the hill
 const TURN = 1.05;                 // carving rhythm, radians a second (one left+right every ~6s)
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -199,12 +199,13 @@ function buildSettings() {
   const shop = world.shop = new THREE.Group(); scene.add(shop);
   floor(shop, (x, W, H) => { for (let i = 0; i < 8; i++) { const c = ['#7a5a3c', '#6f5135', '#836243', '#74553a'][i % 4]; x.fillStyle = c; x.fillRect(i * W / 8, 0, W / 8, H); x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect(i * W / 8, 0, 2, H); const cut = Math.random() * H; x.fillRect(i * W / 8, cut, W / 8, 2); } for (let i = 0; i < 90; i++) { x.strokeStyle = 'rgba(40,24,12,.18)'; x.lineWidth = 1; x.beginPath(); const px = Math.random() * W; x.moveTo(px, Math.random() * H); x.lineTo(px + (Math.random() - .5) * 4, Math.random() * H); x.stroke(); } }, { wall: 4.6 });
   const rail = new THREE.Group(); rail.position.set(-1.25, 0, -1.55); rail.rotation.y = .25; shop.add(rail);
-  [-.85, .85].forEach(x => cyl(rail, .018, 1.7, 0xb08d57, x, .85, 0)); cyl(rail, .016, 1.75, 0xb08d57, 0, 1.68, 0, [0, 0, Math.PI / 2]);
-  sprite(rail, 'scenes/work-jackets.webp', 1.66, 1.66 * 1032 / 1408, 0, 1.69, .02);   // painted jackets on their hangers, hooks on the bar
+  [-.7, .7].forEach(x => cyl(rail, .018, 1.62, 0xb08d57, x, .81, 0)); cyl(rail, .016, 1.45, 0xb08d57, 0, 1.6, 0, [0, 0, Math.PI / 2]);
+  sprite(rail, 'scenes/work-jackets.webp', 1408 / 1032, 1, 0, 1.61, .02);   // painted jackets on their hangers, hooks on the bar
   // the back wall is a painting (lofi, see docs/CHARACTER.md "Scenes"); 3D is only what he touches
-  backdrop(shop, 'scenes/work.jpg?v=1', { aspect: 4552 / 1536, H: 6.4, base: .75, D: 4.6 });
-  blob(shop, -1.25, -1.55, 1.9, .5, .25);   // under the rail
-  { const mir = new THREE.Group(); mir.position.set(-2.3, 0, -.2); mir.rotation.y = .9; shop.add(mir); sprite(mir, 'scenes/work-mirror.webp', .86, .86 * 2421 / 1028, 0, .86 * 2421 / 1028, 0); blob(shop, -2.3, -.2, .9, .4, -.9); }   // painted tailor's mirror (motion.js walks him to it)
+  // (sized so a painted jacket on the back wall is as tall as a real one: about .85 m)
+  backdrop(shop, 'scenes/work.jpg?v=2', { aspect: 4432 / 1656, H: 5.21, base: .8436, D: 4.6 });
+  blob(shop, -1.25, -1.55, 1.55, .5, .25);   // under the rail
+  { const mir = new THREE.Group(); mir.position.set(-2.3, 0, -.2); mir.rotation.y = .9; shop.add(mir); sprite(mir, 'scenes/work-mirror.webp', .72, .72 * 2421 / 1028, 0, .72 * 2421 / 1028, 0); blob(shop, -2.3, -.2, .78, .36, -.9); }   // painted tailor's mirror (motion.js walks him to it)
     world.makeShoeBox = shoeBox; world.box = box; world.cyl = cyl; world.blob = blob;
   // camp: stars, a moon and a small fire in the snow for the late-night look
   const camp = world.camp = new THREE.Group(); scene.add(camp);
@@ -478,14 +479,15 @@ function prepare(key, vrm) {
   vrm.scene.updateMatrixWorld(true);
   const r = { key, vrm, B, R, footRest: R('leftFoot').getWorldPosition(new THREE.Vector3()).y, hipsRest: B('hips').position.clone(), tails: [] };
   r.toesRest = R('leftToes') ? R('leftToes').getWorldPosition(new THREE.Vector3()).y : r.footRest;
-  if (key === 'sleep') { r.mug = holdInFist(vrm, 'left', cocoaMug(), { r: .045 }); r.log = holdInFist(vrm, 'right', makeLog(true)); }   // mug left: the drinking clip drinks left-handed
-  if (key === 'work') r.carry = holdInFist(vrm, 'right', shoeBox());
-  if (key === 'gym') { r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell(), { r: .014 })); r.bottle = holdInFist(vrm, 'left', waterBottle(true), { r: .035 }); }
+  if (key === 'sleep') { r.mug = holdInFist(vrm, 'left', cocoaMug(), { r: .045, sip: { z: .058, rim: .04 } }); r.log = holdInFist(vrm, 'right', makeLog(true), { across: true }); }   // mug left: the drinking clip drinks left-handed
+  if (key === 'work') { r.carry = holdInFist(vrm, 'right', shoeBox(false, true), { across: true }); r.pen = holdInFist(vrm, 'right', pen(), { pen: true }); }
+  if (key === 'gym') { r.dumbbells = ['left', 'right'].map(side => holdInFist(vrm, side, dumbbell(), { r: .014 })); r.bottle = holdInFist(vrm, 'left', waterBottle(true), { r: .035, sip: { z: .05 } }); }
   if (key === 'ski') {
     const D = dexPrefs();
-    r.kit = plainSkiKit(vrm, { skis: D.skis, pole: D.poles }); r.dexWas = { ...D };   // jacket, mask and goggles are part of the model; skis and poles are props
+    r.kit = plainSkiKit(vrm, { skis: D.skis, pole: D.poles }); r.splay = r.kit.footYaw; r.dexWas = { ...D };   // jacket, mask and goggles are part of the model; skis and poles are props
     r.tails = ['l', 'r'].map(s => { const o = new THREE.Object3D(); o.position.set(0, .01, -.8); r.kit.skis[s].add(o); return o; });
   }
+  r.mouth = mouthOf(vrm);
   r.held = vrm.scene.userData.held || [];   // what can be in his hands: motion.js closes his fingers round whichever is showing
   return r;
 }
@@ -497,15 +499,50 @@ function dumbbell() {
   g.visible = false; return g;
 }
 // a shoe box, carried by its end in one hand
-function shoeBox(visible = false) {
-  const g = new THREE.Group(), b = box(g, .32, .12, .2, 0xc9a879, 0, 0, 0); box(g, .335, .03, .215, 0x5a3b26, 0, .05, 0);   // kraft box, dark lid
-  b.position.y = 0; g.visible = visible; return g;
+function shoeBox(visible = false, inHand = false) {
+  const g = new THREE.Group();   // kraft box, dark lid
+  if (inHand) { box(g, .2, .32, .12, 0xc9a879, 0, -.16, 0); box(g, .215, .335, .03, 0x5a3b26, 0, -.16, .05); }   // between his palms: its length across them, lid toward his thumbs
+  else { box(g, .32, .12, .2, 0xc9a879, 0, 0, 0); box(g, .335, .03, .215, 0x5a3b26, 0, .05, 0); }
+  g.visible = visible; return g;
+}
+// his pen: navy barrel, brass nib. Built point-down; holdInFist leans it into a writing hold
+function pen() {
+  const g = new THREE.Group(), barrel = new THREE.CylinderGeometry(.0048, .0044, .13, 8).translate(0, .04, 0), nib = new THREE.ConeGeometry(.0044, .02, 8).rotateX(Math.PI).translate(0, -.035, 0);
+  g.add(new THREE.Mesh(barrel, toon(0x1d2a4a)), new THREE.Mesh(nib, toon(0xc9a24a))); g.visible = false; return g;
+}
+// Where his lips are from the head joint, in the rest pose's world axes (which are the head bone's own in the
+// rig the clips drive). Read off the profile of his face: going up the front of the head, the neck is the
+// set-back part, the chin is where the profile jumps forward above it, and the lips are just under 3 cm above that.
+// (The head joint is in the middle of the head, not under it, so the lips are below it.)
+function mouthOf(vrm) {
+  const R = n => vrm.humanoid.getRawBoneNode(n); vrm.scene.updateMatrixWorld(true);
+  const head = R('head').getWorldPosition(new THREE.Vector3()), fallback = new THREE.Vector3(0, -.025, .085);
+  let skin; vrm.scene.traverse(o => { if (!skin && o.isSkinnedMesh && o.name !== 'ink') skin = o; });
+  skin.skeleton.update();
+  const A = skin.geometry.attributes.position, v = new THREE.Vector3(), front = {};   // per centimetre of height: how far forward the face reaches
+  for (let i = 0; i < A.count; i++) {
+    skin.getVertexPosition(i, v).applyMatrix4(skin.matrixWorld);
+    if (Math.abs(v.x - head.x) > .025) continue;
+    const k = Math.round((v.y - head.y) / .01); if (k < -13 || k > 8) continue;
+    if (!(k in front) || v.z - head.z > front[k]) front[k] = v.z - head.z;
+  }
+  // (a coarse mesh: some heights have no vertex on the face's centre line, only ones behind the head joint; skip those)
+  const at = k => (k in front && front[k] > 0 ? front[k] : null);
+  let chin = null;
+  for (let k = -10; k <= 2 && chin === null; k++) {
+    if (at(k) === null) continue;
+    let below = null; for (let j = k - 1; j >= k - 4; j--) if (at(j) !== null && (below === null || at(j) < below)) below = at(j);
+    if (below !== null && at(k) - below > .04) chin = k;
+  }
+  if (chin === null) return fallback;
+  const z = Math.max(at(chin + 2) ?? -9, at(chin + 3) ?? -9); if (z < 0) return fallback;
+  return new THREE.Vector3(0, (chin + 2.8) * .01, z - .004);
 }
 // a split log, bark sides and pale cut rings: along x, or held (along the palm's normal, so it spans both hands in a carry)
 let LOGM = null;
 function makeLog(inHand = false, len = .42, rad = .055) {
   LOGM = LOGM || [toon(0x5b3a22), toon(0xd9b483), toon(0xd9b483)];
-  const geo = new THREE.CylinderGeometry(rad, rad * 1.08, len, 12); if (inHand) geo.translate(0, -.16, 0); else geo.rotateZ(Math.PI / 2);
+  const geo = new THREE.CylinderGeometry(rad, rad * 1.08, len, 12); if (inHand) geo.translate(0, -len / 2, 0); else geo.rotateZ(Math.PI / 2);   // in hand: its end against his palm
   const g = new THREE.Group(); g.add(new THREE.Mesh(geo, LOGM), new THREE.Mesh(geo, INK)); g.visible = !inHand; return g;
 }
 // his water bottle: in the fist (along its axis, like the mug) or standing on the crate
@@ -525,36 +562,30 @@ function cocoaMug() {
   g.visible = false; return g;
 }
 // parent a prop to a hand so it sits in the closed fist (built in the bind pose, like the ski poles)
-// His palm at the T-pose rest, in world space: the knuckle row (which runs front to back, thumb side forward)
-// and the palm's underside, found from the skin itself.
-const PALMS = new WeakMap();
-function palmOf(vrm, side) {
-  let P = PALMS.get(vrm); if (!P) PALMS.set(vrm, P = {});
-  if (P[side]) return P[side];
-  vrm.scene.updateMatrixWorld(true);
-  const R = n => vrm.humanoid.getRawBoneNode(n), wp = n => R(n) ? R(n).getWorldPosition(new THREE.Vector3()) : null;
-  const hand = wp(side + 'Hand'), K = wp(side + 'MiddleProximal') || wp(side + 'IndexProximal'), next = wp(side + 'MiddleIntermediate');
-  const zi = (wp(side + 'IndexProximal') || K).z, zl = (wp(side + 'LittleProximal') || K).z, z0 = Math.min(zi, zl) - .008, z1 = Math.max(zi, zl) + .008;
-  let skin; vrm.scene.traverse(o => { if (!skin && o.isSkinnedMesh && o.name !== 'ink') skin = o; });
-  skin.skeleton.update();
-  const A = skin.geometry.attributes.position, v = new THREE.Vector3(); let low = K.y - .009;
-  for (let i = 0; i < A.count; i++) {   // the four fingers' bases only: the thumb hangs lower and would read as the palm
-    skin.getVertexPosition(i, v).applyMatrix4(skin.matrixWorld);
-    if (Math.abs(v.x - K.x) < .014 && v.z > z0 && v.z < z1 && Math.abs(v.y - K.y) < .04) low = Math.min(low, v.y);
-  }
-  return P[side] = { K, low, zc: (z0 + z1) / 2, seg: next ? next.distanceTo(K) : .035, dir: Math.sign(K.x - hand.x) || 1 };
-}
 // how far each finger joint closes to wrap a handle of radius rad (thin handle: a fist; a mug: an open clasp)
 const curlFor = (rad, seg) => { const a = clamp(seg / (rad + .011), .45, 1.4), b = clamp(seg * .68 / (rad + .011) * 1.05, .4, 1.55); return [a, b, clamp(b * .7, .3, 1.1)]; };
 function holdInFist(vrm, side, obj, grip) {
   if (vrm.plain) {   // Tripo/Mixamo: build at the straightened T-pose rest and attach in place (their bind pose hangs the arms)
     vrm.scene.updateMatrixWorld(true);
     const R = n => vrm.humanoid.getRawBoneNode(n), held = vrm.scene.userData.held || (vrm.scene.userData.held = []);
-    if (grip && R(side + 'MiddleProximal')) {
+    const fingers = R(side + 'MiddleProximal'), handAt = () => R(side + 'Hand').getWorldPosition(new THREE.Vector3());
+    if (grip && grip.across && fingers) {
+      // carried between both palms (a box, a log): its end flat against this palm, its length along the palm's normal
+      const p = palmOf(vrm, side), h = handAt();
+      obj.position.set(h.x + (p.K.x - h.x) * .62, p.low, p.zc); obj.quaternion.identity();
+      held.push({ obj, side, curl: [.3, .25, .2] });
+    } else if (grip && grip.pen && R(side + 'IndexIntermediate')) {
+      // a pen: under the index finger on the thumb's side, its top leaning back toward the wrist
+      const p = palmOf(vrm, side), f = R(side + 'IndexIntermediate').getWorldPosition(new THREE.Vector3());
+      obj.position.set(f.x, p.low - .004, f.z + .034); obj.quaternion.identity(); obj.rotation.set(-.2, 0, p.dir * .35);
+      held.push({ obj, side, curl: [.8, .95, .55] });
+    } else if (grip && fingers) {
       // a handle of radius rad tucked under the knuckles, touching the palm and the inside of the closed fingers
       const p = palmOf(vrm, side), rad = grip.r;
       obj.position.set(p.K.x - p.dir * (rad + .008), p.low - rad, p.zc + (grip.along || 0)); obj.quaternion.identity();
-      held.push({ obj, side, curl: curlFor(rad, p.seg) });
+      // sip: the point that meets his lips (the cap, or the rim), from the hand joint, in the rest pose's world axes
+      const sip = grip.sip ? { p: obj.position.clone().add(new THREE.Vector3(0, 0, grip.sip.z)).sub(handAt()), rim: grip.sip.rim || 0 } : null;
+      held.push({ obj, side, curl: curlFor(rad, p.seg), sip });
     } else {
       const hand = R(side + 'Hand').getWorldPosition(new THREE.Vector3());
       const knuckle = (R(side + 'MiddleProximal') || R(side + 'IndexProximal')).getWorldPosition(new THREE.Vector3());
@@ -685,7 +716,8 @@ function skiPose(r, t, dt) {
   const f = .85 + .35 * Math.abs(s) * amp + .7 * tk + flexAir, inR = .3 * Math.max(0, s) * amp, inL = .3 * Math.max(0, -s) * amp;
   B('leftUpperLeg').rotation.set(-.55 * (f + inL), 0, .04); B('rightUpperLeg').rotation.set(-.55 * (f + inR), 0, -.04);
   B('leftLowerLeg').rotation.x = .95 * (f + inL); B('rightLowerLeg').rotation.x = .95 * (f + inR);
-  B('leftFoot').rotation.x = -.4 * (f + inL); B('rightFoot').rotation.x = -.4 * (f + inR);
+  const sp = r.splay || { l: 0, r: 0 };   // he stands toes-out at rest; the skis are built along his boots, and the ankles turn them straight
+  B('leftFoot').rotation.set(-.4 * (f + inL), -sp.l, 0); B('rightFoot').rotation.set(-.4 * (f + inR), -sp.r, 0);
   // upper body stays quieter than the skis: counter-rotated and more upright
   B('spine').rotation.set(.18 + .35 * tk, -yaw * .5, -lean * .45);
   B('chest').rotation.set(.04 + .12 * tk, -yaw * .2, -lean * .15);

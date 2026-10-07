@@ -180,7 +180,37 @@ The four looks were regenerated in **Tripo Smart Mesh** and rigged by Tripo. Thi
   How far they close comes from the handle's radius (`curlFor`): a fist on a dumbbell, a clasp on the mug.
 - The bottle is held near its top with the cap just above his thumb; the mug with its rim there. The drink is a
   cup clip, so the bottle is an approximation.
-- The log and shoe box still use the old placement (no `r`); his fingers close on them at a fixed curl.
+- **Carried between his palms** (`{ across: true }`): the log and the shoe box sit with one end flat against his palm,
+  their length along the palm's normal.
+- **Pen** (`{ pen: true }`): under his index finger on the thumb's side, leaning back toward the wrist. It shows while
+  the `writing` clip plays.
+- **Ski poles** use the same palm measurement (`palmOf`, now in gear.js), so the grips sit in his fists.
+
+### Hands that reach (motion.js, `corrections()`)
+The clips were made for other bodies and props, so two things are corrected on top of them with a two-bone reach
+(`reach()`: the elbow opens or closes for the distance, the shoulder swings the arm onto the target, the hand keeps
+the clip's angle):
+- **A sip.** Each cup has a sip point (the mug's rim, the bottle's cap). As it nears his face in the `drinking` clip,
+  his hand is drawn in until that point meets his lips. `mouthOf()` (rider.js) finds his lips from the profile of his
+  face: the chin is where the profile jumps forward above the neck, and the lips are just under 3 cm above it.
+  (The head joint is in the middle of the head, so the lips are *below* it. The first version assumed above, and the
+  mug went to his eye.)
+- **Writing.** The `writing` clip writes in his lap. Both hands are lifted onto the desk top (`world.deskTop`), which
+  is now a desk's height over the stool (seat + 29 cm).
+- Anything changed after the mixer runs goes through `touch()` and is put back by `untouch()` before the next mixer
+  update (the mixer only rewrites a bone whose value changed). The finger grips use this too.
+
+### Fixed along the way (2026-10-06)
+- **The stool was 33 cm too tall.** Its height came from his hips at the end of the `sitting` clip, but sampling a
+  looping clip at exactly its duration gives its first frame (standing). It's sampled just short of the end now.
+- **Pale speckles on the suit.** Tripo's 8K atlas packs thousands of colour patches edge to edge; shrunk to 2K they
+  bled into each other along every seam. `tools/blender/tripo.py` now re-bakes each texture onto a fresh UV layout
+  with padding between islands (the head gets 1.8x the texel density). Models are at `?v=3`.
+- **Boots crooked on the skis.** The ski model stands toes-out (about 15 degrees). The skis are now built along his
+  boots (`footYaw`), and `skiPose` turns each ankle in by the same angle, so boots and skis both point straight.
+- **The shop was drawn for a giant.** Painted jackets on the back wall came out 1.7 m tall. The painting was extended
+  upward and outward (a ceiling, more room) and is shown so a painted jacket is about .85 m; the rail's jackets and
+  the mirror were scaled to match.
 
 ### Cleanup (2026-10-06)
 Everything that only served the VRoid .vrm models is gone: `physique.js`, the code-built clothes (`dress()`),

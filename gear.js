@@ -41,7 +41,7 @@ const bentTex = (seed, name = 'bent') => canvasTex(256, 2048, (x, W, H) => {
 
 // Skis under each boot and poles in each fist. Works on any rig: positions come from bindPos (bind or
 // rest pose, in the same space attach expects) and boots is the boot vertices' bounds source.
-function skisAndPoles({ bindPos, attach, hasBone, boots, C, skiTex, skiName }) {
+function skisAndPoles({ bindPos, attach, hasBone, boots, C, skiTex, skiName, gripAt, footYaw }) {
   // ── skis: twin tips with a sidecut and rocker, bindings under each boot ──
   const skis = {}, built = {};   // built: the code-drawn ski and its outline, per side (hidden while the painted skis show)
   const skiGeo = (() => {
@@ -69,13 +69,14 @@ function skisAndPoles({ bindPos, attach, hasBone, boots, C, skiTex, skiName }) {
     blk(.075, .03, .06, 0, bh + .012, bl / 2 - .03 + .01, C.binding);    // toe piece
     blk(.075, .045, .07, 0, bh + .02, -bl / 2 - .03 - .01, C.binding);   // heel piece
     blk(.077, .008, .02, 0, bh + .034, -bl / 2 - .03 - .01, C.accent);   // heel accent
+    g.rotation.y = footYaw[s];   // along his boot (the model stands toes-out)
     skis[s] = attach(g, bone);
   });
 
   // ── poles: in a closed fist, running out of the little-finger side ──
   const poles = {}, poleMat = toon(C.pole);
   [['l', 'left'], ['r', 'right']].forEach(([s, side]) => {
-    const hand = bindPos(side + 'Hand'), mid = bindPos(hasBone(side + 'MiddleProximal') ? side + 'MiddleProximal' : side + 'IndexProximal'), grip = hand.clone().lerp(mid, .95); grip.y -= .022;
+    const grip = gripAt(side);   // in his palm, under the knuckles
     const g = new THREE.Group(); g.name = 'pole_' + s; g.position.copy(grip);
     const L = 1.22, part = (geo, c, y) => { const m = inked(geo, c.isMaterial ? c : toon(c), INK_FINE); m.position.y = y; g.add(m); };
     part(new THREE.CylinderGeometry(.0085, .0085, L, 10), poleMat, -L / 2 + .02);
@@ -87,6 +88,25 @@ function skisAndPoles({ bindPos, attach, hasBone, boots, C, skiTex, skiName }) {
     poles[s] = attach(g, side + 'Hand');
   });
   return { skis, poles, poleMat, skiTops, built };
+}
+// His palm at the T-pose rest, in world space: the knuckle row (which runs front to back, thumb side forward)
+// and the palm's underside, found from the skin itself.
+const PALMS = new WeakMap();
+export function palmOf(vrm, side) {
+  let P = PALMS.get(vrm); if (!P) PALMS.set(vrm, P = {});
+  if (P[side]) return P[side];
+  vrm.scene.updateMatrixWorld(true);
+  const R = n => vrm.humanoid.getRawBoneNode(n), wp = n => R(n) ? R(n).getWorldPosition(new THREE.Vector3()) : null;
+  const hand = wp(side + 'Hand'), K = wp(side + 'MiddleProximal') || wp(side + 'IndexProximal'), next = wp(side + 'MiddleIntermediate');
+  const zi = (wp(side + 'IndexProximal') || K).z, zl = (wp(side + 'LittleProximal') || K).z, z0 = Math.min(zi, zl) - .008, z1 = Math.max(zi, zl) + .008;
+  let skin; vrm.scene.traverse(o => { if (!skin && o.isSkinnedMesh && o.name !== 'ink') skin = o; });
+  skin.skeleton.update();
+  const A = skin.geometry.attributes.position, v = new THREE.Vector3(); let low = K.y - .009;
+  for (let i = 0; i < A.count; i++) {   // the four fingers' bases only: the thumb hangs lower and would read as the palm
+    skin.getVertexPosition(i, v).applyMatrix4(skin.matrixWorld);
+    if (Math.abs(v.x - K.x) < .014 && v.z > z0 && v.z < z1 && Math.abs(v.y - K.y) < .04) low = Math.min(low, v.y);
+  }
+  return P[side] = { K, low, zc: (z0 + z1) / 2, seg: next ? next.distanceTo(K) : .035, dir: Math.sign(K.x - hand.x) || 1 };
 }
 let ART_SKIS = null;   // loaded once and shared; private like the other models (KV, model:skis.glb)
 const loadArtSkis = () => ART_SKIS || (ART_SKIS = new GLTFLoader().loadAsync('models/skis.glb?v=1').then(g => { const out = {}; g.scene.traverse(o => { const m = o.isMesh && /^ski_([lr])/.exec(o.name); if (m) out[m[1]] = o; }); return out; }));
@@ -100,7 +120,10 @@ export function plainSkiKit(vrm, { skis: skiName = 'bent', pole } = {}) {
   let skin; vrm.scene.traverse(o => { if (!skin && o.isSkinnedMesh && o.name !== 'ink') skin = o; });
   const P = skin.geometry.attributes.position, footY = Math.max(bindPos('leftFoot').y, bindPos('rightFoot').y) + .03, v = new THREE.Vector3(), pos = [];
   for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(skin.matrixWorld); if (v.y < footY) pos.push(v.x, v.y, v.z); }
-  const kit = skisAndPoles({ bindPos, attach, hasBone: n => !!R(n), boots: { n: pos.length / 3, pos }, C, skiName });
+  const yawOf = side => { if (!R(side + 'Toes')) return 0; const f = bindPos(side + 'Foot'), t = bindPos(side + 'Toes'); return Math.max(-.5, Math.min(.5, Math.atan2(t.x - f.x, t.z - f.z))); };
+  const footYaw = { l: yawOf('left'), r: yawOf('right') };
+  const gripAt = side => { const p = palmOf(vrm, side), rad = .015; return new THREE.Vector3(p.K.x - p.dir * (rad + .008), p.low - rad, p.zc); };
+  const kit = skisAndPoles({ bindPos, attach, hasBone: n => !!R(n), boots: { n: pos.length / 3, pos }, C, skiName, gripAt, footYaw });
   // 'art' is the pair he generated in Tripo (tools/blender/skis.py lays them flat): the same bindings and poles,
   // with the model in place of the code-drawn ski. The other names are code-drawn topsheets.
   const art = {}; let want = skiName, failed = false;
@@ -120,7 +143,7 @@ export function plainSkiKit(vrm, { skis: skiName = 'bent', pole } = {}) {
     show();
   }).catch(() => { failed = true; show(); });   // no model: the code-drawn skis stand in
   const setPoles = c => kit.poleMat.color.set(c);
-  return { skis: kit.skis, poles: kit.poles, setSkis, setPoles };
+  return { skis: kit.skis, poles: kit.poles, setSkis, setPoles, footYaw };
 }
 // Hands. 0 = relaxed (a natural curl, looser at the index, tighter at the little finger,
 // thumb resting in), 1 = a closed fist, negative = opening toward flat (-1). One value per hand.

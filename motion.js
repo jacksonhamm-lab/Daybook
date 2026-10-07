@@ -49,7 +49,7 @@ const BODY = .2;
 const box_ = (x, z, hw, hd, yaw = 0) => ({ x, z, hw, hd, yaw });
 const disc = (x, z, r) => ({ x, z, r });
 const OBST = {   // fixed props (rider.js buildSettings)
-  work: [box_(-1.25, -1.55, .9, .16, .25), box_(-2.3, -.2, .46, .16, .9)],          // rail, mirror
+  work: [box_(-1.25, -1.55, .74, .16, .25), box_(-2.3, -.2, .4, .16, .9)],          // rail, mirror
   gym: [disc(.8, .5, .15)],                                                           // kettlebell
   sleep: [disc(.95, -1.05, .38), box_(-1.5, -2.6, .85, .7, .32), disc(-1.04, -.52, .1)],    // fire, tent, lantern
 };
@@ -236,35 +236,83 @@ function props(r, fx, world) {
   if (fx === 'box-') { if (r.carry) r.carry.visible = false; if (world.benchBox) world.benchBox.visible = true; }
   if (fx === 'box-reset') { if (r.carry) r.carry.visible = false; if (world.stackTop) world.stackTop.visible = true; if (world.benchBox) world.benchBox.visible = false; }
 }
+/* ---------- on top of the clips ----------
+   The mixer only rewrites a bone whose value changed, so anything adjusted after it has run would stick.
+   touch() remembers the clip's value the first time a bone is adjusted in a frame; untouch() puts them all back
+   before the next mixer update. */
+function touch(r, bn) { const T = r.mo.touched || (r.mo.touched = new Map()); let e = T.get(bn); if (!e) T.set(bn, e = { q: new THREE.Quaternion(), on: false }); if (!e.on) { e.q.copy(bn.quaternion); e.on = true; } }
+function untouch(r) { const T = r.mo.touched; if (T) T.forEach((e, bn) => { if (e.on) { bn.quaternion.copy(e.q); e.on = false; } }); }
 // The clips' hands are open. Whatever is showing in a hand (r.held, from rider.js), its fingers close round it,
-// eased in and out. The clip's own finger pose is put back before each mixer update (the mixer only rewrites a
-// bone whose value changed, so an override would otherwise stick).
+// eased in and out. How far comes with the prop (a fist on a handle, a clasp on a mug).
 const FINGERS = ['Index', 'Middle', 'Ring', 'Little'], JOINTS = ['Proximal', 'Intermediate', 'Distal'];
 function gripBones(r) {
   if (r.mo.fingers) return r.mo.fingers;
   const F = { left: [], right: [] };
   for (const side of ['left', 'right']) {
     const k = side === 'left' ? -1 : 1;
-    FINGERS.forEach(f => JOINTS.forEach((j, n) => { const bn = r.B(side + f + j); if (bn) F[side].push({ bn, axis: 'z', k, n, base: new THREE.Quaternion() }); }));
+    FINGERS.forEach(f => JOINTS.forEach((j, n) => { const bn = r.B(side + f + j); if (bn) F[side].push({ bn, axis: 'z', k, n }); }));
     const t = r.B(side + 'ThumbProximal'), t2 = r.B(side + 'ThumbDistal');
-    if (t) F[side].push({ bn: t, axis: 'y', k, thumb: -.45, base: new THREE.Quaternion() }); if (t2) F[side].push({ bn: t2, axis: 'z', k, thumb: .55, base: new THREE.Quaternion() });
+    if (t) F[side].push({ bn: t, axis: 'y', k, thumb: -.45 }); if (t2) F[side].push({ bn: t2, axis: 'z', k, thumb: .55 });
   }
   return r.mo.fingers = F;
 }
-function gripRestore(r) { const mo = r.mo; if (!mo.gripOn) return; const F = gripBones(r); for (const side of ['left', 'right']) if (mo.gripOn[side]) for (const f of F[side]) f.bn.quaternion.copy(f.base); }
 function gripApply(r, dt) {
-  const mo = r.mo, F = gripBones(r); mo.gripW = mo.gripW || { left: 0, right: 0 }; mo.gripOn = mo.gripOn || {}; mo.gripCurl = mo.gripCurl || {};
+  const mo = r.mo, F = gripBones(r); mo.gripW = mo.gripW || { left: 0, right: 0 }; mo.gripCurl = mo.gripCurl || {};
   for (const side of ['left', 'right']) {
     const h = (r.held || []).find(x => x.side === side && x.obj.visible);
     if (h) mo.gripCurl[side] = h.curl;
     const w = mo.gripW[side] = damp(mo.gripW[side], h ? 1 : 0, 16, dt), c = mo.gripCurl[side];
-    mo.gripOn[side] = w > .003 && !!c; if (!mo.gripOn[side]) continue;
+    if (w < .003 || !c) continue;
     for (const f of F[side]) {
-      f.base.copy(f.bn.quaternion);
+      touch(r, f.bn);
       _e.set(0, 0, 0); _e[f.axis] = f.k * (f.thumb != null ? f.thumb : c[f.n]);
       f.bn.quaternion.slerp(_q.setFromEuler(_e), w);
     }
   }
+}
+// Move a hand by delta (world space, scaled by w): the elbow opens or closes for the distance, the shoulder
+// swings the arm onto the target, and the hand keeps the angle the clip gave it. A two-bone reach.
+const _S = new THREE.Vector3(), _E = new THREE.Vector3(), _W = new THREE.Vector3(), _T = new THREE.Vector3(), _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _n = new THREE.Vector3();
+const _hq = new THREE.Quaternion(), _pq = new THREE.Quaternion(), _bq = new THREE.Quaternion(), _rq = new THREE.Quaternion();
+const unit = v => Math.max(-1, Math.min(1, v));
+function turnWorld(bn, rq) { bn.parent.getWorldQuaternion(_pq); bn.getWorldQuaternion(_bq); bn.quaternion.copy(_pq.invert().multiply(rq).multiply(_bq)); }
+function reach(r, side, delta, w) {
+  const U = r.B(side + 'UpperArm'), L = r.B(side + 'LowerArm'), H = r.B(side + 'Hand'); if (!U || !L || !H || w < .002) return;
+  touch(r, U); touch(r, L); touch(r, H);
+  H.getWorldQuaternion(_hq); U.getWorldPosition(_S); L.getWorldPosition(_E); H.getWorldPosition(_W);
+  _T.copy(_W).addScaledVector(delta, w);
+  const a = _S.distanceTo(_E), b = _E.distanceTo(_W), d = Math.min(a + b - .002, Math.max(Math.abs(a - b) + .002, _S.distanceTo(_T)));
+  _v1.copy(_S).sub(_E).normalize(); _v2.copy(_W).sub(_E).normalize();
+  const cur = Math.acos(unit(_v1.dot(_v2))), want = Math.acos(unit((a * a + b * b - d * d) / (2 * a * b)));
+  _n.crossVectors(_v2, _v1); if (_n.lengthSq() < 1e-8) _n.set(0, 1, 0); _n.normalize();
+  turnWorld(L, _rq.setFromAxisAngle(_n, cur - want));
+  H.getWorldPosition(_W); _v1.copy(_W).sub(_S).normalize(); _v2.copy(_T).sub(_S).normalize();
+  turnWorld(U, _rq.setFromUnitVectors(_v1, _v2));
+  H.parent.getWorldQuaternion(_pq); H.quaternion.copy(_pq.invert().multiply(_hq));
+}
+const _m = new THREE.Vector3(), _c = new THREE.Vector3(), _ax = new THREE.Vector3(), _d = new THREE.Vector3();
+function corrections(r, kind, dt, world) {
+  const mo = r.mo, s = mo.step, writing = !!s && s.play === 'writing' && !mo.react;
+  // at the desk: pen out, and both hands lifted onto the desk top (the clip writes lower, in his lap)
+  if (r.pen) r.pen.visible = writing;
+  mo.deskW = damp(mo.deskW || 0, writing && world.deskTop ? 1 : 0, 5, dt);
+  if (mo.deskW > .01) for (const side of ['left', 'right']) {
+    const H = r.B(side + 'Hand'); if (!H) continue;
+    H.getWorldPosition(_W); _d.set(0, world.deskTop + (side === 'right' ? .05 : .035) - _W.y, 0);   // the writing hand rides on its pen
+    reach(r, side, _d, mo.deskW);
+  }
+  // a sip: as the cup nears his face in the clip, the hand is drawn in until the rim (or the cap) meets his lips
+  let want = 0, h = null;
+  if (mo.curName === 'drinking' && r.mouth && !mo.react) h = (r.held || []).find(x => x.sip && x.obj.visible);
+  if (h) {
+    const H = r.B(h.side + 'Hand'), head = r.B('head');
+    head.updateWorldMatrix(true, false); H.updateWorldMatrix(true, false);
+    _m.copy(r.mouth); head.localToWorld(_m); _c.copy(h.sip.p); H.localToWorld(_c);
+    if (h.sip.rim) { H.getWorldQuaternion(_bq); _ax.set(0, 0, 1).applyQuaternion(_bq); _d.copy(_m).sub(_c); _d.addScaledVector(_ax, -_d.dot(_ax)); if (_d.lengthSq() > 1e-8) _c.addScaledVector(_d.normalize(), h.sip.rim); }
+    _d.copy(_m).sub(_c); const dist = _d.length(), u = unit((.30 - dist) / .17); want = u <= 0 ? 0 : u * u * (3 - 2 * u);
+    mo.sipW = damp(mo.sipW || 0, want, 9, dt);
+    reach(r, h.side, _d, mo.sipW);
+  } else mo.sipW = damp(mo.sipW || 0, 0, 9, dt);
 }
 // Lay the scene out around his reach: the dumbbells rest on a low cradle exactly where his hands land
 // in picking_up (both sides), and the cocoa on a stump where his right hand lands. Redone per model.
@@ -304,7 +352,7 @@ function stage(r, kind, world) {
     // the stool goes where his hips land after sitting back; the desk where his hands are while writing
     build(r, 'sitting'); build(r, 'writing');
     const T = r.mo.travel.sitting || { x: 0, z: -.45 };
-    const [hips] = sample(r, r.mo.clips.sitting, r.mo.clips.sitting.duration, ['hips']);
+    const [hips] = sample(r, r.mo.clips.sitting, r.mo.clips.sitting.duration - .03, ['hips']);   // just short of the end: at the end itself a looping clip is back on its first (standing) frame
     const [lh, rh] = sample(r, r.mo.clips.writing, r.mo.clips.writing.duration * .5, ['leftHand', 'rightHand']);
     // He stands just clear of the desk's front edge. Seated, his hands only reach ~0.3m ahead of his hips,
     // so for writing he scoots in (mo.shift, eased) and back out before standing up, like pulling a chair in.
@@ -316,7 +364,7 @@ function stage(r, kind, world) {
     world.cyl(stool, .17, .05, 0x6b4630, 0, seatTop - .025, 0, [0, 0, 0], 20);
     [0, 1, 2, 3].forEach(k => { const a = k * Math.PI / 2 + Math.PI / 4; world.cyl(stool, .016, seatTop - .05, 0x2a1d14, Math.cos(a) * .115, (seatTop - .05) / 2, Math.sin(a) * .115); });
     keep(world.blob(shop, seat.x, seat.z, .5, .5, 0, .3));
-    const topY = Math.max(.62, Math.min(lh.y, rh.y) - .03);
+    const topY = seatTop + .29; world.deskTop = topY;   // a desk's height over its seat; the clip writes lower (in his lap), so direct() lifts his hands onto it
     const deskC = at('till', { x: T.x + (lh.x + rh.x) / 2, y: 0, z: edge + .31 }), desk = keep(new THREE.Group());
     desk.position.set(deskC.x, 0, deskC.z); desk.rotation.y = rot; shop.add(desk);
     world.box(desk, 1.25, .05, .62, 0x5b3a26, 0, topY - .025, 0);                       // walnut top
@@ -466,8 +514,9 @@ export function direct(r, kind, dt, world, look) {
   // pose is put back first (the mixer won't rewrite a value that hasn't changed)
   const head = r.B('head');
   if (head && mo.headBase) head.quaternion.copy(mo.headBase);
-  gripRestore(r);
+  untouch(r);
   mo.mixer.update(dt);
+  corrections(r, kind, dt, world);
   gripApply(r, dt);
   if (head) { mo.headBase = (mo.headBase || new THREE.Quaternion()).copy(head.quaternion); if (look) { _e.set(-look.y * .12, look.x * .3, 0); head.quaternion.multiply(_q.setFromEuler(_e)); } }
   const scene = r.vrm.scene;
