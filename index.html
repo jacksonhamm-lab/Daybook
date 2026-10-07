@@ -1561,6 +1561,23 @@ async function loadProgram() {
     render();
   } catch (e) {}   // offline: the cached copy stands
 }
+// Set ticks are stored by an exercise's place in its day, so when exercises are taken out of a day the ticks after
+// them would slide onto the wrong exercise. Each program edit that removes exercises lists them here (day: places
+// removed, in the old numbering) and the ticks already made that week are moved once per device.
+const TICK_EDITS = { 2: { d3: [8, 9], d4: [10] } };   // 2 (2026-10-07): jump squats and skater bounds out of Legs, skater bounds out of Max Day
+(() => {
+  try {
+    const done = +(localStorage.getItem('daybook_ticks_rev') || 1), revs = Object.keys(TICK_EDITS).map(Number).filter(v => v > done).sort((a, b) => a - b);
+    if (!revs.length) return;
+    const st = JSON.parse(localStorage.getItem(W_STATE) || '{}');
+    for (const v of revs) for (const [day, gone] of Object.entries(TICK_EDITS[v])) {
+      if (!st[day]) continue;
+      const next = {}; Object.keys(st[day]).map(Number).sort((a, b) => a - b).forEach(i => { if (!gone.includes(i)) next[i - gone.filter(g => g < i).length] = st[day][i]; });
+      st[day] = next;
+    }
+    localStorage.setItem(W_STATE, JSON.stringify(st)); localStorage.setItem('daybook_ticks_rev', String(revs[revs.length - 1]));
+  } catch (e) {}
+})();
 // Set ticks clear every Monday.
 function wState() {
   return memo('wstate', () => {

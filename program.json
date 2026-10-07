@@ -82,8 +82,6 @@
       { "label": "Posterior + Power", "accent": "legs", "exercises": [
         { "name": "Single-leg Romanian deadlift · 10 each side", "detail": "Dumbbell in each hand. Hinge, flat back, slow down. Hamstrings and balance.", "sets": 3 },
         { "name": "Kettlebell swings · 20", "detail": "Hip hinge, not a squat. Explosive.", "sets": 4 },
-        { "name": "Jump squats · 10", "detail": "Land soft, reset each rep.", "sets": 3 },
-        { "name": "Skater bounds · 20 total", "detail": "Side to side, stick each landing for 1 sec. Edge-to-edge ski power.", "sets": 3 },
         { "name": "Single-leg calf raise · 15 each side", "detail": "On a step. Dumbbell in one hand, full stretch at the bottom.", "sets": 3 }
       ]},
       { "label": "Core", "accent": "abs", "exercises": [
@@ -112,8 +110,7 @@
         { "name": "Wall sit · 60 sec", "sets": 3 },
         { "name": "Bulgarian split squats · 12 each side", "detail": "Lighter and faster than Day 3. Burn, not grind.", "sets": 3 },
         { "name": "Kettlebell goblet squats · 15", "sets": 3 },
-        { "name": "Kettlebell swings · 20", "sets": 3 },
-        { "name": "Skater bounds · 20 total", "sets": 3 }
+        { "name": "Kettlebell swings · 20", "sets": 3 }
       ]},
       { "label": "Shoulders (weak point)", "accent": "push", "exercises": [
         { "name": "Dumbbell lateral raise · 15", "detail": "Light and strict. Shoulder width.", "sets": 3 }
