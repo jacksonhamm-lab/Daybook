@@ -1,18 +1,19 @@
 # Shared helpers for rigging the Tripo smart-mesh exports in Blender (headless).
-import bpy, os, math
+import bpy, os, math, glob
 import numpy as np
 from mathutils import Vector
 
-SRC = r'C:/Users/jhamm2/AppData/Local/Temp/claude/C--Users-jhamm2/6c67cfbe-b272-42bb-8915-ae8d42ca252a/scratchpad/v4'
+# where the unzipped Tripo exports are: <SRC>/<name>/<anything>.fbx with its .fbm texture folder beside it
+SRC = os.environ.get('DEX_SRC') or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src')
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, 'out'); os.makedirs(OUT, exist_ok=True)
+OUT = os.environ.get('DEX_OUT') or os.path.join(HERE, 'out'); os.makedirs(OUT, exist_ok=True)
 HEIGHT = 1.75   # metres, like the app's other models
 
 
 def load(name):
     """Import <name>.fbx, apply transforms, scale to HEIGHT, feet on z = 0, centred on x. Returns the mesh object."""
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bpy.ops.import_scene.fbx(filepath=f'{SRC}/{name}/{name}.fbx')
+    bpy.ops.import_scene.fbx(filepath=glob.glob(f'{SRC}/{name}/*.fbx')[0])
     ob = [o for o in bpy.context.scene.objects if o.type == 'MESH'][0]
     for o in bpy.context.scene.objects: o.select_set(o == ob)
     bpy.context.view_layer.objects.active = ob
@@ -22,8 +23,8 @@ def load(name):
     for v in ob.data.vertices: v.co = Vector(((v.co.x - cx) * s, v.co.y * s, (v.co.z - V[:, 2].min()) * s))
     ob.data.update(); ob.name = name
     # the texture (FBX points at <name>.fbm/<name>_basecolor.jpg)
-    tex = f'{SRC}/{name}/{name}.fbm/{name}_basecolor.jpg'
-    if os.path.exists(tex):
+    tex = next(iter(glob.glob(f'{SRC}/{name}/*.fbm/*.jpg')), None)
+    if tex:
         img = bpy.data.images.load(tex, check_existing=True)
         for m in ob.data.materials:
             if not m: continue

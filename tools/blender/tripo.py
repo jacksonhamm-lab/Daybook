@@ -9,7 +9,7 @@ import dexlib as D
 
 args = sys.argv[sys.argv.index('--') + 1:]
 name = args[0]; arms = 'A' if 'A' in args[1:] else 'T'
-SRC = D.SRC.replace('/v4', '/v5')
+SRC = D.SRC
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.fbx(filepath=glob.glob(f'{SRC}/{name}/*.fbx')[0])
 rig = next(o for o in bpy.context.scene.objects if o.type == 'ARMATURE'); ob = next(o for o in bpy.context.scene.objects if o.type == 'MESH')
