@@ -1,6 +1,7 @@
 {
-  "title": "Protein Prep Book",
-  "blurb": "Sixteen batch-cook recipes built for a lean-muscle goal. Cook on Sunday, eat well all week.",
+  "v": 2,
+  "title": "Recipe Book",
+  "blurb": "Sixteen high-protein recipes, each scaled to three portions: two for tonight and one to spare.",
   "cats": [
     "All",
     "Bowls",
@@ -19,50 +20,90 @@
         55,
         12
       ],
+      "sv": 3,
       "time": "Prep 15 min + 20 min marinate · Cook 35 min",
       "eq": "Large deep skillet or Dutch oven, pot or rice cooker",
       "i": [
-        "900 g chicken breast, cut into 1-inch cubes",
-        "¾ cup 0% plain Greek yogurt",
-        "2 tbsp garam masala, divided",
-        "1 tsp salt, divided, plus more to taste",
-        "1 tbsp oil",
-        "2 tbsp butter",
-        "1 medium onion, finely diced",
-        "1 tbsp minced garlic (about 3 cloves)",
-        "1 tbsp grated fresh ginger",
-        "1 tsp chili powder (optional, for heat)",
-        "1½ cups tomato passata",
-        "½ cup light coconut milk",
-        "1 cup dry basmati rice + 1½ cups water",
-        "Cilantro, chopped, to finish"
+        "675 g chicken breast, cut into 1-inch cubes",
+        "½ cup + 1 tbsp 0% plain Greek yogurt",
+        "4 tsp garam masala, divided",
+        "¾ tsp salt, divided, plus more to taste",
+        "2 tsp oil",
+        "1½ tbsp butter",
+        "1 small onion, finely diced",
+        "2 tsp minced garlic (2 cloves)",
+        "2 tsp grated fresh ginger",
+        "¾ tsp chili powder (optional, for heat)",
+        "1 cup + 2 tbsp tomato passata",
+        "6 tbsp light coconut milk",
+        "¾ cup dry basmati rice, plus 1 cup + 2 tbsp water",
+        "Small handful cilantro, chopped, to finish"
       ],
       "s": [
-        "Marinate|In a bowl, mix the Greek yogurt, 1 tbsp garam masala and ½ tsp salt. Add the chicken cubes and stir until every piece is coated. Cover and refrigerate at least 20 minutes (up to overnight for more flavour).",
-        "Start the rice|Rinse the basmati in a sieve under cold water until the water runs mostly clear (about 30 seconds). Add rice and 1½ cups water to a pot with a pinch of salt, bring to a boil, then cover, drop to the lowest heat and cook 12 minutes. Turn off the heat and leave it covered 10 minutes, then fluff with a fork. (Or use a rice cooker.)",
-        "Sear the chicken|Heat the oil in your large skillet over medium-high until it shimmers. Shake excess marinade off the chicken and add it in a single layer (do this in 2 batches if it doesn't fit). Leave it untouched 3 minutes so it browns, then flip and cook 2 more minutes. It doesn't need to be cooked through yet. Move to a plate.",
-        "Build the sauce base|Lower heat to medium. Add the butter to the same pan (don't clean it; the browned bits are flavour). Once melted, add the onion and a pinch of salt and cook, stirring occasionally, 6–8 minutes until soft and light golden.",
-        "Bloom the spices|Add garlic, ginger, the remaining 1 tbsp garam masala and chili powder. Stir constantly for 60 seconds until very fragrant. Don't let the garlic brown.",
-        "Simmer|Pour in the passata and ½ tsp salt, stir, and bring to a gentle bubble. Cook 10 minutes, stirring now and then, until it thickens slightly and darkens in colour.",
-        "Finish|Stir in the coconut milk, then return the chicken and any juices from the plate. Simmer uncovered 8–10 minutes until the chicken is cooked through (no pink in the centre, 165°F/74°C). Taste and add salt if needed. If the sauce gets too thick, splash in water.",
-        "Portion|Divide rice into 4 containers (about ¾ cup cooked each), spoon chicken and sauce alongside, and top with cilantro. Cool 20 minutes uncovered before sealing."
+        "Marinate|In a bowl, mix ½ cup + 1 tbsp Greek yogurt, 2 tsp garam masala and ½ tsp salt. Add the 675 g chicken cubes and stir until every piece is coated. Cover and refrigerate at least 20 minutes (up to overnight for more flavour).",
+        "Start the rice|Rinse ¾ cup basmati in a sieve under cold water until the water runs mostly clear (about 30 seconds). Add the rice and 1 cup + 2 tbsp water to a pot with a pinch of salt, bring to a boil, then cover, drop to the lowest heat and cook 12 minutes. Turn off the heat and leave it covered 10 minutes, then fluff with a fork. (Or use a rice cooker.)",
+        "Sear the chicken|Heat 2 tsp oil in your large skillet over medium-high until it shimmers. Shake excess marinade off the chicken and add it in a single layer (do this in 2 batches if it doesn't fit). Leave it untouched 3 minutes so it browns, then flip and cook 2 more minutes. It doesn't need to be cooked through yet. Move to a plate.",
+        "Build the sauce base|Lower heat to medium. Add 1½ tbsp butter to the same pan (don't clean it; the browned bits are flavour). Once melted, add the diced onion and a pinch of salt and cook, stirring occasionally, 6–8 minutes until soft and light golden.",
+        "Bloom the spices|Add 2 tsp garlic, 2 tsp ginger, the remaining 2 tsp garam masala and ¾ tsp chili powder. Stir constantly for 60 seconds until very fragrant. Don't let the garlic brown.",
+        "Simmer|Pour in 1 cup + 2 tbsp passata and the remaining ¼ tsp salt, stir, and bring to a gentle bubble. Cook 10 minutes, stirring now and then, until it thickens slightly and darkens in colour.",
+        "Finish|Stir in 6 tbsp coconut milk, then return the chicken and any juices from the plate. Simmer uncovered 8–10 minutes until the chicken is cooked through (no pink in the centre, 165°F/74°C). Taste and add salt if needed. If the sauce gets too thick, splash in water.",
+        "Serve|Split the rice three ways (about ¾ cup cooked each), spoon chicken and sauce alongside, and top with cilantro. Two portions for tonight. Let the third cool 20 minutes before it goes in the fridge."
       ],
       "rh": "Microwave covered 2–2½ minutes, stirring halfway. Add a splash of water to the rice.",
-      "x": "Freezes well up to 3 months. Freeze sauce and chicken without the rice for best texture.",
+      "x": "The spare keeps 4 days in the fridge.",
       "g": [
-        "Protein|Chicken breast",
-        "Dairy|0% plain Greek yogurt",
-        "Dairy|Butter",
-        "Produce|Onions",
-        "Produce|Garlic",
-        "Produce|Ginger",
-        "Produce|Cilantro, dill, green onion, parsley, chives",
-        "Grains & bread|Basmati or jasmine rice",
-        "Pantry & sauces|Tomato passata",
-        "Pantry & sauces|Light coconut milk",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Spices|Garam masala",
-        "Spices|Chili powder, cumin, smoked paprika"
+        [
+          "Protein|Chicken breast",
+          "675 g"
+        ],
+        [
+          "Dairy|0% plain Greek yogurt",
+          "140 g"
+        ],
+        [
+          "Dairy|Butter",
+          "1.5 tbsp"
+        ],
+        [
+          "Produce|Yellow onion",
+          "1"
+        ],
+        [
+          "Produce|Garlic",
+          "2 cloves"
+        ],
+        [
+          "Produce|Ginger",
+          "small knob"
+        ],
+        [
+          "Produce|Cilantro",
+          "small bunch"
+        ],
+        [
+          "Grains & bread|Basmati or jasmine rice",
+          "0.75 cup"
+        ],
+        [
+          "Pantry & sauces|Tomato passata",
+          "280 ml"
+        ],
+        [
+          "Pantry & sauces|Light coconut milk",
+          "90 ml"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "2 tsp"
+        ],
+        [
+          "Spices|Garam masala",
+          "4 tsp"
+        ],
+        [
+          "Spices|Chili powder",
+          "0.75 tsp"
+        ]
       ]
     },
     {
@@ -75,51 +116,99 @@
         62,
         14
       ],
+      "sv": 3,
       "time": "Prep 10 min · Cook 25 min",
       "eq": "Large skillet, pot or rice cooker",
       "i": [
-        "900 g lean ground turkey",
-        "1 tbsp oil",
-        "1 tbsp chili powder",
-        "2 tsp ground cumin",
-        "1 tsp smoked paprika",
-        "1 tsp garlic powder",
-        "1 tsp salt",
-        "1 tbsp chipotle in adobo, finely chopped (plus 1 tsp of the sauce)",
-        "½ cup water",
-        "1 can (540 ml) black beans, drained and rinsed",
-        "1 cup frozen corn",
-        "1 cup dry rice + 2 cups water (or 1½ for basmati)",
-        "2 limes",
-        "Handful cilantro, chopped (optional)",
-        "1 cup salsa",
-        "½ cup 0% Greek yogurt (as sour cream)",
-        "2 romaine hearts, shredded"
+        "675 g lean ground turkey",
+        "2 tsp oil",
+        "2 tsp chili powder",
+        "1½ tsp ground cumin",
+        "¾ tsp smoked paprika",
+        "¾ tsp garlic powder",
+        "¾ tsp salt",
+        "2 tsp chipotle in adobo, finely chopped (plus ¾ tsp of the sauce)",
+        "6 tbsp water",
+        "1 can (398 ml) black beans, drained and rinsed",
+        "¾ cup frozen corn",
+        "¾ cup dry rice, plus 1½ cups water (1 cup + 2 tbsp for basmati)",
+        "1½ limes",
+        "Small handful cilantro, chopped (optional)",
+        "¾ cup salsa",
+        "6 tbsp 0% Greek yogurt (as sour cream)",
+        "1½ romaine hearts, shredded"
       ],
       "s": [
-        "Start the rice|Rinse the rice, then add it to a pot with the water and a pinch of salt. Boil, cover, reduce to low and cook 15 minutes (12 for basmati). Rest covered 10 minutes off the heat.",
-        "Brown the turkey|Heat oil in your large skillet over medium-high. Add the turkey and break it apart with a wooden spoon. Cook 7–9 minutes, stirring every minute or so, until no pink remains and some bits are browned. Turkey is lean, so don't expect much fat; if a little collects, leave it.",
-        "Season|Sprinkle in chili powder, cumin, paprika, garlic powder and salt. Add the chipotle and adobo sauce. Stir 1 minute to toast the spices, then pour in the ½ cup water and scrape the bottom of the pan. Simmer 3 minutes until the liquid mostly cooks off and coats the meat.",
-        "Add beans and corn|Stir in the black beans and frozen corn. Cook 3–4 minutes until everything is hot. Squeeze in the juice of 1 lime. Taste; add more salt or chipotle if you want more kick.",
-        "Make lime rice|Fluff the rice, then stir in the zest and juice of the second lime and the cilantro.",
-        "Portion|Divide rice into 4 containers and top with the turkey mixture. Put salsa and yogurt in small side containers (or a corner of the container). Pack the shredded romaine separately so it stays crisp; add it after reheating."
+        "Start the rice|Rinse ¾ cup rice, then add it to a pot with 1½ cups water (1 cup + 2 tbsp for basmati) and a pinch of salt. Boil, cover, reduce to low and cook 15 minutes (12 for basmati). Rest covered 10 minutes off the heat.",
+        "Brown the turkey|Heat 2 tsp oil in your large skillet over medium-high. Add 675 g turkey and break it apart with a wooden spoon. Cook 7–9 minutes, stirring every minute or so, until no pink remains and some bits are browned. Turkey is lean, so don't expect much fat; if a little collects, leave it.",
+        "Season|Sprinkle in 2 tsp chili powder, 1½ tsp cumin, ¾ tsp smoked paprika, ¾ tsp garlic powder and ¾ tsp salt. Add 2 tsp chopped chipotle and ¾ tsp adobo sauce. Stir 1 minute to toast the spices, then pour in 6 tbsp water and scrape the bottom of the pan. Simmer 3 minutes until the liquid mostly cooks off and coats the meat.",
+        "Add beans and corn|Stir in the drained black beans and ¾ cup frozen corn. Cook 3–4 minutes until everything is hot. Squeeze in the juice of half a lime. Taste; add more salt or chipotle if you want more kick.",
+        "Make lime rice|Fluff the rice, then stir in the zest and juice of 1 lime and the cilantro.",
+        "Serve|Split the rice three ways and top with the turkey mixture. Add ¼ cup salsa, 2 tbsp yogurt and a handful of shredded romaine to each of tonight's two bowls. Box the third without the cold toppings and add them after reheating."
       ],
       "rh": "Microwave rice and turkey 2 minutes. Top with cold salsa, yogurt and romaine after heating.",
       "x": "Swap in extra-lean ground beef any week; drain any fat after browning.",
       "g": [
-        "Protein|Lean ground turkey",
-        "Dairy|0% plain Greek yogurt",
-        "Produce|Romaine hearts",
-        "Produce|Garlic",
-        "Produce|Limes",
-        "Produce|Cilantro, dill, green onion, parsley, chives",
-        "Grains & bread|Basmati or jasmine rice",
-        "Pantry & sauces|Black beans",
-        "Pantry & sauces|Chipotle in adobo",
-        "Pantry & sauces|Salsa",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Spices|Chili powder, cumin, smoked paprika",
-        "Frozen|Corn"
+        [
+          "Protein|Lean ground turkey",
+          "675 g"
+        ],
+        [
+          "Dairy|0% plain Greek yogurt",
+          "90 g"
+        ],
+        [
+          "Produce|Romaine hearts",
+          "1.5"
+        ],
+        [
+          "Produce|Limes",
+          "1.5"
+        ],
+        [
+          "Produce|Cilantro",
+          "small bunch"
+        ],
+        [
+          "Grains & bread|Basmati or jasmine rice",
+          "0.75 cup"
+        ],
+        [
+          "Pantry & sauces|Black beans",
+          "1 can (398 ml)"
+        ],
+        [
+          "Pantry & sauces|Chipotle in adobo",
+          "small can"
+        ],
+        [
+          "Pantry & sauces|Salsa",
+          "0.75 cup"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "2 tsp"
+        ],
+        [
+          "Spices|Chili powder",
+          "2 tsp"
+        ],
+        [
+          "Spices|Ground cumin",
+          "1.5 tsp"
+        ],
+        [
+          "Spices|Smoked paprika",
+          "0.75 tsp"
+        ],
+        [
+          "Spices|Garlic powder",
+          "0.75 tsp"
+        ],
+        [
+          "Frozen|Corn",
+          "0.75 cup"
+        ]
       ]
     },
     {
@@ -132,45 +221,100 @@
         38,
         24
       ],
+      "sv": 3,
       "time": "Prep 15 min · Cook 35 min",
       "eq": "Sheet pan, cast iron or heavy skillet, sturdy flat spatula",
       "i": [
-        "800 g baby potatoes, halved",
-        "1 tbsp olive oil",
-        "½ tsp garlic powder, salt and pepper",
-        "900 g extra-lean ground beef",
-        "1 tsp salt + ½ tsp pepper for the beef",
-        "4 slices light cheddar",
-        "2 romaine hearts, chopped",
-        "1 tomato, diced",
-        "½ red onion, finely diced",
-        "½ cup dill pickles, chopped",
-        "Sauce: ½ cup 0% Greek yogurt, 2 tbsp light mayo, 1 tbsp ketchup, 1 tsp yellow mustard, 2 tbsp pickle relish, ¼ tsp paprika, pinch garlic powder"
+        "600 g baby potatoes, halved",
+        "2 tsp olive oil",
+        "Scant ½ tsp garlic powder, plus salt and pepper, for the potatoes",
+        "675 g extra-lean ground beef",
+        "¾ tsp salt and a scant ½ tsp pepper, for the beef",
+        "3 slices light cheddar",
+        "1½ romaine hearts, chopped",
+        "1 small tomato, diced",
+        "⅓ red onion, finely diced",
+        "6 tbsp dill pickles, chopped",
+        "#Burger sauce",
+        "6 tbsp 0% Greek yogurt",
+        "1½ tbsp light mayo",
+        "2 tsp ketchup",
+        "¾ tsp yellow mustard",
+        "1½ tbsp pickle relish",
+        "Pinch each of paprika and garlic powder"
       ],
       "s": [
-        "Roast the potatoes|Heat oven to 425°F (220°C). On a sheet pan, toss potato halves with olive oil, garlic powder, salt and pepper. Turn them cut side down. Roast 25–30 minutes until the undersides are deep golden and a fork slides in easily. No need to flip.",
-        "Make the sauce|While potatoes roast, stir all sauce ingredients together in a small bowl. Taste; add more relish for tang or ketchup for sweetness. Refrigerate.",
-        "Portion the beef|Divide the beef into 8 loose balls (about 110 g each). Don't pack them tight; loose meat smashes thinner and browns better.",
+        "Roast the potatoes|Heat oven to 425°F (220°C). On a sheet pan, toss 600 g potato halves with 2 tsp olive oil, a scant ½ tsp garlic powder and a good pinch of salt and pepper. Turn them cut side down. Roast 25–30 minutes until the undersides are deep golden and a fork slides in easily. No need to flip.",
+        "Make the sauce|While the potatoes roast, stir 6 tbsp Greek yogurt, 1½ tbsp light mayo, 2 tsp ketchup, ¾ tsp yellow mustard, 1½ tbsp relish and a pinch each of paprika and garlic powder in a small bowl. Taste; add more relish for tang or ketchup for sweetness. Refrigerate.",
+        "Portion the beef|Divide 675 g beef into 6 loose balls (about 110 g each). Don't pack them tight; loose meat smashes thinner and browns better.",
         "Heat the pan hard|Put your cast iron over high heat for 3–4 minutes with no oil, until it's smoking lightly. Open a window or turn on the fan.",
-        "Smash|Place 2–3 balls in the pan with space between. Immediately press each one flat with your spatula as hard as you can (a piece of parchment between the spatula and meat stops sticking) to about ¼ inch thick. Season the tops with salt and pepper.",
+        "Smash|Place 2–3 balls in the pan with space between. Immediately press each one flat with your spatula as hard as you can (a piece of parchment between the spatula and meat stops sticking) to about ¼ inch thick. Season the tops, using ¾ tsp salt and a scant ½ tsp pepper across all six.",
         "Flip and melt|Cook 2 minutes without moving until the edges are dark brown and crisp. Scrape under each patty firmly with the spatula to keep the crust, flip, and lay half a cheese slice on each. Cook 1 more minute. Repeat with the rest, wiping out the pan between batches if it gets too smoky.",
-        "Chop and portion|Let patties rest 2 minutes, then roughly chop them. Divide potatoes and beef between 4 containers. Pack romaine, tomato, onion and pickles in a separate container or a lidded side section, and sauce in small cups."
+        "Chop and serve|Let the patties rest 2 minutes, then roughly chop them. Split the potatoes and beef three ways. Top tonight's two bowls with romaine, tomato, red onion, pickles and sauce. Box the third with its salad and sauce kept separate."
       ],
       "rh": "Microwave potatoes and beef 1½–2 minutes (or air fry 4 minutes at 375°F to re-crisp). Add cold salad and sauce after.",
-      "x": "Sauce keeps 5 days; make a double batch.",
+      "x": "The sauce keeps 5 days.",
       "g": [
-        "Protein|Extra-lean ground beef",
-        "Dairy|0% plain Greek yogurt",
-        "Dairy|Light cheddar slices",
-        "Produce|Baby potatoes",
-        "Produce|Romaine hearts",
-        "Produce|Tomatoes",
-        "Produce|Onions",
-        "Produce|Garlic",
-        "Pantry & sauces|Light mayo, ketchup, mustard, relish",
-        "Pantry & sauces|Pickles",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Spices|Chili powder, cumin, smoked paprika"
+        [
+          "Protein|Extra-lean ground beef",
+          "675 g"
+        ],
+        [
+          "Dairy|0% plain Greek yogurt",
+          "90 g"
+        ],
+        [
+          "Dairy|Light cheddar slices",
+          "3 slices"
+        ],
+        [
+          "Produce|Baby potatoes",
+          "600 g"
+        ],
+        [
+          "Produce|Romaine hearts",
+          "1.5"
+        ],
+        [
+          "Produce|Tomatoes",
+          "1"
+        ],
+        [
+          "Produce|Red onion",
+          "0.5"
+        ],
+        [
+          "Pantry & sauces|Dill pickles",
+          "6 tbsp"
+        ],
+        [
+          "Pantry & sauces|Light mayo",
+          "1.5 tbsp"
+        ],
+        [
+          "Pantry & sauces|Ketchup",
+          "2 tsp"
+        ],
+        [
+          "Pantry & sauces|Yellow mustard",
+          "0.75 tsp"
+        ],
+        [
+          "Pantry & sauces|Pickle relish",
+          "1.5 tbsp"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "2 tsp"
+        ],
+        [
+          "Spices|Garlic powder",
+          "0.5 tsp"
+        ],
+        [
+          "Spices|Paprika",
+          "pinch"
+        ]
       ]
     },
     {
@@ -183,45 +327,79 @@
         64,
         8
       ],
+      "sv": 3,
       "time": "Prep 10 min · Cook 25 min",
       "eq": "Sheet pan, large skillet, pot or rice cooker",
       "i": [
-        "900 g chicken breast, cut into 1-inch cubes",
-        "½ tsp salt, ¼ tsp pepper",
-        "1 tbsp cornstarch (for the chicken)",
-        "1 tbsp oil",
-        "600 g broccoli florets + 1 tsp oil",
-        "3 tbsp honey",
-        "¼ cup low-sodium soy sauce",
-        "1 tbsp minced garlic (about 3 cloves)",
-        "1 tbsp rice vinegar",
-        "1 tbsp cornstarch + 2 tbsp cold water (slurry)",
-        "1 cup dry rice",
+        "675 g chicken breast, cut into 1-inch cubes",
+        "Scant ½ tsp salt and a pinch of pepper",
+        "2 tsp cornstarch, for the chicken",
+        "2 tsp oil, for the chicken",
+        "450 g broccoli florets + ¾ tsp oil",
+        "2 tbsp honey",
+        "3 tbsp low-sodium soy sauce",
+        "2 tsp minced garlic (2 cloves)",
+        "2 tsp rice vinegar",
+        "2 tsp cornstarch + 1½ tbsp cold water (slurry)",
+        "¾ cup dry rice, plus 1½ cups water",
         "Sesame seeds and sliced green onion, to finish"
       ],
       "s": [
-        "Prep|Heat oven to 425°F (220°C). Start the rice (rinse, boil in 2 cups water, cover on low 15 minutes, rest 10). In a small bowl, whisk honey, soy, garlic and rice vinegar; set aside. In a cup, stir cornstarch into cold water for the slurry.",
-        "Roast the broccoli|Toss florets with 1 tsp oil and a pinch of salt on a sheet pan. Roast 15–18 minutes until the edges are browned and crispy.",
-        "Coat the chicken|Pat chicken dry with paper towel. Toss with salt, pepper and 1 tbsp cornstarch. This thin coating is what makes the sauce cling and turn sticky.",
-        "Sear|Heat oil in your large skillet over medium-high until shimmering. Add chicken in a single layer (2 batches if needed). Cook 3 minutes without touching, flip, and cook 3–4 more until golden and cooked through (165°F/74°C, no pink inside).",
+        "Prep|Heat oven to 425°F (220°C). Start the rice: rinse ¾ cup, boil in 1½ cups water, cover on low 15 minutes, rest 10. In a small bowl, whisk 2 tbsp honey, 3 tbsp soy sauce, 2 tsp garlic and 2 tsp rice vinegar; set aside. In a cup, stir 2 tsp cornstarch into 1½ tbsp cold water for the slurry.",
+        "Roast the broccoli|Toss 450 g florets with ¾ tsp oil and a pinch of salt on a sheet pan. Roast 15–18 minutes until the edges are browned and crispy.",
+        "Coat the chicken|Pat 675 g chicken dry with paper towel. Toss with a scant ½ tsp salt, a pinch of pepper and 2 tsp cornstarch. This thin coating is what makes the sauce cling and turn sticky.",
+        "Sear|Heat 2 tsp oil in your large skillet over medium-high until shimmering. Add chicken in a single layer (2 batches if needed). Cook 3 minutes without touching, flip, and cook 3–4 more until golden and cooked through (165°F/74°C, no pink inside).",
         "Sauce|Return all chicken to the pan and drop heat to medium. Pour in the honey-soy mixture; it will bubble fast. Stir 1–2 minutes.",
         "Thicken|Stir the slurry again (it settles), pour it in and stir constantly 30–60 seconds until the sauce turns glossy and coats the chicken. Take it off the heat immediately; honey burns quickly.",
-        "Portion|Divide rice, broccoli and chicken into 4 containers and spoon all the pan sauce over. Scatter sesame seeds and green onion."
+        "Serve|Split the rice, broccoli and chicken three ways and spoon all the pan sauce over. Scatter sesame seeds and green onion. Two portions for tonight, the third into a container once it has cooled."
       ],
       "rh": "Microwave covered 2 minutes. The sauce loosens as it warms.",
-      "x": "Cook an extra 600 g of plain seasoned chicken in the same session for the Caesar wraps.",
+      "x": "",
       "g": [
-        "Protein|Chicken breast",
-        "Produce|Broccoli",
-        "Produce|Garlic",
-        "Produce|Cilantro, dill, green onion, parsley, chives",
-        "Grains & bread|Basmati or jasmine rice",
-        "Pantry & sauces|Low-sodium soy sauce",
-        "Pantry & sauces|Honey",
-        "Pantry & sauces|Rice vinegar",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Pantry & sauces|Cornstarch, flour",
-        "Pantry & sauces|Chia seeds, sesame seeds"
+        [
+          "Protein|Chicken breast",
+          "675 g"
+        ],
+        [
+          "Produce|Broccoli",
+          "450 g"
+        ],
+        [
+          "Produce|Garlic",
+          "2 cloves"
+        ],
+        [
+          "Produce|Green onion",
+          "small bunch"
+        ],
+        [
+          "Grains & bread|Basmati or jasmine rice",
+          "0.75 cup"
+        ],
+        [
+          "Pantry & sauces|Low-sodium soy sauce",
+          "3 tbsp"
+        ],
+        [
+          "Pantry & sauces|Honey",
+          "2 tbsp"
+        ],
+        [
+          "Pantry & sauces|Rice vinegar",
+          "2 tsp"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "1 tbsp"
+        ],
+        [
+          "Pantry & sauces|Cornstarch",
+          "4 tsp"
+        ],
+        [
+          "Pantry & sauces|Sesame seeds",
+          "sprinkle"
+        ]
       ]
     },
     {
@@ -234,38 +412,79 @@
         60,
         14
       ],
+      "sv": 3,
       "time": "Prep 10 min · Cook 30 min",
       "eq": "Sheet pan, large skillet, small saucepan, pot or rice cooker",
       "i": [
-        "800 g chicken breast, cut into 1-inch cubes",
-        "1 tsp garlic powder, 1 tsp paprika, ½ tsp salt, ¼ tsp pepper",
-        "1 tbsp oil",
-        "700 g broccoli florets + 1 tsp oil",
-        "1 cup dry rice",
-        "Cheese sauce: 1 can (370 ml) 2% evaporated milk, 1 tbsp cornstarch, 120 g light old cheddar (shredded), ½ tsp Dijon mustard, ¼ tsp garlic powder, pinch cayenne, salt to taste"
+        "600 g chicken breast, cut into 1-inch cubes",
+        "¾ tsp garlic powder, ¾ tsp paprika, scant ½ tsp salt and a pinch of pepper",
+        "2 tsp oil",
+        "525 g broccoli florets + ¾ tsp oil",
+        "¾ cup dry rice, plus 1½ cups water",
+        "#Cheese sauce",
+        "280 ml 2% evaporated milk (¾ of a 370 ml can)",
+        "2 tsp cornstarch",
+        "90 g light old cheddar, shredded",
+        "Scant ½ tsp Dijon mustard",
+        "Pinch each of garlic powder and cayenne",
+        "Salt to taste"
       ],
       "s": [
-        "Start the rice and oven|Heat oven to 425°F (220°C). Rinse rice and cook in 2 cups water (boil, cover, lowest heat 15 minutes, rest 10).",
-        "Roast the broccoli|Toss florets with 1 tsp oil and a pinch of salt on a sheet pan. Roast 15–18 minutes until tender with crispy browned edges.",
-        "Cook the chicken|Toss chicken with garlic powder, paprika, salt and pepper. Heat oil in your skillet over medium-high until shimmering. Add chicken in one layer (2 batches if needed), cook 3 minutes untouched, flip, and cook 3–4 more minutes until golden and 165°F/74°C inside.",
-        "Heat the milk|For the sauce, pour all but 3 tbsp of the evaporated milk into a small saucepan over medium heat. Heat until steaming with small bubbles at the edge, about 3–4 minutes. Don't let it boil hard.",
-        "Thicken|Stir the cornstarch into the reserved 3 tbsp cold evaporated milk until smooth. Whisk it into the hot milk and keep whisking 1–2 minutes until it thickens enough to coat a spoon.",
-        "Melt in the cheese|Take the pan off the heat. Add the cheddar a handful at a time, whisking until each addition melts before adding more. Stir in Dijon, garlic powder, cayenne and salt. Off-heat melting keeps it smooth instead of grainy.",
-        "Portion|Divide rice, broccoli and chicken into 4 containers. Pour the cheese sauce over the broccoli and chicken, or pack it in small cups if you like it saucier after reheating."
+        "Start the rice and oven|Heat oven to 425°F (220°C). Rinse ¾ cup rice and cook in 1½ cups water (boil, cover, lowest heat 15 minutes, rest 10).",
+        "Roast the broccoli|Toss 525 g florets with ¾ tsp oil and a pinch of salt on a sheet pan. Roast 15–18 minutes until tender with crispy browned edges.",
+        "Cook the chicken|Toss 600 g chicken with ¾ tsp garlic powder, ¾ tsp paprika, a scant ½ tsp salt and a pinch of pepper. Heat 2 tsp oil in your skillet over medium-high until shimmering. Add chicken in one layer (2 batches if needed), cook 3 minutes untouched, flip, and cook 3–4 more minutes until golden and 165°F/74°C inside.",
+        "Heat the milk|For the sauce, pour all but 2 tbsp of the 280 ml evaporated milk into a small saucepan over medium heat. Heat until steaming with small bubbles at the edge, about 3 minutes. Don't let it boil hard.",
+        "Thicken|Stir 2 tsp cornstarch into the reserved 2 tbsp cold evaporated milk until smooth. Whisk it into the hot milk and keep whisking 1–2 minutes until it thickens enough to coat a spoon.",
+        "Melt in the cheese|Take the pan off the heat. Add 90 g cheddar a handful at a time, whisking until each addition melts before adding more. Stir in a scant ½ tsp Dijon, a pinch each of garlic powder and cayenne, and salt to taste. Off-heat melting keeps it smooth instead of grainy.",
+        "Serve|Split the rice, broccoli and chicken three ways and pour the cheese sauce over the broccoli and chicken. For the spare, pack its sauce in a small cup if you like it saucier after reheating."
       ],
       "rh": "Microwave covered 2 minutes, stirring halfway. If the sauce has set, stir in 1 tbsp milk.",
       "x": "Evaporated milk is the trick: it gives a cream-sauce texture for a fraction of the fat. Sauce keeps 4 days.",
       "g": [
-        "Protein|Chicken breast",
-        "Dairy|Light old cheddar",
-        "Dairy|2% evaporated milk",
-        "Produce|Broccoli",
-        "Produce|Garlic",
-        "Grains & bread|Basmati or jasmine rice",
-        "Pantry & sauces|Dijon and grainy mustard",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Pantry & sauces|Cornstarch, flour",
-        "Spices|Chili powder, cumin, smoked paprika"
+        [
+          "Protein|Chicken breast",
+          "600 g"
+        ],
+        [
+          "Dairy|Light old cheddar",
+          "90 g"
+        ],
+        [
+          "Dairy|2% evaporated milk",
+          "280 ml"
+        ],
+        [
+          "Produce|Broccoli",
+          "525 g"
+        ],
+        [
+          "Grains & bread|Basmati or jasmine rice",
+          "0.75 cup"
+        ],
+        [
+          "Pantry & sauces|Dijon mustard",
+          "0.5 tsp"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "1 tbsp"
+        ],
+        [
+          "Pantry & sauces|Cornstarch",
+          "2 tsp"
+        ],
+        [
+          "Spices|Garlic powder",
+          "1 tsp"
+        ],
+        [
+          "Spices|Paprika",
+          "0.75 tsp"
+        ],
+        [
+          "Spices|Cayenne",
+          "pinch"
+        ]
       ]
     },
     {
@@ -278,36 +497,62 @@
         55,
         19
       ],
+      "sv": 3,
       "time": "Prep 10 min · Cook 25 min",
       "eq": "Large pot, large skillet",
       "i": [
-        "800 g chicken breast",
-        "1 tsp Italian seasoning, ½ tsp salt, ¼ tsp pepper",
-        "1 tbsp olive oil",
-        "340 g chickpea or lentil pasta (penne or rotini)",
-        "⅓ cup basil pesto",
-        "2 cups cherry tomatoes, halved",
-        "2 big handfuls baby spinach",
-        "⅓ cup grated parmesan"
+        "600 g chicken breast",
+        "¾ tsp Italian seasoning, scant ½ tsp salt and a pinch of pepper",
+        "2 tsp olive oil",
+        "255 g chickpea or lentil pasta, penne or rotini (¾ of a 340 g box)",
+        "¼ cup basil pesto",
+        "1½ cups cherry tomatoes, halved",
+        "2 handfuls baby spinach",
+        "¼ cup grated parmesan"
       ],
       "s": [
-        "Even out the chicken|If breasts are thick on one end, place them between plastic wrap and pound with a pan or rolling pin to an even ¾ inch. They'll cook evenly and stay juicy. Season both sides with Italian seasoning, salt and pepper.",
-        "Cook the chicken|Heat olive oil in your skillet over medium-high. Lay the chicken in and don't move it for 5–6 minutes until deep golden. Flip, turn heat to medium, and cook 5–6 more minutes until the thickest part reads 165°F/74°C or the juices run clear when cut. Rest on a board 5 minutes, then slice.",
-        "Boil the pasta|Bring a large pot of well-salted water to a rolling boil. Cook the pasta 1 minute less than the package says; legume pasta goes mushy fast. Before draining, scoop out ½ cup of the pasta water.",
-        "Wilt the veg|Drain the pasta and return it to the hot pot off the heat. Add spinach and tomatoes and stir; the heat will wilt the spinach in about a minute.",
-        "Sauce it|Add the pesto and 3–4 tbsp of the reserved pasta water. Stir well until the pesto coats everything in a loose sauce (add more water if it looks dry, since it tightens in the fridge).",
-        "Finish and portion|Fold in the sliced chicken and parmesan. Divide into 4 containers."
+        "Even out the chicken|If the breasts are thick on one end, place them between plastic wrap and pound with a pan or rolling pin to an even ¾ inch. They'll cook evenly and stay juicy. Season both sides with ¾ tsp Italian seasoning, a scant ½ tsp salt and a pinch of pepper.",
+        "Cook the chicken|Heat 2 tsp olive oil in your skillet over medium-high. Lay the 600 g chicken in and don't move it for 5–6 minutes until deep golden. Flip, turn heat to medium, and cook 5–6 more minutes until the thickest part reads 165°F/74°C or the juices run clear when cut. Rest on a board 5 minutes, then slice.",
+        "Boil the pasta|Bring a large pot of well-salted water to a rolling boil. Cook 255 g pasta 1 minute less than the package says; legume pasta goes mushy fast. Before draining, scoop out ½ cup of the pasta water.",
+        "Wilt the veg|Drain the pasta and return it to the hot pot off the heat. Add 2 handfuls spinach and 1½ cups halved tomatoes and stir; the heat will wilt the spinach in about a minute.",
+        "Sauce it|Add ¼ cup pesto and 2–3 tbsp of the reserved pasta water. Stir well until the pesto coats everything in a loose sauce (add more water if it looks dry).",
+        "Finish and serve|Fold in the sliced chicken and ¼ cup parmesan. Split three ways: two for tonight, one for the fridge."
       ],
       "rh": "Add 1 tbsp water, microwave covered 1½–2 minutes, stir. Also good cold like pasta salad.",
-      "x": "",
+      "x": "The spare keeps 3 days and is also good cold.",
       "g": [
-        "Protein|Chicken breast",
-        "Dairy|Parmesan",
-        "Produce|Cherry tomatoes",
-        "Produce|Baby spinach",
-        "Grains & bread|Chickpea or lentil pasta",
-        "Pantry & sauces|Basil pesto",
-        "Pantry & sauces|Olive oil, sesame oil"
+        [
+          "Protein|Chicken breast",
+          "600 g"
+        ],
+        [
+          "Dairy|Parmesan",
+          "0.25 cup"
+        ],
+        [
+          "Produce|Cherry tomatoes",
+          "1.5 cup"
+        ],
+        [
+          "Produce|Baby spinach",
+          "2 handfuls"
+        ],
+        [
+          "Grains & bread|Chickpea or lentil pasta",
+          "255 g"
+        ],
+        [
+          "Pantry & sauces|Basil pesto",
+          "0.25 cup"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "2 tsp"
+        ],
+        [
+          "Spices|Italian seasoning",
+          "0.75 tsp"
+        ]
       ]
     },
     {
@@ -320,41 +565,99 @@
         50,
         20
       ],
+      "sv": 3,
       "time": "Prep 20 min + 20 min marinate · Cook 25 min",
       "eq": "Sheet pan or skillet, box grater, pot",
       "i": [
-        "900 g boneless skinless chicken thighs",
-        "Marinade: juice of 1 lemon, 1 tbsp olive oil, 1 tbsp minced garlic, 2 tsp dried oregano, 1 tsp paprika, 1 tsp salt, ½ tsp pepper",
-        "Tzatziki: 1 cup 0% Greek yogurt, ½ cucumber grated, 1 tsp minced garlic, 1 tbsp fresh dill (or 1 tsp dried), 1 tsp lemon juice, pinch of salt",
-        "Salad: 1 cucumber, 2 tomatoes, ½ red onion, all diced, + squeeze of lemon and pinch of salt",
-        "1 cup dry rice or orzo",
-        "⅓ cup crumbled feta"
+        "675 g boneless skinless chicken thighs",
+        "#Marinade",
+        "2 tbsp lemon juice (from 1 lemon; keep the rest)",
+        "2 tsp olive oil",
+        "2 tsp minced garlic (2 cloves)",
+        "1½ tsp dried oregano",
+        "¾ tsp paprika",
+        "¾ tsp salt",
+        "Scant ½ tsp pepper",
+        "#Tzatziki",
+        "¾ cup 0% Greek yogurt",
+        "⅓ cucumber, grated",
+        "¾ tsp minced garlic (1 small clove)",
+        "2 tsp fresh dill (or ¾ tsp dried)",
+        "¾ tsp lemon juice",
+        "Pinch of salt",
+        "#Salad",
+        "⅔ cucumber, diced",
+        "2 small tomatoes, diced",
+        "⅓ red onion, diced",
+        "Squeeze of lemon and a pinch of salt",
+        "#Bowls",
+        "¾ cup dry rice or orzo (rice needs 1½ cups water)",
+        "¼ cup crumbled feta"
       ],
       "s": [
-        "Marinate|Whisk marinade ingredients in a bowl or zip bag, add the chicken thighs, and massage to coat. Refrigerate at least 20 minutes (up to 24 hours).",
-        "Start the rice or orzo|Rice: rinse and cook as usual (2 cups water, 15 min on low, rest 10). Orzo: boil in salted water 8–9 minutes, drain, and toss with a few drops of olive oil so it doesn't clump.",
+        "Marinate|Whisk 2 tbsp lemon juice, 2 tsp olive oil, 2 tsp garlic, 1½ tsp oregano, ¾ tsp paprika, ¾ tsp salt and a scant ½ tsp pepper in a bowl or zip bag. Add 675 g chicken thighs and massage to coat. Refrigerate at least 20 minutes (up to 24 hours).",
+        "Start the rice or orzo|Rice: rinse ¾ cup and cook in 1½ cups water, 15 minutes on low, rest 10. Orzo: boil ¾ cup in salted water 8–9 minutes, drain, and toss with a few drops of olive oil so it doesn't clump.",
         "Cook the chicken|Heat oven to 425°F (220°C). Lay thighs flat on a lined sheet pan with space between them. Roast 18–22 minutes until the edges char slightly and the thickest piece reads 175°F/80°C (thighs taste better cooked a bit past 165°F). For more colour, broil the last 2 minutes. Or pan-fry over medium-high, 5–6 minutes per side.",
-        "Make the tzatziki|Grate the half cucumber on the large holes of a box grater. Pile it in a clean towel and squeeze hard over the sink until no more water comes out; this stops the sauce going runny. Mix with yogurt, garlic, dill, lemon juice and salt.",
-        "Make the salad|Toss diced cucumber, tomato and red onion with lemon and salt. Keep it separate from hot food.",
+        "Make the tzatziki|Grate ⅓ of a cucumber on the large holes of a box grater. Pile it in a clean towel and squeeze hard over the sink until no more water comes out; this stops the sauce going runny. Mix with ¾ cup yogurt, ¾ tsp garlic, 2 tsp dill, ¾ tsp lemon juice and a pinch of salt.",
+        "Make the salad|Toss the diced ⅔ cucumber, 2 small tomatoes and ⅓ red onion with a squeeze of lemon and a pinch of salt. Keep it separate from hot food.",
         "Slice|Rest the chicken 5 minutes, then slice into strips.",
-        "Portion|Divide rice, chicken and feta into 4 containers. Pack salad and tzatziki separately so the rice doesn't get soggy."
+        "Serve|Split the rice, chicken and ¼ cup feta three ways. Add salad and tzatziki to tonight's two bowls. Pack the spare's salad and tzatziki separately so the rice doesn't get soggy."
       ],
       "rh": "Microwave rice and chicken 2 minutes. Add cold salad and tzatziki after.",
-      "x": "",
+      "x": "The spare keeps 3 days.",
       "g": [
-        "Protein|Boneless skinless chicken thighs",
-        "Dairy|0% plain Greek yogurt",
-        "Dairy|Feta",
-        "Produce|Cucumbers",
-        "Produce|Tomatoes",
-        "Produce|Onions",
-        "Produce|Garlic",
-        "Produce|Lemons",
-        "Produce|Cilantro, dill, green onion, parsley, chives",
-        "Grains & bread|Basmati or jasmine rice",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Spices|Chili powder, cumin, smoked paprika",
-        "Spices|Dried oregano, thyme, tarragon"
+        [
+          "Protein|Boneless skinless chicken thighs",
+          "675 g"
+        ],
+        [
+          "Dairy|0% plain Greek yogurt",
+          "190 g"
+        ],
+        [
+          "Dairy|Feta",
+          "40 g"
+        ],
+        [
+          "Produce|Cucumbers",
+          "1"
+        ],
+        [
+          "Produce|Tomatoes",
+          "2"
+        ],
+        [
+          "Produce|Red onion",
+          "0.5"
+        ],
+        [
+          "Produce|Garlic",
+          "3 cloves"
+        ],
+        [
+          "Produce|Lemons",
+          "1"
+        ],
+        [
+          "Produce|Dill",
+          "small bunch"
+        ],
+        [
+          "Grains & bread|Basmati or jasmine rice",
+          "0.75 cup"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "2 tsp"
+        ],
+        [
+          "Spices|Paprika",
+          "0.75 tsp"
+        ],
+        [
+          "Spices|Dried oregano",
+          "1.5 tsp"
+        ]
       ]
     },
     {
@@ -367,41 +670,89 @@
         58,
         21
       ],
+      "sv": 3,
       "time": "Prep 15 min · Cook 20 min",
       "eq": "Lined sheet pan, small saucepan, pot",
       "i": [
-        "4 salmon fillets, about 150 g each, skin on or off",
-        "Teriyaki: ¼ cup low-sodium soy sauce, 2 tbsp honey, 1 tbsp rice vinegar, 1 tsp minced garlic, 1 tsp grated ginger, 2 tbsp water, 1 tsp cornstarch",
-        "1½ cups frozen shelled edamame",
-        "1 cup dry rice",
-        "1 cucumber, sliced thin",
-        "2 carrots, julienned or grated",
-        "Sesame seeds, green onion"
+        "3 salmon fillets, about 150 g each, skin on or off",
+        "#Teriyaki",
+        "3 tbsp low-sodium soy sauce",
+        "1½ tbsp honey",
+        "2 tsp rice vinegar",
+        "¾ tsp minced garlic (1 small clove)",
+        "¾ tsp grated ginger",
+        "1½ tbsp water",
+        "¾ tsp cornstarch",
+        "#Bowls",
+        "1¼ cups frozen shelled edamame",
+        "¾ cup dry rice, plus 1½ cups water",
+        "¾ cucumber, sliced thin",
+        "2 small carrots, julienned or grated",
+        "Sesame seeds and sliced green onion, to finish"
       ],
       "s": [
-        "Make the teriyaki|In a small saucepan, whisk soy, honey, vinegar, garlic, ginger, water and cornstarch. Bring to a simmer over medium, stirring, and cook 1–2 minutes until it thickens enough to coat a spoon. Pour half into a separate bowl for brushing (so raw-fish brush never touches the serving sauce).",
-        "Start the rice|Rinse and cook rice (2 cups water, boil, cover on low 15 minutes, rest 10).",
-        "Prep the salmon|Heat oven to 400°F (200°C). Pat fillets dry, place on a lined sheet pan skin side down, and season lightly with salt. Brush generously with the brushing half of the sauce.",
+        "Make the teriyaki|In a small saucepan, whisk 3 tbsp soy sauce, 1½ tbsp honey, 2 tsp rice vinegar, ¾ tsp garlic, ¾ tsp ginger, 1½ tbsp water and ¾ tsp cornstarch. Bring to a simmer over medium, stirring, and cook 1–2 minutes until it thickens enough to coat a spoon. Pour half into a separate bowl for brushing (so the raw-fish brush never touches the serving sauce).",
+        "Start the rice|Rinse ¾ cup rice and cook in 1½ cups water (boil, cover on low 15 minutes, rest 10).",
+        "Prep the salmon|Heat oven to 400°F (200°C). Pat the 3 fillets dry, place on a lined sheet pan skin side down, and season lightly with salt. Brush generously with the brushing half of the sauce.",
         "Bake|Bake 12–14 minutes, until the salmon flakes easily at the thickest point and reads 130–140°F (54–60°C). It will keep cooking a little on the tray. For a glazed top, brush once more and broil 1–2 minutes, watching closely.",
-        "Cook the edamame|Boil or microwave edamame 3–4 minutes until hot, drain, and salt lightly.",
-        "Portion|Divide rice into 4 containers. Add a fillet, edamame, cucumber and carrot to each. Drizzle the reserved teriyaki over the salmon and finish with sesame seeds and green onion."
+        "Cook the edamame|Boil or microwave 1¼ cups edamame 3–4 minutes until hot, drain, and salt lightly.",
+        "Serve|Split the rice three ways. Add a fillet, edamame, sliced cucumber and carrot to each. Drizzle the reserved teriyaki over the salmon and finish with sesame seeds and green onion. Two for tonight, one for the fridge."
       ],
       "rh": "Microwave at 50% power for 2–2½ minutes to avoid drying out the salmon, or eat it cold over warm rice.",
-      "x": "Eat within 2–3 days, so plan it early in the week.",
+      "x": "The spare keeps 2 days in the fridge.",
       "g": [
-        "Protein|Salmon fillets",
-        "Produce|Cucumbers",
-        "Produce|Carrots",
-        "Produce|Garlic",
-        "Produce|Ginger",
-        "Produce|Cilantro, dill, green onion, parsley, chives",
-        "Grains & bread|Basmati or jasmine rice",
-        "Pantry & sauces|Low-sodium soy sauce",
-        "Pantry & sauces|Honey",
-        "Pantry & sauces|Rice vinegar",
-        "Pantry & sauces|Cornstarch, flour",
-        "Pantry & sauces|Chia seeds, sesame seeds",
-        "Frozen|Shelled edamame"
+        [
+          "Protein|Salmon fillets",
+          "3 fillets (150 g each)"
+        ],
+        [
+          "Produce|Cucumbers",
+          "1"
+        ],
+        [
+          "Produce|Carrots",
+          "2"
+        ],
+        [
+          "Produce|Garlic",
+          "1 cloves"
+        ],
+        [
+          "Produce|Ginger",
+          "small knob"
+        ],
+        [
+          "Produce|Green onion",
+          "small bunch"
+        ],
+        [
+          "Grains & bread|Basmati or jasmine rice",
+          "0.75 cup"
+        ],
+        [
+          "Pantry & sauces|Low-sodium soy sauce",
+          "3 tbsp"
+        ],
+        [
+          "Pantry & sauces|Honey",
+          "1.5 tbsp"
+        ],
+        [
+          "Pantry & sauces|Rice vinegar",
+          "2 tsp"
+        ],
+        [
+          "Pantry & sauces|Cornstarch",
+          "0.75 tsp"
+        ],
+        [
+          "Pantry & sauces|Sesame seeds",
+          "sprinkle"
+        ],
+        [
+          "Frozen|Shelled edamame",
+          "1.25 cup"
+        ]
       ]
     },
     {
@@ -414,46 +765,101 @@
         50,
         18
       ],
+      "sv": 3,
       "time": "Prep 20 min · Cook 35 min",
       "eq": "Sheet pan, large non-stick skillet, 3 shallow dishes",
       "i": [
-        "900 g cod fillets, cut into 4 portions",
-        "½ tsp salt, ¼ tsp pepper",
-        "⅓ cup all-purpose flour",
-        "Egg dip: 2 eggs, ¼ cup liquid egg whites, 2 tbsp grated parmesan, 1 tbsp chopped parsley",
-        "1 tbsp butter + 1 tbsp oil for frying",
-        "Sauce: 1 tbsp butter, 1 tsp minced garlic, ½ cup dry white wine (or extra broth), ½ cup chicken broth, juice of 1 lemon, 1 tbsp cold butter, 1 tbsp capers (optional), parsley",
-        "800 g baby potatoes, halved + 1 tsp oil",
-        "400 g green beans, trimmed"
+        "675 g cod fillets, cut into 3 portions",
+        "Scant ½ tsp salt and a pinch of pepper",
+        "¼ cup all-purpose flour",
+        "#Egg dip",
+        "2 eggs",
+        "1½ tbsp grated parmesan",
+        "2 tsp chopped parsley",
+        "#For frying",
+        "2 tsp butter + 2 tsp oil",
+        "#Sauce",
+        "2 tsp butter",
+        "¾ tsp minced garlic (1 small clove)",
+        "6 tbsp dry white wine (or extra broth)",
+        "6 tbsp chicken broth",
+        "2 tbsp lemon juice (about ¾ of a lemon)",
+        "2 tsp cold butter",
+        "2 tsp capers (optional)",
+        "Chopped parsley, to finish",
+        "#Sides",
+        "600 g baby potatoes, halved + ¾ tsp oil",
+        "300 g green beans, trimmed"
       ],
       "s": [
-        "Roast the potatoes|Heat oven to 425°F (220°C). Toss potatoes with oil, salt and pepper, turn cut side down on a sheet pan, and roast 25–30 minutes. Add the green beans to the same pan for the last 12 minutes.",
-        "Set up the station|Put flour in one shallow dish. Whisk eggs, egg whites, parmesan and parsley in a second. Leave a clean plate at the end.",
-        "Dry and season the fish|Pat the cod very dry with paper towel; wet fish makes the coating slide off. Season both sides with salt and pepper.",
+        "Roast the potatoes|Heat oven to 425°F (220°C). Toss 600 g potatoes with ¾ tsp oil, salt and pepper, turn cut side down on a sheet pan, and roast 25–30 minutes. Add 300 g green beans to the same pan for the last 12 minutes.",
+        "Set up the station|Put ¼ cup flour in one shallow dish. Whisk 2 eggs, 1½ tbsp parmesan and 2 tsp parsley in a second. Leave a clean plate at the end.",
+        "Dry and season the fish|Pat the cod very dry with paper towel; wet fish makes the coating slide off. Season both sides with a scant ½ tsp salt and a pinch of pepper.",
         "Dredge and dip|Coat each piece lightly in flour and tap off the excess, then dip in the egg mixture so it's fully covered, letting extra drip back into the dish.",
-        "Pan-fry|Heat butter and oil in the skillet over medium until the butter foams. Lay the cod in (don't crowd it) and cook 3–4 minutes until the underside is golden. Flip gently with a fish spatula and cook 3–4 more minutes until the thickest part flakes easily and is opaque all the way through (145°F/63°C). Move to a plate.",
-        "Build the sauce|Wipe out any burnt bits but leave the golden ones. Over medium, melt 1 tbsp butter and add garlic for 30 seconds. Pour in the wine and let it bubble 2 minutes until reduced by half. Add broth and lemon juice and simmer 3 minutes.",
-        "Finish the sauce|Take the pan off the heat and swirl in the cold butter until the sauce turns slightly glossy. Stir in capers and parsley. Taste for salt.",
-        "Portion|Divide potatoes, green beans and cod into 4 containers. Pack the sauce in small cups so the coating stays intact; pour it over after reheating."
+        "Pan-fry|Heat 2 tsp butter and 2 tsp oil in the skillet over medium until the butter foams. Lay the cod in (don't crowd it) and cook 3–4 minutes until the underside is golden. Flip gently with a fish spatula and cook 3–4 more minutes until the thickest part flakes easily and is opaque all the way through (145°F/63°C). Move to a plate.",
+        "Build the sauce|Wipe out any burnt bits but leave the golden ones. Over medium, melt 2 tsp butter and add ¾ tsp garlic for 30 seconds. Pour in 6 tbsp wine and let it bubble 2 minutes until reduced by half. Add 6 tbsp broth and 2 tbsp lemon juice and simmer 3 minutes.",
+        "Finish the sauce|Take the pan off the heat and swirl in 2 tsp cold butter until the sauce turns slightly glossy. Stir in 2 tsp capers and a little parsley. Taste for salt.",
+        "Serve|Split the potatoes, green beans and cod three ways and pour the sauce over tonight's two plates. Pack the spare's sauce in a small cup so the coating stays intact; pour it over after reheating."
       ],
       "rh": "Best: oven or air fryer at 350°F for 6–8 minutes. Otherwise microwave at 50% power for 1½–2 minutes. Warm the sauce separately and pour over.",
-      "x": "Eat within 2 days. Sole or haddock work the same way.",
+      "x": "The spare keeps 2 days. Sole or haddock work the same way.",
       "g": [
-        "Protein|Cod fillets",
-        "Protein|Eggs",
-        "Protein|Liquid egg whites",
-        "Dairy|Butter",
-        "Dairy|Parmesan",
-        "Produce|Baby potatoes",
-        "Produce|Green beans",
-        "Produce|Garlic",
-        "Produce|Lemons",
-        "Produce|Cilantro, dill, green onion, parsley, chives",
-        "Pantry & sauces|Capers",
-        "Pantry & sauces|Chicken broth",
-        "Pantry & sauces|Dry white wine",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Pantry & sauces|Cornstarch, flour"
+        [
+          "Protein|Cod fillets",
+          "675 g"
+        ],
+        [
+          "Protein|Eggs",
+          "2"
+        ],
+        [
+          "Dairy|Butter",
+          "2 tbsp"
+        ],
+        [
+          "Dairy|Parmesan",
+          "1.5 tbsp"
+        ],
+        [
+          "Produce|Baby potatoes",
+          "600 g"
+        ],
+        [
+          "Produce|Green beans",
+          "300 g"
+        ],
+        [
+          "Produce|Garlic",
+          "1 cloves"
+        ],
+        [
+          "Produce|Lemons",
+          "1"
+        ],
+        [
+          "Produce|Parsley",
+          "small bunch"
+        ],
+        [
+          "Pantry & sauces|Capers",
+          "2 tsp"
+        ],
+        [
+          "Pantry & sauces|Chicken broth",
+          "90 ml"
+        ],
+        [
+          "Pantry & sauces|Dry white wine",
+          "90 ml"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "1 tbsp"
+        ],
+        [
+          "Pantry & sauces|All-purpose flour",
+          "0.25 cup"
+        ]
       ]
     },
     {
@@ -466,41 +872,85 @@
         50,
         12
       ],
+      "sv": 3,
       "time": "Prep 10 min · Cook 25 min",
       "eq": "Sheet pan, large skillet, pot or rice cooker, mortar or zip bag",
       "i": [
-        "900 g haddock (or halibut or cod), cut into 4 portions",
-        "½ tsp salt, ¼ tsp black pepper",
-        "1 tbsp oil",
-        "1 cup dry jasmine rice",
-        "1 bunch asparagus, woody ends snapped off + 1 tsp oil",
-        "Sauce: 1 tbsp butter, 1 shallot finely diced, 1 tbsp pink peppercorns, ⅓ cup dry white wine (or broth), ⅔ cup 2% evaporated milk, 1 tsp Dijon, squeeze of lemon, chopped chives"
+        "675 g haddock (or halibut or cod), cut into 3 portions",
+        "Scant ½ tsp salt and a pinch of black pepper",
+        "2 tsp oil",
+        "¾ cup dry jasmine rice, plus 1 cup + 2 tbsp water",
+        "1 small bunch asparagus, woody ends snapped off + ¾ tsp oil",
+        "#Sauce",
+        "2 tsp butter",
+        "1 small shallot, finely diced",
+        "2 tsp pink peppercorns",
+        "¼ cup dry white wine (or broth)",
+        "½ cup 2% evaporated milk",
+        "¾ tsp Dijon mustard",
+        "Squeeze of lemon",
+        "Chopped chives, to finish"
       ],
       "s": [
-        "Rice and asparagus|Cook rice (rinse, 1½ cups water, boil, cover on low 15 minutes, rest 10). Heat oven to 425°F, toss asparagus with oil and salt, and roast 10–12 minutes until just tender.",
-        "Crush the peppercorns|Put pink peppercorns in a zip bag and press with the bottom of a pan, or use a mortar. You want them cracked, not powdered.",
-        "Sear the fish|Pat the haddock very dry and season. Heat oil in the skillet over medium-high until shimmering. Lay fish in and cook 3 minutes without moving until golden underneath. Flip carefully and cook 2–3 minutes more until opaque and flaking at the thickest part. Move to a plate.",
-        "Start the sauce|Lower heat to medium. Add butter and shallot and cook 2–3 minutes until soft. Add most of the pink peppercorns (save a pinch for garnish) and stir 30 seconds.",
-        "Reduce|Pour in the wine and let it bubble 2 minutes until reduced by about half.",
-        "Make it creamy|Lower to medium-low. Stir in evaporated milk and Dijon and simmer gently 3–4 minutes until it thickens enough to coat a spoon. Keep it at a gentle bubble; a hard boil can split it. Add lemon, salt to taste and chives.",
-        "Portion|Divide rice, asparagus and fish into 4 containers. Spoon sauce over the fish and finish with the reserved peppercorns."
+        "Rice and asparagus|Cook the rice (rinse ¾ cup, add 1 cup + 2 tbsp water, boil, cover on low 15 minutes, rest 10). Heat oven to 425°F (220°C), toss the asparagus with ¾ tsp oil and a pinch of salt, and roast 10–12 minutes until just tender.",
+        "Crush the peppercorns|Put 2 tsp pink peppercorns in a zip bag and press with the bottom of a pan, or use a mortar. You want them cracked, not powdered.",
+        "Sear the fish|Pat the haddock very dry and season with a scant ½ tsp salt and a pinch of pepper. Heat 2 tsp oil in the skillet over medium-high until shimmering. Lay the fish in and cook 3 minutes without moving until golden underneath. Flip carefully and cook 2–3 minutes more until opaque and flaking at the thickest part. Move to a plate.",
+        "Start the sauce|Lower heat to medium. Add 2 tsp butter and the diced shallot and cook 2–3 minutes until soft. Add most of the pink peppercorns (save a pinch for garnish) and stir 30 seconds.",
+        "Reduce|Pour in ¼ cup wine and let it bubble 2 minutes until reduced by about half.",
+        "Make it creamy|Lower to medium-low. Stir in ½ cup evaporated milk and ¾ tsp Dijon and simmer gently 3–4 minutes until it thickens enough to coat a spoon. Keep it at a gentle bubble; a hard boil can split it. Add a squeeze of lemon, salt to taste and chives.",
+        "Serve|Split the rice, asparagus and fish three ways. Spoon sauce over the fish and finish with the reserved peppercorns. Two for tonight, one for the fridge."
       ],
       "rh": "Microwave at 50% power for 2–2½ minutes to keep the fish tender.",
-      "x": "Eat within 2 days. Pink peppercorns are related to cashews, so skip them if anyone eating has a cashew allergy.",
+      "x": "The spare keeps 2 days. Pink peppercorns are related to cashews, so skip them if anyone eating has a cashew allergy.",
       "g": [
-        "Protein|Haddock fillets",
-        "Dairy|Butter",
-        "Dairy|2% evaporated milk",
-        "Produce|Asparagus",
-        "Produce|Shallots",
-        "Produce|Lemons",
-        "Produce|Cilantro, dill, green onion, parsley, chives",
-        "Grains & bread|Basmati or jasmine rice",
-        "Pantry & sauces|Dijon and grainy mustard",
-        "Pantry & sauces|Chicken broth",
-        "Pantry & sauces|Dry white wine",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Spices|Pink peppercorns"
+        [
+          "Protein|Haddock fillets",
+          "675 g"
+        ],
+        [
+          "Dairy|Butter",
+          "2 tsp"
+        ],
+        [
+          "Dairy|2% evaporated milk",
+          "125 ml"
+        ],
+        [
+          "Produce|Asparagus",
+          "small bunch"
+        ],
+        [
+          "Produce|Shallots",
+          "1"
+        ],
+        [
+          "Produce|Lemons",
+          "0.5"
+        ],
+        [
+          "Produce|Chives",
+          "small bunch"
+        ],
+        [
+          "Grains & bread|Basmati or jasmine rice",
+          "0.75 cup"
+        ],
+        [
+          "Pantry & sauces|Dijon mustard",
+          "0.75 tsp"
+        ],
+        [
+          "Pantry & sauces|Dry white wine",
+          "60 ml"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "1 tbsp"
+        ],
+        [
+          "Spices|Pink peppercorns",
+          "2 tsp"
+        ]
       ]
     },
     {
@@ -513,41 +963,89 @@
         38,
         23
       ],
+      "sv": 3,
       "time": "Prep 15 min + 30 min soak · Cook 35 min",
       "eq": "Air fryer or sheet pan, cast iron skillet, meat thermometer",
       "i": [
-        "900 g top sirloin, 2–4 steaks about 1 inch thick",
-        "1 tsp salt, 1 tsp coarse black pepper",
-        "1 tsp oil",
-        "1 tbsp butter, 2 garlic cloves (smashed), 2 sprigs thyme",
-        "800 g russet potatoes + 1 tbsp oil, ½ tsp salt",
-        "Light béarnaise: ½ cup 0% Greek yogurt, 1 tbsp melted butter, 1 tsp Dijon, 1 tsp dried tarragon, 1 small shallot finely minced, 1 tsp lemon juice, salt",
-        "2 handfuls arugula + lemon"
+        "675 g top sirloin, 2–3 steaks about 1 inch thick",
+        "¾ tsp salt and ¾ tsp coarse black pepper",
+        "¾ tsp oil",
+        "2 tsp butter, 2 garlic cloves (smashed) and 2 sprigs thyme, for basting",
+        "#Fries",
+        "600 g russet potatoes",
+        "2 tsp oil and a scant ½ tsp salt",
+        "#Light béarnaise",
+        "6 tbsp 0% Greek yogurt",
+        "2 tsp melted butter",
+        "¾ tsp Dijon mustard",
+        "¾ tsp dried tarragon",
+        "1 small shallot, finely minced",
+        "¾ tsp lemon juice",
+        "Pinch of salt",
+        "#To serve",
+        "2 handfuls arugula and a squeeze of lemon"
       ],
       "s": [
-        "Cut and soak the fries|Cut potatoes (skin on is fine) into ⅓-inch sticks. Soak in cold water 30 minutes. This pulls out surface starch so they crisp instead of going limp.",
-        "Temper the steak|While fries soak, take the steak out of the fridge, pat it very dry, and season heavily on both sides with salt and pepper. Leave it on the counter.",
-        "Cook the fries|Drain the fries and dry them thoroughly with a towel (water is the enemy of crisp). Toss with oil and salt. Air fryer: 380°F for 18–22 minutes, shaking every 6 minutes. Oven: spread in one layer on parchment at 450°F for 30–35 minutes, flipping halfway.",
-        "Make the béarnaise|Stir yogurt, melted butter, Dijon, tarragon, shallot, lemon and salt together. Let it sit 10 minutes so the tarragon softens.",
-        "Sear the steak|Heat cast iron over high until it just starts to smoke. Add the oil, then the steaks. Don't touch them for 3 minutes. Flip and cook 2–3 minutes more. For prep, aim for 125°F (rare) inside; it cooks further when reheated and ends up medium-rare.",
-        "Baste|Turn heat to medium, add butter, garlic and thyme. Tilt the pan and spoon the foaming butter over the steaks for 45 seconds.",
-        "Rest and slice|Rest steaks on a board 10 minutes, then slice across the grain into strips.",
-        "Portion|Divide steak and fries between 4 containers. Pack arugula and béarnaise separately."
+        "Cut and soak the fries|Cut 600 g potatoes (skin on is fine) into ⅓-inch sticks. Soak in cold water 30 minutes. This pulls out surface starch so they crisp instead of going limp.",
+        "Temper the steak|While the fries soak, take the steak out of the fridge, pat it very dry, and season both sides with ¾ tsp salt and ¾ tsp pepper. Leave it on the counter.",
+        "Cook the fries|Drain the fries and dry them thoroughly with a towel (water is the enemy of crisp). Toss with 2 tsp oil and a scant ½ tsp salt. Air fryer: 380°F for 18–22 minutes, shaking every 6 minutes. Oven: spread in one layer on parchment at 450°F for 30–35 minutes, flipping halfway.",
+        "Make the béarnaise|Stir 6 tbsp yogurt, 2 tsp melted butter, ¾ tsp Dijon, ¾ tsp tarragon, the minced shallot, ¾ tsp lemon juice and a pinch of salt together. Let it sit 10 minutes so the tarragon softens.",
+        "Sear the steak|Heat cast iron over high until it just starts to smoke. Add ¾ tsp oil, then the steaks. Don't touch them for 3 minutes. Flip and cook 2–3 minutes more. Aim for 130°F (54°C) inside for medium-rare; it climbs a few degrees while it rests.",
+        "Baste|Turn heat to medium, add 2 tsp butter, 2 smashed garlic cloves and 2 thyme sprigs. Tilt the pan and spoon the foaming butter over the steaks for 45 seconds.",
+        "Rest and slice|Rest the steaks on a board 10 minutes, then slice across the grain into strips.",
+        "Serve|Split the steak and fries three ways. Add arugula with a squeeze of lemon and béarnaise to tonight's two plates. Pack the spare's arugula and béarnaise separately."
       ],
       "rh": "Fries: air fry at 375°F for 4–5 minutes to re-crisp. Steak: microwave at 50% for 30–45 seconds, or eat it cold sliced. Add arugula and béarnaise after.",
-      "x": "Keeps 3 days. Flank or striploin also work.",
+      "x": "The spare keeps 3 days. Flank or striploin also work.",
       "g": [
-        "Protein|Top sirloin",
-        "Dairy|0% plain Greek yogurt",
-        "Dairy|Butter",
-        "Produce|Russet potatoes",
-        "Produce|Arugula",
-        "Produce|Shallots",
-        "Produce|Garlic",
-        "Produce|Lemons",
-        "Pantry & sauces|Dijon and grainy mustard",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Spices|Dried oregano, thyme, tarragon"
+        [
+          "Protein|Top sirloin",
+          "675 g"
+        ],
+        [
+          "Dairy|0% plain Greek yogurt",
+          "90 g"
+        ],
+        [
+          "Dairy|Butter",
+          "4 tsp"
+        ],
+        [
+          "Produce|Russet potatoes",
+          "600 g"
+        ],
+        [
+          "Produce|Arugula",
+          "2 handfuls"
+        ],
+        [
+          "Produce|Shallots",
+          "1"
+        ],
+        [
+          "Produce|Garlic",
+          "2 cloves"
+        ],
+        [
+          "Produce|Lemons",
+          "0.5"
+        ],
+        [
+          "Produce|Fresh thyme",
+          "2 sprigs"
+        ],
+        [
+          "Pantry & sauces|Dijon mustard",
+          "0.75 tsp"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "1 tbsp"
+        ],
+        [
+          "Spices|Dried tarragon",
+          "0.75 tsp"
+        ]
       ]
     },
     {
@@ -560,42 +1058,101 @@
         48,
         16
       ],
+      "sv": 3,
       "time": "Prep 15 min · Cook 35 min",
       "eq": "Oven-safe skillet, pot, potato masher, meat thermometer",
       "i": [
-        "2 pork tenderloins (about 1 kg total)",
-        "1 tsp salt, ½ tsp pepper, 1 tsp dried thyme",
-        "1 tbsp oil",
-        "Mash: 800 g Yukon Gold potatoes, ⅓ cup 0% Greek yogurt, ¼ cup milk, 1 tbsp butter, salt and pepper",
-        "400 g green beans, trimmed",
-        "Sauce: 1 tsp butter, 1 shallot finely diced, 1 tsp minced garlic, ½ cup chicken broth, ⅔ cup 2% evaporated milk, 1 tbsp Dijon, 1 tbsp grainy mustard, ½ tsp thyme, pepper"
+        "750 g pork tenderloin (1 large or 2 small)",
+        "¾ tsp salt, scant ½ tsp pepper and ¾ tsp dried thyme",
+        "2 tsp oil",
+        "#Mash",
+        "600 g Yukon Gold potatoes",
+        "¼ cup 0% Greek yogurt",
+        "3 tbsp milk",
+        "2 tsp butter",
+        "Salt and pepper",
+        "#Sides",
+        "300 g green beans, trimmed",
+        "#Sauce",
+        "¾ tsp butter",
+        "1 small shallot, finely diced",
+        "¾ tsp minced garlic (1 small clove)",
+        "6 tbsp chicken broth",
+        "½ cup 2% evaporated milk",
+        "2 tsp Dijon mustard",
+        "2 tsp grainy mustard",
+        "Scant ½ tsp dried thyme",
+        "Pepper"
       ],
       "s": [
-        "Trim the pork|Heat oven to 400°F (200°C). Look for the thin shiny membrane (silverskin) on the tenderloin. Slide a knife just under it and cut it away, angling the blade up; it turns chewy if left on. Season all over with salt, pepper and thyme.",
-        "Start the mash|Peel and cube potatoes into 1½-inch pieces. Put in a pot, cover with cold water, add 1 tsp salt, and bring to a boil. Simmer 15 minutes until a fork slides through with no resistance.",
-        "Sear the pork|Heat oil in the oven-safe skillet over medium-high. Sear the tenderloins on all sides, about 2 minutes per side, 6–8 minutes total, until browned.",
-        "Roast|Move the skillet to the oven and roast 12–15 minutes until the centre reads 145°F/63°C. A little pink inside is correct and safe. Move pork to a board and rest 10 minutes. Carefully leave the hot skillet handle covered with a towel.",
-        "Finish the mash|Drain the potatoes well and let them steam dry 1 minute in the pot. Mash with butter, then stir in yogurt and milk until creamy. Season with salt and pepper.",
-        "Cook the green beans|Steam or microwave the beans with 2 tbsp water, covered, 4 minutes until bright green and tender-crisp. Salt lightly.",
-        "Make the sauce|Put the skillet back on the stove over medium (handle is still hot). Add butter and shallot for 2 minutes, then garlic for 30 seconds. Pour in broth and scrape up the browned bits; simmer 3 minutes until reduced by half. Stir in evaporated milk, both mustards and thyme. Simmer gently 3–4 minutes until it coats a spoon. Add pepper and pour in any juices from the resting pork.",
-        "Slice and portion|Slice the pork into ½-inch medallions. Divide mash, beans and pork into 4 containers and spoon sauce over the pork so it stays moist."
+        "Trim the pork|Heat oven to 400°F (200°C). Look for the thin shiny membrane (silverskin) on the tenderloin. Slide a knife just under it and cut it away, angling the blade up; it turns chewy if left on. Season all over with ¾ tsp salt, a scant ½ tsp pepper and ¾ tsp thyme.",
+        "Start the mash|Peel 600 g potatoes and cube into 1½-inch pieces. Put in a pot, cover with cold water, add ¾ tsp salt, and bring to a boil. Simmer 15 minutes until a fork slides through with no resistance.",
+        "Sear the pork|Heat 2 tsp oil in the oven-safe skillet over medium-high. Sear the pork on all sides, about 2 minutes per side, 6–8 minutes total, until browned.",
+        "Roast|Move the skillet to the oven and roast 12–15 minutes until the centre reads 145°F/63°C. A little pink inside is correct and safe. Move the pork to a board and rest 10 minutes. Leave a towel over the hot skillet handle.",
+        "Finish the mash|Drain the potatoes well and let them steam dry 1 minute in the pot. Mash with 2 tsp butter, then stir in ¼ cup yogurt and 3 tbsp milk until creamy. Season with salt and pepper.",
+        "Cook the green beans|Steam or microwave 300 g beans with 2 tbsp water, covered, 4 minutes until bright green and tender-crisp. Salt lightly.",
+        "Make the sauce|Put the skillet back on the stove over medium (the handle is still hot). Add ¾ tsp butter and the shallot for 2 minutes, then ¾ tsp garlic for 30 seconds. Pour in 6 tbsp broth and scrape up the browned bits; simmer 3 minutes until reduced by half. Stir in ½ cup evaporated milk, 2 tsp Dijon, 2 tsp grainy mustard and a scant ½ tsp thyme. Simmer gently 3–4 minutes until it coats a spoon. Add pepper and pour in any juices from the resting pork.",
+        "Slice and serve|Slice the pork into ½-inch medallions. Split the mash, beans and pork three ways and spoon sauce over the pork so it stays moist. Two for tonight, one for the fridge."
       ],
       "rh": "Microwave covered 2 minutes, with the sauce over the pork. Add a splash of milk to the mash if it's stiff.",
-      "x": "Keeps 4 days. Mash freezes fine; the sauce is best fresh.",
+      "x": "The spare keeps 4 days.",
       "g": [
-        "Protein|Pork tenderloin",
-        "Dairy|0% plain Greek yogurt",
-        "Dairy|Milk (skim or unsweetened almond)",
-        "Dairy|Butter",
-        "Dairy|2% evaporated milk",
-        "Produce|Yukon Gold potatoes",
-        "Produce|Green beans",
-        "Produce|Shallots",
-        "Produce|Garlic",
-        "Pantry & sauces|Dijon and grainy mustard",
-        "Pantry & sauces|Chicken broth",
-        "Pantry & sauces|Olive oil, sesame oil",
-        "Spices|Dried oregano, thyme, tarragon"
+        [
+          "Protein|Pork tenderloin",
+          "750 g"
+        ],
+        [
+          "Dairy|0% plain Greek yogurt",
+          "60 g"
+        ],
+        [
+          "Dairy|Milk (skim or unsweetened almond)",
+          "45 ml"
+        ],
+        [
+          "Dairy|Butter",
+          "1 tbsp"
+        ],
+        [
+          "Dairy|2% evaporated milk",
+          "125 ml"
+        ],
+        [
+          "Produce|Yukon Gold potatoes",
+          "600 g"
+        ],
+        [
+          "Produce|Green beans",
+          "300 g"
+        ],
+        [
+          "Produce|Shallots",
+          "1"
+        ],
+        [
+          "Produce|Garlic",
+          "1 cloves"
+        ],
+        [
+          "Pantry & sauces|Dijon mustard",
+          "2 tsp"
+        ],
+        [
+          "Pantry & sauces|Grainy mustard",
+          "2 tsp"
+        ],
+        [
+          "Pantry & sauces|Chicken broth",
+          "90 ml"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "2 tsp"
+        ],
+        [
+          "Spices|Dried thyme",
+          "1.25 tsp"
+        ]
       ]
     },
     {
@@ -608,33 +1165,56 @@
         58,
         9
       ],
+      "sv": 3,
       "time": "Prep 10 min · Chill overnight",
       "eq": "Large bowl, whisk, 4 jars or containers",
       "i": [
-        "2 cups rolled oats (not instant)",
-        "4 scoops vanilla protein powder",
-        "2 cups milk (skim or unsweetened almond)",
-        "1 cup 0% Greek yogurt",
-        "2 tbsp chia seeds",
-        "Pinch of salt, ½ tsp cinnamon (optional)",
-        "2 cups frozen mixed berries"
+        "1½ cups rolled oats (not instant)",
+        "3 scoops vanilla protein powder",
+        "1½ cups milk (skim or unsweetened almond)",
+        "¾ cup 0% Greek yogurt",
+        "1½ tbsp chia seeds",
+        "Pinch of salt and a scant ½ tsp cinnamon (optional)",
+        "1½ cups frozen mixed berries"
       ],
       "s": [
-        "Dissolve the protein first|Pour milk into a large bowl, add the protein powder, and whisk hard for 30 seconds until completely smooth. Doing this first prevents dry clumps later.",
-        "Mix the base|Whisk in the Greek yogurt, then stir in oats, chia, salt and cinnamon until evenly combined. It should look loose and soupy; the oats and chia absorb a lot of liquid overnight.",
-        "Jar it|Divide evenly between 4 jars. Top each with ½ cup frozen berries. Frozen is fine; they thaw overnight and bleed flavour into the oats.",
+        "Dissolve the protein first|Pour 1½ cups milk into a large bowl, add 3 scoops protein powder, and whisk hard for 30 seconds until completely smooth. Doing this first prevents dry clumps later.",
+        "Mix the base|Whisk in ¾ cup Greek yogurt, then stir in 1½ cups oats, 1½ tbsp chia, a pinch of salt and the cinnamon until evenly combined. It should look loose and soupy; the oats and chia absorb a lot of liquid overnight.",
+        "Jar it|Divide evenly between 3 jars. Top each with ½ cup frozen berries. Frozen is fine; they thaw overnight and bleed flavour into the oats.",
         "Chill|Seal and refrigerate at least 6 hours or overnight.",
         "Adjust in the morning|If it's too thick, stir in a splash of milk. Eat cold, or microwave 60–90 seconds if you prefer it warm."
       ],
       "rh": "Eat cold or microwave 60–90 seconds.",
-      "x": "Keeps 4 days. Swap chocolate protein and add a tbsp of peanut butter for variety.",
+      "x": "Makes 3 jars, which keep 4 days. Swap in chocolate protein and add a tbsp of peanut butter for variety.",
       "g": [
-        "Dairy|0% plain Greek yogurt",
-        "Dairy|Milk (skim or unsweetened almond)",
-        "Grains & bread|Rolled oats",
-        "Pantry & sauces|Chia seeds, sesame seeds",
-        "Supplements|Vanilla protein powder",
-        "Frozen|Mixed berries"
+        [
+          "Dairy|0% plain Greek yogurt",
+          "190 g"
+        ],
+        [
+          "Dairy|Milk (skim or unsweetened almond)",
+          "375 ml"
+        ],
+        [
+          "Grains & bread|Rolled oats",
+          "1.5 cup"
+        ],
+        [
+          "Pantry & sauces|Chia seeds",
+          "1.5 tbsp"
+        ],
+        [
+          "Spices|Cinnamon",
+          "0.5 tsp"
+        ],
+        [
+          "Supplements|Vanilla protein powder",
+          "3 scoops"
+        ],
+        [
+          "Frozen|Mixed berries",
+          "1.5 cup"
+        ]
       ]
     },
     {
@@ -647,39 +1227,64 @@
         42,
         20
       ],
+      "sv": 3,
       "time": "Prep 20 min · Cook 20 min · Cool 20 min",
       "eq": "Large non-stick skillet, foil, freezer bag",
       "i": [
-        "8 large high-protein tortillas",
-        "8 large eggs",
-        "500 ml liquid egg whites",
-        "½ tsp salt, ¼ tsp pepper",
-        "250 g turkey sausage, casings removed",
-        "2 bell peppers, diced small",
-        "1 onion, diced small",
-        "1 cup light shredded cheese",
-        "½ cup salsa",
+        "6 large high-protein tortillas",
+        "6 large eggs",
+        "375 ml liquid egg whites (1½ cups)",
+        "Scant ½ tsp salt and a pinch of pepper",
+        "190 g turkey sausage, casings removed",
+        "1½ bell peppers, diced small",
+        "1 small onion, diced small",
+        "¾ cup light shredded cheese",
+        "6 tbsp salsa",
         "Cooking spray"
       ],
       "s": [
-        "Cook the filling|Brown the sausage in the skillet over medium-high, breaking it into small crumbles, 6–7 minutes. Add peppers and onion and cook 5 more minutes until soft and any liquid has cooked off. Wet filling makes soggy burritos, so get it dry. Tip into a bowl.",
-        "Scramble the eggs|Whisk eggs, egg whites, salt and pepper. Wipe the pan, spray it, and set to medium-low. Pour in eggs and let sit 30 seconds, then slowly push them from the edges to the centre with a spatula. Stop while they still look slightly wet (about 4–5 minutes); they finish cooking when reheated.",
-        "Cool the fillings|Spread eggs on a plate and let both fillings cool 10 minutes. Hot filling steams inside the wrap and causes ice crystals and sogginess.",
-        "Warm the tortillas|Microwave the stack of tortillas under a damp paper towel for 30 seconds so they fold without cracking.",
-        "Assemble|Lay a tortilla flat. In the lower third, add ⅛ of the eggs, ⅛ of the sausage mix, 2 tbsp cheese and 1 tbsp salsa. Fold the bottom edge up over the filling, fold in both sides, then roll up tightly away from you.",
-        "Wrap and freeze|Wrap each burrito tightly in foil (or plastic wrap), label with the date, and put them all in a large freezer bag. Freeze flat."
+        "Cook the filling|Brown 190 g sausage in the skillet over medium-high, breaking it into small crumbles, 6–7 minutes. Add the diced peppers and onion and cook 5 more minutes until soft and any liquid has cooked off. Wet filling makes soggy burritos, so get it dry. Tip into a bowl.",
+        "Scramble the eggs|Whisk 6 eggs, 375 ml egg whites, a scant ½ tsp salt and a pinch of pepper. Wipe the pan, spray it, and set to medium-low. Pour in the eggs and let sit 30 seconds, then slowly push them from the edges to the centre with a spatula. Stop while they still look slightly wet (about 4–5 minutes); they finish cooking when reheated.",
+        "Cool the fillings|Spread the eggs on a plate and let both fillings cool 10 minutes. Hot filling steams inside the wrap and causes ice crystals and sogginess.",
+        "Warm the tortillas|Microwave the stack of 6 tortillas under a damp paper towel for 30 seconds so they fold without cracking.",
+        "Assemble|Lay a tortilla flat. In the lower third, add a sixth of the eggs, a sixth of the sausage mix, 2 tbsp cheese and 1 tbsp salsa. Fold the bottom edge up over the filling, fold in both sides, then roll up tightly away from you.",
+        "Wrap and freeze|Eat two now if you like. Wrap the rest tightly in foil (or plastic wrap), label with the date, and put them in a large freezer bag. Freeze flat."
       ],
       "rh": "From frozen: remove foil, wrap in a damp paper towel, microwave 1 minute, flip, 1–1½ more minutes until hot in the centre. For a crisp outside, finish 2 minutes in a dry pan or air fryer.",
-      "x": "Keeps 2 months frozen.",
+      "x": "Makes 6 burritos; two are one portion. They keep 2 months frozen.",
       "g": [
-        "Protein|Turkey sausage",
-        "Protein|Eggs",
-        "Protein|Liquid egg whites",
-        "Dairy|Light shredded cheese",
-        "Produce|Bell peppers",
-        "Produce|Onions",
-        "Grains & bread|High-protein tortillas",
-        "Pantry & sauces|Salsa"
+        [
+          "Protein|Turkey sausage",
+          "190 g"
+        ],
+        [
+          "Protein|Eggs",
+          "6"
+        ],
+        [
+          "Protein|Liquid egg whites",
+          "375 ml"
+        ],
+        [
+          "Dairy|Light shredded cheese",
+          "0.75 cup"
+        ],
+        [
+          "Produce|Bell peppers",
+          "1.5"
+        ],
+        [
+          "Produce|Yellow onion",
+          "1"
+        ],
+        [
+          "Grains & bread|High-protein tortillas",
+          "6"
+        ],
+        [
+          "Pantry & sauces|Salsa",
+          "6 tbsp"
+        ]
       ]
     },
     {
@@ -692,39 +1297,72 @@
         32,
         15
       ],
-      "time": "Prep 15 min · Cook 10 min (with pre-cooked chicken)",
+      "sv": 3,
+      "time": "Prep 15 min · Cook 20 min",
       "eq": "Skillet, large bowl, foil",
       "i": [
-        "600 g cooked chicken breast, sliced or chopped (from your honey garlic prep day, cooked plain)",
-        "4 strips turkey bacon",
-        "3 tbsp light Caesar dressing",
-        "3 tbsp 0% Greek yogurt",
-        "1 tsp lemon juice, cracked pepper",
-        "2 romaine hearts, chopped",
-        "¼ cup grated parmesan",
-        "4 large high-protein tortillas"
+        "450 g chicken breast",
+        "Salt, pepper and a pinch of garlic powder, for the chicken",
+        "1 tsp oil",
+        "3 strips turkey bacon",
+        "2 tbsp light Caesar dressing",
+        "2 tbsp 0% Greek yogurt",
+        "¾ tsp lemon juice and plenty of cracked pepper",
+        "1½ romaine hearts, chopped",
+        "3 tbsp grated parmesan",
+        "3 large high-protein tortillas"
       ],
       "s": [
-        "Cook the chicken if you haven't|Season 600 g raw chicken breast with salt, pepper and garlic powder. Pan-cook over medium-high 5–6 minutes per side to 165°F/74°C. Rest 5 minutes and slice thinly.",
-        "Crisp the bacon|Cook turkey bacon in a dry skillet over medium, 3–4 minutes per side, until crisp. Cool on paper towel, then crumble.",
-        "Mix the dressing|Stir Caesar dressing, Greek yogurt, lemon juice and lots of pepper together. The yogurt adds protein and cuts calories without losing the flavour.",
-        "Dry the romaine|Make sure the chopped romaine is completely dry (use a salad spinner or towel). Wet lettuce makes wraps soggy by day 2.",
-        "Toss|In a large bowl, toss romaine, chicken, bacon and parmesan with the dressing until everything is lightly coated.",
-        "Roll|Warm tortillas 20 seconds in the microwave. Pile a quarter of the filling in the lower third of each, fold up the bottom, fold in the sides, and roll tightly. Wrap each in foil and cut in half at serving time."
+        "Cook the chicken|Season 450 g chicken breast with salt, pepper and a pinch of garlic powder. Pan-cook in 1 tsp oil over medium-high, 5–6 minutes per side, to 165°F/74°C. Rest 5 minutes and slice thinly.",
+        "Crisp the bacon|Cook 3 strips turkey bacon in a dry skillet over medium, 3–4 minutes per side, until crisp. Cool on paper towel, then crumble.",
+        "Mix the dressing|Stir 2 tbsp Caesar dressing, 2 tbsp Greek yogurt, ¾ tsp lemon juice and lots of pepper together. The yogurt adds protein and cuts calories without losing the flavour.",
+        "Dry the romaine|Make sure the chopped romaine is completely dry (use a salad spinner or towel). Wet lettuce makes wraps soggy.",
+        "Toss|In a large bowl, toss the romaine, chicken, bacon and 3 tbsp parmesan with the dressing until everything is lightly coated.",
+        "Roll|Warm 3 tortillas 20 seconds in the microwave. Pile a third of the filling in the lower third of each, fold up the bottom, fold in the sides, and roll tightly. Cut tonight's two in half. Wrap the spare in foil."
       ],
-      "rh": "Eat cold. Best within 3 days.",
-      "x": "For longer storage, keep the dressing separate and toss it in the morning.",
+      "rh": "Eat the spare cold, within 2 days.",
+      "x": "For a crisper spare, set its share aside before dressing and toss it when you eat it.",
       "g": [
-        "Protein|Chicken breast",
-        "Protein|Turkey bacon",
-        "Dairy|0% plain Greek yogurt",
-        "Dairy|Parmesan",
-        "Produce|Romaine hearts",
-        "Produce|Garlic",
-        "Produce|Lemons",
-        "Grains & bread|High-protein tortillas",
-        "Pantry & sauces|Honey",
-        "Pantry & sauces|Light Caesar dressing"
+        [
+          "Protein|Chicken breast",
+          "450 g"
+        ],
+        [
+          "Protein|Turkey bacon",
+          "3 strips"
+        ],
+        [
+          "Dairy|0% plain Greek yogurt",
+          "30 g"
+        ],
+        [
+          "Dairy|Parmesan",
+          "3 tbsp"
+        ],
+        [
+          "Produce|Romaine hearts",
+          "1.5"
+        ],
+        [
+          "Produce|Lemons",
+          "0.5"
+        ],
+        [
+          "Grains & bread|High-protein tortillas",
+          "3"
+        ],
+        [
+          "Pantry & sauces|Light Caesar dressing",
+          "2 tbsp"
+        ],
+        [
+          "Pantry & sauces|Cooking oil",
+          "1 tsp"
+        ],
+        [
+          "Spices|Garlic powder",
+          "pinch"
+        ]
       ]
     },
     {
@@ -737,421 +1375,165 @@
         15,
         1
       ],
+      "sv": 3,
       "time": "Prep 5 min · Chill 1 hour",
       "eq": "Bowl, whisk, 4 small containers",
       "i": [
-        "3 cups (750 g) 0% Greek yogurt",
-        "2 scoops chocolate protein powder",
-        "1 tbsp unsweetened cocoa powder",
-        "2–4 tbsp milk",
+        "2¼ cups (560 g) 0% Greek yogurt",
+        "1½ scoops chocolate protein powder",
+        "2 tsp unsweetened cocoa powder",
+        "2–3 tbsp milk",
         "Pinch of salt",
         "Berries or a few chocolate chips to top (optional)"
       ],
       "s": [
-        "Combine the dry|In a bowl, mix protein powder, cocoa and salt so the cocoa doesn't clump.",
-        "Whisk in the yogurt|Add the yogurt and whisk hard for about a minute. It will look stiff and streaky at first, then turn smooth and dark.",
-        "Adjust the texture|Add milk 1 tbsp at a time, whisking between, until it's thick and spoonable like pudding. Different protein powders absorb different amounts, so go by feel.",
-        "Portion and chill|Divide between 4 containers and refrigerate at least 1 hour. It thickens as it sits. Top right before eating."
+        "Combine the dry|In a bowl, mix 1½ scoops protein powder, 2 tsp cocoa and a pinch of salt so the cocoa doesn't clump.",
+        "Whisk in the yogurt|Add 2¼ cups (560 g) yogurt and whisk hard for about a minute. It will look stiff and streaky at first, then turn smooth and dark.",
+        "Adjust the texture|Add 2–3 tbsp milk, 1 tbsp at a time, whisking between, until it's thick and spoonable like pudding. Different protein powders absorb different amounts, so go by feel.",
+        "Chill|Split between 3 bowls or containers and refrigerate at least 1 hour. It thickens as it sits. Top right before eating."
       ],
       "rh": "Eat cold.",
-      "x": "Keeps 5 days.",
+      "x": "Makes 3 portions, which keep 5 days.",
       "g": [
-        "Dairy|0% plain Greek yogurt",
-        "Dairy|Milk (skim or unsweetened almond)",
-        "Pantry & sauces|Cocoa powder",
-        "Supplements|Chocolate protein powder",
-        "Frozen|Mixed berries"
+        [
+          "Dairy|0% plain Greek yogurt",
+          "560 g"
+        ],
+        [
+          "Dairy|Milk (skim or unsweetened almond)",
+          "45 ml"
+        ],
+        [
+          "Pantry & sauces|Cocoa powder",
+          "2 tsp"
+        ],
+        [
+          "Supplements|Chocolate protein powder",
+          "1.5 scoops"
+        ],
+        [
+          "Frozen|Mixed berries",
+          "0.5 cup"
+        ]
       ]
     }
   ],
-  "grocery": {
+  "aisles": {
     "Protein": [
-      [
-        "Chicken breast",
-        "4 kg (includes wraps)"
-      ],
-      [
-        "Boneless skinless chicken thighs",
-        "900 g"
-      ],
-      [
-        "Lean ground turkey",
-        "900 g"
-      ],
-      [
-        "Extra-lean ground beef",
-        "900 g"
-      ],
-      [
-        "Top sirloin",
-        "900 g"
-      ],
-      [
-        "Cod fillets",
-        "900 g"
-      ],
-      [
-        "Haddock fillets",
-        "900 g"
-      ],
-      [
-        "Pork tenderloin",
-        "2 (about 1 kg)"
-      ],
-      [
-        "Salmon fillets",
-        "4 × 150 g"
-      ],
-      [
-        "Turkey sausage",
-        "250 g"
-      ],
-      [
-        "Turkey bacon",
-        "1 pack"
-      ],
-      [
-        "Eggs",
-        "1 dozen"
-      ],
-      [
-        "Liquid egg whites",
-        "500 ml carton"
-      ]
+      "Chicken breast",
+      "Boneless skinless chicken thighs",
+      "Lean ground turkey",
+      "Extra-lean ground beef",
+      "Top sirloin",
+      "Pork tenderloin",
+      "Cod fillets",
+      "Haddock fillets",
+      "Salmon fillets",
+      "Turkey sausage",
+      "Turkey bacon",
+      "Eggs",
+      "Liquid egg whites"
     ],
     "Dairy": [
-      [
-        "0% plain Greek yogurt",
-        "2 × 1 kg tubs"
-      ],
-      [
-        "Milk (skim or unsweetened almond)",
-        "1 L"
-      ],
-      [
-        "Butter",
-        "small block"
-      ],
-      [
-        "Light cheddar slices",
-        "1 pack"
-      ],
-      [
-        "Light shredded cheese",
-        "1 bag"
-      ],
-      [
-        "Light old cheddar",
-        "1 block (120 g needed)"
-      ],
-      [
-        "2% evaporated milk",
-        "3 cans (370 ml)"
-      ],
-      [
-        "Parmesan",
-        "1 small wedge"
-      ],
-      [
-        "Feta",
-        "1 small tub"
-      ]
+      "0% plain Greek yogurt",
+      "Milk (skim or unsweetened almond)",
+      "Butter",
+      "Light cheddar slices",
+      "Light shredded cheese",
+      "Light old cheddar",
+      "2% evaporated milk",
+      "Parmesan",
+      "Feta"
     ],
     "Produce": [
-      [
-        "Broccoli",
-        "1.3 kg (about 4–5 heads)"
-      ],
-      [
-        "Baby potatoes",
-        "1.6 kg"
-      ],
-      [
-        "Russet potatoes",
-        "800 g"
-      ],
-      [
-        "Yukon Gold potatoes",
-        "800 g"
-      ],
-      [
-        "Green beans",
-        "800 g"
-      ],
-      [
-        "Asparagus",
-        "1 bunch"
-      ],
-      [
-        "Arugula",
-        "1 small bag"
-      ],
-      [
-        "Shallots",
-        "4"
-      ],
-      [
-        "Romaine hearts",
-        "6"
-      ],
-      [
-        "Cucumbers",
-        "3"
-      ],
-      [
-        "Tomatoes",
-        "3"
-      ],
-      [
-        "Cherry tomatoes",
-        "1 pint"
-      ],
-      [
-        "Baby spinach",
-        "1 bag"
-      ],
-      [
-        "Bell peppers",
-        "2"
-      ],
-      [
-        "Carrots",
-        "2"
-      ],
-      [
-        "Onions",
-        "2 yellow, 1 red"
-      ],
-      [
-        "Garlic",
-        "1 head or minced jar"
-      ],
-      [
-        "Ginger",
-        "1 knob"
-      ],
-      [
-        "Limes",
-        "2"
-      ],
-      [
-        "Lemons",
-        "4"
-      ],
-      [
-        "Cilantro, dill, green onion, parsley, chives",
-        "1 bunch each"
-      ]
+      "Broccoli",
+      "Baby potatoes",
+      "Russet potatoes",
+      "Yukon Gold potatoes",
+      "Green beans",
+      "Asparagus",
+      "Arugula",
+      "Baby spinach",
+      "Romaine hearts",
+      "Cucumbers",
+      "Tomatoes",
+      "Cherry tomatoes",
+      "Bell peppers",
+      "Carrots",
+      "Yellow onion",
+      "Red onion",
+      "Shallots",
+      "Garlic",
+      "Ginger",
+      "Limes",
+      "Lemons",
+      "Cilantro",
+      "Dill",
+      "Green onion",
+      "Parsley",
+      "Chives",
+      "Fresh thyme"
     ],
     "Grains & bread": [
-      [
-        "Basmati or jasmine rice",
-        "2 kg bag"
-      ],
-      [
-        "Chickpea or lentil pasta",
-        "340 g box"
-      ],
-      [
-        "Rolled oats",
-        "1 bag"
-      ],
-      [
-        "High-protein tortillas",
-        "2 packs (16)"
-      ]
+      "Basmati or jasmine rice",
+      "Chickpea or lentil pasta",
+      "Rolled oats",
+      "High-protein tortillas"
     ],
     "Pantry & sauces": [
-      [
-        "Black beans",
-        "1 can"
-      ],
-      [
-        "Tomato passata",
-        "1 jar"
-      ],
-      [
-        "Light coconut milk",
-        "1 can"
-      ],
-      [
-        "Chipotle in adobo",
-        "1 small can"
-      ],
-      [
-        "Salsa",
-        "1 jar"
-      ],
-      [
-        "Basil pesto",
-        "1 jar"
-      ],
-      [
-        "Low-sodium soy sauce",
-        "1 bottle"
-      ],
-      [
-        "Dijon and grainy mustard",
-        "1 jar each"
-      ],
-      [
-        "Capers",
-        "1 small jar"
-      ],
-      [
-        "Chicken broth",
-        "1 L carton"
-      ],
-      [
-        "Dry white wine",
-        "1 small bottle (or extra broth)"
-      ],
-      [
-        "Honey",
-        "1 bottle"
-      ],
-      [
-        "Rice vinegar",
-        "1 bottle"
-      ],
-      [
-        "Light mayo, ketchup, mustard, relish",
-        "check fridge"
-      ],
-      [
-        "Pickles",
-        "1 jar"
-      ],
-      [
-        "Light Caesar dressing",
-        "1 bottle"
-      ],
-      [
-        "Olive oil, sesame oil",
-        "check pantry"
-      ],
-      [
-        "Cornstarch, flour",
-        "check pantry"
-      ],
-      [
-        "Chia seeds, sesame seeds",
-        "1 bag each"
-      ],
-      [
-        "Cocoa powder",
-        "1 tin"
-      ]
+      "Black beans",
+      "Tomato passata",
+      "Light coconut milk",
+      "Chipotle in adobo",
+      "Salsa",
+      "Basil pesto",
+      "Low-sodium soy sauce",
+      "Honey",
+      "Rice vinegar",
+      "Dijon mustard",
+      "Grainy mustard",
+      "Capers",
+      "Chicken broth",
+      "Dry white wine",
+      "Light mayo",
+      "Ketchup",
+      "Yellow mustard",
+      "Pickle relish",
+      "Dill pickles",
+      "Light Caesar dressing",
+      "Cooking oil",
+      "Cornstarch",
+      "All-purpose flour",
+      "Chia seeds",
+      "Sesame seeds",
+      "Cocoa powder"
     ],
     "Spices": [
-      [
-        "Garam masala",
-        "1 jar"
-      ],
-      [
-        "Chili powder, cumin, smoked paprika",
-        "1 jar each"
-      ],
-      [
-        "Dried oregano, thyme, tarragon",
-        "1 jar each"
-      ],
-      [
-        "Pink peppercorns",
-        "1 small jar"
-      ]
+      "Garam masala",
+      "Chili powder",
+      "Ground cumin",
+      "Smoked paprika",
+      "Paprika",
+      "Garlic powder",
+      "Italian seasoning",
+      "Dried oregano",
+      "Dried thyme",
+      "Dried tarragon",
+      "Pink peppercorns",
+      "Cayenne",
+      "Cinnamon"
     ],
     "Supplements": [
-      [
-        "Vanilla protein powder",
-        "1 tub"
-      ],
-      [
-        "Chocolate protein powder",
-        "1 tub"
-      ]
+      "Vanilla protein powder",
+      "Chocolate protein powder"
     ],
     "Frozen": [
-      [
-        "Corn",
-        "1 bag"
-      ],
-      [
-        "Shelled edamame",
-        "1 bag"
-      ],
-      [
-        "Mixed berries",
-        "1 bag"
-      ]
+      "Corn",
+      "Shelled edamame",
+      "Mixed berries"
     ]
   },
-  "plan": [
-    [
-      "Pick 3 recipes",
-      "Two bowls for lunch and dinner, plus one breakfast. Rotate next week so you don't burn out."
-    ],
-    [
-      "Start the rice first",
-      "2 cups dry rice covers two bowl recipes. Rice cooker or pot, then forget it."
-    ],
-    [
-      "Heat the oven to 425°F",
-      "Anything roasting (potatoes, broccoli) goes in now on sheet pans."
-    ],
-    [
-      "Marinate while it heats",
-      "Chicken sits in its marinade for the 15–20 minutes you spend on everything else."
-    ],
-    [
-      "Cook proteins back to back",
-      "One big pan, one recipe after another. Don't wash it between batches unless flavours clash."
-    ],
-    [
-      "Mix sauces while meat cooks",
-      "Tzatziki, burger sauce and stir-fry sauces are all no-cook stirs."
-    ],
-    [
-      "Cool, portion, label",
-      "Let food cool 20 minutes, split into containers, write the day on the lid."
-    ],
-    [
-      "Fridge 4 days, freeze the rest",
-      "Eat Thursday onward from the freezer. Salmon: eat within 2–3 days, don't freeze after cooking."
-    ]
-  ],
-  "sample": {
-    "rows": [
-      [
-        "Breakfast",
-        "Overnight protein oats",
-        "42g"
-      ],
-      [
-        "Lunch",
-        "Honey garlic chicken",
-        "55g"
-      ],
-      [
-        "Snack",
-        "Chocolate protein pudding",
-        "30g"
-      ],
-      [
-        "Dinner",
-        "Creamy Dijon pork tenderloin",
-        "62g"
-      ]
-    ],
-    "total": [
-      "Total",
-      "≈1,800 cal before extras",
-      "189g"
-    ],
-    "note": "On heavy training days, add a breakfast burrito or an extra scoop of rice to push calories up; building muscle needs enough fuel, not just protein."
-  },
-  "containers": "Ten glass 3-cup containers, four jars for oats, and a roll of freezer bags for burritos. Glass reheats better and doesn't hold sauce stains.",
-  "fine": "Macros are estimates per serving based on standard grocery products. Check brands in your tracking app if you're counting closely.",
+  "fine": "Macros are estimates per portion, based on standard grocery products. Amounts on the list are what the recipes use, so check the pantry before buying spices and sauces.",
   "snacks": [
     {
       "n": "Beef jerky",

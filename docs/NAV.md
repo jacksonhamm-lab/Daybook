@@ -6,7 +6,7 @@
   on phones, left edge on wide screens). Drag, scroll or tap a neighbour.
 - **Modules:** secondary content sits in tiles that show one number and open in place,
   one at a time per tab.
-- **Sheets:** bottom sheets for editing (task, shift, session, job, note, prep book,
+- **Sheets:** bottom sheets for editing (task, shift, session, job, note, recipe book,
   progress, settings). Close by dragging the handle, tapping outside, or Done.
 - **Quick add:** the + in the top bar opens Spotlight.
 

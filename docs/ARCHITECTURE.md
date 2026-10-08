@@ -15,7 +15,7 @@ Start here before touching code.
 | `buddy.js` | The old code-built Dex. Only loaded if the models can't be fetched. |
 | `models/` (not in git) | The `.vrm` files, slimmed and gzipped. **Never commit them** (public repo); they are served from KV, see Hosting. |
 | `vendor/` | three.js r169 (`three.module.min.js`), `RoundedBoxGeometry.js`, `RoomEnvironment.js`, `jsm/` (GLTFLoader and BufferGeometryUtils from r169) and `three-vrm.module.min.js` (@pixiv/three-vrm 3.5.5). Loaded through an import map in `<head>`. |
-| `meals.json` | The Protein Prep Book: recipes, grocery list, prep plan, snacks. |
+| `meals.json` | The Recipe Book (`v: 2`): 16 recipes at three portions each (two tonight, one spare), amounts written into every step. Each recipe carries `g`, its shopping items as aisle-and-item id plus amount (`["Produce\|Garlic", "2 cloves"]`); `aisles` is the shelf order; plus `snacks`. Bump `v` and `bookOk()` together when the shape changes. |
 | `sw.js` | Service worker. Network-first cache, push notifications, notification buttons. |
 | `src/worker.js` | Cloudflare Worker: sync API, push API, reminder cron, `/workout/` proxy. |
 | `src/push.js` | Web Push encryption (RFC 8291) and VAPID signing (RFC 8292), no libraries. |
@@ -89,7 +89,7 @@ Line numbers drift, so search for the section comment instead.
 | `/* ---------- pay periods` | `periodFor`, `periodHours`, `extraHours`, submit-to-Len window. |
 | `/* ---------- quick-add parser` | Spotlight text → task, shift, job, workout. |
 | `/* ---------- dynamic island` | Toasts and the live pill. |
-| `/* ---------- fuel` | Prep book loading, meal picks, grocery, shakes. |
+| `/* ---------- fuel` | Recipe book loading, meal picks (ticked on the recipe row), the shopping list (`amtSum()` adds amounts across the picked recipes), shakes. |
 | `/* ---------- the game layer` | XP, levels, trophies, quests. |
 | `/* ---------- arc navigation` | The looping tab wheel. |
 | `/* ---------- notes` | Notes tab, `orb()` halo, `weekBars()`. |

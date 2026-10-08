@@ -122,7 +122,15 @@ input[type=number]{-moz-appearance:textfield}
 .bk-head{margin:6px 0 12px}
 .rcp{border-radius:18px;background:rgba(255,255,255,.035);margin-bottom:8px;overflow:hidden}
 .rcp.open{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--stroke)}
-.rcp-h{display:flex;width:100%;align-items:center;gap:12px;padding:14px;text-align:left}
+.rcp-h{display:flex;align-items:stretch}
+.rcp-pick{flex:none;width:54px;display:grid;place-items:center}
+.rcp-pick i{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.25);display:grid;place-items:center;transition:background .25s,border-color .25s,transform .3s var(--spring)}
+.rcp-pick i svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22;transition:stroke-dashoffset .3s var(--ease)}
+.rcp-pick.on i{background:var(--green);border-color:var(--green)}
+.rcp-pick.on i svg{stroke-dashoffset:0}
+.rcp-pick:active i{transform:scale(.88)}
+.rcp-t{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:14px 14px 14px 0;text-align:left}
+.rcp-g{font-size:13px;font-weight:700;color:var(--text);margin:12px 0 4px}
 .rcp-h b{display:block;font-size:16px;font-weight:700;letter-spacing:-.02em}
 .rcp-h span{font-size:13px;color:var(--text2)}
 .rcp-p{margin-left:auto;text-align:right;flex:none}
@@ -153,10 +161,6 @@ input[type=number]{-moz-appearance:textfield}
 .snk.done .snk-p{opacity:.5}
 .snk.done .g-n{color:var(--text);text-decoration:none}
 .snk.done .g-n em{color:var(--text3);text-decoration:none}
-.bk-table{width:100%;border-collapse:collapse;font-size:14px}
-.bk-table td{padding:8px 4px;border-bottom:1px solid var(--sep);color:var(--text2)}
-.bk-table td.n{text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
-.bk-table tr.tot td{border-bottom:0;color:var(--text)}
 .shakes{display:flex;gap:10px;flex-wrap:wrap}
 .shake{flex:1;min-width:150px;display:flex;align-items:center;gap:10px;padding:14px;border-radius:16px;background:rgba(255,255,255,.04);font-size:15px;font-weight:600;text-align:left;transition:background .25s,transform .3s var(--spring)}
 .shake:active{transform:scale(.97)}
@@ -1928,12 +1932,12 @@ const island = {
 };
 
 /* ---------- fuel ----------
-   The recipes live in the Protein Prep Book; Daybook tracks what you picked
+   The recipes live in meals.json (three portions each); Daybook tracks what you picked
    for the week and how much protein you've actually eaten. */
 let BOOK = null, BOOK_TAB = 'recipes', BOOK_CAT = 'All', BOOK_OPEN = '';
 // A book cached by an older version of the app is missing pieces this one needs,
 // so check its shape before trusting it and always refetch in the background.
-const bookOk = b => !!(b && b.recipes && b.recipes.length && b.recipes[0].g && b.snacks && b.grocery);
+const bookOk = b => !!(b && b.v === 2 && b.recipes && b.recipes.length && b.aisles && b.snacks);
 try { const c = JSON.parse(localStorage.getItem('daybook_book') || 'null'); if (bookOk(c)) BOOK = c; } catch (e) {}
 function fetchBook() {
   return fetch('meals.json', { cache: 'no-cache' }).then(r => r.json()).then(b => {
@@ -1957,24 +1961,44 @@ function toggleGrocery(id) { S.grocery[id] = { c: !groceryOn(id) }; save(); }
 const snackOn = n => !!(S.snacks[n] || {}).c;
 function toggleSnack(n) { S.snacks[n] = { c: !snackOn(n) }; save(); }
 const snacksChosen = () => ((BOOK && BOOK.snacks) || []).filter(x => snackOn(x.n));
-// Every recipe carries the aisle items it needs, so the list can shrink to this week's meals.
-function grocerySections() {
-  const out = [], g = (BOOK && BOOK.grocery) || {};
-  // Nothing picked yet? Show the whole book; otherwise only what the picks need.
-  let keep = null;
-  if (BOOK && picks().m.length) {
-    keep = new Set();
-    BOOK.recipes.filter(r => picks().m.includes(r.n)).forEach(r => (r.g || []).forEach(id => keep.add(id)));
+// Amounts are written as "675 g", "0.75 cup", "2 cloves" or plain words ("small bunch").
+// Adding them up across the picked meals is what makes the list a shopping list.
+const AMT_VOL = { tsp: 1, tbsp: 3, cup: 48 }, AMT_ONE = { cloves: 'clove', strips: 'strip', slices: 'slice', scoops: 'scoop', handfuls: 'handful', sprigs: 'sprig' };
+function amtFrac(n) {
+  const w = Math.floor(n + 1e-6), f = n - w;
+  const [v, g] = [[0, ''], [.25, '¼'], [1 / 3, '⅓'], [.5, '½'], [2 / 3, '⅔'], [.75, '¾'], [1, '']].reduce((a, b) => Math.abs(b[0] - f) < Math.abs(a[0] - f) ? b : a);
+  const whole = w + (v === 1 ? 1 : 0);
+  return (whole || '') + g || '¼';
+}
+function amtSum(list) {
+  const p = list.map(a => /^(\d+(?:\.\d+)?)\s*(.*)$/.exec(a));
+  if (p.some(m => !m) || !p.length) return [...new Set(list.map(a => /^\d/.test(a) ? amtSum([a]) : a))].join(' + ');
+  const u = [...new Set(p.map(m => m[2]))], tot = f => p.reduce((t, m) => t + m[1] * f(m[2]), 0);
+  if (u.every(x => x === 'g' || x === 'kg')) { const g = tot(x => x === 'kg' ? 1000 : 1); return g >= 1000 ? +(g / 1000).toFixed(2) + ' kg' : Math.round(g / 5) * 5 + ' g'; }
+  if (u.every(x => x === 'ml' || x === 'L')) { const ml = tot(x => x === 'L' ? 1000 : 1); return ml >= 1000 ? +(ml / 1000).toFixed(2) + ' L' : Math.round(ml / 5) * 5 + ' ml'; }
+  if (u.every(x => AMT_VOL[x])) {
+    const t = tot(x => AMT_VOL[x]);
+    if (t >= 12) { const c = Math.round(t / 12) / 4; return amtFrac(c) + (c > 1 ? ' cups' : ' cup'); }
+    return t >= 3 ? amtFrac(Math.round(t / 1.5) / 2) + ' tbsp' : amtFrac(t) + ' tsp';
   }
-  Object.entries(g).forEach(([sec, items]) => {
-    const rows = items.filter(([n]) => !keep || keep.has(sec + '|' + n));
+  if (u.length > 1) return [...new Set(list.map(a => amtSum([a])))].join(' + ');
+  const n = tot(() => 1);
+  if (!u[0]) return String(Math.ceil(n));   // whole things: nobody buys half a lemon
+  return amtFrac(n) + ' ' + (n <= 1 && AMT_ONE[u[0]] || u[0]);
+}
+// The list is what this week's picks need, in shelf order, plus any snacks.
+function grocerySections() {
+  const out = [], need = new Map();
+  if (!BOOK) return out;
+  BOOK.recipes.filter(r => picks().m.includes(r.n)).forEach(r => r.g.forEach(([id, a]) => { if (!need.has(id)) need.set(id, []); need.get(id).push(a); }));
+  Object.entries(BOOK.aisles).forEach(([sec, items]) => {
+    const rows = items.filter(n => need.has(sec + '|' + n)).map(n => [n, amtSum(need.get(sec + '|' + n))]);
     if (rows.length) out.push([sec, rows]);
   });
   const sn = snacksChosen();
   if (sn.length) out.push(['Snacks', sn.map(x => [x.n, x.p + ' g protein'])]);
   return out;
 }
-// Until you choose, the list shows your picks when you have some and everything when you don't.
 
 const groceryCount = () => { let done = 0, all = 0; grocerySections().forEach(([sec, items]) => items.forEach(([n]) => { all++; if (groceryOn(sec + '|' + n)) done++; })); return { done, all }; };
 const mealWeek = () => iso(mondayOf(new Date()));
@@ -2548,8 +2572,8 @@ function renderTraining() {
     <div class="mods" style="margin-top:16px">
       ${mod('fuel', { title: 'Fuel', value: `${skN}<small>/${SHAKES.length}</small>`, sub: `Shakes · ${pk.m.length ? pk.m.length + ' meal' + (pk.m.length === 1 ? '' : 's') : 'no meals'}`, icon: IC.fuel, c: 'var(--green)', live: skN < SHAKES.length, i: 8,
         body: `<div class="shakes">${SHAKES.map(([k, label]) => `<button class="shake ${sk[k] ? 'on' : ''}" data-act="shake" data-v="${k}"><span class="sk-box">${I.check}</span>${label}</button>`).join('')}</div>
-          ${pk.m.length ? `<div class="lbl">This week's meals · tap to drop one</div><div class="chips">${pk.m.map(n => { const r = recipeFor(n); return `<button class="chip on" style="--c:var(--green);--on:#fff" data-act="pick-meal" data-v="${esc(n)}">${esc(n)}${r ? ` · ${r.m[1]}g` : ''}</button>`; }).join('')}</div>` : ''}
-          <div class="row" style="margin-top:14px"><button class="btn sm white" data-act="open-book">${pk.m.length ? 'Prep book' : 'Pick this week\'s meals'}</button></div>` })}
+          ${pk.m.length ? `<div class="lbl">This week's meals · tap for the recipe</div><div class="chips" style="flex-wrap:wrap">${pk.m.map(n => { const r = recipeFor(n); return `<button class="chip on" style="--c:var(--green);--on:#fff" data-act="open-recipe" data-v="${esc(n)}">${esc(n)}${r ? ` · ${r.m[1]}g` : ''}</button>`; }).join('')}</div>` : ''}
+          <div class="row" style="margin-top:14px"><button class="btn sm white" data-act="open-book" data-v="recipes">${pk.m.length ? 'Change meals' : 'Pick this week\'s meals'}</button>${pk.m.length ? '<button class="btn sm" data-act="open-book" data-v="list">Shopping list</button>' : ''}</div>` })}
       ${mod('cardio', { title: 'Cardio', value: `${nk('cm', cMin)}<small>min</small>`, sub: `${wkC.length} this week`, icon: IC.heart, c: 'var(--pink)', i: 9,
         body: `${cardioForm(null)}<div class="nlist" style="margin-top:14px">${cl.slice(-3).reverse().map(l => `<div class="nitem" style="--c:var(--pink)"><div class="ni">${esc(l.type[0])}</div><div class="nb"><b>${esc(l.type)} · ${l.min} min${l.dist ? ` · ${l.dist} km` : ''}</b><span>${rel(iso(new Date(l.ts)))}</span></div></div>`).join('')}</div>` })}
       ${mod('bench', { title: 'Benchmarks', value: lastPush ? `${lastPush.reps}<small> pushups</small>` : '—', sub: 'Pushups, plank, row', icon: IC.bench, c: 'var(--yellow)', i: 10, body: `<div class="bms">${bms}</div>` })}
@@ -2815,34 +2839,37 @@ const SHEETS = {
   },
   book() {
     if (!BOOK) return '<div class="grab"></div><div class="empty"><b>Opening the book</b>One moment</div>';
-    const tabs = [['recipes', 'Recipes'], ['list', 'List'], ['plan', 'Plan']];
+    const tabs = [['recipes', 'Recipes'], ['list', 'List']], pkm = picks().m;
+    if (BOOK_TAB !== 'list') BOOK_TAB = 'recipes';
     const head = `<div class="grab"></div><div class="bk-head"><h2 style="margin:0">${esc(BOOK.title)}</h2><p class="shp">${esc(BOOK.blurb)}</p></div>
       <div class="segwrap"><div class="seg">${tabs.map(([k, l]) => `<button class="${BOOK_TAB === k ? 'on' : ''}" data-act="book-tab" data-v="${k}">${l}</button>`).join('')}</div></div>`;
     if (BOOK_TAB === 'recipes') {
-      const list = BOOK.recipes.filter(r => BOOK_CAT === 'All' || r.c === BOOK_CAT);
-      return head + `<div class="chips" style="margin:14px 0">${BOOK.cats.map(c => `<button class="chip ${BOOK_CAT === c ? 'on' : ''}" style="--c:var(--green);--on:#fff" data-act="book-cat" data-v="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+      if (BOOK_CAT === 'Picked' && !pkm.length) BOOK_CAT = 'All';
+      const cats = pkm.length ? [...BOOK.cats, 'Picked'] : BOOK.cats;
+      const list = BOOK.recipes.filter(r => BOOK_CAT === 'All' || (BOOK_CAT === 'Picked' ? pkm.includes(r.n) : r.c === BOOK_CAT));
+      return head + `<div class="chips" style="margin:14px 0 10px">${cats.map(c => `<button class="chip ${BOOK_CAT === c ? 'on' : ''}" style="--c:var(--green);--on:#fff" data-act="book-cat" data-v="${esc(c)}">${esc(c)}${c === 'Picked' ? ' · ' + pkm.length : ''}</button>`).join('')}</div>
+        <p class="sub" style="margin:0 0 10px">${pkm.length ? `${pkm.length} picked for this week.` : 'Tick the meals you are cooking this week.'} Tap a name for the recipe.</p>
         ${list.map(r => {
-          const open = BOOK_OPEN === r.n, picked = picks().m.includes(r.n);
+          const open = BOOK_OPEN === r.n, picked = pkm.includes(r.n);
           return `<div class="rcp ${open ? 'open' : ''}">
-            <button class="rcp-h" data-act="book-open" data-v="${esc(r.n)}"><div><b>${esc(r.n)}</b><span>${esc(r.t)}</span></div><div class="rcp-p"><b>${r.m[1]}g</b><span>protein</span></div></button>
+            <div class="rcp-h"><button class="rcp-pick ${picked ? 'on' : ''}" data-act="pick-meal" data-v="${esc(r.n)}" aria-pressed="${picked}" aria-label="${picked ? 'Picked' : 'Pick'} ${esc(r.n)} for this week"><i>${I.check}</i></button>
+              <button class="rcp-t" data-act="book-open" data-v="${esc(r.n)}" aria-expanded="${open}"><div><b>${esc(r.n)}</b><span>${esc(r.t)}</span></div><div class="rcp-p"><b>${r.m[1]}g</b><span>protein</span></div></button></div>
             ${open ? `<div class="rcp-b">
               <div class="macros">${[['Calories', r.m[0]], ['Protein', r.m[1] + ' g'], ['Carbs', r.m[2] + ' g'], ['Fat', r.m[3] + ' g']].map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>
-              <p class="rcp-meta">${esc(r.time)}<br>${esc(r.eq)}</p>
-              <div class="lbl">Ingredients</div><ul class="rcp-i">${r.i.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+              <p class="rcp-meta">Makes ${r.sv} portions · macros are per portion<br>${esc(r.time)}<br>${esc(r.eq)}</p>
+              <div class="lbl">Ingredients</div><ul class="rcp-i">${r.i.map(x => x[0] === '#' ? `</ul><div class="rcp-g">${esc(x.slice(1))}</div><ul class="rcp-i">` : `<li>${esc(x)}</li>`).join('')}</ul>
               <div class="lbl">Method</div><ol class="rcp-s">${r.s.map(x => { const parts = x.split('|'); return `<li><div><b>${esc(parts[0])}</b>${esc(parts[1])}</div></li>`; }).join('')}</ol>
-              <div class="lbl">Reheat</div><p class="sub">${esc(r.rh)}</p>
+              <div class="lbl">The spare portion</div><p class="sub">${esc(r.rh)}</p>
               ${r.x ? `<p class="note">${esc(r.x)}</p>` : ''}
-              <div class="row" style="margin-top:14px"><button class="btn sm ${picked ? 'tint' : 'white'}" style="--c:var(--green)" data-act="pick-meal" data-v="${esc(r.n)}">${picked ? 'Picked this week' : 'Pick for this week'}</button></div>
             </div>` : ''}</div>`;
-        }).join('')}`;
+        }).join('')}
+        <p class="sub" style="margin-top:18px;opacity:.7">${esc(BOOK.fine)}</p>`;
     }
-    if (BOOK_TAB === 'list') {
-      const pkm = picks().m, counts = groceryCount();
-      return head + `<div class="ch" style="margin:14px 0 6px"><span class="sub">${counts.done} of ${counts.all} in the cart</span>${counts.done ? '<button class="btn sm" data-act="book-clear">Clear ticks</button>' : ''}</div>
+    const counts = groceryCount();
+    return head + (pkm.length ? `<div class="ch" style="margin:14px 0 6px"><span class="sub">${counts.done} of ${counts.all} in the cart</span>${counts.done ? '<button class="btn sm" data-act="book-clear">Clear ticks</button>' : ''}</div>
         ${pbar('groc', counts.all ? counts.done / counts.all : 0, 'var(--green)')}
-        <p class="sub" style="margin-top:10px">${pkm.length
-          ? `Everything your ${pkm.length} picked meal${pkm.length === 1 ? '' : 's'} need${pkm.length === 1 ? 's' : ''}, plus any snacks you add.`
-          : 'Nothing picked yet, so this is the whole book. Pick meals in Recipes and the list shrinks to them.'}</p>
+        <p class="sub" style="margin-top:10px">What your ${pkm.length} picked meal${pkm.length === 1 ? '' : 's'} use${pkm.length === 1 ? 's' : ''}, at three portions each. Check the pantry before buying spices and sauces.</p>`
+        : `<div class="empty" style="margin:18px 0 6px"><b>Nothing picked yet</b>Tick meals in Recipes and what they need shows up here</div>`) + `
         ${grocerySections().map(([sec, items]) => `<div class="lbl">${esc(sec)}</div>${items.map(([n, q]) => {
           const id = sec + '|' + n;
           return `<button class="gitem ${groceryOn(id) ? 'done' : ''}" data-act="groc" data-v="${esc(id)}"><span class="g-box">${I.check}</span><span class="g-n">${esc(n)}<em>${esc(q)}</em></span></button>`;
@@ -2851,14 +2878,6 @@ const SHEETS = {
           ${['Salty', 'Sweet'].map(t => `<div class="lbl">${t}</div>${BOOK.snacks.filter(x => x.t === t).map(x => `
             <button class="gitem snk ${snackOn(x.n) ? 'done' : ''}" data-act="snack" data-v="${esc(x.n)}"><span class="g-box">${I.check}</span><span class="g-n">${esc(x.n)}<em>${esc(x.note)}</em></span><span class="snk-p">${x.p}g</span></button>`).join('')}`).join('')}
         </details>`;
-    }
-    return head + `<ol class="rcp-s" style="margin-top:16px">${BOOK.plan.map(([t, d]) => `<li><div><b>${esc(t)}</b>${esc(d)}</div></li>`).join('')}</ol>
-      <div class="lbl">A sample prep day</div>
-      <table class="bk-table">${BOOK.sample.rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td class="n">${esc(r[2])}</td></tr>`).join('')}
-        <tr class="tot"><td><b>${esc(BOOK.sample.total[0])}</b></td><td>${esc(BOOK.sample.total[1])}</td><td class="n"><b>${esc(BOOK.sample.total[2])}</b></td></tr></table>
-      <p class="sub">${esc(BOOK.sample.note)}</p>
-      <div class="lbl">Containers</div><p class="sub">${esc(BOOK.containers)}</p>
-      <p class="sub" style="margin-top:18px;opacity:.7">${esc(BOOK.fine)}</p>`;
   },
   // Customise Dex: his look, the scene, his skis and poles
   dex() {
@@ -3243,13 +3262,14 @@ document.addEventListener('click', e => {
     case 'note-pin': { const n = S.notes.find(x => x.id === SHEET.arg); n.pin = !n.pin; save(); haptic(); return refreshSheet(); }
     case 'note-del': { const n = S.notes.find(x => x.id === SHEET.arg); closeSheet(); return withUndo('Note deleted', () => { S.notes = S.notes.filter(x => x !== n); }); }
     case 'open-book': { if (v) BOOK_TAB = v; openSheet('book'); return loadBook().then(refreshSheet).catch(() => island.toast('Could not open the book')); }
+    case 'open-recipe': { BOOK_TAB = 'recipes'; BOOK_CAT = 'All'; BOOK_OPEN = v; openSheet('book'); const show = () => { refreshSheet(); const r = $('#sheet .rcp.open'); if (r) $('#sheet').scrollTop = Math.max(0, r.offsetTop - 12); }; show(); return loadBook().then(show).catch(() => island.toast('Could not open the book')); }
     case 'book-tab': BOOK_TAB = v; return refreshSheet();
     case 'snack': toggleSnack(v); haptic(); return refreshSheet();
     case 'book-cat': BOOK_CAT = v; return refreshSheet();
     case 'book-open': BOOK_OPEN = BOOK_OPEN === v ? '' : v; return refreshSheet();
     case 'groc': toggleGrocery(v); return refreshSheet();
     case 'book-clear': S.grocery = {}; save(); return refreshSheet();
-    case 'pick-meal': togglePick(v); return refreshSheet();
+    case 'pick-meal': togglePick(v); haptic(); return refreshSheet();
     case 'cardio-type': cardioType = v; el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el)); return pop(el);
     case 'sel-day': {
       const d = el.dataset.date; if (d === S.ui.selDay) return;
