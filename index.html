@@ -722,7 +722,7 @@ input[type=number]{-moz-appearance:textfield}
 .note-ed{width:100%;min-height:42vh;resize:vertical;font-size:16px;line-height:1.5;border-radius:16px;padding:14px 16px;margin:4px 0 14px}
 @media(max-width:760px){.notes{columns:2 150px;column-gap:10px}.note{margin-bottom:10px;padding:14px 13px 12px;border-radius:18px}.note b{font-size:15px}.note p{font-size:13px;-webkit-line-clamp:6}}
 
-/* ===== v4: studio stage, buddy, arc navigation, halos ===== */
+/* ===== v4: buddy, halos ===== */
 :root{--display:"Unbounded",var(--font);--mint1:#9ff5d6;--mint2:#18c29c}
 /* the gradient lives on the fixed .ambient layer: background-attachment:fixed repaints every scroll frame on iOS */
 .ambient{background:radial-gradient(120% 80% at 70% -10%,#1a2350 0%,#0a0e22 45%,#05060a 100%)}
@@ -732,43 +732,22 @@ input[type=number]{-moz-appearance:textfield}
 .hero .kicker{letter-spacing:.14em;font-size:12px}
 .card{border-radius:30px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.03) 60%);border-color:rgba(255,255,255,.07);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 .btn{border-radius:999px}
-.timer,.big,.orb-v b,.stc b,.pn-score b,.dk-in b,.lvl b{font-family:var(--display);font-weight:600;letter-spacing:-.04em}
+.timer,.big,.orb-v b,.dk-in b,.lvl b{font-family:var(--display);font-weight:600;letter-spacing:-.04em}
 .nitem,.jrow{border-radius:20px}
 .top .nav{display:none}
 
-/* ---- arc navigation ---- */
-.arc{position:fixed;z-index:45;left:0;right:0;bottom:0;height:calc(122px + env(safe-area-inset-bottom));pointer-events:none;touch-action:pan-y;user-select:none;-webkit-user-select:none;overflow:hidden}
-.arc-bed{position:absolute;left:50%;top:22px;width:760px;height:760px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(10,14,34,.0) 88%,rgba(255,255,255,.05) 88.3%,rgba(12,16,36,.86) 89%);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:0 -1px 0 rgba(255,255,255,.08)}
-.arc-bed{background:rgba(10,13,30,.78);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -20px 60px -20px color-mix(in srgb,var(--c,#0a84ff) 40%,transparent)}
-.arc-ring{position:absolute;left:50%;top:54px;width:84px;height:84px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.0) 58%,rgba(255,255,255,.14) 60%,rgba(255,255,255,.04) 72%,transparent 73%);box-shadow:0 0 30px -4px color-mix(in srgb,var(--c,#0a84ff) 70%,transparent),inset 0 0 0 1.5px rgba(255,255,255,.22);transition:box-shadow .4s}
-.arc-it{position:absolute;left:0;top:0;width:62px;height:62px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--art);box-shadow:0 10px 24px -8px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -10px 20px rgba(0,0,0,.25);will-change:transform}
-.arc-it svg{width:26px;height:26px;stroke-width:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
-.arc-it::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(60% 40% at 35% 25%,rgba(255,255,255,.45),transparent 70%);pointer-events:none}
-.arc-lbl{position:absolute;left:50%;bottom:calc(6px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none;line-height:1}
-.arc-lbl small{display:none}
-.arc-lbl b{font-family:var(--display);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:color-mix(in srgb,var(--c,#0a84ff) 55%,#fff)}
 .tabbar{display:none!important}
 .fab,.fab[class]{display:none!important}
 .lvl{display:none}
 @media(max-width:760px){.top .qa-btn{display:inline-flex!important;width:40px;height:40px;padding:0;justify-content:center;border-radius:50%}.top .qa-btn .kbd,.top .qa-btn .qa-t{display:none}}
 @media(max-width:900px){.main{padding-bottom:calc(150px + env(safe-area-inset-bottom))}}
 @media(min-width:901px){
-  .arc{top:0;bottom:0;left:0;right:auto;width:200px;height:auto}
-  .arc-bed{left:-640px;top:50%;transform:translateY(-50%);width:760px;height:760px}
-  .arc-ring{left:70px;top:50%}
-  .arc-lbl{left:118px;bottom:auto;top:50%;transform:translateY(-50%);align-items:flex-start;gap:4px}
-  .arc-lbl small{display:block;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text3)}
-  .arc-lbl b{font-size:13px}
   .main{padding-left:210px}
   .top{padding-left:210px}
   .fab{display:none}
 }
 
-/* ---- Today: studio stage + player card ---- */
-.dash{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:0;margin:22px 0 18px;border-radius:36px;overflow:hidden;background:#eef1f7;box-shadow:0 40px 80px -40px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.08)}
-.stg{position:relative;min-height:560px;border-radius:36px;overflow:hidden;background:radial-gradient(90% 70% at 50% 34%,#5f6a8c 0%,#3a4263 38%,#1c2138 78%,#141828 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
-.stg::before{content:"";position:absolute;left:50%;bottom:9%;width:70%;height:22%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.18),transparent);pointer-events:none}
-.stg::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(140,180,255,.10) 45%,rgba(255,160,200,.08) 55%,transparent 70%)}
+/* ---- Dex: the fallback buddy and his speech bubble ---- */
 #buddySlot,.bd{position:absolute;inset:0}
 .bd canvas{display:block;width:100%!important;height:100%!important;touch-action:pan-y;cursor:pointer}
 #buddySlot.no3d::after{content:"Your buddy needs WebGL";position:absolute;inset:0;display:grid;place-items:center;color:rgba(255,255,255,.5);font-size:13px}
@@ -783,14 +762,6 @@ input[type=number]{-moz-appearance:textfield}
 .stg-hi{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.1;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.35)}
 .stg-hi span{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
 .stg-hi b{font-size:20px;font-weight:700;letter-spacing:-.02em}
-.stc{position:absolute;z-index:3;bottom:18px;width:150px;padding:14px 14px 12px;border-radius:22px;background:#fff;color:#141828;text-align:left;box-shadow:0 18px 36px -16px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:2px;transition:transform .35s var(--spring)}
-.stc:active{transform:scale(.95)}
-.stc.l{left:18px}.stc.r{right:18px}
-.stc b{font-size:26px;line-height:1.05;color:#141828}
-.stc b small{font-size:14px;opacity:.45;font-weight:600}
-.stc>span:not(.stc-i){font-size:11.5px;font-weight:600;color:rgba(20,24,40,.55);line-height:1.3}
-.stc-i{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#eef1f7;color:#141828}
-.stc-i svg{width:15px;height:15px;stroke-width:2.2}
 .bd-say{position:absolute;left:0;top:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .2s}
 .bd-say span{position:absolute;left:0;bottom:10px;transform:translateX(-50%) scale(.7);transform-origin:50% 100%;display:block;max-width:220px;width:max-content;padding:10px 14px;border-radius:18px;background:#fff;color:#141828;font-size:13.5px;font-weight:600;line-height:1.3;text-align:center;box-shadow:0 14px 30px -12px rgba(0,0,0,.6);transition:transform .45s var(--spring)}
 .bd-say span::after{content:"";position:absolute;left:50%;bottom:-6px;width:14px;height:14px;background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:3px}
@@ -801,49 +772,6 @@ input[type=number]{-moz-appearance:textfield}
 .bd-z i{position:absolute;font-style:normal;font-family:var(--display);font-weight:700;color:rgba(200,220,255,.85);animation:zz 3s ease-in infinite}
 .bd-z i:nth-child(1){font-size:12px}.bd-z i:nth-child(2){font-size:16px;animation-delay:1s}.bd-z i:nth-child(3){font-size:22px;animation-delay:2s}
 @keyframes zz{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(26px,-60px)}}
-
-.pnl{position:relative;padding:28px 26px 24px;color:#141828;display:flex;flex-direction:column;min-width:0;
-  --text:#141828;--text2:rgba(20,24,40,.6);--text3:rgba(20,24,40,.4);--sep:rgba(20,24,40,.07);--fill:rgba(20,24,40,.06);--glass:rgba(20,24,40,.04);--stroke:rgba(20,24,40,.08)}
-.pn-h{display:flex;justify-content:space-between;align-items:flex-start;text-align:center}
-.pn-h>div{flex:1}
-.pn-h h2{margin:0;font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:.02em;line-height:1.1}
-.pn-h span{font-size:12.5px;color:var(--text2)}
-.pn-score{display:grid;grid-template-columns:1fr 1px 1fr;align-items:center;margin:18px 0 8px;text-align:center}
-.pn-score i{height:44px;background:var(--sep)}
-.pn-score>div>span{display:block;font-size:12px;font-weight:600;color:var(--text2)}
-.pn-score b{font-size:42px;line-height:1.05;letter-spacing:-.05em}
-.pn-xp{display:flex;align-items:center;gap:10px;font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:12px}
-.pn-xp .pbar{flex:1;background:rgba(20,24,40,.08)}
-.pn-list{flex:1;display:flex;flex-direction:column;gap:8px;margin:4px 0 0;padding:0;max-height:340px;overflow:auto}
-.pnl .task{background:#fff;border-radius:18px;padding:10px 12px;box-shadow:0 0 0 1px rgba(20,24,40,.07),0 6px 16px -12px rgba(20,24,40,.5);border:0}
-.pnl .task .tt{color:#141828}
-.pnl .task.done .tt{color:rgba(20,24,40,.35)}
-.pnl .task .ck{border-color:color-mix(in srgb,var(--c) 70%,#fff)}
-.pnl .qadd{background:#fff;border-radius:16px;margin-top:10px;box-shadow:0 0 0 1px rgba(20,24,40,.07)}
-.pnl .qadd input{color:#141828}
-.pnl .empty{color:var(--text3)}
-.pnl .empty b{color:var(--text2)}
-.pnl .banner{background:rgba(255,69,58,.08);color:#b3261e}
-.pn-ctas{display:flex;gap:10px;margin-top:16px}
-.pn-cta{flex:1;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 22px;border-radius:999px;background:linear-gradient(90deg,var(--mint1),var(--mint2));color:#062a20;box-shadow:0 16px 30px -14px rgba(24,194,156,.8);text-align:left;transition:transform .35s var(--spring)}
-.pn-cta:active{transform:scale(.97)}
-.pn-cta span{font-weight:700;font-size:15.5px}
-.pn-cta em{font-style:normal;font-size:12px;font-weight:600;opacity:.65;margin-left:auto;font-variant-numeric:tabular-nums}
-.pn-cta i{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#062a20;color:#9ff5d6;flex:none}
-.pn-cta i svg{width:18px;height:18px}
-.pn-cta.out{background:linear-gradient(90deg,#ffc2b8,#ff6b5c);color:#3a0b06;box-shadow:0 16px 30px -14px rgba(255,91,79,.8)}
-.pn-cta.out i{background:#3a0b06;color:#ffc2b8}
-.pn-alt{width:60px;flex:none;border-radius:999px;display:grid;place-items:center;background:#fff;color:#141828;box-shadow:0 0 0 1px rgba(20,24,40,.08)}
-.pn-alt svg{width:22px;height:22px}
-@media(max-width:900px){
-  .dash{grid-template-columns:1fr;margin:12px -6px 16px;border-radius:32px}
-  .stg{min-height:0;height:min(540px,68vh);border-radius:32px}
-  .stc{width:128px;padding:12px;border-radius:20px;bottom:14px}
-  .stc.l{left:14px}.stc.r{right:14px}
-  .stc b{font-size:22px}
-  .pnl{padding:22px 18px 20px}
-  .pn-list{max-height:none}
-}
 .today-grid .rail{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .today-grid .rail>section{margin:0}
 @media(max-width:1100px){.today-grid .rail{grid-template-columns:1fr 1fr}.today-grid .next-card{grid-column:1/-1}}
@@ -1048,8 +976,6 @@ button.hchip:active{transform:scale(.95)}
   .at-n{font-size:8.5px;letter-spacing:.08em}.at-l{font-size:8.5px}.at-i{display:none}
   .at-v{font-size:16px;margin:3px 0 5px}
 }
-
-.arc-bed,.arc-it{pointer-events:auto;touch-action:pan-y}
 /* 4: clip sideways overflow in a way iPhone Safari respects */
 html,body{overflow-x:clip}
 html{overscroll-behavior-y:none}
@@ -1057,10 +983,7 @@ html{overscroll-behavior-y:none}
 .main{overflow-x:clip}
 /* 5: the page stays pinned under an open sheet */
 body.locked{position:fixed;left:0;right:0;width:100%}
-/* 6: the tab wheel steps aside while you type on a phone */
-@media(max-width:900px){.arc{transition:transform .35s var(--ios),opacity .25s}body.typing .arc{transform:translateY(120%);opacity:0}body.typing .arc *{pointer-events:none}}
 /* ===== nav v6: Dex's chips are the menu (docs/NAV.md) ===== */
-.arc{display:none!important}
 @media(max-width:900px){.main{padding-bottom:calc(48px + env(safe-area-inset-bottom))}}
 @media(min-width:901px){.main{padding-left:28px}.top{padding-left:28px}}
 .pgbar{position:sticky;top:calc(64px + env(safe-area-inset-top));z-index:20;transform:translateZ(0);display:flex;align-items:center;gap:10px;margin:10px 0 4px;padding:6px 0}
@@ -1543,6 +1466,40 @@ const cap = s => String(s).replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUppe
 const hue = s => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
 const clamp01 = x => Math.max(0, Math.min(1, x || 0));
 const haptic = p => { try { navigator.vibrate && navigator.vibrate(p || 8); } catch (e) {} };
+
+/* ---------- sound ----------
+   Quiet cues made in code (no audio files). Off until it's turned on in Settings, and the
+   choice stays on this device: a phone and a laptop rarely want the same answer.
+   The context is only created on a tap, which is also what iOS needs to let it play. */
+const SND = { on: false, ctx: null, out: null };
+try { SND.on = localStorage.getItem('daybook_sound') === '1'; } catch (e) {}
+function sndCtx() {
+  if (!SND.ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    SND.ctx = new AC(); SND.out = SND.ctx.createGain(); SND.out.gain.value = .7; SND.out.connect(SND.ctx.destination);
+  }
+  if (SND.ctx.state !== 'running' && SND.ctx.resume) SND.ctx.resume().catch(() => {});
+  return SND.ctx;
+}
+// One soft note: quick attack, long tail, optional glide to a second pitch.
+function sndNote(f, at, len, vol, type, to) {
+  const c = SND.ctx, o = c.createOscillator(), g = c.createGain(), t = c.currentTime + at;
+  o.type = type || 'sine'; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + len);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + len);
+  o.connect(g); g.connect(SND.out); o.start(t); o.stop(t + len + .02);
+}
+const SFX = {
+  tick: () => sndNote(1320, 0, .05, .12),                                              // a set, a shake, a grocery tick
+  open: () => sndNote(520, 0, .09, .11, 'sine', 780),                                  // a chip opens its page
+  back: () => sndNote(700, 0, .09, .1, 'sine', 470),                                 // back to Dex
+  check: () => { sndNote(784, 0, .12, .14); sndNote(1175, .07, .2, .12); },            // task done
+  uncheck: () => sndNote(587, 0, .1, .1),
+  in: () => { sndNote(294, 0, .22, .15, 'triangle'); sndNote(440, .12, .32, .13, 'triangle'); },    // clock in: rises
+  out: () => { sndNote(440, 0, .22, .13, 'triangle'); sndNote(294, .12, .36, .15, 'triangle'); },   // clock out: falls
+  chime: () => { sndNote(880, 0, .5, .13); sndNote(1319, .14, .7, .11); },             // rest is up
+  win: () => { [659, 784, 988, 1319].forEach((f, i) => sndNote(f, i * .09, .5, .1)); },            // session or day complete
+};
+function sfx(name) { if (!SND.on || document.hidden || !SFX[name]) return; try { if (sndCtx()) SFX[name](); } catch (e) {} }
 const readLS = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? fb; } catch (e) { return fb; } };
 const writeLS = (k, v) => { MEMO.clear(); try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 // Per-render cache for storage reads; a full render used to parse the workout state dozens of times.
@@ -1904,7 +1861,7 @@ function confetti(x, y, colors) {
       { duration: 900 + Math.random() * 700, easing: 'cubic-bezier(.15,.7,.35,1)' }).finished.then(() => el.remove());
   }
 }
-function celebrate(text, color) { haptic([12, 40, 18]); island.toast(text, { icon: I.trophy, color: '#ffd60a', big: true }); confetti(innerWidth / 2, Math.min(140, innerHeight * .2), [color, '#fff', '#ffd60a']); }
+function celebrate(text, color) { haptic([12, 40, 18]); sfx('win'); island.toast(text, { icon: I.trophy, color: '#ffd60a', big: true }); confetti(innerWidth / 2, Math.min(140, innerHeight * .2), [color, '#fff', '#ffd60a']); }
 
 /* ---------- dynamic island ---------- */
 let REST = null;
@@ -2017,7 +1974,7 @@ function toggleShake(k) {
   cur[k] = !cur[k];
   S.shakes[d] = cur;
   commit();
-  haptic();
+  haptic(); if (cur[k]) sfx('tick');
 }
 
 /* ---------- the game layer ----------
@@ -2103,99 +2060,6 @@ function quests() {
   const ag = +S.settings.appGoal || 0;
   if (ag) out.push({ k: 'jobs', label: `${appsIn(wk)} of ${ag} applications`, now: appsIn(wk), goal: ag, c: 'var(--green)' });
   return out;
-}
-
-/* ---------- arc navigation ----------
-   The tabs sit on a curve like records on a shelf. Drag or scroll the curve and
-   they slide along it; whichever lands in the ring is the tab you're on.
-   Phone: along the bottom. Wide screens: down the left edge. */
-const TAB_ART = {
-  today: 'linear-gradient(140deg,#0a2f73 0%,#0a84ff 55%,#9fd6ff 100%)',
-  week: 'linear-gradient(140deg,#231760 0%,#5e5ce6 55%,#c3c1ff 100%)',
-  hours: 'linear-gradient(140deg,#043446 0%,#1597c0 55%,#a8ecff 100%)',
-  training: 'linear-gradient(140deg,#3d1402 0%,#e0620a 55%,#ffc46b 100%)',
-  jobs: 'linear-gradient(140deg,#032b16 0%,#159447 55%,#8ef0b0 100%)',
-  notes: 'linear-gradient(140deg,#330b52 0%,#9b3fd6 55%,#e6b8ff 100%)',
-};
-const ARC = { pos: 0, target: 0, drag: null, raf: 0, el: null, items: [], wheelAcc: 0, wheelT: 0 };
-const arcVertical = () => innerWidth > 900;
-const arcIndex = () => Math.max(0, TABS.findIndex(t => t.k === S.ui.tab));
-function arcBuild() {
-  const el = ARC.el = document.createElement('nav');
-  el.className = 'arc'; el.setAttribute('aria-label', 'Tabs');
-  el.innerHTML = `<div class="arc-bed"></div><div class="arc-ring"></div><div class="arc-lbl"><small>Now</small><b id="arcLbl"></b></div>` +
-    TABS.map((t, i) => `<button class="arc-it" data-arc="${i}" style="--c:${t.color};--art:${TAB_ART[t.k]}" aria-label="${t.label}">${I[t.k]}</button>`).join('');
-  document.body.append(el);
-  ARC.items = [...el.querySelectorAll('.arc-it')];
-  ARC.pos = ARC.target = arcIndex();
-  const along = e => arcVertical() ? e.clientY : e.clientX;
-  el.addEventListener('pointerdown', e => {
-    ARC.drag = { p: along(e), pos: ARC.pos, moved: 0, id: e.pointerId, t: performance.now(), v: 0, lp: along(e), lt: performance.now() };
-    try { el.setPointerCapture(e.pointerId); } catch (x) {} el.classList.add('drag');
-  });
-  el.addEventListener('pointermove', e => {
-    const d = ARC.drag; if (!d) return;
-    const dp = along(e) - d.p; d.moved = Math.max(d.moved, Math.abs(dp));
-    const step = arcStep().px, now = performance.now();
-    ARC.pos = clampPos(d.pos - dp / step);
-    d.v = -(along(e) - d.lp) / step / Math.max(1, now - d.lt) * 1000; d.lp = along(e); d.lt = now;
-    ARC.target = ARC.pos; arcLayout(); arcLabel(arcMod(ARC.pos));
-  });
-  const end = e => {
-    const d = ARC.drag; if (!d) return; ARC.drag = null; el.classList.remove('drag');
-    let i;
-    if (d.moved < 6) { const hit = document.elementFromPoint(e.clientX, e.clientY); const b = hit && hit.closest('.arc-it'); i = b ? Math.round(ARC.pos + arcWrap(+b.dataset.arc - ARC.pos)) : Math.round(ARC.pos); }
-    else i = Math.round(clampPos(ARC.pos + d.v * .07));
-    arcGo(i);
-  };
-  el.addEventListener('pointerup', end);
-  el.addEventListener('pointercancel', () => { if (!ARC.drag) return; ARC.drag = null; el.classList.remove('drag'); arcSync(); });
-  el.addEventListener('wheel', e => {
-    e.preventDefault();
-    ARC.wheelAcc += Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-    const now = performance.now();
-    if (Math.abs(ARC.wheelAcc) > 40 && now - ARC.wheelT > 260) { arcGo(Math.round(ARC.target) + Math.sign(ARC.wheelAcc)); ARC.wheelAcc = 0; ARC.wheelT = now; }
-  }, { passive: false });
-  arcLayout(); arcLabel(arcIndex());
-}
-// the wheel loops: past Notes comes Today again
-const clampPos = p => p, arcMod = i => ((Math.round(i) % TABS.length) + TABS.length) % TABS.length;
-const arcWrap = d => { const N = TABS.length; return ((d % N) + N * 1.5) % N - N / 2; };
-function arcStep() { return arcVertical() ? { ang: .3, px: 84 } : { ang: .27, px: 76 }; }
-function arcGo(i) {
-  const k = arcMod(i);
-  ARC.target = Math.round(i); arcAnimate(); arcLabel(k); haptic(6);
-  if (TABS[k].k !== S.ui.tab) { closeSheet(); switchTab(TABS[k].k); }
-}
-function arcSync() { if (!ARC.el || ARC.drag) return; const i = arcIndex(); if (arcMod(ARC.target) !== i) ARC.target = Math.round(ARC.pos + arcWrap(i - ARC.pos)); arcAnimate(); arcLabel(i); }
-function arcLabel(i) { const t = TABS[i]; const l = $('#arcLbl'); if (l && t) { l.textContent = t.label; ARC.el.style.setProperty('--c', t.color); } ARC.items.forEach((b, j) => b.classList.toggle('on', j === i)); }
-function arcAnimate() {
-  if (ARC.raf) return;
-  let last = 0;
-  const step = now => {
-    const dt = last ? Math.min(.05, (now - last) / 1000) : 1 / 60; last = now;
-    ARC.pos += (ARC.target - ARC.pos) * (1 - Math.exp(-dt * (REDUCED ? 60 : 11)));
-    if (Math.abs(ARC.target - ARC.pos) < .002) ARC.pos = ARC.target;
-    arcLayout();
-    ARC.raf = ARC.pos !== ARC.target ? requestAnimationFrame(step) : 0;
-  };
-  ARC.raf = requestAnimationFrame(step);
-}
-function arcLayout() {
-  if (!ARC.el) return;
-  const vert = arcVertical(), { ang } = arcStep(), R = vert ? 300 : 300;
-  const W = ARC.el.clientWidth, H = ARC.el.clientHeight;
-  // the ring sits at the anchor; the curve's centre is off-screen behind it
-  const ax = vert ? 70 : W / 2, ay = vert ? H / 2 : 54;
-  ARC.items.forEach((b, i) => {
-    const d = arcWrap(i - ARC.pos), ad = Math.abs(d), a = d * ang;
-    const x = vert ? ax - R * (1 - Math.cos(a)) : ax + R * Math.sin(a);
-    const y = vert ? ay + R * Math.sin(a) : ay + R * (1 - Math.cos(a));
-    const s = ad < 1 ? 1 - ad * .26 : Math.max(.46, .74 - (ad - 1) * .14);
-    b.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%) scale(${s.toFixed(3)})`;
-    b.style.opacity = (ad > 2.6 ? 0 : 1 - Math.max(0, ad - 1.7) * .9).toFixed(2);
-    b.style.zIndex = 10 - Math.round(ad);
-  });
 }
 
 // One big number inside a living ring of particles. The lit share of the ring is the progress.
@@ -2940,6 +2804,9 @@ const SHEETS = {
         <div class="lbl" style="margin-top:14px">Keep reminding until it's done</div>
         <div class="chips">${[[0, 'Off'], [120, 'Every 2 hours'], [240, 'Every 4 hours']].map(([m, l]) => `<button class="chip ${(st.nag == null ? 240 : +st.nag) === m ? 'on' : ''}" style="--c:var(--orange);--on:#fff" data-act="set-nag" data-v="${m}">${l}</button>`).join('')}</div>
         <p class="sub" style="margin:6px 0 0">A reminder you haven't ticked off comes back, like Apple Reminders, until you tap Done or Tomorrow. Stops at 10:30pm.</p>`)}
+      ${grp('Sound', SND.on ? 'On' : 'Off', `
+        <p class="sub" style="margin-top:0">Quiet taps and chimes: ticking a task, clocking in and out, the end of a rest, opening a page. This choice stays on this device. On an iPhone the silent switch mutes them.</p>
+        <div class="chips">${[['0', 'Off'], ['1', 'On']].map(([k, l]) => `<button class="chip ${(SND.on ? '1' : '0') === k ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="set-sound" data-v="${k}">${l}</button>`).join('')}</div>`)}
       ${grp('Performance', perfLabel(), `
         <p class="sub" style="margin-top:0">How hard Dex works this device. Saver runs him at 20fps and drops the blur and grain, for laptops on a CPU or RAM limiter. Auto starts balanced and switches to saver by itself if he can't keep up.</p>
         <div class="chips">${[['auto', 'Auto'], ['smooth', 'Smooth'], ['balanced', 'Balanced'], ['saver', 'Saver']].map(([k, l]) => `<button class="chip ${perfNow().pick === k ? 'on' : ''}" style="--c:var(--blue);--on:#fff" data-act="set-perf" data-v="${k}">${l}</button>`).join('')}</div>
@@ -3019,7 +2886,6 @@ function render() {
   animateValues(root); if (t === 'week') animateValues($('#v-notes'));
   $('#avatar').textContent = (S.settings.name || 'J')[0].toUpperCase();
   paintLevel();
-  arcSync();
   island.live(); tick();
   // open reminders on the app icon
   try { const n = slipped().length; if (navigator.setAppBadge) (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {}); } catch (e) {}
@@ -3066,6 +2932,7 @@ const GROW = { busy: false };
 function openPage(v, chip) {
   const tab = v.split(':')[0], p = TABS.find(x => x.k === tab);
   if (!p || GROW.busy) return;
+  if (tab !== S.ui.tab) sfx('open');
   if (REDUCED || !chip || !chip.animate || tab === S.ui.tab) { if (tab !== S.ui.tab) history.pushState({ page: tab }, ''); return goAttr(v); }
   GROW.busy = true; GROW.chip = chip.dataset.k;
   const veilEl = veil(chip.style.getPropertyValue('--c') || p.color), from = rectClip(chip.getBoundingClientRect());
@@ -3083,7 +2950,7 @@ function goHome(fromPop) {
   if (from === 'today') return;
   if (GROW.busy) { setTimeout(() => goHome(fromPop), 250); return; }
   if (!fromPop && history.state && history.state.page) { history.back(); return; }   // popstate brings us back here
-  closeSheet();
+  closeSheet(); sfx('back');
   if (REDUCED || !document.body.animate) return switchTab('today');
   GROW.busy = true;
   const veilEl = veil(p.color);
@@ -3152,6 +3019,7 @@ function toggleTask(li) {
   else { t.done = !t.done; now = t.done; }
   save(); li.classList.toggle('done', now);
   if (now) { haptic(); pop(li.querySelector('.ck')); }
+  sfx(now ? 'check' : 'uncheck');
   clearTimeout(toggleTask.t);
   toggleTask.t = setTimeout(() => { if (!SHEET) render(); }, 700);
   if (now && d === today()) {
@@ -3167,7 +3035,7 @@ function toggleSet(btn) {
   const s = btn.dataset.s, id = s.toLowerCase(), i = +btn.dataset.ex, j = +btn.dataset.set, e = flatEx(id)[i]; if (!e) return;
   const st = wState(); st[id] = st[id] || {}; st[id][i] = st[id][i] || Array(e.sets).fill(false);
   st[id][i][j] = !st[id][i][j]; writeLS(W_STATE, st);
-  const on = st[id][i][j]; btn.classList.toggle('on', on); pop(btn); haptic();
+  const on = st[id][i][j]; btn.classList.toggle('on', on); pop(btn); haptic(); if (on) sfx('tick');
   btn.closest('.ex').classList.toggle('done', [...Array(e.sets)].every((_, k) => st[id][i][k]));
   const p = sessProgress(s), bar = $('#sessBar');
   if (bar) { bar.dataset.to = p.p; animateValues($('#sheet')); }
@@ -3179,6 +3047,7 @@ function toggleSet(btn) {
 function startRest(sec) { REST = { end: Date.now() + sec * 1000 }; island.mode = null; island.key = null; island.live(); }
 function clockOut() {
   const c = S.clock; if (!c) return;
+  sfx('out');
   if (c.breakTs) { c.brkMs += Date.now() - c.breakTs; c.breakTs = null; }
   const start = hm(new Date(c.startTs)), end = hm(new Date()), brk = Math.round(c.brkMs / 6e4);
   if (clockElapsed() < 60000 || start === end) { S.clock = null; commit(); return island.toast('Under a minute, nothing logged'); }
@@ -3237,7 +3106,7 @@ document.addEventListener('click', e => {
     case 'tm-rep': { const t = task(); t.repeat = v === 'none' ? null : { t: v, dow: dowIdx(t.date || today()) }; if (t.repeat && !t.date) t.date = today(); t.doneOn = t.doneOn || {}; save(); return refreshSheet(); }
     case 'tm-del': { const t = task(); closeSheet(); const li = $(`.task[data-id="${t.id}"]`); return collapse(li).then(() => withUndo('Task deleted', () => { S.tasks = S.tasks.filter(x => x !== t); })); }
     case 'rollover': { const td = today(); return withUndo(`Moved ${overdue().length} to today`, () => overdue().forEach(t => t.date = td)); }
-    case 'clock-in': S.clock = { date: today(), startTs: Date.now(), brkMs: 0, breakTs: null }; haptic(15); commit(); return island.toast('Clocked in', { icon: I.play, color: '#30d158' });
+    case 'clock-in': S.clock = { date: today(), startTs: Date.now(), brkMs: 0, breakTs: null }; haptic(15); sfx('in'); commit(); return island.toast('Clocked in', { icon: I.play, color: '#30d158' });
     case 'clock-break': { const c = S.clock; if (c.breakTs) { c.brkMs += Date.now() - c.breakTs; c.breakTs = null; } else c.breakTs = Date.now(); island.key = null; return commit(); }
     case 'clock-out': return clockOut();
     case 'apply-preset': { const [start, end, brk] = el.dataset.p.split('|'), d = el.dataset.date; S.shifts[d] = { ...(S.shifts[d] || {}), start, end, brk: +brk }; haptic(); commit(); if (SHEET) refreshSheet(); return island.toast(`${rel(d)} · ${fh(shiftHours(S.shifts[d]))}h logged`, { icon: I.hours, color: '#64d2ff' }); }
@@ -3267,9 +3136,9 @@ document.addEventListener('click', e => {
     case 'snack': toggleSnack(v); haptic(); return refreshSheet();
     case 'book-cat': BOOK_CAT = v; return refreshSheet();
     case 'book-open': BOOK_OPEN = BOOK_OPEN === v ? '' : v; return refreshSheet();
-    case 'groc': toggleGrocery(v); return refreshSheet();
+    case 'groc': toggleGrocery(v); if (groceryOn(v)) sfx('tick'); return refreshSheet();
     case 'book-clear': S.grocery = {}; save(); return refreshSheet();
-    case 'pick-meal': togglePick(v); haptic(); return refreshSheet();
+    case 'pick-meal': togglePick(v); haptic(); if (picks().m.includes(v)) sfx('tick'); return refreshSheet();
     case 'cardio-type': cardioType = v; el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el)); return pop(el);
     case 'sel-day': {
       const d = el.dataset.date; if (d === S.ui.selDay) return;
@@ -3306,6 +3175,7 @@ document.addEventListener('click', e => {
         .catch(() => island.toast('Test failed'));
     }
     case 'set-nag': S.settings.nag = +v; commit(); return refreshSheet();
+    case 'set-sound': { SND.on = v === '1'; try { localStorage.setItem('daybook_sound', SND.on ? '1' : '0'); } catch (x) {} haptic(6); sfx('check'); return refreshSheet(); }
     case 'set-perf': { if (window.Buddy && Buddy.perf) Buddy.perf(v); else { try { localStorage.setItem('daybook_perf', v); } catch (x) {} } haptic(6); return refreshSheet(); }
     case 'copy-log': { let log = []; try { log = JSON.parse(localStorage.getItem('daybook_log') || '[]'); } catch (x) {}
       const head = `Daybook problem log · ${navigator.userAgent} · perf ${perfLabel()} · ${devicePixelRatio}x · ${innerWidth}x${innerHeight}`;
@@ -3516,7 +3386,7 @@ function tick() {
   if (REST) {
     const left = Math.max(0, REST.end - Date.now()), secs = Math.ceil(left / 1000);
     $$('[data-rest]').forEach(x => x.textContent = `${Math.floor(secs / 60)}:${pad(secs % 60)}`);
-    if (!left) { REST = null; haptic([80, 60, 80]); island.key = null; island.toast('Rest’s up. Next set.', { icon: I.training, color: '#ff9f0a' }); }
+    if (!left) { REST = null; haptic([80, 60, 80]); sfx('chime'); island.key = null; island.toast('Rest’s up. Next set.', { icon: I.training, color: '#ff9f0a' }); }
   }
 }
 setInterval(() => { tick(); island.live(); }, 1000);
@@ -3544,7 +3414,6 @@ addEventListener('storage', e => { if (e.key && (e.key.startsWith('workout_') ||
 let lastMode = weekMode();
 addEventListener('resize', () => {
   $$('.seg').forEach(s => placeInd(s, true));
-  arcLayout();
   if (weekMode() !== lastMode) { lastMode = weekMode(); if (S.ui.tab === 'week') render(); }
 });
 

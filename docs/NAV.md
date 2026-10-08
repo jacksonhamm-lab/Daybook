@@ -2,8 +2,9 @@
 
 ## Now
 
-- **Tabs:** Today, Week, Hours, Training, Jobs, Notes, on a looping arc wheel (bottom
-  on phones, left edge on wide screens). Drag, scroll or tap a neighbour.
+- **Menu:** home is the Dex scene and his six stat chips are the only menu. They open four
+  pages (Plan, Work, Train, Jobs), each with just a ‹ back. See the decision below. The old
+  tab wheel was removed from the code on 2026-10-07.
 - **Modules:** secondary content sits in tiles that show one number and open in place,
   one at a time per tab.
 - **Sheets:** bottom sheets for editing (task, shift, session, job, note, recipe book,
