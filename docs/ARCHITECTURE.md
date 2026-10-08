@@ -48,10 +48,10 @@ Everything is one object, `S`, saved to `localStorage.daybook_v1` and synced.
 
 **Training program (2026-10-05):** lives in `program.json` (days `d1`-`d5`: sections of exercises with sets). Edit that file
 to change the program. It used to be parsed out of the old workout app, which Daybook no longer needs.
-- Program 2 is five lifting days (Push, Pull, Legs, Max Day, Upper), one conditioning day and one rest day (`SPLIT`).
+- Program 2 is five lifting days (Push, Pull, Legs, Upper, Max Day; Max Day is Day 5 since 2026-10-08 so it ends the week), one conditioning day and one rest day (`SPLIT`).
 - `migrateProgram()` moves the weekly split onto it once (`settings.programV`) and pins the old split onto past days,
   so earlier weeks keep their history and streak.
-- Set ticks are stored by an exercise's place in its day. When exercises are *removed*, list their old places in `TICK_EDITS` (index.html) under a new number: ticks already made that week are moved once per device, so they stay on their exercises. For bigger reshuffles, bump `W_STATE` to clear the week's ticks.
+- Set ticks are stored by an exercise's place in its day. When exercises are *removed*, list their old places in `TICK_EDITS` (index.html) under a new number: ticks already made that week are moved once per device, so they stay on their exercises. When two days trade places, add `swap: [a, b]` and their ticks move across. For bigger reshuffles, bump `W_STATE` to clear the week's ticks.
 
 Workout logs (`workout_state_v4`, `log_*_v1`) are per device, in localStorage.
 They only exist on the device that ran it, so `syncAuto()` only un-ticks an auto-done session on a device that has that session's log.

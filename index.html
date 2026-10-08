@@ -1123,8 +1123,8 @@ const SESS = {
   D1:   { color: '#64d2ff', art: 'linear-gradient(140deg,#062a4a 0%,#0a6fd6 55%,#64d2ff 100%)' },
   D2:   { color: '#30d158', art: 'linear-gradient(140deg,#032b16 0%,#159447 55%,#8ef0b0 100%)' },
   D3:   { color: '#ff9f0a', art: 'linear-gradient(140deg,#3d1402 0%,#e0620a 55%,#ffc46b 100%)' },
-  D4:   { color: '#ffd60a', art: 'linear-gradient(140deg,#332700 0%,#c79a00 55%,#fff08a 100%)' },
-  D5:   { color: '#bf5af2', art: 'linear-gradient(140deg,#1e0a36 0%,#7a2fc4 55%,#dba6ff 100%)' },
+  D4:   { color: '#bf5af2', art: 'linear-gradient(140deg,#1e0a36 0%,#7a2fc4 55%,#dba6ff 100%)' },
+  D5:   { color: '#ffd60a', art: 'linear-gradient(140deg,#332700 0%,#c79a00 55%,#fff08a 100%)' },
   HIIT: { color: '#ff375f', art: 'linear-gradient(140deg,#3a0414 0%,#e0204a 55%,#ff9fb5 100%)' },
   REST: { color: '#8e8e93', art: 'linear-gradient(140deg,#121217 0%,#26262e 60%,#3a3a44 100%)' },
 };
@@ -1525,16 +1525,24 @@ async function loadProgram() {
 // Set ticks are stored by an exercise's place in its day, so when exercises are taken out of a day the ticks after
 // them would slide onto the wrong exercise. Each program edit that removes exercises lists them here (day: places
 // removed, in the old numbering) and the ticks already made that week are moved once per device.
-const TICK_EDITS = { 2: { d3: [8, 9], d4: [10] } };   // 2 (2026-10-07): jump squats and skater bounds out of Legs, skater bounds out of Max Day
+// When two days trade places, `swap` moves their ticks across with them.
+const TICK_EDITS = {
+  2: { d3: [8, 9], d4: [10] },   // 2026-10-07: jump squats and skater bounds out of Legs, skater bounds out of Max Day (then d4)
+  3: { swap: ['d4', 'd5'] },     // 2026-10-08: Max Day moves to Day 5 so it ends the week; Upper is Day 4
+};
 (() => {
   try {
     const done = +(localStorage.getItem('daybook_ticks_rev') || 1), revs = Object.keys(TICK_EDITS).map(Number).filter(v => v > done).sort((a, b) => a - b);
     if (!revs.length) return;
     const st = JSON.parse(localStorage.getItem(W_STATE) || '{}');
-    for (const v of revs) for (const [day, gone] of Object.entries(TICK_EDITS[v])) {
-      if (!st[day]) continue;
-      const next = {}; Object.keys(st[day]).map(Number).sort((a, b) => a - b).forEach(i => { if (!gone.includes(i)) next[i - gone.filter(g => g < i).length] = st[day][i]; });
-      st[day] = next;
+    for (const v of revs) {
+      const { swap, ...cuts } = TICK_EDITS[v];
+      for (const [day, gone] of Object.entries(cuts)) {
+        if (!st[day]) continue;
+        const next = {}; Object.keys(st[day]).map(Number).sort((a, b) => a - b).forEach(i => { if (!gone.includes(i)) next[i - gone.filter(g => g < i).length] = st[day][i]; });
+        st[day] = next;
+      }
+      if (swap) { const [a, b] = swap, ta = st[a], tb = st[b]; delete st[a]; delete st[b]; if (tb) st[a] = tb; if (ta) st[b] = ta; }
     }
     localStorage.setItem(W_STATE, JSON.stringify(st)); localStorage.setItem('daybook_ticks_rev', String(revs[revs.length - 1]));
   } catch (e) {}

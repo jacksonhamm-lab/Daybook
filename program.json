@@ -93,39 +93,7 @@
   },
 
   "d4": {
-    "badge": "Day 4 · Max Day",
-    "title": "Benchmarks · Ski Legs · Abs",
-    "sections": [
-      { "label": "Warm Up", "accent": "warmup", "exercises": [
-        { "name": "Arm circles · 30 sec each direction", "sets": 1 },
-        { "name": "Bodyweight squats · 15", "sets": 1 },
-        { "name": "Easy push-ups · 8", "sets": 1 }
-      ]},
-      { "label": "Weekly Benchmarks · Log All", "accent": "gold", "exercises": [
-        { "name": "Max consecutive pushups", "detail": "Standard form. Log it.", "sets": 1 },
-        { "name": "Max single-arm row reps (at 10 kg)", "detail": "Strict reps. Log it.", "sets": 1 },
-        { "name": "Max plank hold", "detail": "Time it. New PR.", "sets": 1 }
-      ]},
-      { "label": "Ski Legs (second hit)", "accent": "legs", "exercises": [
-        { "name": "Wall sit · 60 sec", "sets": 3 },
-        { "name": "Bulgarian split squats · 12 each side", "detail": "Lighter and faster than Day 3. Burn, not grind.", "sets": 3 },
-        { "name": "Kettlebell goblet squats · 15", "sets": 3 },
-        { "name": "Kettlebell swings · 20", "sets": 3 }
-      ]},
-      { "label": "Shoulders (weak point)", "accent": "push", "exercises": [
-        { "name": "Dumbbell lateral raise · 15", "detail": "Light and strict. Shoulder width.", "sets": 3 }
-      ]},
-      { "label": "Abs", "accent": "abs", "exercises": [
-        { "name": "Weighted crunches · 12", "detail": "Heavier and slower than Day 1.", "sets": 3 },
-        { "name": "Side plank reach-through · 10 each side", "sets": 2 },
-        { "name": "Hollow body hold · 30 sec", "sets": 2 }
-      ]}
-    ],
-    "cardio": "No extra cardio needed today."
-  },
-
-  "d5": {
-    "badge": "Day 5 · Upper",
+    "badge": "Day 4 · Upper",
     "title": "Chest · Back · Shoulders · Arms · Abs",
     "sections": [
       { "label": "Warm Up", "accent": "warmup", "exercises": [
@@ -158,6 +126,38 @@
         { "name": "Russian twist with dumbbell · 20 total", "sets": 3 }
       ]}
     ],
-    "cardio": "Rest day tomorrow."
+    "cardio": "Max Day tomorrow. Skip extra cardio so you test fresh."
+  },
+
+  "d5": {
+    "badge": "Day 5 · Max Day",
+    "title": "Benchmarks · Ski Legs · Abs",
+    "sections": [
+      { "label": "Warm Up", "accent": "warmup", "exercises": [
+        { "name": "Arm circles · 30 sec each direction", "sets": 1 },
+        { "name": "Bodyweight squats · 15", "sets": 1 },
+        { "name": "Easy push-ups · 8", "sets": 1 }
+      ]},
+      { "label": "Weekly Benchmarks · Log All", "accent": "gold", "exercises": [
+        { "name": "Max consecutive pushups", "detail": "Standard form. Log it.", "sets": 1 },
+        { "name": "Max single-arm row reps (at 10 kg)", "detail": "Strict reps. Log it.", "sets": 1 },
+        { "name": "Max plank hold", "detail": "Time it. New PR.", "sets": 1 }
+      ]},
+      { "label": "Ski Legs (second hit)", "accent": "legs", "exercises": [
+        { "name": "Wall sit · 60 sec", "sets": 3 },
+        { "name": "Bulgarian split squats · 12 each side", "detail": "Lighter and faster than Day 3. Burn, not grind.", "sets": 3 },
+        { "name": "Kettlebell goblet squats · 15", "sets": 3 },
+        { "name": "Kettlebell swings · 20", "sets": 3 }
+      ]},
+      { "label": "Shoulders (weak point)", "accent": "push", "exercises": [
+        { "name": "Dumbbell lateral raise · 15", "detail": "Light and strict. Shoulder width.", "sets": 3 }
+      ]},
+      { "label": "Abs", "accent": "abs", "exercises": [
+        { "name": "Weighted crunches · 12", "detail": "Heavier and slower than Day 1.", "sets": 3 },
+        { "name": "Side plank reach-through · 10 each side", "sets": 2 },
+        { "name": "Hollow body hold · 30 sec", "sets": 2 }
+      ]}
+    ],
+    "cardio": "No extra cardio needed today. Rest day tomorrow."
   }
 }
