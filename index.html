@@ -102,11 +102,9 @@ input[type=number]{-moz-appearance:textfield}
 .tr b{display:block;font-size:14px}
 .tr span{font-size:12px;color:var(--text2)}
 .rail{display:contents}
-.quests-card .ch{margin-bottom:10px}
 @media(max-width:760px){
   #v-today .grid{display:flex;flex-direction:column}
   #v-today .slip-card{order:1}
-  #v-today .quests-card{order:2}
   #v-today .tasks-card{order:3}
   #v-today .rail{order:4}
   #v-today .next-card{order:5}
@@ -169,12 +167,6 @@ input[type=number]{-moz-appearance:textfield}
 .shake.on{background:color-mix(in srgb,var(--green) 16%,transparent)}
 .shake.on .sk-box{background:var(--green);border-color:var(--green)}
 .shake.on .sk-box svg{stroke-dashoffset:0}
-.quests{display:flex;flex-direction:column;gap:10px}
-.qt{display:flex;align-items:center;gap:12px}
-.qt .qt-b{flex:1;min-width:0}
-.qt .qt-l{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px}
-.qt .qt-l span{color:var(--text2);font-weight:500}
-.qt.done .qt-l{color:var(--text3);text-decoration:line-through}
 .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--glow),#1c1c22);display:grid;place-items:center;font-weight:700;font-size:14px;transition:transform .3s var(--spring)}
 .avatar:hover{transform:scale(1.08)}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:background .3s,box-shadow .3s}
@@ -2054,20 +2046,6 @@ function noteClearDay() {
   if (S.clearDays.includes(d)) return false;
   S.clearDays.push(d); save();
   return true;
-}
-// Today's objectives, drawn from what you've actually set up.
-function quests() {
-  const d = today(), list = tasksOn(d), w = wo(d), wk = curWeek();
-  const out = [
-    { k: 'tasks', label: list.length ? `Clear ${list.length} task${list.length === 1 ? '' : 's'}` : 'Add a task', now: list.filter(t => isDone(t, d)).length, goal: Math.max(1, list.length), c: 'var(--blue)' },
-  ];
-  if (w.s !== 'REST') out.push({ k: 'train', label: `${w.s} · ${sessName(w.s)}`, now: w.done ? 1 : (w.prog && w.prog.total ? w.prog.done / w.prog.total : 0), goal: 1, c: 'var(--orange)', frac: true });
-  if (shiftHours(S.shifts[d]) || S.clock) out.push({ k: 'hours', label: 'Hours logged', now: shiftHours(S.shifts[d]) ? 1 : 0, goal: 1, c: 'var(--teal)' });
-  const sk = shakesToday(), skDone = SHAKES.filter(([k]) => sk[k]).length;
-  out.push({ k: 'shakes', label: 'Shakes', now: skDone, goal: SHAKES.length, c: 'var(--green)' });
-  const ag = +S.settings.appGoal || 0;
-  if (ag) out.push({ k: 'jobs', label: `${appsIn(wk)} of ${ag} applications`, now: appsIn(wk), goal: ag, c: 'var(--green)' });
-  return out;
 }
 
 // One big number inside a living ring of particles. The lit share of the ring is the progress.

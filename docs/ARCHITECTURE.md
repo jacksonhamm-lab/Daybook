@@ -91,7 +91,7 @@ Line numbers drift, so search for the section comment instead.
 | `/* ---------- dynamic island` | Toasts and the live pill. |
 | `/* ---------- sound` | `sfx(name)`: quiet cues synthesised with Web Audio (no audio files). Off by default; the switch is in Settings and is stored per device in `localStorage.daybook_sound`, never synced. Add a cue to `SFX`, then call `sfx()` next to the matching `haptic()`. |
 | `/* ---------- fuel` | Recipe book loading, meal picks (ticked on the recipe row), the shopping list (`amtSum()` adds amounts across the picked recipes), shakes. |
-| `/* ---------- the game layer` | XP, levels, trophies, quests. |
+| `/* ---------- the game layer` | XP, levels, trophies. |
 | `/* ---------- notes` | Notes tab, `orb()` halo, `weekBars()`. |
 | `/* ---------- views` | `hero()`, `taskLi`, clock disc, `sessionArt`. |
 | `/* ---------- modules` | `mod()`, `toggleMod()`, and the Today, Hours and Training views. |
