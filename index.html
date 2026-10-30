@@ -2324,18 +2324,14 @@ function goAttr(v) {
   switchTab(tab);
 }
 
-function renderToday(part) {
-  const d = today(), wk = curWeek();
-  const apps = appsIn(wk), ag = +S.settings.appGoal || 0;
-  const list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, left = list.length - done, ov = overdue();
+// What the home stage and the Today modules both read, worked out in one place.
+const todayShared = () => { const d = today(); return { d, slip: slipped() }; };
+// Today's home: Dex's stage with the level, greeting, his six stat chips, the live pills and the date.
+function renderStage() {
+  const { d, slip } = todayShared();
   const hr = new Date().getHours(), greet = hr < 5 ? 'Late night' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-  const w = wo(d), pk = periodFor(d), pHours = periodHours(pk) + extraHours(pk), rate = +S.settings.rate;
   const { lvl, into, need } = levelFor(xpTotal());
-  const follow = S.jobs.filter(needsFollow), slip = slipped(), sh = S.shifts[d], shH = shiftHours(sh), sk = shakesToday();
-  const tmr = iso(addDays(parse(d), 1)), tw = wo(tmr), tsh = S.shifts[tmr], tList = tasksOn(tmr);
-  const due = daysBetween(d, submitDay(pk)), dueTxt = d > pk.end ? 'Period closed' : due < 0 ? 'Sent to Len' : due === 0 ? 'To Len today' : due === 1 ? 'To Len tomorrow' : `To Len ${DOW_LONG[dowIdx(submitDay(pk))]}`;
-  const sub = inSubmitWindow(pk) ? pendingDays(pk) : [], est = sub.reduce((a, x) => a + shiftHours(x.est), 0);
-  const stage = `<section class="stage2 anim" style="--i:0">
+  return `<section class="stage2 anim" style="--i:0">
       <div class="stg-top">
         <button class="stg-sq" data-act="progress" aria-label="Level ${lvl}"><small>LV</small><b>${lvl}</b></button>
         <div class="stg-hi"><span>${greet}</span><b>${esc(S.settings.name || 'there')}</b></div>
@@ -2348,7 +2344,18 @@ function renderToday(part) {
       <div class="stg-acts">${S.clock ? `<button class="stg-pill" style="--c:#64d2ff" data-act="attr" data-k="grind" data-v="hours:"><i class="stg-dot"></i>${S.clock.breakTs ? 'On break' : 'On the clock'} <span data-clock>0:00:00</span></button>` : ''}${slip.length ? `<button class="stg-pill" style="--c:#ff453a" data-act="attr" data-k="focus" data-v="week:">${I.bell}${slip.length} need${slip.length === 1 ? 's' : ''} a decision</button>` : ''}</div>
       <div class="stg-date">${longDate(d)}</div>
     </section>`;
-  if (!part) return stage;
+}
+// The Today modules, built on demand: Work embeds 'work' and Plan embeds 'decide'. With no part it returns the home.
+function renderToday(part) {
+  if (!part) return renderStage();
+  const { d, slip } = todayShared(), wk = curWeek();
+  const apps = appsIn(wk), ag = +S.settings.appGoal || 0;
+  const list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, left = list.length - done, ov = overdue();
+  const w = wo(d), pk = periodFor(d), pHours = periodHours(pk) + extraHours(pk), rate = +S.settings.rate;
+  const follow = S.jobs.filter(needsFollow), sh = S.shifts[d], shH = shiftHours(sh), sk = shakesToday();
+  const tmr = iso(addDays(parse(d), 1)), tw = wo(tmr), tsh = S.shifts[tmr], tList = tasksOn(tmr);
+  const due = daysBetween(d, submitDay(pk)), dueTxt = d > pk.end ? 'Period closed' : due < 0 ? 'Sent to Len' : due === 0 ? 'To Len today' : due === 1 ? 'To Len tomorrow' : `To Len ${DOW_LONG[dowIdx(submitDay(pk))]}`;
+  const sub = inSubmitWindow(pk) ? pendingDays(pk) : [], est = sub.reduce((a, x) => a + shiftHours(x.est), 0);
   const M = [];
   if (slip.length) M.push(mod('decide', { title: 'Needs a decision', value: slip.length, sub: 'Reminder passed', icon: IC.bell, c: 'var(--red)', alert: true, open: true, i: 1,
     body: `<div class="decs">${slip.map(t => `<div class="dec" style="--c:${CATS[t.cat].color}"><div class="dec-h"><span class="dec-i">${I.bell}</span><div class="dec-t"><b>${esc(t.title)}</b><span>Was due ${t12(remAt(t, today()))}</span></div></div>
@@ -2376,8 +2383,7 @@ function renderToday(part) {
   M.push(mod('jobs', { title: 'Applications', value: `${nk('mj', apps)}${ag ? `<small>/${ag}</small>` : ''}`, sub: follow.length ? `${follow.length} to follow up` : 'this week', icon: IC.jobs, c: 'var(--green)', alert: follow.length > 0, i: 7,
     body: `${follow.map(j => `<div class="nitem" style="--c:var(--green)"><div class="ni">${esc(j.company[0] || '?')}</div><div class="nb"><b>Follow up · ${esc(j.company)}</b><span>Applied ${daysBetween(j.date, d)} days ago</span></div><button class="btn tint sm" style="--c:var(--green)" data-act="followed" data-id="${j.id}">Done</button></div>`).join('') || `<p class="sub" style="margin:0">${ag && apps < ag ? `${ag - apps} more to hit ${ag} this week.` : 'Nothing to chase right now.'}</p>`}
       <div class="row" style="margin-top:14px"><button class="btn sm" data-tab="jobs">Log an application</button></div>` }));
-  if (part) return M.find(h => h.includes(`data-mod="${part}"`)) || '';
-  return stage;
+  return M.find(h => h.includes(`data-mod="${part}"`)) || '';
 }
 
 // Hours: one row per day that opens to edit, pay and history as tiles.

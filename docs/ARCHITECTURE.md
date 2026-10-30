@@ -95,7 +95,7 @@ Line numbers drift, so search for the section comment instead.
 | `/* ---------- notes` | Notes tab, `orb()` halo, `weekBars()`. |
 | `/* ---------- views` | `hero()`, `taskLi`, clock disc, `sessionArt`. |
 | `/* ---------- modules` | `mod()`, `toggleMod()`, and the Today, Hours and Training views. |
-| `/* ---------- attributes` | Dex's six stats, `goAttr()`. Also `window.buddyContext`. |
+| `/* ---------- attributes` | Dex's six stats, `goAttr()`. Then the home: `renderStage()` builds Dex's stage, and `renderToday(part)` is the Today module factory that Work (`'work'`) and Plan (`'decide'`) embed; with no part it returns the stage. Values both use come from `todayShared()`. Also `window.buddyContext`. |
 | `renderWeek`, `renderJobs` | The other two tabs. |
 | `/* ---------- sheets` | `SHEETS` (compose, task, shift, session, job, note, book, progress, settings), `openSheet`, `closeSheet`. |
 | `/* ---------- render` | `render()`: rebuilds the current tab's HTML, mounts Dex, keeps animations running. |
