@@ -1988,7 +1988,7 @@ function toggleShake(k) {
 /* ---------- the game layer ----------
    XP and trophies are worked out from what's already in the data rather than
    counted up separately, so two devices can never disagree about your score. */
-const XP = { task: 10, session: 50, cardio: 20, shiftDay: 15, applied: 30, interview: 60, offer: 200, clearDay: 25 };
+const XP = { task: 30, session: 50, cardio: 20, shiftDay: 15, applied: 30, interview: 60, offer: 200, clearDay: 25 };
 function xpTotal() {
   let n = 0;
   S.tasks.forEach(t => { n += t.repeat ? Object.keys(t.doneOn || {}).length * XP.task : (t.done ? XP.task : 0); });
