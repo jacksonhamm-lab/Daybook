@@ -1395,7 +1395,7 @@ function codeDetail(which, res) {
   const sw = navigator.serviceWorker && navigator.serviceWorker.controller ? 'yes' : 'no';
   return `Rejected (${which}) · ${shape}${odd} · ${location.host} · sw:${sw}`;
 }
-const perfNow = () => (window.Buddy && Buddy.perf ? Buddy.perf() : { pick: (() => { try { return localStorage.getItem('daybook_perf') || 'auto'; } catch (e) { return 'auto'; } })(), level: document.documentElement.dataset.perf || '' });
+const perfNow = () => (window.Perf ? window.Perf.get() : { pick: (() => { try { return localStorage.getItem('daybook_perf') || 'auto'; } catch (e) { return 'auto'; } })(), level: document.documentElement.dataset.perf || '' });
 const perfLabel = () => { const p = perfNow(), cap = x => x ? x[0].toUpperCase() + x.slice(1) : ''; return p.pick === 'auto' ? 'Auto · ' + cap(p.level) : cap(p.pick); };
 const probCount = () => { try { return JSON.parse(localStorage.getItem('daybook_log') || '[]').length; } catch (e) { return 0; } };
 const syncLabel = () => SYNC.state === 'off' ? 'Not syncing — this device only'
@@ -3181,7 +3181,7 @@ document.addEventListener('click', e => {
     }
     case 'set-nag': S.settings.nag = +v; commit(); return refreshSheet();
     case 'set-sound': { SND.on = v === '1'; try { localStorage.setItem('daybook_sound', SND.on ? '1' : '0'); } catch (x) {} haptic(6); sfx('check'); return refreshSheet(); }
-    case 'set-perf': { if (window.Buddy && Buddy.perf) Buddy.perf(v); else { try { localStorage.setItem('daybook_perf', v); } catch (x) {} } haptic(6); return refreshSheet(); }
+    case 'set-perf': { if (window.Perf) window.Perf.set(v); else { try { localStorage.setItem('daybook_perf', v); } catch (x) {} } haptic(6); return refreshSheet(); }
     case 'copy-log': { let log = []; try { log = JSON.parse(localStorage.getItem('daybook_log') || '[]'); } catch (x) {}
       const head = `Daybook problem log · ${navigator.userAgent} · perf ${perfLabel()} · ${devicePixelRatio}x · ${innerWidth}x${innerHeight}`;
       return copy([head, ...log.map(l => `${l.t} [${l.w}] ${l.m}`)].join('\n')).then(() => island.toast(log.length ? 'Log copied, paste it to Claude' : 'Nothing logged, copied device info')); }

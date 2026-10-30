@@ -14,6 +14,7 @@ import { VRMUtils, VRMHumanoid } from './vendor/three-vrm.module.min.js';   // o
 import { toon, INK } from './dress.js';
 import { plainSkiKit, fists, hands, palmOf } from './gear.js';
 import { loadAnims, animsReady, setupMotion, direct, react } from './motion.js';
+import { perf, tier, onPerf, watchPerf } from './perf.js';
 
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const V = 2;   // bump to make phones fetch new model files (2: unused face blendshapes stripped)
@@ -31,38 +32,10 @@ const bump = (p, at, w) => { const d = Math.atan2(Math.sin(p - at), Math.cos(p -
 let renderer, scene, camera, wrap, cv, sayEl, zEl, raf = 0, last = 0, inView = true, ok = true, failed = false, lost = false, errs = 0;
 
 /* ---------- performance ----------
-   Per device (localStorage daybook_perf): auto | smooth | balanced | saver. Auto starts on
-   balanced (saver on a weak machine) and drops to saver if the frame rate can't keep up,
-   e.g. under Opera's CPU limiter. Lofi motion reads fine at 30fps. */
-const PERF = { smooth: { fps: 60, dpr: 2 }, balanced: { fps: 30, dpr: 1.5 }, saver: { fps: 20, dpr: 1 } };
-const weak = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4;
-let perfPick = (() => { try { return localStorage.getItem('daybook_perf') || 'auto'; } catch (e) { return 'auto'; } })();
-let perfLevel = PERF[perfPick] ? perfPick : weak ? 'saver' : 'balanced';
-const perfMon = { n: 0, t0: 0 };
-document.documentElement.dataset.perf = perfLevel;
-function applyPerf() {
-  document.documentElement.dataset.perf = perfLevel; perfMon.n = 0;
-  if (renderer) { renderer.setPixelRatio(Math.min(PERF[perfLevel].dpr, devicePixelRatio || 1)); size(); }
-}
-function perf(pick) {
-  if (pick === undefined) return { pick: perfPick, level: perfLevel };
-  perfPick = PERF[pick] ? pick : 'auto';
-  try { localStorage.setItem('daybook_perf', perfPick); } catch (e) {}
-  perfLevel = PERF[perfPick] ? perfPick : weak ? 'saver' : 'balanced';
-  applyPerf(); return { pick: perfPick, level: perfLevel };
-}
-// auto: measure the frame rate he actually gets over 4s windows (not while an outfit loads)
-function watchPerf(now) {
-  if (perfPick !== 'auto' || perfLevel === 'saver' || loading || document.hidden || REDUCED) { perfMon.n = 0; return; }
-  if (perfMon.n && now - perfMon.prev > 500) perfMon.n = 0;   // paused (hidden, scrolled away): start over
-  perfMon.prev = now;
-  if (!perfMon.n) perfMon.t0 = now;
-  if (++perfMon.n < 2) return;
-  const span = now - perfMon.t0;
-  if (span < 4000) return;
-  const fps = (perfMon.n - 1) / span * 1000; perfMon.n = 0;
-  if (fps < PERF[perfLevel].fps * .7) { perfLevel = 'saver'; applyPerf(); report('dex', 'slow device, switched to saver (' + fps.toFixed(0) + 'fps)'); }
-}
+   The tiers (Auto, Smooth, Balanced, Saver) and Auto's step-down live in perf.js, shared with the city.
+   Dex always draws at his tier's full frame rate; while an outfit loads he reports a cap of 0, so
+   Auto doesn't measure the load. A new level re-sizes his canvas at its pixel ratio. */
+onPerf(() => { if (renderer) { renderer.setPixelRatio(Math.min(tier().dpr, devicePixelRatio || 1)); size(); } });
 const report = (where, e) => { try { window.logProblem ? window.logProblem(where, e) : console.warn(where, e); } catch (x) {} };
 let rider = null, loading = null, pointScale = 800;
 const state = {
@@ -76,7 +49,7 @@ const world = {};
 const canvasTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; };
 function buildScene() {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(PERF[perfLevel].dpr, devicePixelRatio || 1));
+  renderer.setPixelRatio(Math.min(tier().dpr, devicePixelRatio || 1));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   cv = renderer.domElement;
   // the GPU can drop the context (driver reset, sleep, memory pressure): pause, then carry on when it's back
@@ -1013,8 +986,8 @@ function wake() { if (!raf && live()) { last = 0; raf = requestAnimationFrame(fr
 function frame(now, force) {
   raf = 0; if (!renderer || !ok || lost) return;
   // capped frame rate: skip this vsync if it's too soon (the canvas keeps its last picture)
-  if (!force && last && now - last < 1000 / PERF[perfLevel].fps - 3) { if (live()) raf = requestAnimationFrame(frame); return; }
-  try { draw(now); errs = 0; watchPerf(now); }
+  if (!force && last && now - last < 1000 / tier().fps - 3) { if (live()) raf = requestAnimationFrame(frame); return; }
+  try { draw(now); errs = 0; watchPerf(now, loading ? 0 : tier().fps); }
   catch (e) { last = now; if (errs++ < 3 || errs % 100 === 0) report('dex', e); }   // one bad frame never stops him
   if (live() && (!REDUCED || state.act || state.drag || loading)) raf = requestAnimationFrame(frame);
 }
@@ -1124,5 +1097,5 @@ function update(ctx) {
 }
 function wardrobe(on) { state.wardrobe = !!on; wake(); }
 function resetView() { state.orbit = 0; try { localStorage.removeItem('daybook_orbit'); } catch (e) {} wake(); }
-window.Buddy = { mount, update, say, play, wardrobe, resetView, perf, get _() { return { camera, scene, state, world, rider: () => rider, frame, renderer, warm }; } };
+window.Buddy = { mount, update, say, play, wardrobe, resetView, perf /* alias of perf.js's perf() */, get _() { return { camera, scene, state, world, rider: () => rider, frame, renderer, warm }; } };
 const slot0 = document.querySelector('#buddySlot'); if (slot0) mount(slot0);

@@ -9,6 +9,7 @@ Start here before touching code.
 |---|---|
 | `index.html` | The whole app: CSS, markup and the main script (~3,200 lines). No build step. |
 | `rider.js` | Dex, the 3D character: four Tripo models (ski, gym, work, camp) on the Today stage, their scenes, props and camera. |
+| `perf.js` | The performance tiers and Auto's step-down, shared by Dex and the city (see Performance). Sets `html[data-perf]` and `window.Perf` when imported. |
 | `motion.js` | His routines from motion-captured clips: walking between spots, picking things up, closing his fingers on props. |
 | `dress.js`, `gear.js` | The cel-shading materials and ink outline (`dress.js`); skis, poles and finger poses (`gear.js`). |
 | `tools/blender/` | Headless Blender scripts that turn a Tripo export into an app-ready GLB (see docs/CHARACTER.md, Models v5). |
@@ -132,6 +133,19 @@ Line numbers drift, so search for the section comment instead.
   - Auto starts on Balanced (Saver on a machine with 4 cores or less, or 4GB or less). It drops to Saver if it measures under
     70% of the target frame rate, e.g. under Opera's CPU limiter.
   - `html[data-perf]` carries the level for CSS, and the halo rings follow it.
+- **`perf.js`** holds all of this, so Dex and the city share one set of tiers. Import it as `./perf.js` (no `?v=`) so there's
+  only ever one copy.
+  - Importing it sets `html[data-perf]` and `window.Perf = { get, set, watch }`. Exports: `PERF` (fps and DPR per level),
+    `weak`, `tier()` (the level in force), `perf(pick)` (reads `{ pick, level }`, or picks and saves one), `onPerf(fn)`
+    (called on every level change, returns an off switch) and `watchPerf(now, cap)`.
+  - Settings > Performance reads and sets it through `window.Perf` (`perfNow`, `set-perf`), falling back to
+    `localStorage.daybook_perf` before it has loaded. `Buddy.perf` stays as an alias.
+  - **Auto is cap-aware.** Whatever draws calls `watchPerf(now, cap)` after each frame with the fps it's capped to right
+    now. It measures only while `cap` is the tier's full fps; idle at half rate, drawing on demand, standing still, under a
+    sheet, paused, hidden and reduced motion all reset it, and a change of cap starts the 4s window over. Otherwise a quiet
+    half-fps scene would drop every device to Saver.
+  - Dex passes his full fps, or 0 while an outfit loads, so he behaves as before. His `onPerf` hook resets his pixel ratio
+    and canvas size.
 - **No big main-thread blocks:** a new outfit is warmed up before it's shown (`warm()`: `compileAsync`, then each mesh drawn
   off camera, a frame apart).
   - Before this, the first draw blocked the page for 2-3s on Windows. ANGLE compiles shaders at draw time, and all 57 face
