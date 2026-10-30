@@ -273,39 +273,62 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 Technical state only. Updated 2026-10-30.
 
-- **Branch:** `city-p1`, made from `main` at `a92ca26`. Local only, never pushed. `git log --oneline main..city-p1`
-  lists the Phase 0 commits; the head is the P0.6 docs commit.
-- **Part A (Phase 0) seams, all committed:**
-  - P0.1 `67b2956` home render split (`renderStage()`, `renderToday(part)`, `todayShared()`)
-  - P0.2 `d354856` `GROW.chip = { k, tab }` on every `openPage` path, `placeKey()`, `homeTarget(k)` (BUGS.md #7)
-  - P0.5 `876b78b` dead quests code out
-  - P0.3 `9452647` `perf.js`, cap-aware `watchPerf`, `window.Perf`
+- **Branch:** `city-p1`, made from `main` at `a92ca26`. Local only, never pushed. The head is this Handoff commit, on
+  top of `e69ba08`; `git log --oneline main..city-p1` lists seven commits.
+- **Part A (Phase 0): done.** Every seam is committed and tested:
+  - P0.1 `67b2956` home render split (`renderStage()`, `renderToday(part)`, `todayShared()`): done
+  - P0.2 `d354856` `GROW.chip = { k, tab }` on every `openPage` path, `placeKey()`, `homeTarget(k)` (BUGS.md #7):
+    done
+  - P0.3 `9452647` `perf.js`, cap-aware `watchPerf`, `window.Perf`: done
   - P0.4 `ee4a6ca` Worker guard in the `syncApi` PUT, `KNOWN` carry-through in `mergeState`, `catOf`/`knownCat`,
-    `BUILD = 'p0'`
-  - P0.6 docs: this file, ARCHITECTURE.md fixes, `docs` in `.assetsignore`, stale Access comments in `wrangler.jsonc`
-- **Gate 0:** decisions 1, 2 and 4 answered with the defaults; drag-to-look on the phone added to the defaults.
-  Decision 3 answered, see memory.
-- **Tests so far** (flag off, headless Chrome, fake data, scripts kept outside the repo):
-  - innerHTML of the home, every page with each module open and closed, every sheet and Spotlight: identical to
-    `main` at 390×844 and 1366×768 after each seam; the only difference is the Build line in Settings › Sync
-  - frozen Dex frames: byte-identical at 390×844, at most 1/255 off at 1366×768
-  - back paths: 15/15, including Fuel, key 2, ‹ shrinking into Focus, and reduced motion storing
-    `{ k: 'fuel', tab: 'training' }`
-  - perf: each tier sets the same `data-perf` and Dex pixel ratio as `main`; a synthetic `Perf.watch` harness steps
-    down at 10 fps on full cap, holds at 15 fps on half cap, and restarts its window on a cap change
-  - sync, in Node: 400 known-key pairs merge byte-identically to `main`; unknown key `zz` is taken from the server,
-    remote wins when both have it, local-only is kept; `ui` is never sent; the Worker guard against a fake Durable
-    Object keeps `zz`, replaces it when sent, and the stale `if-match` 409 is unchanged
-  - unknown categories in the app: six `cat:'school'` tasks never show on home or any page and never crash; XP still
-    counts them
-  - console and problem log clean throughout
-- **Not run yet:** §13.2 sync tests 7–9 on a scratch `wrangler dev` (two origins; `main`'s client and Worker as the
-  controls).
+    `BUILD = 'p0'`: done
+  - P0.5 `876b78b` dead quests code out: done
+  - P0.6 `e69ba08` docs: this file, ARCHITECTURE.md fixes, `docs` in `.assetsignore`, stale Access comments in
+    `wrangler.jsonc`: done
+- **Gate 0:** decisions 1, 2 and 4 answered with the defaults. Decision 3 answered, see memory. Drag-to-look on the
+  phone requested for Part B (§8.9): a sideways drag on the room band looks around, yaw only, and vertical drags still
+  scroll the page.
+- **Tests (§13.2), all pass.** Flag off, headless Chrome, fake data, scripts kept outside the repo.
+  - **Same home:** the innerHTML of the home, every page with each module open and closed, every sheet and Spotlight
+    (41 captures) matches `main` at 390×844 and 1366×768. The only difference is the Build line in Settings › Sync.
+    A `main`-against-`main` control gives 41/41.
+  - **Frozen Dex frames:** byte-identical at 390×844. At 1366×768, under 25 px differ by 1/255, within `main`'s own
+    run-to-run noise.
+  - **Back paths:** 64/64 at both sizes, with real touch drags at 390×844, animated and reduced motion.
+    - ‹, Escape, browser back and the drag down each shrink into the right chip; Escape closes a sheet or Spotlight
+      first.
+    - Key 1 and the island tap go home with no veil.
+    - Fuel, then keys 2/3/4/5, then ‹ shrinks into focus/grind/fuel/hustle; `data-tab` buttons and the home pills
+      shrink into their chips.
+    - Reduced motion stores `{ k: 'fuel', tab: 'training' }` and clears it on the way home.
+    - `main` scores 20/64 on the same suite (Fuel, key 2, ‹ shrinks into Fuel).
+  - **Perf:**
+    - Every tier from Settings (at DPR 3 and 1), every stored pick at boot and a weak device give the same
+      `data-perf`, Dex pixel ratio and canvas as `main`.
+    - `Perf.watch`: 10 fps on full cap steps down to Saver at 4 s with `main`'s log line. Half cap, cap 0, a gap over
+      500 ms, hidden and reduced motion never count. A cap change restarts the 4 s window, and a picked tier never
+      steps down.
+    - End to end, a blocked main thread steps Auto down on both builds. `perf.js` loads once, with no `?v=` copy.
+  - **Sync, §13.2 checks 1–9,** on scratch `wrangler dev --local` Workers:
+    - 300 generated known-key pairs merge byte-identically to `main`'s `mergeState`.
+    - Unknown key `zz`: taken from the server, the server's copy wins when both have it, a local-only copy is kept.
+      `ui` is never sent.
+    - The Worker guard keeps `zz` on a PUT without it, replaces it when sent and stores `null`. The 409, 400 and 401
+      responses are unchanged.
+    - Two devices on the new client and Worker, with `zz` and four `cat:'school'` tasks, converge with both
+      untouched, and no school task shows anywhere.
+    - Controls: `main`'s client and Worker drop `zz`; `main`'s client against the new Worker keeps it.
+  - **Unknown categories in the app:** six `cat:'school'` tasks never show on home or any page and never crash. XP
+    still counts them, and `noteClearDay` won't clear a day while one is open.
+  - The syntax check and `node --check` pass. The console and problem log stay clean throughout.
 - **Open:**
-  - Local `main` is one commit behind `origin/main` (`8edd767`). Merge it into `city-p1` before Gate A and re-run the
-    HTML diff.
+  - `origin/main` has one commit that isn't on `city-p1` (`8edd767`, task XP 10 → 30, one line in index.html). A test
+    merge is clean. Merge it into `city-p1` before the Gate A push and re-run the HTML diff against `origin/main`.
+  - A scratch worktree has `main` checked out, so `git checkout main` in the repo is refused until it's removed.
+  - Don't push `city-p1` itself until Cloudflare branch builds are confirmed off (§15). Gate A pushes `main` only.
   - Key 1 and the island tap go home through `switchTab`, which doesn't clear `GROW.chip`, so Fuel, key 1, key 4, ‹
     still shrinks into Fuel (same as `main`). Phase 1's keys 2–5 room swap would show the wrong room after that trip.
+  - With the flag off, focus lands on `<body>` after going home (same as `main`). The icon taking focus is Part B.
   - `noteCard` still reads `CATS[n.cat]` directly (already guarded; an unknown category renders as uncategorised).
   - The app badge from `slipped()` leaves out unknown-category reminders; the Worker's push badge still counts them.
     Phase 2 filters both.
@@ -314,8 +337,12 @@ Technical state only. Updated 2026-10-30.
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command. Left alone because
     Phase 0 changes worker.js only for the guard.
   - Dead `#v-today .grid` and `#v-today .slip-card` rules remain in the first 760 px media query.
-  - No backup bundle of `city-p1` made yet.
-- **Gate A:** not asked yet. The device check (Build p0 on every copy with the sync code): not done.
-- **Next step:** sync tests 7–9 on the scratch Worker, merge `origin/main`, bundle the branch, then Gate A: ask him,
-  he exports a backup, push only on his yes, confirm the page and the Worker guard are live, then the device check.
-  After that, Phase 1.
+- **Backup:** `city-p1-2026-10-30.bundle`, made after this commit and kept outside the repo (decision 4).
+- **Gate A:** not asked yet. **Gate A device check: not yet confirmed.**
+- **Next step:**
+  1. Merge `origin/main` into `city-p1` and re-run the HTML diff.
+  2. Gate A: he taps Settings › Export backup on the iPhone first. Push only on his go: merge `city-p1` into `main`
+     and push `main`. Confirm it's live (the `Build p0` marker, and the commit's check-runs for the Worker guard).
+  3. The §13.5 device check: every copy with the sync code shows "Build p0" and a clean sync, or is closed. Record
+     yes/no and the date here.
+  4. Then Part B: the flag and loader, the greybox city, icons and flight, then the shop room (Gate B).
