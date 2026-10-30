@@ -57,7 +57,11 @@ async function syncApi(request, env) {
     if (body.length > 2000000) return json({ error: 'too large' }, 413);
     let data;
     try { data = JSON.parse(body); } catch (e) { return json({ error: 'bad json' }, 400); }
-    await readState(hash, env);   // makes sure the KV copy has been carried over first
+    const cur = await readState(hash, env);   // also makes sure the KV copy has been carried over first
+    // an older app copy never removes keys it doesn't know
+    if (cur && cur.data && data && typeof data === 'object' && !Array.isArray(data)) {
+      for (const k of Object.keys(cur.data)) if (!Object.prototype.hasOwnProperty.call(data, k)) data[k] = cur.data[k];
+    }
     const res = await writeState(hash, env, +(request.headers.get('if-match') || 0), data);
     if (!res.ok) return json({ error: 'conflict', rev: res.rev }, 409); // caller re-reads and merges
     return json({ rev: res.rev, at: res.at });

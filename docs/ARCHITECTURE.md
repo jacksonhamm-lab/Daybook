@@ -46,6 +46,9 @@ Everything is one object, `S`, saved to `localStorage.daybook_v1` and synced.
 | `template[7]` | The weekly training split (D1–D4, HIIT, REST). |
 | `clock` | The running shift timer. Synced (stamped `clockU`), so clocking in on the phone shows on the laptop. |
 | `ui` | Per-device view state (tab, open modules). **Never synced.** |
+| `since`, `seen[]`, `clearDays[]`, `submitted{payday}`, `settingsU`, `templateU`, `clockU` | First day used, trophies already shown, all-clear days, when hours went to Len, and the change stamps for `settings`, `template` and `clock`. |
+
+Every top-level key above is listed in `KNOWN` in index.html (see Sync).
 
 **Training program (2026-10-05):** lives in `program.json` (days `d1`-`d5`: sections of exercises with sets). Edit that file
 to change the program. It used to be parsed out of the old workout app, which Daybook no longer needs.
@@ -76,6 +79,22 @@ They only exist on the device that ran it, so `syncAuto()` only un-ticks an auto
 - A sync only PUTs when the merged state differs from the server's (`sig()`, order-blind), so idle devices don't write.
 - Devices merge item by item (newest `u` wins, tombstones win over older items), and a `409` triggers a re-merge.
 - **A new keyed map or list must be added to both lists in `stampChanges()` and `mergeState()`**, or it won't sync.
+- **Keys from a newer version survive older copies** (Phase 0, for School). An old copy of the app (a Home Screen app
+  resumed after days, a snoozed tab, an offline start) only merges the keys it knows, so on its own it would PUT a
+  state without a newer key, and the Durable Object keeps no history. Two guards:
+  - **Worker (the real protection):** the `syncApi` PUT copies every top-level key the stored state has and the body
+    lacks into the body before writing ("an older app copy never removes keys it doesn't know"). The `if-match` rev
+    check is unchanged. Nothing in the app deletes a top-level key (only `ui` is stripped, and it's never stored).
+  - **Client:** `KNOWN` (next to `mergeState`) lists every top-level key this version reads or writes. At the end of
+    `mergeState`, any key in the server's copy that isn't in `KNOWN` is taken as-is (the server's copy wins; this
+    version never edits it). Keys only this device has are left alone. Known keys merge exactly as before.
+  - **A new top-level key must be added to `KNOWN`**, or an older copy's rules apply to it.
+- **Task categories from a newer version** (e.g. Phase 2's `cat:'school'`) never crash: `catOf(k)` falls back to
+  Personal, and `tasksOn`, `slipped` and `overdue` skip tasks whose `cat` isn't in `CATS` (`knownCat`), so Today,
+  Plan, Tomorrow, Needs a decision, the overdue roll-over and the app badge leave them alone. XP, trophies and the
+  clear-day check still count every task.
+- **`BUILD`** (top of the main script, now `'p0'`) is shown as "Build p0" at the bottom of Settings › Sync, so each
+  device can show which copy it runs. Bump it when a release changes the data's shape.
 
 ## Code map (index.html)
 
@@ -85,7 +104,7 @@ Line numbers drift, so search for the section comment instead.
 |---|---|
 | `/* ===== v3` … `v5` …` / attributes` (in `<style>`) | CSS layers from each redesign. The v4 `.dash/.stg/.pnl/.stc` rules are now unused. |
 | `/* ---------- state` | Defaults, `load()`, `save()`, `commit()` (save + re-render). |
-| `/* ---------- cross-device sync` | `stampChanges`, `mergeState`, `syncNow`. |
+| `/* ---------- cross-device sync` | `stampChanges`, `KNOWN`, `mergeState`, `syncNow`. |
 | `/* ---------- notifications` | Push subscribe/unsubscribe, sync code mirrored to IndexedDB for the service worker. |
 | `/* ---------- pay periods` | `periodFor`, `periodHours`, `extraHours`, submit-to-Len window. |
 | `/* ---------- quick-add parser` | Spotlight text → task, shift, job, workout. |

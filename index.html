@@ -1103,6 +1103,7 @@ body.typing .dexpip{opacity:0;transform:translateY(24px) scale(.88);pointer-even
    read out of the old workout app. Set ticks and benchmark logs are per device (localStorage).
    ============================================================ */
 const KEY = 'daybook_v1';
+const BUILD = 'p0';   // shown at the bottom of Settings › Sync, so each device can show which copy it runs
 const PROGRAM_V = 2, SPLIT = ['D1', 'D2', 'D3', 'HIIT', 'D4', 'D5', 'REST'];   // program 2: five lifting days, one conditioning, one rest
 const CATS = {
   work: { label: 'Work',     color: '#0a84ff' },
@@ -1111,6 +1112,10 @@ const CATS = {
   life: { label: 'Personal', color: '#bf5af2' },
 };
 const CAT_ORDER = ['work', 'gym', 'jobs', 'life'];
+// A category this version doesn't know (a newer version's, e.g. 'school') never crashes: it borrows
+// Personal's colour, and the task lists skip those tasks (knownCat). XP still counts them.
+const knownCat = t => Object.prototype.hasOwnProperty.call(CATS, t.cat);
+const catOf = k => Object.prototype.hasOwnProperty.call(CATS, k) ? CATS[k] : CATS.life;
 const SESS = {
   D1:   { color: '#64d2ff', art: 'linear-gradient(140deg,#062a4a 0%,#0a6fd6 55%,#64d2ff 100%)' },
   D2:   { color: '#30d158', art: 'linear-gradient(140deg,#032b16 0%,#159447 55%,#8ef0b0 100%)' },
@@ -1246,6 +1251,10 @@ function stampChanges() {
   if (JSON.stringify(prev.clock || null) !== JSON.stringify(S.clock || null)) S.clockU = now;
   LAST = JSON.parse(JSON.stringify(S));
 }
+// Every top-level key this version reads or writes (defaults(), load() and every S.<key>).
+// A newer version can add keys; mergeState passes them through untouched. Add new keys here.
+const KNOWN = new Set(['tasks', 'shifts', 'workouts', 'jobs', 'notes', 'clock', 'template', 'extra', 'settings', 'ui', 'tomb',
+  'shakes', 'meals', 'grocery', 'snacks', 'since', 'seen', 'clearDays', 'submitted', 'settingsU', 'templateU', 'clockU']);
 function mergeState(local, remote) {
   if (!remote) return local;
   const out = JSON.parse(JSON.stringify(local));
@@ -1275,6 +1284,8 @@ function mergeState(local, remote) {
   const cutoff = Date.now() - 30 * 864e5;
   Object.keys(out.tomb).forEach(k => { if (out.tomb[k] < cutoff) delete out.tomb[k]; });
   out.tasks.forEach(t => { if (!t.date) t.date = today(); }); // never let a task arrive dateless and vanish
+  // keys a newer version owns: take the server's copy, never edit
+  Object.keys(remote).forEach(k => { if (!KNOWN.has(k)) out[k] = remote[k]; });
   return out;
 }
 const forServer = s => { const c = JSON.parse(JSON.stringify(s)); delete c.ui; return c; };
@@ -1612,13 +1623,13 @@ function occurs(t, d) {
   return r === 'daily' || (r === 'weekdays' && w < 5) || (r === 'weekly' && w === t.repeat.dow);
 }
 const isDone = (t, d) => t.repeat ? !!(t.doneOn && t.doneOn[d]) : !!t.done;
-const tasksOn = d => sortTasks(S.tasks.filter(t => occurs(t, d)), d);
+const tasksOn = d => sortTasks(S.tasks.filter(t => knownCat(t) && occurs(t, d)), d);
 const sortTasks = (arr, d) => arr.slice().sort((a, b) => (isDone(a, d) - isDone(b, d)) || CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat) || (a.created || 0) - (b.created || 0));
 const nowHM = () => { const n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); };
 // a snooze (+2h) on a repeating task only moves that day's reminder
 const remAt = (t, d) => t.snooze && t.snooze.d === d ? t.snooze.at : t.remind;
-const slipped = () => S.tasks.filter(t => t.remind && occurs(t, today()) && !isDone(t, today()) && remAt(t, today()) <= nowHM());
-const overdue = () => S.tasks.filter(t => !t.repeat && t.date && t.date < today() && !t.done);
+const slipped = () => S.tasks.filter(t => knownCat(t) && t.remind && occurs(t, today()) && !isDone(t, today()) && remAt(t, today()) <= nowHM());
+const overdue = () => S.tasks.filter(t => knownCat(t) && !t.repeat && t.date && t.date < today() && !t.done);
 const repeatLabel = r => !r ? '' : r.t === 'daily' ? 'Daily' : r.t === 'weekdays' ? 'Weekdays' : `Every ${DOW[r.dow]}`;
 
 /* ---------- jobs ---------- */
@@ -1801,7 +1812,7 @@ function describe(r) {
   if (r.kind === 'shift') { const h = shiftHours(r); return { c: 'var(--blue)', icon: I.hours, title: `Shift · ${t12(r.start)}–${t12(r.end)}`, chips: [d, r.brk ? `${r.brk}m break` : 'No break', `${fh(h)} hours`] }; }
   if (r.kind === 'job') return { c: 'var(--green)', icon: I.jobs, title: r.company, chips: [r.status, r.role || 'No role', r.link ? 'Link saved' : null, rel(r.date)].filter(Boolean) };
   if (r.kind === 'wo') { const w = wo(r.date); return { c: 'var(--orange)', icon: I.training, title: `Mark ${w.s} · ${sessName(w.s)} done`, chips: [d] }; }
-  return { c: CATS[r.cat].color, icon: I.task, title: r.title, chips: [CATS[r.cat].label, d, repeatLabel(r.repeat)].filter(Boolean) };
+  return { c: catOf(r.cat).color, icon: I.task, title: r.title, chips: [catOf(r.cat).label, d, repeatLabel(r.repeat)].filter(Boolean) };
 }
 function applyQuick(r) {
   if (!r) return false;
@@ -1810,7 +1821,7 @@ function applyQuick(r) {
   if (r.kind === 'wo') { const o = S.workouts[r.date] || {}; S.workouts[r.date] = { ...o, done: true, auto: false }; commit(); celebrate(`${wo(r.date).s} done`, '#ff9f0a'); return true; }
   const t = { id: uid(), created: Date.now(), title: r.title, cat: r.cat, date: r.date || today(), done: false, repeat: r.repeat, doneOn: {} };
   S.tasks.push(t); FX.added = t.id; commit();
-  island.toast(r.repeat ? `Repeats ${repeatLabel(r.repeat).toLowerCase()}` : `Added to ${rel(t.date)}`, { icon: I.check, color: CATS[r.cat].color });
+  island.toast(r.repeat ? `Repeats ${repeatLabel(r.repeat).toLowerCase()}` : `Added to ${rel(t.date)}`, { icon: I.check, color: catOf(r.cat).color });
   return true;
 }
 
@@ -2040,7 +2051,7 @@ function checkTrophies() {
 }
 // A clear day is recorded once, so the reward can't be farmed by re-ticking.
 function noteClearDay() {
-  const d = today(), list = tasksOn(d);
+  const d = today(), list = S.tasks.filter(t => occurs(t, d));   // every task, not just the listed ones (XP)
   if (!list.length || !list.every(t => isDone(t, d))) return false;
   S.clearDays = S.clearDays || [];
   if (S.clearDays.includes(d)) return false;
@@ -2165,8 +2176,8 @@ function hero(kicker, title, sub, right = '', lead = '', chips = []) {
 const weekNav = () => `<div class="wnav"><button class="btn icon" data-act="prev" aria-label="Previous week">‹</button><button class="btn" data-act="thisweek">${isCurWeek() ? 'This week' : 'Jump to today'}</button><button class="btn icon" data-act="next" aria-label="Next week">›</button></div>`;
 
 function taskLi(t, d, opts = {}) {
-  const c = (CATS[t.cat] || CATS.life).color, done = isDone(t, d);
-  const meta = [opts.showCat !== false ? `<span class="cd"></span>${CATS[t.cat].label}` : '', t.remind ? `${I.bell}${t12(t.remind)}` : '', t.repeat ? `${I.repeat}${repeatLabel(t.repeat)}` : '', opts.when ? rel(t.date) : ''].filter(Boolean).join(' · ');
+  const c = catOf(t.cat).color, done = isDone(t, d);
+  const meta = [opts.showCat !== false ? `<span class="cd"></span>${catOf(t.cat).label}` : '', t.remind ? `${I.bell}${t12(t.remind)}` : '', t.repeat ? `${I.repeat}${repeatLabel(t.repeat)}` : '', opts.when ? rel(t.date) : ''].filter(Boolean).join(' · ');
   return `<li class="task ${done ? 'done' : ''} ${FX.added === t.id ? 'fx-in' : ''}" data-id="${t.id}" data-date="${d || ''}" style="--c:${c}" ${t.repeat ? '' : 'draggable="true"'}>
     <button class="ck" data-act="toggle-task" aria-label="Complete">${I.check}</button>
     <div class="tb" data-act="task-menu"><div class="tt">${esc(t.title)}</div>${meta ? `<div class="tm">${meta}</div>` : ''}</div></li>`;
@@ -2336,7 +2347,7 @@ function renderToday(part) {
   const sub = inSubmitWindow(pk) ? pendingDays(pk) : [], est = sub.reduce((a, x) => a + shiftHours(x.est), 0);
   const M = [];
   if (slip.length) M.push(mod('decide', { title: 'Needs a decision', value: slip.length, sub: 'Reminder passed', icon: IC.bell, c: 'var(--red)', alert: true, open: true, i: 1,
-    body: `<div class="decs">${slip.map(t => `<div class="dec" style="--c:${CATS[t.cat].color}"><div class="dec-h"><span class="dec-i">${I.bell}</span><div class="dec-t"><b>${esc(t.title)}</b><span>Was due ${t12(remAt(t, today()))}</span></div></div>
+    body: `<div class="decs">${slip.map(t => `<div class="dec" style="--c:${catOf(t.cat).color}"><div class="dec-h"><span class="dec-i">${I.bell}</span><div class="dec-t"><b>${esc(t.title)}</b><span>Was due ${t12(remAt(t, today()))}</span></div></div>
       <div class="dec-b"><button class="btn sm tint" style="--c:var(--green)" data-act="rm-done" data-id="${t.id}">Done</button><button class="btn sm" data-act="rm-later" data-id="${t.id}">+2h</button><button class="btn sm" data-act="rm-tomorrow" data-id="${t.id}">Tomorrow</button></div></div>`).join('')}</div>` }));
   M.push(mod('tasks', { title: 'Tasks', value: `${nk('mt', done)}<small>/${list.length}</small>`, sub: !list.length ? 'Nothing yet' : left ? `${left} left` : 'All done', icon: IC.tasks, c: 'var(--blue)', open: !slip.length, i: 2, live: !!left,
     body: `${ov.length ? `<div class="banner"><span>${ov.length} overdue from earlier</span><button class="btn sm tint" style="--c:var(--red)" data-act="rollover">Move to today</button></div>` : ''}
@@ -2356,7 +2367,7 @@ function renderToday(part) {
       <div class="row" style="margin-top:14px"><button class="btn sm" data-tab="hours">Open Hours</button></div>` }));
   M.push(mod('tmr', { title: 'Tomorrow', value: `${tList.length}<small> task${tList.length === 1 ? '' : 's'}</small>`, sub: [shiftHours(tsh) ? `${t12(tsh.start)}–${t12(tsh.end)}` : 'No shift', tw.s === 'REST' ? 'rest' : tw.s].join(' · '), icon: IC.week, c: 'var(--indigo)', i: 6,
     body: `<div class="kv"><span>Shift</span><b>${shiftHours(tsh) ? `${t12(tsh.start)} – ${t12(tsh.end)}` : 'None'}</b></div><div class="kv"><span>Training</span><b>${tw.s === 'REST' ? 'Rest day' : esc(sessName(tw.s))}</b></div>
-      ${tList.length ? `<ul class="mini-list">${tList.map(t => `<li style="--c:${(CATS[t.cat] || CATS.life).color}">${esc(t.title)}</li>`).join('')}</ul>` : ''}
+      ${tList.length ? `<ul class="mini-list">${tList.map(t => `<li style="--c:${catOf(t.cat).color}">${esc(t.title)}</li>`).join('')}</ul>` : ''}
       <div class="row" style="margin-top:14px"><button class="btn sm" data-tab="week" data-sel="${tmr}">Plan tomorrow</button></div>` }));
   M.push(mod('jobs', { title: 'Applications', value: `${nk('mj', apps)}${ag ? `<small>/${ag}</small>` : ''}`, sub: follow.length ? `${follow.length} to follow up` : 'this week', icon: IC.jobs, c: 'var(--green)', alert: follow.length > 0, i: 7,
     body: `${follow.map(j => `<div class="nitem" style="--c:var(--green)"><div class="ni">${esc(j.company[0] || '?')}</div><div class="nb"><b>Follow up · ${esc(j.company)}</b><span>Applied ${daysBetween(j.date, d)} days ago</span></div><button class="btn tint sm" style="--c:var(--green)" data-act="followed" data-id="${j.id}">Done</button></div>`).join('') || `<p class="sub" style="margin:0">${ag && apps < ag ? `${ag - apps} more to hit ${ag} this week.` : 'Nothing to chase right now.'}</p>`}
@@ -2598,7 +2609,7 @@ function addDraft() {
   const d = DRAFT; if (!d || !d.title.trim()) return closeSheet();
   const t = { id: uid(), created: Date.now(), title: d.title.trim(), cat: d.cat, date: d.date, done: false, repeat: null, doneOn: {}, remind: d.remind || null };
   S.tasks.push(t); FX.added = t.id; DRAFT = null; save(); closeSheet();
-  island.toast(`Added to ${rel(t.date)}${t.remind ? ' · ' + t12(t.remind) : ''}`, { icon: I.check, color: CATS[t.cat].color });
+  island.toast(`Added to ${rel(t.date)}${t.remind ? ' · ' + t12(t.remind) : ''}`, { icon: I.check, color: catOf(t.cat).color });
 }
 const WHENS = () => { const td = parse(today()); return [['today', 'Today', today()], ['tomorrow', 'Tomorrow', iso(addDays(td, 1))], ['weekend', 'Weekend', iso(addDays(td, (5 - dowIdx(today()) + 7) % 7))], ['nextweek', 'Next week', iso(addDays(mondayOf(td), 7))]]; };
 const REMINDS = [['', 'No reminder'], ['08:00', 'Morning'], ['12:00', 'Noon'], ['17:00', '5:00'], ['20:00', 'Evening']];
@@ -2807,7 +2818,8 @@ const SHEETS = {
         <p class="sub" style="margin-top:0">Same sync code on your laptop and phone and they stay in step. Changes merge, so editing both offline is fine.</p>
         <div class="row"><input id="syncCode" placeholder="Sync code" value="${esc(SYNC.code)}" style="flex:1;min-width:180px" autocomplete="off" spellcheck="false" autocapitalize="none" autocorrect="off" inputmode="text" onfocus="this.select()">
           ${SYNC.code ? `<button class="btn" data-act="sync-off">Turn off</button><button class="btn white" data-act="sync-now">Sync now</button>` : `<button class="btn white" data-act="sync-on">Connect</button>`}</div>
-        <p class="sub" id="syncStatus" style="margin:8px 0 0">${esc(syncLabel())}</p>`)}
+        <p class="sub" id="syncStatus" style="margin:8px 0 0">${esc(syncLabel())}</p>
+        <p class="sub" style="margin:6px 0 0">Build ${BUILD}</p>`)}
       ${grp('More', 'Backup, install', `
         <div class="row"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Import backup</button></div>
         <p class="sub" style="margin:0">Install: iPhone Share → Add to Home Screen. Android / Chrome: menu → Install app.</p>`)}
@@ -3309,7 +3321,7 @@ document.addEventListener('drop', e => {
   const t = S.tasks.find(x => x.id === dragId); if (!t) return;
   if (!z.dataset.drop) return;
   t.date = z.dataset.drop; FX.added = t.id; haptic(); commit();
-  island.toast(`Moved to ${rel(t.date)}`, { icon: I.arrow, color: CATS[t.cat].color });
+  island.toast(`Moved to ${rel(t.date)}`, { icon: I.arrow, color: catOf(t.cat).color });
 });
 
 /* Drag-to-dismiss sheets (phones). Pull down from the handle any time, or from anywhere
