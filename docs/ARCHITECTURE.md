@@ -7,14 +7,14 @@ Start here before touching code.
 
 | Path | What it is |
 |---|---|
-| `index.html` | The whole app: CSS, markup and the main script (~3,200 lines). No build step. |
+| `index.html` | The whole app: CSS, markup and the main script (~3,500 lines). No build step. |
 | `rider.js` | Dex, the 3D character: four Tripo models (ski, gym, work, camp) on the Today stage, their scenes, props and camera. |
 | `perf.js` | The performance tiers and Auto's step-down, shared by Dex and the city (see Performance). Sets `html[data-perf]` and `window.Perf` when imported. |
 | `motion.js` | His routines from motion-captured clips: walking between spots, picking things up, closing his fingers on props. |
 | `dress.js`, `gear.js` | The cel-shading materials and ink outline (`dress.js`); skis, poles and finger poses (`gear.js`). |
 | `tools/blender/` | Headless Blender scripts that turn a Tripo export into an app-ready GLB (see docs/CHARACTER.md, Models v5). |
 | `buddy.js` | The old code-built Dex. Only loaded if the models can't be fetched. |
-| `models/` (not in git) | The `.vrm` files, slimmed and gzipped. **Never commit them** (public repo); they are served from KV, see Hosting. |
+| `models/` (not in git) | Dex's `.glb` looks (`ski`, `work`, `camp`, `gym`), `skis.glb` and `anims.json`. **Never commit them** (public repo); they are served from KV, see Hosting. |
 | `vendor/` | three.js r169 (`three.module.min.js`), `RoundedBoxGeometry.js`, `RoomEnvironment.js`, `jsm/` (GLTFLoader and BufferGeometryUtils from r169) and `three-vrm.module.min.js` (@pixiv/three-vrm 3.5.5). Loaded through an import map in `<head>`. |
 | `meals.json` | The Recipe Book (`v: 2`): 16 recipes at three portions each (two tonight, one spare), amounts written into every step. Each recipe carries `g`, its shopping items as aisle-and-item id plus amount (`["Produce\|Garlic", "2 cloves"]`); `aisles` is the shelf order; plus `snacks`. Bump `v` and `bookOk()` together when the shape changes. |
 | `sw.js` | Service worker. Network-first cache, push notifications, notification buttons. |
@@ -22,7 +22,7 @@ Start here before touching code.
 | `src/push.js` | Web Push encryption (RFC 8291) and VAPID signing (RFC 8292), no libraries. |
 | `wrangler.jsonc` | Worker config: custom domain, KV binding, Durable Object `Store` (synced state), cron, VAPID public key. |
 | `icons/`, `manifest.webmanifest` | Home-screen app icons and manifest. |
-| `docs/` | These notes. |
+| `docs/` | These notes. `CITY.md` is the plan for the city home, with its Handoff. Not served on the site (`.assetsignore`). |
 
 ## Hosting and deploy
 
@@ -30,8 +30,10 @@ Start here before touching code.
 - **A push to `main` deploys on its own** in about 40 seconds (Cloudflare Workers Builds via the GitHub app).
 - Check a deploy is live: `curl -s "https://apps.jacksonhamm.ca/?cb=$RANDOM" | grep -c <something new>`.
 - Secrets live in the Cloudflare dashboard, not the repo: `SYNC_KEYS` (allowed sync-code hashes) and `VAPID_PRIVATE_JWK`.
+- There's no Cloudflare Access in front of the site (turned off on 2026-09-19). The sync and push APIs check the sync code.
+- The assets directory is the repo root. `.assetsignore` keeps `.dev.vars`, `.wrangler`, `.claude`, `.git`, `models`, `node_modules`, `tools` and `docs` off the site; check it still lists them before any direct `npx wrangler deploy`.
 - `/workout/*` is proxied from the Jackson-Workout-Plan repo so both apps share one origin and one localStorage.
-- `/models/<name>.vrm` is served by the Worker from KV key `model:<name>.vrm` (stored gzipped, sent with `content-encoding: gzip`). To update a model: slim it (textures over 1024px halved, thumbnail shrunk, then `node tools/strip-morphs.js in.vrm out.vrm` to drop the face blendshapes no expression uses, then gzip), run `npx wrangler kv key put --binding SYNC --remote "model:ski.vrm" --path models/ski.vrm.gz`, and bump `V` in `rider.js` so phones fetch the new file. The service worker caches models cache-first.
+- `/models/<name>` (the `.glb` looks, `skis.glb` and `anims.json`) is served by the Worker from KV key `model:<name>` (stored gzipped, sent with `content-encoding: gzip`). To update a model: build it with the `tools/blender/` pipeline (docs/CHARACTER.md, Models v5), gzip it (`gzip -9 -k models/ski.glb`), run `npx wrangler kv key put --binding SYNC --remote "model:ski.glb" --path models/ski.glb.gz`, then bump its `?v=` so phones fetch the new file: `MODELS` in rider.js for the looks, `loadArtSkis` in gear.js for `skis.glb`, `URL_` in motion.js for `anims.json`. The service worker caches models cache-first.
 
 ## Data
 
@@ -102,7 +104,7 @@ Line numbers drift, so search for the section comment instead.
 
 | Section comment | What's there |
 |---|---|
-| `/* ===== v3` … `v5` …` / attributes` (in `<style>`) | CSS layers from each redesign. The v4 `.dash/.stg/.pnl/.stc` rules are now unused. |
+| `/* ===== v3` … `v5`, `nav v6` (in `<style>`) | CSS layers from each redesign. The old v4 dashboard rules (`.dash/.stg/.pnl/.stc`) were removed on 2026-10-07. |
 | `/* ---------- state` | Defaults, `load()`, `save()`, `commit()` (save + re-render). |
 | `/* ---------- cross-device sync` | `stampChanges`, `KNOWN`, `mergeState`, `syncNow`. |
 | `/* ---------- notifications` | Push subscribe/unsubscribe, sync code mirrored to IndexedDB for the service worker. |
@@ -120,7 +122,7 @@ Line numbers drift, so search for the section comment instead.
 | `/* ---------- sheets` | `SHEETS` (compose, task, shift, session, job, note, book, progress, settings), `openSheet`, `closeSheet`. |
 | `/* ---------- render` | `render()`: rebuilds the current tab's HTML, mounts Dex, keeps animations running. |
 | `/* ---------- actions` | One click handler, switching on `data-act`. Input, change and submit handlers follow. |
-| `/* ---------- boot` | Builds the arc, first render, sync, service worker. |
+| `/* ---------- boot` | The boot splash, one-time migrations (`migrateProgram`, the skis default), first render, program load, sync, service worker. |
 
 ## How rendering works
 
@@ -137,11 +139,39 @@ Line numbers drift, so search for the section comment instead.
 
 ## Testing locally
 
-- The `daybook` preview server serves the scratchpad folder; the app is at `http://localhost:8765/db/index.html`.
-- Put the slimmed `.vrm` files (ungzipped) in `models/` so the local server can serve them.
-- The preview pane throttles animation when hidden. To inspect Dex, step frames by hand: `Buddy._.frame(t)`. Move the camera with `Buddy._.state.camDist` and `camY`; swing it with `state.orbit` (hold it with `state.drag = {x:0,y:0,orbit:0,moved:0}`).
-- To see another outfit, override the context: `window.buddyContext = () => ({ ...orig(), mode: 'work' })` then `Buddy.update(buddyContext())`.
-- Screenshots right after a programmatic scroll are sometimes blank; take a second one.
+- **Server:** from the repo root, `npx http-server . -p 8765 -c-1`. The app is at `http://localhost:8765/index.html`.
+  A `.claude/launch.json` for the preview pane is fine (`.claude/` is gitignored).
+- **Dex's models** (flag-off checks only; city mode needs none): fetch them into the gitignored `models/`:
+  - `curl -s --compressed "https://apps.jacksonhamm.ca/models/<name>?v=<n>" -o models/<name>`
+  - `ski.glb`, `work.glb`, `camp.glb`, `gym.glb` at `?v=3` (`MODELS` in rider.js); `skis.glb?v=1` (gear.js);
+    `anims.json?v=3` (motion.js)
+- **Fake data only.** Seed a made-up `daybook_v1` on localhost with a script kept outside the repo: tasks, a shift, a
+  training day, shakes, a reminder that has gone by, and a pay period inside its submit window. Never screenshot the
+  live site with real data.
+- **Headless browsers:** Chrome or Edge with `--headless=new --mute-audio` and a throwaway `--user-data-dir`.
+- **Seeded runs:** for frozen-frame comparisons, use a scratch copy of the repo outside it, with a tiny script that
+  seeds `Math.random` and stubs `Date` before anything else runs. Never add test files to the repo.
+- **Notched-iPhone inset:** desktop emulation reports a 0px safe-area inset. In the scratch copy, replace
+  `env(safe-area-inset-top)` with `var(--sat, 0px)` and set `--sat: 47px` to check the header and anything placed
+  below it.
+- **Sync tests:**
+  - Never run `wrangler dev` on the repo root (it reloads forever), and never use `--remote`.
+  - Copy the repo to a scratch folder with the assets in `./public`, and give that copy's `.dev.vars` a throwaway
+    test sync code, hashed the way `src/worker.js` expects.
+  - Two "devices" are two origins with separate storage, e.g. `localhost:8787` and `127.0.0.1:8787`.
+- **Stepping frames:** the preview pane throttles animation when hidden, so step by hand: `Buddy._.frame(t, true)`
+  (and `City._.frame(t)` once the city exists).
+  - Move Dex's camera with `Buddy._.state.camDist` and `camY`; swing it with `state.orbit` (hold it with
+    `state.drag = {x:0,y:0,orbit:0,moved:0}`).
+  - To see another outfit, override the context: `window.buddyContext = () => ({ ...orig(), mode: 'work' })` then
+    `Buddy.update(buddyContext())`.
+- **Blank screenshots:** one taken right after a programmatic scroll can come out blank. Take a second one.
+- **Drag-down to go home** is touch-only. Use the mobile preset (it emulates touch), or synthetic `TouchEvent`s built
+  with `new Touch({ identifier, target, clientX, clientY })`: start, move 150px down, end.
+- **Touch look in rooms** (Phase 1): synthetic `TouchEvent`s fire no pointer events and never scroll, so use real
+  touch input: CDP `Input.dispatchTouchEvent` with touch emulation on (moves of about 120px, sideways and up-down).
+- **Reduced motion:** use emulation, or stub `matchMedia` before load in the scratch copy.
+- Screenshots and scratch files stay outside the repo.
 
 ## Performance
 

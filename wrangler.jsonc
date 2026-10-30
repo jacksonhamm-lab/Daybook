@@ -1,10 +1,10 @@
 {
-  // Daybook + the workout app on one private hostname (same origin, so they share localStorage).
-  // Access control is a Cloudflare Access application on apps.jacksonhamm.ca, set in the dashboard.
+  // Daybook + the workout app on one hostname (same origin, so they share localStorage).
+  // No Cloudflare Access since 2026-09-19: the sync and push APIs check the sync code.
   "name": "daybook",
   "main": "src/worker.js",
   "compatibility_date": "2026-09-17",
-  // No public *.workers.dev or preview URLs: they would bypass Access.
+  // No *.workers.dev or preview URLs: the app lives on this one hostname only.
   "workers_dev": false,
   "preview_urls": false,
   "routes": [{ "pattern": "apps.jacksonhamm.ca", "custom_domain": true }],
