@@ -8,6 +8,15 @@ _None right now. Add new ones here with what you did, what happened, and on whic
 
 ## Fixed
 
+### 7. Back shrinks into the wrong chip after a page jump (2026-10-30)
+- **Cause:** the chip a page opened from (`GROW.chip`) was saved only on the animated open and
+  never cleared, and `goHome` used it whenever it was set. After a number key or a `data-tab`
+  button took you to another page, back shrank into the chip opened earlier (Fuel, key 2, ‹ went
+  into Fuel instead of Focus).
+- **Fix:** every open saves `{ k, tab }`; `placeKey()` uses it only while you're still on that
+  page, else the page's own chip. `goHome` reads it before going home, measures `homeTarget(k)`
+  on the new home, then clears it.
+
 ### 1. Sheets are hard to slide closed (2026-09-30)
 - **Cause:** a sheet could only be dragged by its handle bar, a 42×5px target. If the
   browser took over the touch (to scroll), the drag was never ended, so the sheet could

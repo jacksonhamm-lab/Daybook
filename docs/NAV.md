@@ -32,7 +32,9 @@
   | Jobs | Jobs | Hustle |
 - **Grow and shrink.** Tapping a chip grows it into the page; going back shrinks the
   page into that chip. Back = the ‹ button, Escape, the browser back, or dragging the
-  page down from the top.
+  page down from the top. If a number key or a button has jumped to another page since,
+  back shrinks into that page's own chip instead (`placeKey()` gives the place,
+  `homeTarget(k)` the element).
 - **Home base is always Dex.** He wants no bottom nav and no in-page tab strip: the
   buttons on the scene are the only menu, and exiting a page always returns to him.
   A page shows just a ‹ button and its name.

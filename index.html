@@ -2942,13 +2942,24 @@ const rectClip = r => `inset(${r.top}px ${innerWidth - r.right}px ${innerHeight 
 function veil(color) { const v = document.createElement('div'); v.className = 'grow'; v.style.background = `radial-gradient(120% 90% at 50% 20%, color-mix(in srgb, ${color} 30%, #0b0d14), #07080d)`; document.body.append(v); return v; }
 // Timers, not animation promises, drive each step: an animation can stall (tab hidden,
 // low-power mode) and navigation must never get stuck waiting for it.
-const GROW = { busy: false };
+const GROW = { busy: false, chip: null };
+// The place you're in. Strength, Stamina and Fuel all open Train, so it comes from the chip that
+// opened the page (GROW.chip), unless a number key or a button has jumped to another page since.
+function placeKey() {
+  const c = GROW.chip;
+  if (c && c.tab === S.ui.tab) return c.k;
+  const p = TABS.find(x => x.k === S.ui.tab);
+  return p && p.attr;
+}
+// What going back shrinks into: that place's chip on the home stage.
+const homeTarget = k => k ? $(`#v-today .attr[data-k="${k}"]`) : null;
 function openPage(v, chip) {
   const tab = v.split(':')[0], p = TABS.find(x => x.k === tab);
   if (!p || GROW.busy) return;
   if (tab !== S.ui.tab) sfx('open');
+  GROW.chip = { k: (chip && chip.dataset.k) || p.attr, tab };   // on every path, the quick one included
   if (REDUCED || !chip || !chip.animate || tab === S.ui.tab) { if (tab !== S.ui.tab) history.pushState({ page: tab }, ''); return goAttr(v); }
-  GROW.busy = true; GROW.chip = chip.dataset.k;
+  GROW.busy = true;
   const veilEl = veil(chip.style.getPropertyValue('--c') || p.color), from = rectClip(chip.getBoundingClientRect());
   veilEl.animate([{ clipPath: from, opacity: .7 }, { clipPath: 'inset(0px 0px 0px 0px round 0px)', opacity: 1 }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
   setTimeout(() => {
@@ -2965,13 +2976,15 @@ function goHome(fromPop) {
   if (GROW.busy) { setTimeout(() => goHome(fromPop), 250); return; }
   if (!fromPop && history.state && history.state.page) { history.back(); return; }   // popstate brings us back here
   closeSheet(); sfx('back');
-  if (REDUCED || !document.body.animate) return switchTab('today');
+  if (REDUCED || !document.body.animate) { switchTab('today'); GROW.chip = null; return; }
   GROW.busy = true;
+  const k = placeKey();   // before switchTab: it reads the page you're leaving
   const veilEl = veil(p.color);
   veilEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 170, easing: 'ease-out', fill: 'forwards' });
   setTimeout(() => {
     switchTab('today');
-    const chip = $(`#v-today .attr[data-k="${GROW.chip && TABS.find(x => x.k === from) ? GROW.chip : p.attr}"]`) || $(`#v-today .attr[data-k="${p.attr}"]`), to = chip ? rectClip(chip.getBoundingClientRect()) : 'inset(45% 45% 45% 45% round 20px)';
+    const chip = homeTarget(k) || homeTarget(p.attr), to = chip ? rectClip(chip.getBoundingClientRect()) : 'inset(45% 45% 45% 45% round 20px)';
+    GROW.chip = null;   // only now: the target is measured on the re-rendered home
     veilEl.animate([{ clipPath: 'inset(0px 0px 0px 0px round 0px)', opacity: 1 }, { clipPath: to, opacity: .35 }], { duration: 420, easing: 'cubic-bezier(.3,.7,.2,1)', fill: 'forwards' });
     setTimeout(() => { veilEl.remove(); GROW.busy = false; chip && pop(chip); }, 440);
   }, 180);
