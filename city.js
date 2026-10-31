@@ -3764,6 +3764,7 @@ async function initGraphics() {
   /* a phone can drop the context in the background: wait, then rebuild what only lived on the GPU */
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lost = true; APP.log('webgl context lost'); });
   canvas.addEventListener('webglcontextrestored', () => { S.lost = false; try { bakeShadows(); resize(); } catch (e) { APP.log(e); } });
+  renderer.debug.checkShaderErrors = RIG;   /* only the test rig: checking costs compile time and the look is settled */
   renderer.autoClear = false; renderer.info.autoReset = false; renderer.setPixelRatio(1);
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace; renderer.toneMapping = THREE.NoToneMapping;
   THREE.ColorManagement.enabled = false;
