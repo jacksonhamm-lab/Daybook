@@ -3794,7 +3794,7 @@ async function initGraphics() {
   const skyMir = new THREE.Mesh(skyG, skyM({ MIRROR: 1 }, THREE.FrontSide)); skyMir.frustumCulled = false; skyMir.renderOrder = -10;
 
   /* water: one big plate */
-  const W = new MB(8); W.set({ kind: K.CUT, c: 0x0d1a2b, id: 0 }); const S = 9000; W.quad([-S, -2, S], [S, -2, S], [S, -2, -S], [-S, -2, -S]); const gWater = W.geom();
+  const W = new MB(8); W.set({ kind: K.CUT, c: 0x0d1a2b, id: 0 }); const SEA = 9000; W.quad([-SEA, -2, SEA], [SEA, -2, SEA], [SEA, -2, -SEA], [-SEA, -2, -SEA]); const gWater = W.geom();
   const world = new THREE.Mesh(gWorld, city.mat), far = new THREE.Mesh(gFar, city.mat), water = new THREE.Mesh(gWater, city.mat);
   [world, far, water].forEach(m => m.frustumCulled = false);
   const worldCells = splitCells(gWorld, 280).map(g => new THREE.Mesh(g, city.mat));
