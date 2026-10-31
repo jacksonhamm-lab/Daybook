@@ -9,6 +9,7 @@ Start here before touching code.
 |---|---|
 | `index.html` | The whole app: CSS, markup and the main script (~3,500 lines). No build step. |
 | `rider.js` | Dex, the 3D character: four Tripo models (ski, gym, work, camp) on the Today stage, their scenes, props and camera. |
+| `city.js` | The city home and shop room, loaded only with the flag on (`?city=1`). All 3D is built in code; the red HUD lives in a shadow root. Reads and acts on the app through `window.CityApp`. See docs/CITY.md. |
 | `perf.js` | The performance tiers and Auto's step-down, shared by Dex and the city (see Performance). Sets `html[data-perf]` and `window.Perf` when imported. |
 | `motion.js` | His routines from motion-captured clips: walking between spots, picking things up, closing his fingers on props. |
 | `dress.js`, `gear.js` | The cel-shading materials and ink outline (`dress.js`); skis, poles and finger poses (`gear.js`). |
@@ -95,7 +96,7 @@ They only exist on the device that ran it, so `syncAuto()` only un-ticks an auto
   Personal, and `tasksOn`, `slipped` and `overdue` skip tasks whose `cat` isn't in `CATS` (`knownCat`), so Today,
   Plan, Tomorrow, Needs a decision, the overdue roll-over and the app badge leave them alone. XP, trophies and the
   clear-day check still count every task.
-- **`BUILD`** (top of the main script, now `'p0'`) is shown as "Build p0" at the bottom of Settings › Sync, so each
+- **`BUILD`** (set as `window.DAYBOOK_BUILD` in `<head>`, now `'p1'` on `city-p1`; `city.js` must match) is shown as "Build p0" at the bottom of Settings › Sync, so each
   device can show which copy it runs. Bump it when a release changes the data's shape.
 
 ## Code map (index.html)
@@ -122,6 +123,7 @@ Line numbers drift, so search for the section comment instead.
 | `/* ---------- sheets` | `SHEETS` (compose, task, shift, session, job, note, book, progress, settings), `openSheet`, `closeSheet`. |
 | `/* ---------- render` | `render()`: rebuilds the current tab's HTML, mounts Dex, keeps animations running. |
 | `/* ---------- actions` | One click handler, switching on `data-act`. Input, change and submit handlers follow. |
+| `/* ---------- the city's way in` | `window.CityApp`, only with the flag on: how `city.js` reads and acts on the app (docs/CITY.md). |
 | `/* ---------- boot` | The boot splash, one-time migrations (`migrateProgram`, the skis default), first render, program load, sync, service worker. |
 
 ## How rendering works
@@ -160,7 +162,7 @@ Line numbers drift, so search for the section comment instead.
     test sync code, hashed the way `src/worker.js` expects.
   - Two "devices" are two origins with separate storage, e.g. `localhost:8787` and `127.0.0.1:8787`.
 - **Stepping frames:** the preview pane throttles animation when hidden, so step by hand: `Buddy._.frame(t, true)`
-  (and `City._.frame(t)` once the city exists).
+  (and `City._.frame(t)` with `?cityrig`).
   - Move Dex's camera with `Buddy._.state.camDist` and `camY`; swing it with `state.orbit` (hold it with
     `state.drag = {x:0,y:0,orbit:0,moved:0}`).
   - To see another outfit, override the context: `window.buddyContext = () => ({ ...orig(), mode: 'work' })` then

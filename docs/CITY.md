@@ -8,6 +8,9 @@ behind a per-device flag, and the Dex home stays the default until the switch-ov
   stopping for any reason.
 - The repo is public, so this file holds technical state only. Personal details (schedule, courses, dates) stay out.
 - The full build prompt is kept outside the repo; section numbers such as §13.5 refer to it.
+- **The approved look test is the source of the look.** It's kept outside the repo. He approved how it looks and runs
+  on his iPhone, so `city.js` starts from it and the greybox phase is skipped. Where older text below disagrees with
+  what's built, the build and this note win.
 
 ## The design in brief
 
@@ -27,8 +30,8 @@ behind a per-device flag, and the Dex home stays the default until the switch-ov
   more of the room, scroll the page back to the top.
 - **Levels, XP and trophies stay.** The level badge in the top bar opens Progress. In city mode Progress also holds
   the six stats.
-- **Phase 1 is all of that as a greybox:** block geometry in the right places, the real cameras, flights, layouts and
-  hotspots, under the real pages. The art comes in Phases 3–5.
+- **Phase 1 is the look test in the app:** the real city, the shop with real Work data, and the other five districts
+  opening their existing pages. Their rooms come in Phase 4.
 
 **Places.** The data comes from `attributes()`, unchanged; its `k`, `c`, `icon` and `go` drive the icons.
 
@@ -42,16 +45,16 @@ behind a per-device flag, and the Dex home stays the default until the switch-ov
 | Jobs (School from Phase 2) | `hustle` `#30d158` | A stone castle on a forested point over the water | `jobs:` | `castle` | Desk (applications). School hotspots are declared for Phase 2. |
 
 **Composition:** the mountain runs across the back, the water along the front and right, and the skyline stands in
-rows across the water. The rail loops the island and the megatower is the tallest point. **Text in 3D:** none in
-Phase 1 (sign and ad frames are blank). From Phase 3, signs carry generic words only. Never logos, crests, real
-brands, game names or the real shop's name. The 3D neon may run warmer than the icon colour so the city stays cozy;
+rows across the water. The rail loops the island and the megatower is the tallest point. **Text in 3D:** signs and
+ads carry made-up words only. Never logos, crests, real brands, game names or the real shop's name. The 3D neon may run warmer than the icon colour so the city stays cozy;
 the icons keep their exact colours.
 
 **Ground rules that shape every phase:**
-- **A place, not a UI.** The neon lives in the world. Pages, sheets and the top bar keep their current card style.
-  Banned from any new UI, the icons and the hotspots: scanlines, glitch text, hex grids, reticles, leader lines,
-  monospace or cyan-on-black readouts, clipped or angled panels, holographic rings. Text always sits on a card or a
-  solid pill.
+- **The red HUD is wanted.** He lifted the earlier ban: the city and the rooms carry the tasteful red HUD from the
+  look test (angled panels, thin rules, small monospace tags, floating labels). It lives in a shadow root inside
+  `city.js`, so its styles and the app's never touch. Pages, app sheets and the toasts keep their current card style
+  for now. Everything in the HUD that looks like his data is his data; moving bars and the side ladder are decoration
+  and carry no claims.
 - **Real 3D, built in code:** geometry, materials and light. No paintings, image layers, depth maps, panoramas or
   flat picture planes. Nothing generated, no credits. The style is flat cel shading: bold colour blocks, neon rim
   light, violet and teal shadows (never grey), ink outlines, banded skies and a big moon.
@@ -70,9 +73,10 @@ the icons keep their exact colours.
   `homeTarget(k)` and the `GROW.chip` fix), `perf.js`, the sync safety fix (Worker guard, `KNOWN`, unknown task
   categories, `BUILD`), dead quests code out, and these docs. Nothing visible changes except "Build p0" in
   Settings › Sync.
-- **Phase 1, the greybox city and rooms** (next): the flag and loader, a greybox island with six districts, floating
-  icons, fly-ins, and six first-person greybox rooms under the existing pages, each with working hotspots and clutter
-  slots.
+- **Phase 1, the city and the shop in the app** (built on `city-p1`, see Handoff): the flag and loader, the look-test
+  city as home, the flight, the shop with real clock, shifts and pay, and the other five icons opening their existing
+  pages. The greybox is skipped. Sound is not part of this; a new sound set is its own later phase (Phase S), and the
+  existing `sfx()` cues stay.
 - **Phase 2, School** (1–2 sessions, its own prompt). Precondition: steps 1 and 2 of the
   [School order](#school-order-and-data-shapes). Built like Work: where Work tracks pay period, hours and pay, School
   tracks **the week, study hours and what's due**.
@@ -140,41 +144,40 @@ the icons keep their exact colours.
   - The KV models stay; deleting them is his call.
 - **Totals:** about 18–30 sessions over 3–5 months, 0 credits.
 
-## The flag (Phase 1, not built yet)
+## The flag
 
 - **Storage:** `localStorage.daybook_home = 'city'`, or absent. It's per device, never synced, and has no Settings UI.
-  Absent means the Dex home runs exactly as today.
-- **URL:** `?city=1` or `?city=0`, and `?perf=1` (the perf card). Strip them with `history.replaceState`, keeping
+  Absent means the Dex home runs exactly as before.
+- **URL:** `?city=1` turns it on, `?city=0` off. The parameter is stripped with `history.replaceState`, keeping
   `history.state`.
-- **Quick add (Spotlight only, not the per-day `.qadd` forms):** input that is exactly `city on`, `city off` or
-  `city perf` after trimming, in any case (iOS capitalises). Intercept it before `parseQuick`.
-  - `spotPreview` shows "Turn city on", "Turn city off" or "Show/hide perf card". Enter applies it, with no task and
-    no XP.
-  - `city on` / `city off` save the flag and reload. The Home Screen app has its own storage and no URL bar, so this is
-    how it gets flipped there.
-  - `city perf` toggles `localStorage.daybook_cityperf` and shows or hides the card live.
-- **Loader:** replace `<script type="module" src="rider.js">` with:
-  - a tiny inline classic script in `<head>` that reads the flag, handles the URL params, sets `window.DAYBOOK_CITY`
-    and `window.DAYBOOK_BUILD` (Phase 1 bumps it to `'p1'`; the main script's `BUILD` reads it), and injects one
-    `<link rel="modulepreload">` for the chosen entry only, so rider.js still starts fetching during parsing as it
-    does today
-  - an inline module that runs
-    `import(window.DAYBOOK_CITY ? './city.js?v=' + BUILD : './rider.js?v=' + BUILD)`, **never both** (the preload URL
-    must match exactly)
-  - Each module self-mounts the way rider.js does today. index.html keeps `let CITY = !!window.DAYBOOK_CITY`, and
-    every `City` call is guarded with `window.City &&`.
-- **Same build:** sw.js is network-first per request, so a flaky network can mix builds. city.js reads `v` from
-  `import.meta.url` and fetches `city/layout.json?v=…` and `city/rooms.json?v=…`; it exports `BUILD`, and a mismatch
-  with `window.DAYBOOK_BUILD` is treated as an import failure (below).
+- **Not built:** the `city on` / `city off` / `city perf` quick-add words and `?perf=1`. The Home Screen app has its own
+  storage and no URL bar, so it can't be flipped until the quick-add words exist. The HUD's GFX button is the perf
+  readout for now.
+- **Loader:** a tiny classic script in `<head>` reads the flag, handles the URL, sets `window.DAYBOOK_CITY` and
+  `window.DAYBOOK_BUILD` (the main script's `BUILD` reads it), and injects one `<link rel="modulepreload">` for the
+  chosen entry only. An inline module then imports `./city.js?v=<build>` or `./rider.js`, **never both**. Only with the
+  flag on, it also adds a small style that hides the app's top bar, FAB and empty main on the home.
+- **Same build:** `city.js` exports `BUILD`. If it doesn't match `window.DAYBOOK_BUILD`, it throws, and that counts as
+  an import failure. Bump the value in three places together: the head script (twice) and `city.js`.
 - **Requests:**
-  - **Flag off:** no request for `city.js` or `city/*.json`.
+  - **Flag off:** no request for `city.js`.
   - **Flag on:** no request for rider.js, motion.js, gear.js, dress.js, buddy.js, three-vrm, GLTFLoader, `models/*`,
-    `anims.json` or `scenes/*`. city.js imports only `three` (import map),
-    `./vendor/jsm/utils/BufferGeometryUtils.js` and `./perf.js`.
-- **If city.js fails to import, `city/layout.json` fails to load, or the build doesn't match:** call
-  `logProblem('city', e)`, set `CITY = false` for the session, re-render (the Dex home), then import rider.js.
-- **City mode writes only** `daybook_home` and `daybook_cityperf`, both per device. Phases 0 and 1 add no synced key
-  and no task field.
+    `anims.json` or `scenes/*`. `city.js` imports only `three` (import map, vendored r169, the same version as the look
+    test) and `./perf.js`. It adds no external script or font. The app's existing Inter and Unbounded stylesheet still
+    loads, because the existing pages use it.
+- **If `city.js` fails to import, the build doesn't match, or WebGL won't start:** `CityApp.fallback` logs it with
+  `logProblem('city', e)`, shows the first, friendly reason as a toast, drops the flag for the session, re-renders the
+  Dex home and imports rider.js.
+- **City mode writes only** `daybook_home`. No new synced key, no new task field. Clock actions go through the app's own
+  state and `save()`, so they sync as they always did.
+- **The bridge:** `city.js` has its own `S` and `$`, so it reaches the app through `window.CityApp` (index.html, flag on
+  only): `tab`, `covered`, `act(name, dataset)` (runs an existing `data-act` exactly as a tap would), `open(go, el)`,
+  `clockIn` (the same state change as `clock-in`, with Undo), `clock`, `home`, `work`, `sfx`, `log`, `fallback`. `home`
+  and `work` only call the functions the pages use. The app calls `City.update()` at the end of `render()`, and
+  `homeTarget` asks `City.chip(k)` for what a page shrinks back into.
+- **Fonts:** system only, no download. The look test's five web fonts are replaced by condensed and heavy system
+  fonts (`--hud-font`, `FONT_EN`, `FONT_DISP`, `FONT_JP`, `FONT_MONO`). Bundling the originals is a decision for him.
+- **Test rig:** `?cityrig` stops the loop, and `City._` steps frames (`frame`, `city`, `fly`, `room`, `sheet`, `skip`).
 
 ## Back paths
 
@@ -203,10 +206,11 @@ Shown on the perf card.
 | Smooth (opt-in) | 60 / 30 | as Balanced | city ≤1.75, rooms 1.5 | as Balanced |
 
 - **City:** ≤40 draw calls and ≤100k triangles (Saver ≤30 and ≤60k).
-- **Phase 1 greybox, every tier:**
-  - city: ≤24 draw calls, ≤30k triangles, ≤10 MB of textures (about 13 draws: 6 districts, ground, water,
-    mountain, skyline, windows, neon, glow)
-  - each room: ≤15 draw calls, ≤20k triangles, ≤4 MB, clutter slots included (about 150 tris, 0 draws)
+- **The look test's real numbers replace these for now.** It runs its own adaptive quality (resolution first, then
+  bloom and reflections; 60 fps, 30 when idle), kept as approved. At 390×844: city about 600k triangles and 74 draw
+  calls, shop about 647k and 61. At 1366×768: city about 604k and 81, shop about 718k and 68. That's over the older
+  budgets in this section, which were written before the look test and don't drive it. Settings › Performance doesn't
+  change the city's quality yet.
 - **Rooms with clutter (Phase 3 on):** about 11 draws, ~68k triangles and ~1.8 MB in Balanced; about 11 draws and
   ~49k in Saver. Clutter's own share is +2 draws (`clutterA`, `clutterB`), ≤21k triangles plus its H pieces' ink,
   0 MB of textures. If a room runs over, thin `clutterB`'s farthest groups first, then `clutterA`'s far mid pieces;
@@ -271,78 +275,62 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 ## Handoff
 
-Technical state only. Updated 2026-10-30.
+Technical state only. Updated 2026-10-31.
 
-- **Branch:** `city-p1`, made from `main` at `a92ca26`. Local only, never pushed. The head is this Handoff commit, on
-  top of `e69ba08`; `git log --oneline main..city-p1` lists seven commits.
-- **Part A (Phase 0): done.** Every seam is committed and tested:
-  - P0.1 `67b2956` home render split (`renderStage()`, `renderToday(part)`, `todayShared()`): done
-  - P0.2 `d354856` `GROW.chip = { k, tab }` on every `openPage` path, `placeKey()`, `homeTarget(k)` (BUGS.md #7):
-    done
-  - P0.3 `9452647` `perf.js`, cap-aware `watchPerf`, `window.Perf`: done
-  - P0.4 `ee4a6ca` Worker guard in the `syncApi` PUT, `KNOWN` carry-through in `mergeState`, `catOf`/`knownCat`,
-    `BUILD = 'p0'`: done
-  - P0.5 `876b78b` dead quests code out: done
-  - P0.6 `e69ba08` docs: this file, ARCHITECTURE.md fixes, `docs` in `.assetsignore`, stale Access comments in
-    `wrangler.jsonc`: done
-- **Gate 0:** decisions 1, 2 and 4 answered with the defaults. Decision 3 answered, see memory. Drag-to-look on the
-  phone requested for Part B (§8.9): a sideways drag on the room band looks around, yaw only, and vertical drags still
-  scroll the page.
-- **Tests (§13.2), all pass.** Flag off, headless Chrome, fake data, scripts kept outside the repo.
-  - **Same home:** the innerHTML of the home, every page with each module open and closed, every sheet and Spotlight
-    (41 captures) matches `main` at 390×844 and 1366×768. The only difference is the Build line in Settings › Sync.
-    A `main`-against-`main` control gives 41/41.
-  - **Frozen Dex frames:** byte-identical at 390×844. At 1366×768, under 25 px differ by 1/255, within `main`'s own
-    run-to-run noise.
-  - **Back paths:** 64/64 at both sizes, with real touch drags at 390×844, animated and reduced motion.
-    - ‹, Escape, browser back and the drag down each shrink into the right chip; Escape closes a sheet or Spotlight
-      first.
-    - Key 1 and the island tap go home with no veil.
-    - Fuel, then keys 2/3/4/5, then ‹ shrinks into focus/grind/fuel/hustle; `data-tab` buttons and the home pills
-      shrink into their chips.
-    - Reduced motion stores `{ k: 'fuel', tab: 'training' }` and clears it on the way home.
-    - `main` scores 20/64 on the same suite (Fuel, key 2, ‹ shrinks into Fuel).
-  - **Perf:**
-    - Every tier from Settings (at DPR 3 and 1), every stored pick at boot and a weak device give the same
-      `data-perf`, Dex pixel ratio and canvas as `main`.
-    - `Perf.watch`: 10 fps on full cap steps down to Saver at 4 s with `main`'s log line. Half cap, cap 0, a gap over
-      500 ms, hidden and reduced motion never count. A cap change restarts the 4 s window, and a picked tier never
-      steps down.
-    - End to end, a blocked main thread steps Auto down on both builds. `perf.js` loads once, with no `?v=` copy.
-  - **Sync, §13.2 checks 1–9,** on scratch `wrangler dev --local` Workers:
-    - 300 generated known-key pairs merge byte-identically to `main`'s `mergeState`.
-    - Unknown key `zz`: taken from the server, the server's copy wins when both have it, a local-only copy is kept.
-      `ui` is never sent.
-    - The Worker guard keeps `zz` on a PUT without it, replaces it when sent and stores `null`. The 409, 400 and 401
-      responses are unchanged.
-    - Two devices on the new client and Worker, with `zz` and four `cat:'school'` tasks, converge with both
-      untouched, and no school task shows anywhere.
-    - Controls: `main`'s client and Worker drop `zz`; `main`'s client against the new Worker keeps it.
-  - **Unknown categories in the app:** six `cat:'school'` tasks never show on home or any page and never crash. XP
-    still counts them, and `noteClearDay` won't clear a day while one is open.
-  - The syntax check and `node --check` pass. The console and problem log stay clean throughout.
+- **Branch:** `city-p1`, local only, never pushed. It was the same as live `main` at `bdacab4` (Phase 0 and the XP change
+  are live), and the city commits sit on top. `git log --oneline bdacab4..city-p1` lists them. `BUILD` is `'p1'` on this
+  branch only. Don't push `city-p1` itself until Cloudflare branch builds are confirmed off (§15).
+- **Built (Phase 1):** `city.js` (the look test's world, people, flights, HUD and quality logic, in a shadow root), the
+  flag and loader, and `window.CityApp`. See [The flag](#the-flag).
+  - Home: the city replaces the Dex home with the flag on. Work flies into the shop. Plan, Train, Cardio, Fuel and Jobs
+    open their existing pages through `openPage`, and back returns to the city. The sixth icon says Jobs because that's
+    the existing route; it becomes School in Phase 2.
+  - The app's Progress, Quick add and Settings are reached from the HUD's top strip (DAYBOOK, +, the initial).
+  - Shop: real clock (Undo on clock in and clock out, Break), the real period's shifts (a row opens the existing shift
+    sheet) and pay. Pins and panels on the home read `attributes()`, tasks, level and sync.
+  - Removed: `SHIFT_ROWS`, EXAMPLE DATA, the fake toasts, fake hours on the till, ledger and notepad props, the fake
+    audio readout. The till's sale lines and the tailor's measurements stay as shop props.
+  - Fixed: the clock-out timer no longer freezes, and the first friendly failure message is the one shown.
+  - Added: recovery after a lost WebGL context; the city stops drawing on other pages and under a sheet.
+  - Ad names now made up: ZENKIRA, CHISPAZ, OJIVEX-9, ZAPTRO, PLAYORA, NOCTELO, TRONZO. A quick web search found no brand
+    for any of them. That isn't a trademark clearance.
+- **Fonts, what changed:** the look test's five web fonts are gone. The HUD uses a condensed system font, signs a heavy
+  system sans, Japanese the system Gothic. Sign words were resized to fit. On Windows that's Bahnschrift, Arial Black and
+  Yu Gothic; on iPhone it should be Avenir Next Condensed, Avenir Next and Hiragino, not yet seen.
+- **Tests, all pass, headless SwiftShader, fake data, scripts outside the repo:**
+  - **Flag on,** 63/63 at 390×844 and 1366×768: city, flight, shop, clock in, Undo, clock out, Undo, break, shifts, pay,
+    back, browser back, Escape, all five other districts, Settings, Quick add, Progress. Clocking in shows on the Hours
+    page. No Dex file is requested.
+  - **Counts,** against the look test: 1366×768 is identical (city 81 calls, 603,994 triangles; shop 68, 718,254). At
+    390×844, city 74 calls and 600,394 triangles (look test 601,794), shop 61 and 646,678 (648,078).
+  - **Flag off** against `bdacab4`, reduced motion: 26/26 captures identical at both sizes (home, pages, sheets,
+    Spotlight, clock, chip and back) apart from the Build line, with the same requests and no city file.
+  - **Service worker:** with the flag on, `city.js` and three are cached, and a reload with the server gone starts the
+    city and clocks in. Registration was forced on in the scratch copy, because the app only registers it on https.
+  - **Failures:** no WebGL and a blocked `city.js` both show their message and fall back to Dex. A lost and restored
+    context draws again.
+  - **Real time, no rig,** at 280×500: flight, tap-skip, live timer, the idle stop under sheets and on pages.
+  - **Sync,** on a local scratch Worker: city device and flag-off device exchange clock in, clock out, Undo and a shift.
+    No new synced keys. Dex itself was stubbed out on the second device to keep the machine responsive.
+- **Not tested:** a real iPhone, real FPS, heat, battery, Safari, iOS fonts and memory limits, the real sync code, and
+  the Home Screen app.
 - **Open:**
-  - `origin/main` has one commit that isn't on `city-p1` (`8edd767`, task XP 10 → 30, one line in index.html). A test
-    merge is clean. Merge it into `city-p1` before the Gate A push and re-run the HTML diff against `origin/main`.
-  - A scratch worktree has `main` checked out, so `git checkout main` in the repo is refused until it's removed.
-  - Don't push `city-p1` itself until Cloudflare branch builds are confirmed off (§15). Gate A pushes `main` only.
-  - Key 1 and the island tap go home through `switchTab`, which doesn't clear `GROW.chip`, so Fuel, key 1, key 4, ‹
-    still shrinks into Fuel (same as `main`). Phase 1's keys 2–5 room swap would show the wrong room after that trip.
-  - With the flag off, focus lands on `<body>` after going home (same as `main`). The icon taking focus is Part B.
-  - `noteCard` still reads `CATS[n.cat]` directly (already guarded; an unknown category renders as uncategorised).
-  - The app badge from `slipped()` leaves out unknown-category reminders; the Worker's push badge still counts them.
-    Phase 2 filters both.
-  - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged, so a device without one PUTs on
-    each sync (a rev bump, no data loss).
-  - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command. Left alone because
-    Phase 0 changes worker.js only for the guard.
-  - Dead `#v-today .grid` and `#v-today .slip-card` rules remain in the first 760 px media query.
-- **Backup:** `city-p1-2026-10-30.bundle`, made after this commit and kept outside the repo (decision 4).
-- **Gate A:** not asked yet. **Gate A device check: not yet confirmed.**
+  - He's asked to confirm the shop name "Sastrería Oro", and whether to bundle the original fonts (they weren't
+    downloaded, no assets in this phase).
+  - The flag can't be flipped in the Home Screen app, because the quick-add words aren't built.
+  - The Inter and Unbounded stylesheet still comes from Google Fonts for the existing pages, with or without the flag.
+  - Settings › Performance doesn't drive the city's quality yet, and the city is well over the older budgets above.
+  - After a context restore, three logs harmless "object does not belong to this context" warnings while it frees the
+    old targets.
+  - With `?cityrig` on Windows, shader checks log a harmless compile warning. Outside the rig they're off.
+  - Key 1 and the island tap go home through `switchTab`, which doesn't clear `GROW.chip` (same as `main`).
+  - `noteCard` still reads `CATS[n.cat]` directly. The app badge leaves out unknown-category reminders while the
+    Worker's push badge counts them; Phase 2 filters both.
+  - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged, so a device without one PUTs on each
+    sync (a rev bump, no data loss).
+  - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command. Dead `#v-today .grid`
+    and `#v-today .slip-card` rules remain in the first 760 px media query.
 - **Next step:**
-  1. Merge `origin/main` into `city-p1` and re-run the HTML diff.
-  2. Gate A: he taps Settings › Export backup on the iPhone first. Push only on his go: merge `city-p1` into `main`
-     and push `main`. Confirm it's live (the `Build p0` marker, and the commit's check-runs for the Worker guard).
-  3. The §13.5 device check: every copy with the sync code shows "Build p0" and a clean sync, or is closed. Record
-     yes/no and the date here.
-  4. Then Part B: the flag and loader, the greybox city, icons and flight, then the shop room (Gate B).
+  1. He answers the two questions above.
+  2. His go to put this on the live site, still flag-off by default. Then the iPhone check at `?city=1`: looks, heat, FPS.
+  3. Fix what that finds, then Phase 2 (School) or the rooms, in his order. Sound is Phase S.
