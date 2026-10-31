@@ -16,7 +16,36 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
-<script type="module" src="rider.js"></script>
+<script>
+// The city home is a per-device flag: ?city=1 turns it on, ?city=0 off (docs/CITY.md). Off means Dex, as ever.
+(function () {
+  var on = false;
+  try {
+    var q = new URLSearchParams(location.search);
+    if (q.has('city')) {
+      if (q.get('city') === '1') localStorage.setItem('daybook_home', 'city');
+      else if (q.get('city') === '0') localStorage.removeItem('daybook_home');
+      q.delete('city');
+      var rest = q.toString();
+      history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+    }
+    on = localStorage.getItem('daybook_home') === 'city';
+  } catch (e) {}
+  window.DAYBOOK_BUILD = 'p1';
+  window.DAYBOOK_CITY = on;
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p1' : './rider.js'; document.head.appendChild(l);
+  if (on) {
+    document.documentElement.dataset.city = '';
+    var c = document.createElement('style');
+    c.textContent = 'html[data-city]{background:#05040a}html[data-city] body.home{overflow:hidden;overscroll-behavior:none}html[data-city] body.home .top,html[data-city] body.home .fab,html[data-city] body.home .ambient,html[data-city] body.home .main{display:none}';
+    document.head.appendChild(c);
+  }
+})();
+</script>
+<script type="module">
+if (window.DAYBOOK_CITY) import('./city.js?v=p1').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
+else import('./rider.js').catch(e => window.logProblem('page', e));
+</script>
 <style>
 @property --glow{syntax:'<color>';inherits:true;initial-value:#0a84ff}
 @property --p{syntax:'<number>';inherits:false;initial-value:0}
@@ -1103,7 +1132,7 @@ body.typing .dexpip{opacity:0;transform:translateY(24px) scale(.88);pointer-even
    read out of the old workout app. Set ticks and benchmark logs are per device (localStorage).
    ============================================================ */
 const KEY = 'daybook_v1';
-const BUILD = 'p0';   // shown at the bottom of Settings › Sync, so each device can show which copy it runs
+const BUILD = window.DAYBOOK_BUILD;   // set in <head>; shown at the bottom of Settings › Sync, so each device can show which copy it runs
 const PROGRAM_V = 2, SPLIT = ['D1', 'D2', 'D3', 'HIIT', 'D4', 'D5', 'REST'];   // program 2: five lifting days, one conditioning, one rest
 const CATS = {
   work: { label: 'Work',     color: '#0a84ff' },
@@ -2336,7 +2365,7 @@ function renderStage() {
 }
 // The Today modules, built on demand: Work embeds 'work' and Plan embeds 'decide'. With no part it returns the home.
 function renderToday(part) {
-  if (!part) return renderStage();
+  if (!part) return window.DAYBOOK_CITY ? '' : renderStage();   // the city draws its own home
   const { d, slip } = todayShared(), wk = curWeek();
   const apps = appsIn(wk), ag = +S.settings.appGoal || 0;
   const list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, left = list.length - done, ov = overdue();
@@ -2524,16 +2553,20 @@ function shiftEditor(d) {
 }
 
 // The pay period covering whichever week you're looking at.
+function payWhen(p) {
+  const td = today(), sd = submitDay(p), left = daysBetween(td, sd);
+  return td > p.end ? `Closed ${short(p.end)}`
+    : left < 0 ? `Hours sent to Len · paid ${DOW_LONG[dowIdx(p.payday)]}`
+    : left === 0 ? `Send hours to Len today · paid ${DOW_LONG[dowIdx(p.payday)]}`
+    : left === 1 ? `Hours to Len tomorrow · paid ${DOW_LONG[dowIdx(p.payday)]}`
+    : `Hours to Len ${DOW_LONG[dowIdx(sd)]} · ${left} days`;
+}
 function payCard() {
   const p = curPeriod(), td = today(), rate = +S.settings.rate;
   const hrs = periodHours(p), days = periodDates(p);
   const sd = submitDay(p), left = daysBetween(td, sd), elapsed = days.filter(d => d <= td).length;
   const worked = days.filter(d => shiftHours(S.shifts[d]) > 0).length;
-  const when = td > p.end ? `Closed ${short(p.end)}`
-    : left < 0 ? `Hours sent to Len · paid ${DOW_LONG[dowIdx(p.payday)]}`
-    : left === 0 ? `Send hours to Len today · paid ${DOW_LONG[dowIdx(p.payday)]}`
-    : left === 1 ? `Hours to Len tomorrow · paid ${DOW_LONG[dowIdx(p.payday)]}`
-    : `Hours to Len ${DOW_LONG[dowIdx(sd)]} · ${left} days`;
+  const when = payWhen(p);
   const half = days.slice(0, Math.floor(p.cyc / 2)), rest = days.slice(Math.floor(p.cyc / 2));
   const wk = (list, label) => `<div class="pw"><span>${label}</span><b>${fh(list.reduce((a, d) => a + shiftHours(S.shifts[d]), 0))}h</b></div>`;
   const ex = extraHours(p), total = hrs + ex;
@@ -2891,6 +2924,7 @@ function render() {
   $('#avatar').textContent = (S.settings.name || 'J')[0].toUpperCase();
   paintLevel();
   island.live(); tick();
+  window.City && City.update();
   // open reminders on the app icon
   try { const n = slipped().length; if (navigator.setAppBadge) (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {}); } catch (e) {}
   FX = {};
@@ -2942,7 +2976,7 @@ function placeKey() {
   return p && p.attr;
 }
 // What going back shrinks into: that place's chip on the home stage.
-const homeTarget = k => k ? $(`#v-today .attr[data-k="${k}"]`) : null;
+const homeTarget = k => !k ? null : window.City ? City.chip(k) : $(`#v-today .attr[data-k="${k}"]`);
 function openPage(v, chip) {
   const tab = v.split(':')[0], p = TABS.find(x => x.k === tab);
   if (!p || GROW.busy) return;
@@ -3062,6 +3096,7 @@ function toggleSet(btn) {
   syncAuto(); save();
 }
 function startRest(sec) { REST = { end: Date.now() + sec * 1000 }; island.mode = null; island.key = null; island.live(); }
+const clockInNow = () => { S.clock = { date: today(), startTs: Date.now(), brkMs: 0, breakTs: null }; };
 function clockOut() {
   const c = S.clock; if (!c) return;
   sfx('out');
@@ -3123,7 +3158,7 @@ document.addEventListener('click', e => {
     case 'tm-rep': { const t = task(); t.repeat = v === 'none' ? null : { t: v, dow: dowIdx(t.date || today()) }; if (t.repeat && !t.date) t.date = today(); t.doneOn = t.doneOn || {}; save(); return refreshSheet(); }
     case 'tm-del': { const t = task(); closeSheet(); const li = $(`.task[data-id="${t.id}"]`); return collapse(li).then(() => withUndo('Task deleted', () => { S.tasks = S.tasks.filter(x => x !== t); })); }
     case 'rollover': { const td = today(); return withUndo(`Moved ${overdue().length} to today`, () => overdue().forEach(t => t.date = td)); }
-    case 'clock-in': S.clock = { date: today(), startTs: Date.now(), brkMs: 0, breakTs: null }; haptic(15); sfx('in'); commit(); return island.toast('Clocked in', { icon: I.play, color: '#30d158' });
+    case 'clock-in': clockInNow(); haptic(15); sfx('in'); commit(); return island.toast('Clocked in', { icon: I.play, color: '#30d158' });
     case 'clock-break': { const c = S.clock; if (c.breakTs) { c.brkMs += Date.now() - c.breakTs; c.breakTs = null; } else c.breakTs = Date.now(); island.key = null; return commit(); }
     case 'clock-out': return clockOut();
     case 'apply-preset': { const [start, end, brk] = el.dataset.p.split('|'), d = el.dataset.date; S.shifts[d] = { ...(S.shifts[d] || {}), start, end, brk: +brk }; haptic(); commit(); if (SHEET) refreshSheet(); return island.toast(`${rel(d)} · ${fh(shiftHours(S.shifts[d]))}h logged`, { icon: I.hours, color: '#64d2ff' }); }
@@ -3433,6 +3468,58 @@ addEventListener('resize', () => {
   $$('.seg').forEach(s => placeInd(s, true));
   if (weekMode() !== lastMode) { lastMode = weekMode(); if (S.ui.tab === 'week') render(); }
 });
+
+/* ---------- the city's way in ----------
+   Only with the flag on. city.js is a module and can't see this script's names through its own
+   (it has its own S and $), so it reads and acts through this. Nothing here works out pay or
+   hours for itself: it asks the same functions the Work page does. */
+if (window.DAYBOOK_CITY) window.CityApp = {
+  tab: () => S.ui.tab,
+  covered: () => !!SHEET || $('#spot').classList.contains('on'),
+  log: e => window.logProblem('city', e),
+  sfx,
+  // run an existing data-act, exactly as if its button had been tapped on a page
+  act(a, data) { const b = document.createElement('button'); b.hidden = true; Object.assign(b.dataset, data, { act: a }); document.body.append(b); b.click(); b.remove(); },
+  open(go, el) { haptic(6); openPage(go, el); },
+  clockIn() { haptic(15); sfx('in'); withUndo('Clocked in', clockInNow); },
+  clock() {
+    const c = S.clock; if (!c) { const sh = S.shifts[today()], h = shiftHours(sh); return { on: false, brk: false, ms: 0, status: h ? `Not clocked in. Logged today ${t12(sh.start)} to ${t12(sh.end)}.` : 'Not clocked in.' }; }
+    return { on: true, brk: !!c.breakTs, ms: clockElapsed(), status: c.breakTs ? 'On break.' : `In since ${t12(hm(new Date(c.startTs)))}.` };
+  },
+  home() {
+    const A = attributes(), attrs = {}, plain = h => String(h).replace(/<[^>]+>/g, '').toUpperCase();
+    A.forEach(a => { attrs[a.k] = { go: a.go, bar: a.bar, lvl: a.lvl, val: plain(a.val) }; });
+    const { lvl, into, need } = levelFor(xpTotal()), d = today(), list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, slip = slipped().length, sh = S.shifts[d];
+    const sync = !SYNC.code ? 'SYNC OFF' : 'SYNC ' + String(SYNC.state).toUpperCase();
+    return { attrs, lvl, into, need, sync, initial: (S.settings.name || 'J')[0].toUpperCase(), overall: A.reduce((s, a) => s + clamp01(a.bar), 0) / A.length,
+      checks: [[!list.length || done === list.length, 'Tasks today', `${done}/${list.length}`], [!slip, 'Needs a decision', String(slip)], [true, 'Shift today', S.clock ? 'LIVE' : shiftHours(sh) ? fh(shiftHours(sh)) + 'H' : 'NONE'], [!SYNC.code || SYNC.state === 'ok', 'Sync', sync.slice(5)]] };
+  },
+  work() {
+    const p = periodFor(today()), td = today(), rate = +S.settings.rate, goal = +S.settings.hoursGoal;
+    const dates = periodDates(p), hrs = periodHours(p), ex = extraHours(p), total = hrs + ex;
+    const target = goal ? goal * p.cyc / 7 : 80, pend = inSubmitWindow(p) ? pendingDays(p) : [];
+    const past = [...Array(6)].map((_, i) => periodFor(iso(addDays(parse(p.start), -p.cyc * (5 - i))))), vals = past.map(x => periodHours(x) + extraHours(x)), sum = vals.reduce((a, v) => a + v, 0);
+    const cash = h => rate ? money(h * rate) : `${fh(h)}H`, tip = t => t.toUpperCase().replace(/ · /g, ' / ');
+    const rows = dates.map(d => {
+      const s = S.shifts[d] || {}, h = shiftHours(s), hr = t => +t.slice(0, 2) + +t.slice(3, 5) / 60, a = h ? hr(s.start) : 0, b = h ? hr(s.end) : 0, left = Math.max(0, Math.min(100, (a - 8) / 12 * 100));
+      return { d, h, dow: DOW[dowIdx(d)].toUpperCase(), day: short(d).toUpperCase(), today: d === td, hrs: fh(h), left: left.toFixed(1), width: Math.max(2, Math.min(100 - left, (b - a) / 12 * 100)).toFixed(1), aria: esc(`${DOW_LONG[dowIdx(d)]} ${short(d)}: ${h ? `${t12(s.start)} to ${t12(s.end)}, ${fh(h)} hours` : 'not logged'}. Edit.`) };
+    });
+    const checks = [[true, `Paid ${DOW_LONG[dowIdx(p.payday)]} ${short(p.payday)}`, 'PAY/01'], [td > submitDay(p), payWhen(p).split(' · ')[0], 'LEN/02']];
+    if (ex) checks.push([true, `Subscriptions ${fh(ex)}h`, 'SUB/03']);
+    if (pend.length) checks.push([false, `About ${fh(total + estimateHours(p))}h with ${pend.map(x => DOW[dowIdx(x.date)]).join(', ')} estimated`, 'EST/04']);
+    return { period: `${tip(short(p.start))} / ${tip(short(p.end))}`, periodEnd: `TO ${tip(short(p.end))}`, hours: fh(total), worked: dates.filter(d => shiftHours(S.shifts[d]) > 0).length, goal: goal ? fh(target) : '-', pct: total / target, ringSub: goal ? '% GOAL' : 'OF 80H',
+      rows, pay: cash(total), payEst: rate ? ' est.' : '', six: cash(sum), sixBar: sum ? total / Math.max(...vals, 1) : 0, win: pend.length > 0, checks, cyc: p.cyc, dayOf: dates.filter(d => d <= td).length };
+  },
+  // no WebGL, or city.js wouldn't load: tell him why, then fall back to Dex for this session
+  fallback(msg, e) {
+    window.logProblem('city', e || msg);
+    window.DAYBOOK_CITY = false; window.City = undefined; delete document.documentElement.dataset.city;
+    const h = $('#cityHost'); if (h) h.remove();
+    render();
+    import('./rider.js').catch(x => window.logProblem('page', x));
+    island.toast(msg, { ms: 6000 });
+  },
+};
 
 /* ---------- boot ---------- */
 if (S.ui.tab === 'notes') S.ui.tab = 'week';
