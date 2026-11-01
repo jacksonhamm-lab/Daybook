@@ -96,7 +96,7 @@ They only exist on the device that ran it, so `syncAuto()` only un-ticks an auto
   Personal, and `tasksOn`, `slipped` and `overdue` skip tasks whose `cat` isn't in `CATS` (`knownCat`), so Today,
   Plan, Tomorrow, Needs a decision, the overdue roll-over and the app badge leave them alone. XP, trophies and the
   clear-day check still count every task.
-- **`BUILD`** (set as `window.DAYBOOK_BUILD` in `<head>`, now `'p1'` on `city-p1`; `city.js` must match) is shown as "Build p0" at the bottom of Settings › Sync, so each
+- **`BUILD`** (set as `window.DAYBOOK_BUILD` in `<head>`, now `'p2'` on `city-p1`; `city.js` must match) is shown as "Build p0" at the bottom of Settings › Sync, so each
   device can show which copy it runs. Bump it when a release changes the data's shape.
 
 ## Code map (index.html)

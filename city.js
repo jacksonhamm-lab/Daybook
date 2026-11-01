@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p1';
+export const BUILD = 'p2';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -222,6 +222,10 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #roomData{display:none}
 @media (hover:none){.tag .key{display:none}}
 #hud.gl>*{animation:gl .36s steps(3) 1}
+/* gl animates transform, which would override these: the closed sheet would flash open, the centred boxes would jump, and a box or scan line already playing would replay */
+#hud.gl>#sheet,#hud.gl>#flyBox,#hud.gl>#hint{animation:none}
+#hud.gl>.rvl{animation:rvl .55s var(--ease) both}
+#hud.gl>.scanl.go{animation:scan 1s var(--ease) 1}
 @keyframes gl{0%{transform:translateX(-5px);filter:hue-rotate(-14deg)}33%{transform:translateX(4px) skewX(-.6deg)}66%{transform:translateX(-2px)}100%{transform:none}}
 #hud.city [data-m]:not([data-m~=city]),#hud.room [data-m]:not([data-m~=room]),#hud.fly [data-m]:not([data-m~=fly]){display:none!important}
 .scanl{position:absolute;left:0;right:0;top:0;height:2px;background:var(--hud-red);box-shadow:0 0 14px var(--hud-red);opacity:0;pointer-events:none}
@@ -4112,8 +4116,10 @@ function eqStep(dt, t) {
   kick = Math.max(0, kick - dt * 1.6);
 }
 function glitchHud(force = 1) { kick = 1; if (REDUCED) return; hudEl.classList.remove('gl'); void hudEl.offsetWidth; hudEl.classList.add('gl'); setTimeout(() => hudEl.classList.remove('gl'), 380); if (force >= 1) S.glitchT = S.t; }
-function scanNow() { S.scanT = S.t; const s = $('#scan'); s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); }
-function setMode(m) { S.mode = m; S.lastInput = performance.now(); hudEl.classList.remove('city', 'fly', 'room'); hudEl.classList.add(m); }
+function scanNow() { S.scanT = S.t; const s = $('#scan'); s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); s.onanimationend = () => s.classList.remove('go'); }
+function setMode(m) { S.mode = m; S.lastInput = S.modeT = performance.now(); hudEl.classList.remove('city', 'fly', 'room'); hudEl.classList.add(m); }
+/* Buttons appear under the finger on arrival, and a touch's click lands after the mode has changed. Nobody means to press what they cannot have seen yet. */
+const justArrived = () => S.mode !== 'fly' && performance.now() - (S.modeT || 0) < 350;
 
 function hudInit() {
   /* icons */
@@ -4146,6 +4152,7 @@ function hudInit() {
   $('#btnSheet').addEventListener('click', () => openSheet('cClock'));
   $('#btnClose').addEventListener('click', () => closeSheet());
   $('#btnClock').addEventListener('click', tapClock);
+  hudEl.addEventListener('click', e => { if (justArrived()) { e.stopPropagation(); e.preventDefault(); } }, true);
   /* anything marked data-act runs the app's own action; data-go opens one of its pages */
   ROOT.addEventListener('click', e => {
     const el = e.target.closest && e.target.closest('[data-act],[data-go]'); if (!el) return;
@@ -4168,9 +4175,9 @@ function hudInit() {
   });
   /* drag: small orbit in the city, look around in the room; vertical stays with the page */
   const dom = canvas;
-  dom.addEventListener('pointerdown', e => { S.drag = { x: e.clientX, y: e.clientY, a: S.azGoal, e: S.elGoal, yaw: S.yawGoal, moved: false, id: e.pointerId, t: performance.now() }; try { dom.setPointerCapture(e.pointerId); } catch (_) {} });
+  dom.addEventListener('pointerdown', e => { S.drag = { x: e.clientX, y: e.clientY, a: S.azGoal, e: S.elGoal, yaw: S.yawGoal, moved: false, id: e.pointerId, t: performance.now(), mode: S.mode }; try { dom.setPointerCapture(e.pointerId); } catch (_) {} });
   dom.addEventListener('pointermove', e => { const d = S.drag; if (!d) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; if (Math.abs(dx) + Math.abs(dy) > 8) d.moved = true; if (S.mode === 'city') { S.azGoal = clamp(d.a - dx * .0016, -.3, .3); if (e.pointerType === 'mouse') S.elGoal = clamp(d.e + dy * .0024, -.3, .4); } else if (S.mode === 'room' && !S.sheet) { S.yawGoal = clamp(d.yaw + dx * (isPhone ? .0052 : .0028), -.61, .61); S.lastDrag = performance.now(); } });
-  const up = e => { const d = S.drag; S.drag = null; if (!d) return; if (!d.moved && performance.now() - d.t < 500) tapWorld(e.clientX, e.clientY); else S.lastDrag = performance.now(); };
+  const up = e => { const d = S.drag; S.drag = null; if (!d) return; if (!d.moved && d.mode === S.mode && performance.now() - d.t < 500) tapWorld(e.clientX, e.clientY); else S.lastDrag = performance.now(); };
   dom.addEventListener('pointerup', up); dom.addEventListener('pointercancel', () => { S.drag = null; S.lastDrag = performance.now(); });
   addEventListener('resize', () => { if (host.hidden) S.sizeStale = true; else resize(); });
   document.addEventListener('visibilitychange', () => { S.last = performance.now(); });
@@ -4180,6 +4187,7 @@ function hudInit() {
 }
 function setRealClock() { const d = new Date(), mo = d.toLocaleString('en', { month: 'short' }).toUpperCase(), dd = String(d.getDate()).padStart(2, '0'), hh = String(d.getHours()).padStart(2, '0'), mm = String(d.getMinutes()).padStart(2, '0'); setText('#clk', hh + ':' + mm); setText('#clkd', mo + '.' + dd); setText('#nA', mo + ' ' + dd); setText('#nB', hh + ' ' + mm); setText('#nC', mo + ' ' + dd); setText('#nD', hh + ' ' + mm); }
 function tapWorld(x, y) {
+  if (justArrived()) return;
   if (S.mode === 'fly') { skipFlight(); return; }
   if (S.mode === 'city') { let best = null, bd = 56; for (const o of iconEls) { const p = project(o.a); const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = o; } } if (best) tapIcon(best.k); return; }
   if (S.mode === 'room' && !S.sheet) { let best = null, bd = 44; for (const o of room.hot) { const p = project(o.p); const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = o; } } if (best) tapHot(best.key); }
