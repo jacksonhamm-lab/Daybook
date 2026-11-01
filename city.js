@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p2';
+export const BUILD = 'p3';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -171,8 +171,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #flyBox .in{padding:5px 12px 6px 9px;display:grid;gap:4px}
 
 /* sheet */
-#sheet{position:absolute;left:0;right:0;bottom:0;top:calc(var(--st) + 112px);transform:translateY(103%);transition:transform .42s var(--ease);z-index:5;display:flex;flex-direction:column;--ct:18px}
-#sheet.open{transform:none}
+/* closed means hidden, not only off screen: rotating into the laptop layout can't slide it past, and Tab can't reach its buttons */
+#sheet{position:absolute;left:0;right:0;bottom:0;top:calc(var(--st) + 112px);transform:translateY(103%);visibility:hidden;transition:transform .42s var(--ease),visibility 0s .42s;z-index:5;display:flex;flex-direction:column;--ct:18px}
+#sheet.open{transform:none;visibility:visible;transition:transform .42s var(--ease),visibility 0s}
 #sheet .in{display:flex;flex-direction:column;min-height:0;background:rgba(10,9,13,.965)}
 .shead{display:flex;align-items:center;gap:9px;padding:calc(6px) 8px 6px 14px;border-bottom:1px solid var(--hud-red-line)}
 .shead h2{margin:0;font:700 23px/1 var(--hud-font);letter-spacing:.06em;color:var(--hud-red);text-transform:uppercase}
@@ -256,18 +257,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 }
 @media (max-width:899px){.clk{display:none}.eqw .row .mi:first-child{display:none}.eqw .row{justify-content:flex-end}}
 @media (max-width:360px){.brand small{display:none}}
-@media (prefers-reduced-motion:reduce){.dcol::before,.dcol::after{content:'';position:absolute;top:50%;height:1px;width:7px;background:var(--hud-red)}
-.dcol::before{left:2px;box-shadow:0 -4px 0 -0px transparent}
-.dcol::after{right:2px}
-.dbox .in{position:relative}
-.dbox .in::before{content:'';position:absolute;left:4px;top:4px;width:3px;height:3px;background:var(--hud-red)}
-.conn{display:flex;align-items:center;gap:3px;flex:none}
-.conn i{display:block;width:9px;height:1px;background:var(--hud-red)}
-.conn b{display:block;width:5px;height:5px;box-shadow:0 0 0 1px var(--hud-red);background:transparent}
-.cross{position:absolute;width:9px;height:9px;background:linear-gradient(var(--hud-red),var(--hud-red)) 50% 50%/100% 1px no-repeat,linear-gradient(var(--hud-red),var(--hud-red)) 50% 50%/1px 100% no-repeat;opacity:.8;pointer-events:none}
-#roomData{display:none}
-@media (hover:none){.tag .key{display:none}}
-#hud.gl>*{animation:none}.scanl.go{animation:none}.rvl{animation:none}}
+@media (prefers-reduced-motion:reduce){#hud.gl>*,#hud.gl>.rvl,#hud.gl>.scanl.go,.scanl.go,.rvl{animation:none}}
 `;
 const MARKUP = `
 <canvas id="gl" aria-hidden="true"></canvas>
@@ -321,7 +311,7 @@ const MARKUP = `
 
   <section class="dbox frame" id="flyBox" data-m="fly" aria-live="off">
     <div class="in">
-      <div style="display:flex;justify-content:space-between;align-items:center"><b style="font:700 14px/1 var(--hud-font);letter-spacing:.12em">APPROACH: SHOP</b><span class="mi" id="flyAlt">ALT 000M</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><b id="flyT" style="font:700 14px/1 var(--hud-font);letter-spacing:.12em">APPROACH: SHOP</b><span class="mi" id="flyAlt">ALT 000M</span></div>
       <div class="load"><i id="flyP" style="width:0"></i></div>
       <div style="display:flex;justify-content:space-between"><span class="mi">VECTOR LOCK</span><span class="mi" id="flyD">DST 0000M</span></div>
     </div>
@@ -3919,6 +3909,7 @@ function flightKeys() {
   };
 }
 function makeFlight(dir) {
+  flyLabel(dir);
   const k = flightKeys();
   const toV = a => a.map(p => new THREE.Vector3(...p));
   const cp = new THREE.CatmullRomCurve3(toV(k.P), false, 'centripetal'), cl = new THREE.CatmullRomCurve3(toV(k.L), false, 'centripetal');
@@ -4115,7 +4106,7 @@ function eqStep(dt, t) {
   }
   kick = Math.max(0, kick - dt * 1.6);
 }
-function glitchHud(force = 1) { kick = 1; if (REDUCED) return; hudEl.classList.remove('gl'); void hudEl.offsetWidth; hudEl.classList.add('gl'); setTimeout(() => hudEl.classList.remove('gl'), 380); if (force >= 1) S.glitchT = S.t; }
+function glitchHud(force = 1) { kick = 1; if (REDUCED) return; hudEl.classList.remove('gl'); void hudEl.offsetWidth; hudEl.classList.add('gl'); clearTimeout(S.glOff); S.glOff = setTimeout(() => hudEl.classList.remove('gl'), 380); if (force >= 1) S.glitchT = S.t; }
 function scanNow() { S.scanT = S.t; const s = $('#scan'); s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); s.onanimationend = () => s.classList.remove('go'); }
 function setMode(m) { S.mode = m; S.lastInput = S.modeT = performance.now(); hudEl.classList.remove('city', 'fly', 'room'); hudEl.classList.add(m); }
 /* Buttons appear under the finger on arrival, and a touch's click lands after the mode has changed. Nobody means to press what they cannot have seen yet. */
@@ -4153,6 +4144,8 @@ function hudInit() {
   $('#btnClose').addEventListener('click', () => closeSheet());
   $('#btnClock').addEventListener('click', tapClock);
   hudEl.addEventListener('click', e => { if (justArrived()) { e.stopPropagation(); e.preventDefault(); } }, true);
+  /* A held Enter would click again with every repeat, and focus moving between WORK and close would flap the sheet. */
+  hudEl.addEventListener('keydown', e => { if (e.repeat && e.key === 'Enter' && e.target.closest('button')) e.preventDefault(); }, true);
   /* anything marked data-act runs the app's own action; data-go opens one of its pages */
   ROOT.addEventListener('click', e => {
     const el = e.target.closest && e.target.closest('[data-act],[data-go]'); if (!el) return;
@@ -4214,7 +4207,8 @@ function goBack() { if (history.state && history.state.city) history.back(); els
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
 function enterRoom() { S.fly = null; flightRes(false); setMode('room'); S.ringIn = S.t; S.yaw = S.yawGoal = 0; S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $('#roomBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
 function enterCity() { S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
-function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideShop() ? 0 : ''; $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - SHOP.x, CAM.position.z - SHOP.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
+const flyLabel = dir => setText('#flyT', dir > 0 ? 'APPROACH: SHOP' : 'DEPART: SHOP');
+function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideShop() ? 0 : ''; flyLabel(dir); $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - SHOP.x, CAM.position.z - SHOP.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
 function tapHot(k) {
   if (k === 'clock') { tapClock(); return; }
   openSheet(k === 'shifts' ? 'cShifts' : 'cPay');
@@ -4222,8 +4216,8 @@ function tapHot(k) {
 }
 /* The same state change as the Work page. The app shows the toast with Undo, then calls City.update. */
 function tapClock() { if (APP.clock().on) APP.act('clock-out'); else APP.clockIn(); }
-function openSheet(id) { S.sheet = true; const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const c = ROOT.getElementById(id); const sc = $('#sheetScroll'); if (c && sc) sc.scrollTop = Math.max(0, c.offsetTop - sc.offsetTop - 4); scanNow(); $('#btnClose').focus({ preventScroll: true }); }
-function closeSheet(quiet) { S.sheet = false; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); }
+function openSheet(id) { if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const c = ROOT.getElementById(id); const sc = $('#sheetScroll'); if (c && sc) sc.scrollTop = Math.max(0, c.offsetTop - sc.offsetTop - 4); scanNow(); $('#btnClose').focus({ preventScroll: true }); }
+function closeSheet(quiet) { S.sheet = false; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); if (!quiet && S.sheetFrom) S.sheetFrom.focus({ preventScroll: true }); S.sheetFrom = null; }
 function updateSel() {
   if (!HOME) return;
   const o = ICONS[sel], a = HOME.attrs[o.attr], v = Math.round(pct01(a.bar) * 100);

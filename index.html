@@ -31,9 +31,9 @@
     }
     on = localStorage.getItem('daybook_home') === 'city';
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p2';
+  window.DAYBOOK_BUILD = 'p3';
   window.DAYBOOK_CITY = on;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p2' : './rider.js'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p3' : './rider.js'; document.head.appendChild(l);
   if (on) {
     document.documentElement.dataset.city = '';
     var c = document.createElement('style');
@@ -43,7 +43,7 @@
 })();
 </script>
 <script type="module">
-if (window.DAYBOOK_CITY) import('./city.js?v=p2').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
+if (window.DAYBOOK_CITY) import('./city.js?v=p3').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
 else import('./rider.js').catch(e => window.logProblem('page', e));
 </script>
 <style>

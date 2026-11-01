@@ -278,7 +278,7 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 Technical state only. Updated 2026-10-31.
 
 - **Branch:** `city-p1`, local only, never pushed. It was the same as live `main` at `bdacab4` (Phase 0 and the XP change
-  are live), and the city commits sit on top. `git log --oneline bdacab4..city-p1` lists them. `BUILD` is `'p1'` on this
+  are live), and the city commits sit on top. `git log --oneline bdacab4..city-p1` lists them. `BUILD` is `'p3'` on this
   branch only. Don't push `city-p1` itself until Cloudflare branch builds are confirmed off (§15).
 - **Built (Phase 1):** `city.js` (the look test's world, people, flights, HUD and quality logic, in a shadow root), the
   flag and loader, and `window.CityApp`. See [The flag](#the-flag).
