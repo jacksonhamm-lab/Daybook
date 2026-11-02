@@ -229,6 +229,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #hud.gl>.scanl.go{animation:scan 1s var(--ease) 1}
 @keyframes gl{0%{transform:translateX(-5px);filter:hue-rotate(-14deg)}33%{transform:translateX(4px) skewX(-.6deg)}66%{transform:translateX(-2px)}100%{transform:none}}
 #hud.city [data-m]:not([data-m~=city]),#hud.room [data-m]:not([data-m~=room]),#hud.fly [data-m]:not([data-m~=fly]){display:none!important}
+#hud:not([data-room=shop]) [data-r=shop],#hud:not([data-room=apartment]) [data-r=apartment]{display:none!important}
 .scanl{position:absolute;left:0;right:0;top:0;height:2px;background:var(--hud-red);box-shadow:0 0 14px var(--hud-red);opacity:0;pointer-events:none}
 .scanl.go{animation:scan 1s var(--ease) 1}
 @keyframes scan{0%{top:0;opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
@@ -261,12 +262,12 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 `;
 const MARKUP = `
 <canvas id="gl" aria-hidden="true"></canvas>
-<div id="hud" class="city">
+<div id="hud" class="city" data-room="shop">
   <div class="vgn"></div>
   <div class="top">
     <button class="frame brand" data-act="progress" data-m="city fly" aria-label="Progress"><div class="in"><i></i><div><b>DAYBOOK</b><small id="brandLv">LV 1</small></div></div></button>
     <button class="back" id="btnBack" data-m="room" aria-label="Back to the city"><span><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8"/></svg></span></button>
-    <button class="frame brand" data-act="progress" data-m="room" aria-label="Progress"><div class="in"><i></i><div><b>SHOP</b><small id="shopPer">PERIOD</small></div></div></button>
+    <button class="frame brand" data-act="progress" data-m="room" data-r="shop" aria-label="Progress"><div class="in"><i></i><div><b>SHOP</b><small id="shopPer">PERIOD</small></div></div></button>
     <div class="frame eqw"><div class="in"><canvas id="eq" aria-hidden="true"></canvas><div class="row"><span class="mi">SIGNAL</span><span class="mi" id="eqv">SYNC OFF</span></div></div></div>
     <div class="frame clk"><div class="in"><b id="clk">00:00</b><span class="mi" id="clkd"></span></div></div>
     <button class="q" data-act="spot-open" aria-label="Quick add"><span style="font-size:22px;font-weight:400">+</span></button>
@@ -318,7 +319,7 @@ const MARKUP = `
   </section>
 
   <div id="tags" data-m="room"></div>
-  <section class="dbox frame" id="roomBox" data-m="room" aria-label="Work status">
+  <section class="dbox frame" id="roomBox" data-m="room" data-r="shop" aria-label="Work status">
     <div class="in">
       <div class="dhead"><b id="rbT">OFF THE CLOCK</b><div class="sq" id="sqB"></div></div>
       <div class="tickr"></div>
@@ -331,7 +332,7 @@ const MARKUP = `
       </div>
     </div>
   </section>
-  <section class="dbox frame" id="roomData" data-m="room" aria-label="Pay period">
+  <section class="dbox frame" id="roomData" data-m="room" data-r="shop" aria-label="Pay period">
     <div class="in">
       <div class="dhead"><b>PAY PERIOD</b><span class="nums" style="margin-left:auto"><span id="nC"></span><i></i><span id="nD"></span></span></div>
       <div class="tickr"></div>
@@ -348,10 +349,10 @@ const MARKUP = `
 
   <aside id="sheet" class="frame" aria-label="Work" aria-hidden="true">
     <div class="in">
-      <div class="shead"><h2>Work</h2><span class="mi" style="margin-left:auto">PAGE.01/03</span><button class="back" id="btnClose" aria-label="Close sheet"><span><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span></button></div>
+      <div class="shead"><h2 id="shName">Work</h2><span class="mi" id="shPage" style="margin-left:auto">PAGE.01/03</span><button class="back" id="btnClose" aria-label="Close sheet"><span><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span></button></div>
       <div class="scroll" id="sheetScroll">
         <div class="cards">
-          <section class="card" id="cClock">
+          <section class="card" id="cClock" data-r="shop">
             <div class="kick">The clock<span class="mi">SYS.CLOCK/01</span></div>
             <div class="hero">
               <div class="ring" id="ringC"></div>
@@ -359,13 +360,13 @@ const MARKUP = `
               <div class="acts"><button class="rbtn" id="btnClock">CLOCK IN</button><button class="rbtn ol" id="btnBreak" data-act="clock-break" hidden>BREAK</button></div></div>
             </div>
           </section>
-          <section class="card" id="cShifts">
+          <section class="card" id="cShifts" data-r="shop">
             <div class="kick">Shifts: this period<span class="mi" id="shPer"></span></div>
             <div class="stats" style="margin-bottom:8px"><div class="stat"><label>Hours</label><b id="stH">0</b></div><div class="stat"><label>Shifts</label><b id="stN">0</b></div><div class="stat"><label>Goal</label><b id="stG">-</b></div></div>
             <div id="shRows"></div>
             <div class="acts"><button class="rbtn ol" data-go="hours:shifts">OPEN WORK PAGE</button></div>
           </section>
-          <section class="card" id="cPay">
+          <section class="card" id="cPay" data-r="shop">
             <div class="kick">Pay<span class="mi" id="payWin"></span></div>
             <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px"><div class="big"><span id="payBig">$0</span><small id="payEst"> est.</small></div><canvas id="wvD" class="mini" style="width:96px;height:26px" aria-hidden="true"></canvas></div>
             <div class="rw" style="margin:8px 0 7px"><span>6 PAYS</span><div class="bar y" id="bF"></div><em id="payAll">$0</em></div>
@@ -1825,7 +1826,7 @@ void main(){
 }`;
 
 /* ---------- the island: everything is built here, no models or pictures ---------- */
-const SHOP = { x: -23, z: 62, w: 11, d: 9, h: 4.1 };
+const SHOP = { x: -23, y: 0, z: 62, w: 11, d: 9, h: 4.1 };
 const GYM = { x: 172, z: -150 }, BOWL = innerWidth / innerHeight < .8 ? { x: 34, z: 246 } : { x: 92, z: 244 };
 const SHAFTS = [{ o: [0, 620, -235], e: [-210, 980, -320], r: 7, c: [.82, .92, 1], a: .55 }, { o: [-225, 225, 42], e: [-150, 700, -160], r: 5, c: [.5, .95, 1], a: .34 }, { o: [118, 150, 40], e: [240, 620, -180], r: 5, c: [1, .36, .7], a: .3 }];
 const ANCHORS = { plan: [-72, 49, 229.2], work: [SHOP.x + SHOP.w / 2 + 1.4, 24, SHOP.z - SHOP.d / 2 - .4], train: [GYM.x, 66, GYM.z + 18], cardio: innerWidth / innerHeight < .8 ? [180, 590, -1120] : [300, 262, -860], fuel: [BOWL.x, 50, BOWL.z], school: [-212, 62, 296] };
@@ -3560,17 +3561,20 @@ function buildRoom() {
     [...w(7, 2.2, 0), 0x4c9cff, 11.5, .66],
   ];
   const hot = [
-    { key: 'clock', label: 'CLOCK IN', sub: '00:00:00', p: w(-2.78, 1.5, -.82) },
-    { key: 'shifts', label: 'SHIFTS', sub: 'LEDGER', p: w(-2.82, 1.08, -.38) },
-    { key: 'pay', label: 'PAY', sub: 'NOTEPAD', p: w(-2.82, 1.06, .02) },
+    { key: 'clock', label: 'CLOCK IN', hotkey: 'E', line: 34, run: tapClock, p: w(-2.78, 1.5, -.82) },
+    { key: 'shifts', label: 'SHIFTS', hotkey: 'R', line: 20, sheet: 'cShifts', p: w(-2.82, 1.08, -.38) },
+    { key: 'pay', label: 'PAY', hotkey: 'F', line: 28, sheet: 'cPay', p: w(-2.82, 1.06, .02) },
   ];
   const door = new THREE.Vector3();
   return {
-    geom: M.geom(), doorGeom: DM.geom(), glassGeom: GL.geom(), doorGlassGeom: DG.geom(), fxGeom: FXM.geom(), lights, hot, glows, pieces: PIECES, tris: M.n / 3,
+    geom: M.geom(), doorGeom: DM.geom(), glassGeom: GL.geom(), doorGlassGeom: DG.geom(), fxGeom: FXM.geom(), backGeom: shopBackdrop(), lights, hot, glows, pieces: PIECES, tris: M.n / 3,
     gobo: { rect: { x: SHOP.z - D, y: SHOP.z + D, z: .46, w: 3.4 }, x: SHOP.x + W, dir: new THREE.Vector3(1, .55, .1).normalize(), color: [.28, .2, .36] },
     setDoor(k) { const off = k * 1.86; if (room.door) room.door.position.z = off; if (room.doorGlass) room.doorGlass.position.z = off; if (room.door) room.door.updateMatrixWorld(true); if (room.doorGlass) room.doorGlass.updateMatrixWorld(true); },
   };
 }
+
+/* the street the shop's mirror sees past the glass */
+function shopBackdrop() { const B = new MB(200), X = SHOP.x + SHOP.w / 2 + 4; for (const [z, y, w, h, c] of [[-3.6, 1.6, .22, 2.2, PAL.red], [-2.2, 3.1, 1.2, .14, PAL.cyan], [-.5, 1.4, .16, 1.9, 0xc09a30], [1.2, 2.5, .9, .16, 0xff2e88], [2.8, 1.2, .2, 2.4, PAL.orange], [4, 3, 1.1, .12, PAL.cyan]]) { B.set({ kind: K.PLAIN, em: 170, c: hex(c), layer: 0, id: 0 }); B.quad([X, y, SHOP.z + z + w], [X, y, SHOP.z + z - w], [X, y + h, SHOP.z + z - w], [X, y + h, SHOP.z + z + w]); B.quad([X, y + h, SHOP.z + z + w], [X, y + h, SHOP.z + z - w], [X, y, SHOP.z + z - w], [X, y, SHOP.z + z + w]); } return B.geom(); }
 
 /* a pencil, round, with a sharpened tip and a ferrule */
 function pencilAt(M, x, y, z, ry, len, c, endC) {
@@ -3809,25 +3813,23 @@ async function initGraphics() {
   const gMir = buildGlowMesh(GLOW, { MIRROR: 1 }); gMir.material.side = THREE.DoubleSide;
   SC.mirror = new THREE.Scene(); SC.mirror.add(skyMir, wMir, fMir, gMir, tr.mirLights);
   setBoot('Dressing the shop', .7); await yieldFrame();
-  room = buildRoom();
+  /* the shell every room is loaded into: these meshes and materials live for the whole session */
   room.u = worldUniforms(true); room.mat = worldMat(room.u);
-  const roomMesh = new THREE.Mesh(room.geom, room.mat); roomMesh.frustumCulled = false; room.mesh = roomMesh;
-  setLights(room.u, room.lights);
+  room.mirU = { ...room.u, uShadowOn: { value: 0 }, uClipZ: { value: 0 } };
+  const mm = worldMat(room.mirU, { ROOMMIR: 1 }, THREE.BackSide), blank = m => { const x = new THREE.Mesh(new THREE.BufferGeometry(), m); x.frustumCulled = false; return x; };
   room.u.uTill.value.set(...CELL.till); city.u.uTill.value.set(...CELL.till);
-  Object.assign(room.u.uGobo.value, room.gobo.rect); room.u.uGoboX.value = room.gobo.x; room.u.uGoboD.value.copy(room.gobo.dir); room.u.uGoboC.value.setRGB(...room.gobo.color);
+  room.mesh = blank(room.mat); room.door = blank(room.mat); room.clutter = blank(room.mat);
   /* the tri-fold mirror reflects the real room: same geometry, seen from the other side of the glass */
-  { const mu = { ...room.u, uShadowOn: { value: 0 }, uClipZ: { value: SHOP.z + SHOP.d / 2 - .26 } }; const mm = worldMat(mu, { ROOMMIR: 1 }, THREE.BackSide); const me = new THREE.Mesh(room.geom, mm); me.frustumCulled = false; SC.roomMir = new THREE.Scene(); SC.roomMir.add(me);
-    const B = new MB(200), X = SHOP.x + SHOP.w / 2 + 4; for (const [z, y, w, h, c] of [[-3.6, 1.6, .22, 2.2, PAL.red], [-2.2, 3.1, 1.2, .14, PAL.cyan], [-.5, 1.4, .16, 1.9, 0xc09a30], [1.2, 2.5, .9, .16, 0xff2e88], [2.8, 1.2, .2, 2.4, PAL.orange], [4, 3, 1.1, .12, PAL.cyan]]) { B.set({ kind: K.PLAIN, em: 170, c: hex(c), layer: 0, id: 0 }); B.quad([X, y, SHOP.z + z + w], [X, y, SHOP.z + z - w], [X, y + h, SHOP.z + z - w], [X, y + h, SHOP.z + z + w]); B.quad([X, y + h, SHOP.z + z + w], [X, y + h, SHOP.z + z - w], [X, y, SHOP.z + z - w], [X, y, SHOP.z + z + w]); } const be = new THREE.Mesh(B.geom(), mm); be.frustumCulled = false; SC.roomMir.add(be); }
-  room.door = new THREE.Mesh(room.doorGeom, room.mat); room.door.frustumCulled = false;
-  const roomFx = new THREE.Mesh(room.fxGeom, fx.material); roomFx.frustumCulled = false;
-  const roomGlows = buildGlowMesh(room.glows); roomGlows.material.uniforms.uGlowK.value = .9;
+  room.mirMesh = blank(mm); room.mirBack = blank(mm); SC.roomMir = new THREE.Scene(); SC.roomMir.add(room.mirMesh, room.mirBack);
+  room.fx = blank(fx.material);
+  room.glowMesh = buildGlowMesh([]); room.glowMesh.material.uniforms.uGlowK.value = .9;
   room.glassU = { uBg: { value: null }, uSigns: { value: TEX.signs }, uTiles: { value: TEX.tiles }, uTime: TIME, uInside: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uMY: { value: 0 } };
   room.glassMat = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: GLASS_VS, fragmentShader: GLASS_FS, uniforms: room.glassU, side: THREE.DoubleSide, transparent: true, depthWrite: false, blending: THREE.NormalBlending });
   room.glassMat.blending = THREE.CustomBlending; room.glassMat.blendSrc = THREE.SrcAlphaFactor; room.glassMat.blendDst = THREE.OneMinusSrcAlphaFactor; room.glassMat.blendSrcAlpha = THREE.ZeroFactor; room.glassMat.blendDstAlpha = THREE.OneFactor;
-  room.glass = new THREE.Mesh(room.glassGeom, room.glassMat); room.glass.frustumCulled = false; room.glass.renderOrder = 5;
-  room.doorGlass = new THREE.Mesh(room.doorGlassGeom, room.glassMat); room.doorGlass.frustumCulled = false; room.doorGlass.renderOrder = 5;
-  SC.room = new THREE.Scene(); SC.room.add(roomMesh, room.door, room.glass, room.doorGlass, roomFx, roomGlows);
-  room.fx = roomFx;
+  room.glass = blank(room.glassMat); room.glass.renderOrder = 5;
+  room.doorGlass = blank(room.glassMat); room.doorGlass.renderOrder = 5;
+  SC.room = new THREE.Scene(); SC.room.add(room.mesh, room.door, room.glass, room.doorGlass, room.fx, room.glowMesh, room.clutter);
+  loadRoom('shop');
   /* passes */
   setBoot('Sharpening ink', .82); await yieldFrame();
   MAT.bright = fsPass(BRIGHT_FS, { t: { value: null }, px: { value: new THREE.Vector2() }, th: { value: .86 } });
@@ -3841,23 +3843,54 @@ async function initGraphics() {
   renderer.compile(SC.city, CAM); renderer.compile(SC.mirror, CAM); renderer.compile(SC.room, CAM);
 }
 
-function bakeShadows() {
-  const depthMat = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, side: THREE.DoubleSide, colorWrite: false });
-  const bake = (geoms, cam, size, u) => {
-    const rt = new THREE.WebGLRenderTarget(size, size, { depthBuffer: true, stencilBuffer: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
+let depthMat = null;
+function bake(geoms, cam, size, u, keep) {
+  depthMat = depthMat || new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, side: THREE.DoubleSide, colorWrite: false });
+  let rt = keep && keep.shadowRT;
+  if (!rt) {
+    rt = new THREE.WebGLRenderTarget(size, size, { depthBuffer: true, stencilBuffer: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
     rt.depthTexture = new THREE.DepthTexture(size, size, THREE.UnsignedIntType); rt.depthTexture.minFilter = rt.depthTexture.magFilter = THREE.NearestFilter;
-    const s = new THREE.Scene(); geoms.forEach(g => { const m = new THREE.Mesh(g, depthMat); m.frustumCulled = false; s.add(m); });
-    renderer.setRenderTarget(rt); renderer.setClearColor(0xffffff, 1); renderer.clear(true, true, false); renderer.render(s, cam); renderer.setRenderTarget(null);
-    cam.updateMatrixWorld(); cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
-    u.uShadow.value = rt.depthTexture; u.uShadowM.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); u.uShadowOn.value = 1;
-  };
+    if (keep) keep.shadowRT = rt;
+  }
+  const s = new THREE.Scene(); geoms.forEach(g => { const m = new THREE.Mesh(g, depthMat); m.frustumCulled = false; s.add(m); });
+  renderer.setRenderTarget(rt); renderer.setClearColor(0xffffff, 1); renderer.clear(true, true, false); renderer.render(s, cam); renderer.setRenderTarget(null);
+  cam.updateMatrixWorld(); cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
+  u.uShadow.value = rt.depthTexture; u.uShadowM.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse); u.uShadowOn.value = 1;
+}
+function bakeRoom() {
+  const k = room.lights[0], pc = new THREE.PerspectiveCamera(room.def.shadow[0], 1, .3, room.def.shadow[1]);
+  pc.position.set(k[0], k[1], k[2]); pc.up.set(1, 0, 0); pc.lookAt(k[0], 0, k[2]); pc.updateMatrixWorld(); pc.updateProjectionMatrix();
+  bake(room.clutterGeom && room.clutter.visible ? [room.geom, room.clutterGeom] : [room.geom], pc, 2048, room.u, room);
+}
+function bakeShadows() {
   const size = isPhone ? 1024 : 2048;
   const mc = new THREE.OrthographicCamera(-760, 760, 760, -760, 10, 2600);
   mc.position.set(moonDir.x * 1200, moonDir.y * 1200 + 100, moonDir.z * 1200 - 90); mc.lookAt(0, 60, -90); mc.updateMatrixWorld(); mc.updateProjectionMatrix();
   bake([city.world.geometry], mc, size, city.u);
-  const pc = new THREE.PerspectiveCamera(134, 1, .3, 22);
-  const k = room.lights[0]; pc.position.set(k[0], k[1], k[2]); pc.up.set(1, 0, 0); pc.lookAt(k[0], 0, k[2]); pc.updateMatrixWorld(); pc.updateProjectionMatrix();
-  bake([room.geom], pc, 2048, room.u);
+  bakeRoom();
+}
+
+/* One room in memory at a time. A swap changes geometry and uniform values only, so no shader ever recompiles.
+   room.id is set last: if a build throws, the next tap simply tries again. */
+function loadRoom(id) {
+  if (room.id === id) return;
+  const def = ROOM_DEF[id]; PIECES = 0;
+  for (const g of [room.geom, room.clutterGeom, room.doorGeom, room.glassGeom, room.doorGlassGeom, room.fxGeom, room.backGeom]) if (g) g.dispose();
+  if (room.atlas) room.atlas.dispose();
+  const d = def.build();
+  Object.assign(room, { clutterGeom: null, doorGeom: null, glassGeom: null, doorGlassGeom: null, backGeom: null, gobo: null, atlas: null, mirDone: false }, d, { def, box: def.box });
+  const put = (m, g) => { m.visible = !!g; if (g) m.geometry = g; };
+  put(room.mesh, room.geom); put(room.clutter, room.clutterGeom); put(room.door, room.doorGeom); put(room.glass, room.glassGeom); put(room.doorGlass, room.doorGlassGeom); put(room.fx, room.fxGeom);
+  put(room.mirMesh, def.mirror && room.geom); put(room.mirBack, def.mirror && room.backGeom);
+  const gm = buildGlowMesh(room.glows); room.glowMesh.geometry.dispose(); room.glowMesh.geometry = gm.geometry; gm.material.dispose();
+  setLights(room.u, room.lights);
+  room.u.uAmbHi.value.setRGB(...def.amb[0]); room.u.uAmbLo.value.setRGB(...def.amb[1]); room.u.uAmbSide.value.setRGB(...def.amb[2]); room.u.uRim.value.setRGB(...def.amb[3]);
+  if (room.gobo) { Object.assign(room.u.uGobo.value, room.gobo.rect); room.u.uGoboX.value = room.gobo.x; room.u.uGoboD.value.copy(room.gobo.dir); room.u.uGoboC.value.setRGB(...room.gobo.color); } else room.u.uGoboC.value.setRGB(0, 0, 0);
+  room.u.uSigns.value = room.atlas || TEX.signs;
+  if (def.mirror) room.mirU.uClipZ.value = def.mirror[2];
+  room.id = id; hudEl.dataset.room = id; room.setDoor(0);
+  setText('#shName', def.sheet[0]); setText('#shPage', def.sheet[1]); $('#sheet').setAttribute('aria-label', def.sheet[0]);
+  if (ready) { bakeRoom(); buildTags(); }
 }
 
 function resize() {
@@ -3888,7 +3921,7 @@ const S = { mode: 'city', t: 0, az: 0, azGoal: 0, el: 0, elGoal: 0, yaw: 0, yawG
 /* low over the harbour, a third of the way up the tower, one near tower cropping the frame */
 const POSE = () => CAM.aspect < .8 ? { p: [-8, 22, 408], l: [-8, 112, -200], fov: 84 } : CAM.aspect < 1.3 ? { p: [66, 50, 505], l: [-10, 220, -180], fov: 66 } : { p: [66, 52, 505], l: [-10, 196, -160], fov: 58 };
 function applyFov() { const a = CAM.aspect; const cf = POSE().fov; const rf = a < .8 ? 74 : a < 1.3 ? 66 : 56; const k = S.mode === 'city' ? 0 : S.mode === 'room' ? 1 : (S.fly ? S.flyK : 0); const mid = S.mode === 'fly' && a < .8 ? S.flyMid || 0 : 0; CAM.fov = lerp(lerp(cf, rf, k), lerp(58, 49, S.flyIn || 0), mid); CAM.updateProjectionMatrix(); }
-const local = (x, y, z) => [SHOP.x + x, y, SHOP.z + z];
+const local = (x, y, z) => [room.box.x + x, room.box.y + y, room.box.z + z];
 
 function cityPose(out = {}) {
   const P = POSE(); const dx = P.p[0] - P.l[0], dz = P.p[2] - P.l[2]; const a = S.az + (REDUCED || RIG ? 0 : Math.sin(S.t * .07) * .03); const r = Math.hypot(dx, dz);
@@ -3896,18 +3929,28 @@ function cityPose(out = {}) {
   const yy = P.p[1] + S.el * 120 + (REDUCED || RIG ? 0 : Math.sin(S.t * .11) * 5);
   out.p = [P.l[0] + Math.sin(b) * r, yy, P.l[2] + Math.cos(b) * r]; out.l = [P.l[0], P.l[1] + Math.sin(S.t * .05) * 2, P.l[2]]; return out;
 }
-const ROOM_REST = () => CAM.aspect < .8 ? { p: local(-4.38, 1.66, -.52), l: local(2, .92, -.52) } : { p: local(-4.18, 1.54, -.4), l: local(2, 1.2, -.4) };
+const ROOM_REST = () => room.def.rest(CAM.aspect);
 
-function flightKeys() {
-  const c = cityPose(); const r = ROOM_REST();
-  const a = CAM.aspect; const up = a < .8 ? .2 : 0;
-  return {
-    P: [c.p, a < .8 ? [4, 92, 372] : [30, 128, 440], [12, 72, 292], [5, 14, 200], [3, 6.4, 142], [-2, 3.6, 96], [-10, 2.1, 72], [-15.2, 1.62, 63.6], [-18.6, 1.42, 63.6], local(1.6, 1.3, 2.75), local(-1.8, 1.36, 2.7), local(-3.9, 1.5, 1.9), r.p],
-    L: [c.l, [4, 80, 150], [0, 16, 150], [2, a < .8 ? 15 : 8, 90], [0, a < .8 ? 12.5 : 5, 80], [-12, a < .8 ? 3.4 : 2.4, 66], [-17.4, 1.9, 63.6], [-23, 1.5, 63.2], local(-2.85, 1.22, .95), local(-2.85, 1.2, .2), local(-2.85, 1.2 + up * .7, -.8), local(-2.7, 1.2 + up * .5, -.9), r.l],
-    /* weights: how long each hop lasts */
-    W: [1.15, 1, .95, .6, .55, .62, .62, .42, .46, .44, .4, .5],
-  };
-}
+/* Everything that differs between rooms. A room looks toward +X with its window on that wall: the gobo, the head shift and the window rectangle all rely on it. */
+const ROOM_DEF = {
+  shop: {
+    box: SHOP, name: 'SHOP', build: buildRoom, panel: '#roomBox', sheet: ['Work', 'PAGE.01/03'], shadow: [134, 22], doorAt: [SHOP.x + SHOP.w / 2, SHOP.z + 1.6],
+    amb: [[.3, .25, .34], [.2, .11, .2], [.05, .05, .09], [.3, .72, .85]],
+    mirror: [SHOP.x + 3.55, 1.1, SHOP.z + SHOP.d / 2 - .26],
+    window: { x: SHOP.x + SHOP.w / 2 + .05, zs: [SHOP.z - SHOP.d / 2, SHOP.z + SHOP.d / 2], ys: [0, SHOP.h] },
+    rest: a => a < .8 ? { p: local(-4.38, 1.66, -.52), l: local(2, .92, -.52) } : { p: local(-4.18, 1.54, -.4), l: local(2, 1.2, -.4) },
+    flight(c, r, a) {
+      const up = a < .8 ? .2 : 0;
+      return {
+        P: [c.p, a < .8 ? [4, 92, 372] : [30, 128, 440], [12, 72, 292], [5, 14, 200], [3, 6.4, 142], [-2, 3.6, 96], [-10, 2.1, 72], [-15.2, 1.62, 63.6], [-18.6, 1.42, 63.6], local(1.6, 1.3, 2.75), local(-1.8, 1.36, 2.7), local(-3.9, 1.5, 1.9), r.p],
+        L: [c.l, [4, 80, 150], [0, 16, 150], [2, a < .8 ? 15 : 8, 90], [0, a < .8 ? 12.5 : 5, 80], [-12, a < .8 ? 3.4 : 2.4, 66], [-17.4, 1.9, 63.6], [-23, 1.5, 63.2], local(-2.85, 1.22, .95), local(-2.85, 1.2, .2), local(-2.85, 1.2 + up * .7, -.8), local(-2.7, 1.2 + up * .5, -.9), r.l],
+        /* weights: how long each hop lasts */
+        W: [1.15, 1, .95, .6, .55, .62, .62, .42, .46, .44, .4, .5],
+      };
+    },
+  },
+};
+function flightKeys() { return room.def.flight(cityPose(), ROOM_REST(), CAM.aspect); }
 function makeFlight(dir) {
   flyLabel(dir);
   const k = flightKeys();
@@ -3937,8 +3980,7 @@ function updateCamera(dt) {
     S.flyK = sstep(.58, .95, e); S.flyMid = sstep(.1, .3, e) * (1 - sstep(.86, .98, e)); S.flyIn = sstep(.7, .78, e);
     const n = lerp(3.5, .06, sstep(.35, .7, e)); setNear(n, lerp(13000, 6000, S.flyK));
     /* door opens as the camera nears, closes behind it */
-    const d = Math.hypot(CAM.position.x - (SHOP.x + SHOP.w / 2), CAM.position.z - (SHOP.z + 1.6));
-    room.setDoor(1 - sstep(4, 16, d));
+    const dA = room.def.doorAt; if (dA) room.setDoor(1 - sstep(4, 16, Math.hypot(CAM.position.x - dA[0], CAM.position.z - dA[1])));
     applyFov();
     onFlightProgress(e, f.dir);
     if (f.dir > 0 && f.u >= 1) enterRoom(); if (f.dir < 0 && f.u <= 0) enterCity();
@@ -3963,7 +4005,7 @@ function setNear(n, f) { if (CAM.near !== n || CAM.far !== f) { CAM.near = n; CA
 
 function drawScene(t) {
   renderer.info.reset();
-  const inside = isInsideShop(); const showCity = !inside; const showRoom = S.mode !== 'city' || CAM.position.distanceTo(_v.set(SHOP.x, 2, SHOP.z)) < 140;
+  const inside = isInsideRoom(); const showCity = !inside; const showRoom = S.mode !== 'city' || CAM.position.distanceTo(_v.set(room.box.x, room.box.y + 2, room.box.z)) < 140;
   /* train runs by time alone */
   const period = 62; for (let i = 0; i < city.train.length; i++) { const a = trainPos(t / period - i * .0088); const m = city.train[i]; m.position.set(a.p[0], a.p[1] + .1, a.p[2]); m.rotation.y = Math.atan2(a.d[0], a.d[2]); m.updateMatrixWorld(true); }
   CAM.updateMatrixWorld();
@@ -3990,7 +4032,7 @@ function drawScene(t) {
     room.glassU.uBg.value = RT.bg.texture; room.glassU.uInside.value = 1;
   } else room.glassU.uInside.value = 0;
   /* the mirror is drawn only while it can be seen */
-  if (showRoom && (inside || S.mode === 'room')) { const zm = SHOP.z + SHOP.d / 2 - .26; _wr.set(SHOP.x + 3.55, 1.1, zm).applyMatrix4(CAM.matrixWorldInverse); const seen = _wr.z < -.2; if (seen) { _wr.applyMatrix4(CAM.projectionMatrix); } if (seen && Math.abs(_wr.x) < 1.5 && (RIG || !room.mirDone || S.fc % (isPhone ? 3 : 2) === 0)) { room.mirDone = true; _rm.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 2 * zm, 0, 0, 0, 1); _mc.projectionMatrix.copy(CAM.projectionMatrix); _mc.projectionMatrixInverse.copy(CAM.projectionMatrixInverse); _mc.matrixWorldInverse.multiplyMatrices(CAM.matrixWorldInverse, _rm); _mc.matrixWorld.copy(_mc.matrixWorldInverse).invert(); renderer.setRenderTarget(RT.mir); renderer.setClearColor(0x0a1420, 1); renderer.clear(true, true, false); renderer.render(SC.roomMir, _mc); } }
+  const mir = room.def.mirror; if (mir && showRoom && (inside || S.mode === 'room')) { const zm = mir[2]; _wr.set(mir[0], mir[1], zm).applyMatrix4(CAM.matrixWorldInverse); const seen = _wr.z < -.2; if (seen) { _wr.applyMatrix4(CAM.projectionMatrix); } if (seen && Math.abs(_wr.x) < 1.5 && (RIG || !room.mirDone || S.fc % (isPhone ? 3 : 2) === 0)) { room.mirDone = true; _rm.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 2 * zm, 0, 0, 0, 1); _mc.projectionMatrix.copy(CAM.projectionMatrix); _mc.projectionMatrixInverse.copy(CAM.projectionMatrixInverse); _mc.matrixWorldInverse.multiplyMatrices(CAM.matrixWorldInverse, _rm); _mc.matrixWorld.copy(_mc.matrixWorldInverse).invert(); renderer.setRenderTarget(RT.mir); renderer.setClearColor(0x0a1420, 1); renderer.clear(true, true, false); renderer.render(SC.roomMir, _mc); } }
   renderer.setRenderTarget(RT.main); renderer.setClearColor(0x05040a, 1); renderer.clear(true, true, false);
   if (showCity) renderer.render(SC.city, CAM);
   if (showRoom) renderer.render(SC.room, CAM);
@@ -4012,13 +4054,13 @@ function drawScene(t) {
 const _wr = new THREE.Vector3(), _rm = new THREE.Matrix4(), _mc = new THREE.PerspectiveCamera(); _mc.matrixWorldAutoUpdate = false;
 function windowRect(rt) {
   /* bounding box of the storefront on screen, in target pixels */
-  const x = SHOP.x + SHOP.w / 2 + .05, zs = [SHOP.z - SHOP.d / 2, SHOP.z + SHOP.d / 2], ys = [0, SHOP.h]; let x0 = 2, x1 = -2, y0 = 2, y1 = -2, full = false;
+  const { x, zs, ys } = room.def.window; let x0 = 2, x1 = -2, y0 = 2, y1 = -2, full = false;
   for (const z of zs) for (const y of ys) { _wr.set(x, y, z).applyMatrix4(CAM.matrixWorldInverse); if (_wr.z > -.1) { full = true; continue; } _wr.applyMatrix4(CAM.projectionMatrix); x0 = Math.min(x0, _wr.x); x1 = Math.max(x1, _wr.x); y0 = Math.min(y0, _wr.y); y1 = Math.max(y1, _wr.y); }
   if (full) { rt.scissor.set(0, 0, rt.width, rt.height); return; }
   const X0 = Math.floor((clamp(x0, -1, 1) * .5 + .5) * rt.width) - 6, X1 = Math.ceil((clamp(x1, -1, 1) * .5 + .5) * rt.width) + 6, Y0 = Math.floor((clamp(y0, -1, 1) * .5 + .5) * rt.height) - 6, Y1 = Math.ceil((clamp(y1, -1, 1) * .5 + .5) * rt.height) + 6;
   rt.scissor.set(Math.max(0, X0), Math.max(0, Y0), Math.max(1, Math.min(rt.width, X1) - Math.max(0, X0)), Math.max(1, Math.min(rt.height, Y1) - Math.max(0, Y0)));
 }
-const isInsideShop = () => { const p = CAM.position; return p.x < SHOP.x + SHOP.w / 2 - .08 && p.x > SHOP.x - SHOP.w / 2 && p.z > SHOP.z - SHOP.d / 2 && p.z < SHOP.z + SHOP.d / 2 && p.y < SHOP.h; };
+const isInsideRoom = () => { const p = CAM.position, b = room.box; return p.x < b.x + b.w / 2 - .08 && p.x > b.x - b.w / 2 && p.z > b.z - b.d / 2 && p.z < b.z + b.d / 2 && p.y > b.y && p.y < b.y + b.h; };
 
 /* 60 fps at most; after a few seconds untouched, 30 */
 function wake() { S.lastInput = performance.now(); if (S.idle) { S.idle = false; S.frames = 0; S.acc = 0; } }
@@ -4058,7 +4100,7 @@ const hudEl = $('#hud');
 function setBoot(t, p) { const a = $('#bootT'), b = $('#bootB'); if (a) a.textContent = t.toUpperCase(); if (b) b.style.width = (p * 100) + '%'; }
 const ICONS = [
   { k: 'plan', attr: 'focus', word: 'Plan', c: '#16e4f4', d: 'MEGABLOCK', r: 'TASKS ', svg: '<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>' },
-  { k: 'work', attr: 'grind', word: 'Work', c: '#f6ee1c', d: 'DOWNTOWN', r: 'HOURS ', svg: '<path d="M12 8V6a2 2 0 1 1 2 2c-1 0-2 1-2 2M12 10 3 17v2h18v-2z"/>' },
+  { k: 'work', room: 'shop', attr: 'grind', word: 'Work', c: '#f6ee1c', d: 'DOWNTOWN', r: 'HOURS ', svg: '<path d="M12 8V6a2 2 0 1 1 2 2c-1 0-2 1-2 2M12 10 3 17v2h18v-2z"/>' },
   { k: 'train', attr: 'strength', word: 'Train', c: '#ff8a1e', d: 'NORTHSIDE', r: 'DONE ', svg: '<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>' },
   { k: 'cardio', attr: 'stamina', word: 'Cardio', c: '#ff2e88', d: 'SKI VILLAGE', r: 'WEEK ', svg: '<path d="M3 20 10 8l4 6 2-3 5 9zM9 10l2 2 2-1"/>' },
   { k: 'fuel', attr: 'fuel', word: 'Fuel', c: '#f6ee1c', d: 'NIGHT MARKET', r: 'SHAKES ', svg: '<path d="M3 11h18a9 9 0 0 1-18 0zM8 3c-1 2 1 3 0 5M13 3c-1 2 1 3 0 5M18 4 13 11"/>' },
@@ -4112,6 +4154,17 @@ function setMode(m) { S.mode = m; S.lastInput = S.modeT = performance.now(); hud
 /* Buttons appear under the finger on arrival, and a touch's click lands after the mode has changed. Nobody means to press what they cannot have seen yet. */
 const justArrived = () => S.mode !== 'fly' && performance.now() - (S.modeT || 0) < 350;
 
+/* hotspot tags: one per object in the room, rebuilt when a room loads */
+function buildTags() {
+  const tw = $('#tags'); tw.textContent = ''; tagEls = []; clockSeen = null;
+  room.hot.forEach(h => {
+    const b = document.createElement('button'); b.className = 'tag'; b.type = 'button'; b.dataset.k = h.key; b.setAttribute('aria-label', h.label);
+    b.innerHTML = `<span class="lbl"><span><b>${h.label}</b><small hidden></small><span class="key" aria-hidden="true">${h.hotkey}</span></span></span><i class="ln" style="--h:${h.line}px"></i><i class="tk"></i>`;
+    b.addEventListener('click', () => { if (S.drag && S.drag.moved) return; tapHot(h.key); });
+    tw.appendChild(b); tagEls.push({ el: b, h, line: h.line });
+  });
+}
+
 function hudInit() {
   /* icons */
   const wrap = $('#icons');
@@ -4122,14 +4175,7 @@ function hudInit() {
     b.addEventListener('click', () => { if (S.drag && S.drag.moved) return; tapIcon(o.k); });
     wrap.appendChild(b); const ns = 'http://www.w3.org/2000/svg', ld = document.createElementNS(ns, 'path'), dt = document.createElementNS(ns, 'rect'); dt.setAttribute('width', 5); dt.setAttribute('height', 5); ld.style.setProperty('--acc', o.c); dt.style.setProperty('--acc', o.c); $('#leaders').append(ld, dt); iconEls.push({ el: b, a: ANCHORS[o.k], k: o.k, ld, dt, sm: b.querySelector('small'), o });
   });
-  /* hotspot tags */
-  const tw = $('#tags');
-  room.hot.forEach((h, i) => {
-    const b = document.createElement('button'); b.className = 'tag'; b.type = 'button'; b.dataset.k = h.key; b.setAttribute('aria-label', h.label);
-    b.innerHTML = `<span class="lbl"><span><b>${h.label}</b><small hidden></small><span class="key" aria-hidden="true">${['E', 'R', 'F'][i]}</span></span></span><i class="ln" style="--h:${[34, 20, 28][i]}px"></i><i class="tk"></i>`;
-    b.addEventListener('click', () => { if (S.drag && S.drag.moved) return; tapHot(h.key); });
-    tw.appendChild(b); tagEls.push({ el: b, h, line: [34, 20, 28][i] });
-  });
+  buildTags();
   /* readouts */
   $('#ringA').innerHTML = ringHTML('0', 0, 'PROGRESS'); $('#ringB').innerHTML = ringHTML('0', 0, 'PERIOD'); $('#ringC').innerHTML = ringHTML('0', 0, '% GOAL');
   barInto($('#bG'), 18, 0); S.ringIn = 0; for (const id of ['#cellsA', '#cellsB']) { const el = $(id); el.innerHTML = '<i class="on"></i>'.repeat(3) + '<i></i>'.repeat(1); }
@@ -4159,12 +4205,12 @@ function hudInit() {
     if (e.key === 'Escape' && S.mode === 'fly' && S.fly && S.fly.dir > 0) return goBack();
     if (S.mode !== 'room') return;
     if (e.key === 'Escape') { if (S.sheet) closeSheet(); else goBack(); return; }
-    const m = { e: 'clock', r: 'shifts', f: 'pay' }[e.key.toLowerCase()]; if (m && !S.sheet) tapHot(m);
+    const h = room.hot.find(x => x.hotkey.toLowerCase() === e.key.toLowerCase()); if (h && !S.sheet) tapHot(h.key);
   }, true);
   addEventListener('popstate', () => {
     if (APP.tab() !== 'today') return;   // leaving a page: the app brings us home, the camera stays put
-    const inShop = S.mode === 'room' || (S.mode === 'fly' && S.fly && S.fly.dir > 0), want = !!(history.state && history.state.city);
-    if (want && !inShop) flyIn(false); else if (!want && inShop) flyOut();
+    const inRoom = S.mode === 'room' || (S.mode === 'fly' && S.fly && S.fly.dir > 0), want = history.state && history.state.city;
+    if (want && !inRoom) flyIn(want, false); else if (!want && inRoom) flyOut();
   });
   /* drag: small orbit in the city, look around in the room; vertical stays with the page */
   const dom = canvas;
@@ -4187,14 +4233,17 @@ function tapWorld(x, y) {
 }
 function tapIcon(k) {
   if (S.mode !== 'city') return;
-  if (k !== 'work') { const e = iconEls.find(i => i.k === k); APP.open(HOME.attrs[e.o.attr].go, e.el); return; }
-  flyIn();
+  const e = iconEls.find(i => i.k === k);
+  if (!e.o.room) { APP.open(HOME.attrs[e.o.attr].go, e.el); return; }
+  /* a build that fails must not leave him stuck: its page still works */
+  try { loadRoom(e.o.room); } catch (x) { APP.log(x); APP.open(HOME.attrs[e.o.attr].go, e.el); return; }
+  flyIn(e.o.room);
 }
-/* The shop gets a history entry, so browser back flies out the same way as ‹ and Escape. */
-function flyIn(push = true) {
+/* A room gets a history entry, so browser back flies out the same way as ‹ and Escape. */
+function flyIn(id, push = true) {
   if (S.mode === 'fly' && S.fly) S.fly.dir = 1;
-  else { closeSheet(true); flightRes(true); makeFlight(1); setMode('fly'); glitchHud(1); S.scanT = -9; }
-  if (push) history.pushState({ city: 'shop' }, '');
+  else { closeSheet(true); loadRoom(id); flightRes(true); makeFlight(1); setMode('fly'); glitchHud(1); S.scanT = -9; }
+  if (push) history.pushState({ city: id }, '');
   APP.sfx('open');
 }
 function flyOut() {
@@ -4205,13 +4254,15 @@ function flyOut() {
 }
 function goBack() { if (history.state && history.state.city) history.back(); else flyOut(); }
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
-function enterRoom() { S.fly = null; flightRes(false); setMode('room'); S.ringIn = S.t; S.yaw = S.yawGoal = 0; S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $('#roomBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
+function enterRoom() { S.fly = null; flightRes(false); setMode('room'); S.ringIn = S.t; S.yaw = S.yawGoal = 0; S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
 function enterCity() { S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
-const flyLabel = dir => setText('#flyT', dir > 0 ? 'APPROACH: SHOP' : 'DEPART: SHOP');
-function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideShop() ? 0 : ''; flyLabel(dir); $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - SHOP.x, CAM.position.z - SHOP.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
+const flyLabel = dir => setText('#flyT', (dir > 0 ? 'APPROACH: ' : 'DEPART: ') + room.def.name);
+function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideRoom() ? 0 : ''; flyLabel(dir); $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - room.box.x, CAM.position.z - room.box.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
 function tapHot(k) {
-  if (k === 'clock') { tapClock(); return; }
-  openSheet(k === 'shifts' ? 'cShifts' : 'cPay');
+  const h = room.hot.find(x => x.key === k); if (!h) return;
+  if (h.run) { h.run(); return; }
+  if (h.go) { APP.open(h.go); return; }
+  openSheet(h.sheet);
   tagEls.forEach(t => { if (t.h.key === k) { t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 600); } });
 }
 /* The same state change as the Work page. The app shows the toast with Undo, then calls City.update. */
@@ -4254,7 +4305,7 @@ function paintClock() {
   const c = CLOCK = APP.clock(), f = c.on ? hms(c.ms) : '00:00:00';
   setText('#rbC', f); setText('#shC', f);
   const key = (c.on ? 1 : 0) + (c.brk ? 2 : 0);
-  const t = tagEls[0]; if (t) setText2(t.el.querySelector('small'), f);
+  const t = tagEls.find(g => g.h.key === 'clock'); if (t) setText2(t.el.querySelector('small'), f);
   if (key === clockSeen) return;
   if (clockSeen !== null) kick = 1;
   clockSeen = key;
@@ -4303,12 +4354,14 @@ function hudFrame(dt) {
       place(g.el, X, Y, off ? 0 : 1);
       const ln = g.el.querySelector('.ln'); if (ln) ln.style.left = clamp(p.x - X, 3, w - 3).toFixed(1) + 'px';
     }
+    if (room.id === 'shop') {
     if (hudFrameN % 24 === 0 && innerWidth >= 900) { const cs = $('#cellsB').children; const on = 1 + Math.floor(Math.random() * 4); for (let i = 0; i < cs.length; i++) cs[i].classList.toggle('on', i < on); }
     const kIn = sstep(0, .9, t - (S.ringIn || 0)); if (kIn < 1 && !RIG && WORK) { const v = pct01(WORK.pct); setRing($('#ringB'), String(Math.round(v * 100 * kIn)), v * kIn); setBar($('#bE'), v * kIn); }
     if (innerWidth >= 900 && (RIG || hudFrameN % 2 === 0)) { wave($('#wvE'), (x, w, h, d) => drawWave(x, w, h, d, t, '#ff4646', 1, 4)); $('#roomData').style.opacity = S.sheet ? 0 : 1; }
     paintClock();
     if (RIG || hudFrameN % 2 === 0) { wave($('#wvC'), (x, w, h, d) => drawWave(x, w, h, d, t, CLOCK.on ? '#5ae4ec' : '#ff4646', CLOCK.on ? 1.1 : .6, 1)); if (S.sheet) wave($('#wvD'), (x, w, h, d) => drawWave(x, w, h, d, t, '#ff4646', 1, 3)); }
     const arc = $('#ringB .arc2'); if (arc) arc.setAttribute('transform', `rotate(${(t * 40) % 360} 50 50)`); const arc3 = $('#ringC .arc2'); if (arc3) arc3.setAttribute('transform', `rotate(${(t * 40) % 360} 50 50)`);
+    }
   }
   if (!$('#perf').hidden && (S.t - (S.perfT || 0) > .4)) { S.perfT = S.t; const i = info(); $('#pF').textContent = i.fps + (S.idle ? ' IDLE' : ''); $('#pC').textContent = i.calls; $('#pT').textContent = i.tris.toLocaleString('en'); $('#pR').textContent = i.w + 'x' + i.h; $('#pS').textContent = i.scale; $('#pB').textContent = (Q.bloom ? 'ON' : 'OFF') + '/' + (Q.refl ? 'ON' : 'OFF'); }
 }
@@ -4349,6 +4402,8 @@ function rig() {
     pins: () => iconEls.map(o => { const p = project(o.a); return [o.k, Math.round(p.x), Math.round(p.y), p.on]; }),
     city() { setMode('city'); S.fly = null; S.azGoal = S.az = 0; applyFov(); return frame(); },
     fly(u, dir = 1) { makeFlight(dir); setMode('fly'); S.fly.u = u; S.fly.dur = 1e9; applyFov(); return frame(); },
+    load(id) { loadRoom(id); return frame(); },
+    reload(id) { room.id = null; loadRoom(id); return frame(); },
     room(yaw = 0) { setMode('room'); S.fly = null; S.yaw = S.yawGoal = yaw; S.flyK = 1; applyFov(); room.setDoor(0); return frame(); },
     sheet(id) { openSheet(id); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     close() { closeSheet(); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
