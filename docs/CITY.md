@@ -278,11 +278,12 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 Technical state only. Updated 2026-11-03.
 
-- **Live:** `main` at `7f1ccc4` is build `p4`: the apartment, behind `?city=1`, flag off by default. `her.glb` is in
-  KV. Pushes go `git push origin city-rooms:main`, never the branch itself, until Cloudflare branch builds are
-  confirmed off (§15).
-- **Branch:** `city-rooms`, local: the p5 commit on top of `7f1ccc4`. `BUILD` is `'p5'` in `city.js`, `index.html`
-  and the `city.js?v=` query. No KV change: `her.glb?v=1` is the same file.
+- **Live:** `main` at `5680bac` is build `p5`: the apartment with her spots and live motion, behind `?city=1`, flag
+  off by default. Live `city.js` checked byte-identical to the repo; `her.glb?v=1` (KV, unchanged since p4) serves.
+  Pushes go `git push origin city-rooms:main`, never the branch itself, until Cloudflare branch builds are confirmed
+  off (§15). Workers Builds took about 15 minutes to pick up the p5 push.
+- **Branch:** `city-rooms`, the same as `main` apart from this note. `BUILD` is `'p5'` in `city.js`, `index.html`
+  and the `city.js?v=` query.
 - **Built (p5, her spots and live motion):**
   - **Spots:** `figSpot()` reads the clock: `day` 6:00 to 18:00 (the window corner), `eve` to 23:00 (at the glass),
     `late` until 6:00 (the bed). `def.figure.spots` lists three key poses per spot (`FIG_POSES` by name, placed by
@@ -347,6 +348,6 @@ Technical state only. Updated 2026-11-03.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. A go to push p5. Then the iPhone check at `?city=1`.
+  1. The iPhone check at `?city=1` (her live rig: FPS, heat, memory).
   2. Weather and time of day, if agreed.
   3. Then the gym, ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.
