@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p3';
+export const BUILD = 'p4';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -162,6 +162,44 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .tag:hover .tk,.tag:focus-visible .tk,.tag.hot .tk{opacity:1;transform:none}
 .tag.on{--k:var(--hud-green)}
 #roomBox{left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px)}
+#aptBox{left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px)}
+#aptBox .dhead{padding-right:6px}
+#aptBox .rbtn{margin-left:auto}
+/* the panel takes the sheet's touches, so a swipe scrolls it and a tap can't reach the rows hidden behind it */
+#hud #sheet.open{pointer-events:auto}
+#hud[data-room=apartment] .cards{grid-template-columns:minmax(0,1fr)}
+#hud.room[data-room=apartment] .q,#hud.room[data-room=apartment] .back{flex:none}
+#hud.room[data-room=apartment] .brand{min-width:0}
+#hud.room[data-room=apartment] .brand b{display:block;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:430px){#hud.room[data-room=apartment] .eqw{display:none}#hud.room[data-room=apartment] .brand{flex:1}}
+.aptl{max-height:min(132px,18vh);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:0 8px 0 4px}
+.trow{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:stretch;border-top:1px solid var(--hud-hair)}
+.trow:first-child{border-top:0}
+.tick{min-height:44px;display:grid;place-items:center}
+.tick i{display:block;width:20px;height:20px;box-shadow:inset 0 0 0 1.5px var(--c,var(--hud-cyan));clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);transition:background .12s}
+.trow.done .tick i{background:var(--c,var(--hud-cyan))}
+.ttl{min-width:0;text-align:left;padding:6px 6px 6px 0;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.ttl b{font:600 14px/1.15 var(--body);color:var(--hud-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl small{font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trow.done .ttl b{opacity:.5;text-decoration:line-through}
+.none{padding:12px 9px;font:13px/1.3 var(--body);color:var(--hud-text2)}
+.wk{width:100%;text-align:left;display:grid;grid-template-columns:42px 26px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:44px;border-top:1px solid var(--hud-hair);font:13px/1.2 var(--body);color:var(--hud-text2)}
+.wk:first-of-type{border-top:0}
+.wk b{font:700 13px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-text)}
+.wk.today b{background:var(--hud-yellow);color:var(--hud-ink);padding:3px 4px;text-align:center}
+.wk span{font-weight:700;font-variant-numeric:tabular-nums;color:var(--hud-text)}
+.wk div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums;color:var(--hud-text);text-align:right}
+.wk.sel{box-shadow:inset 2px 0 0 var(--hud-red);background:var(--hud-s2)}
+.nrow{width:100%;text-align:left;display:block;min-height:44px;padding:7px 2px;border-top:1px solid var(--hud-hair)}
+.nrow:first-of-type{border-top:0}
+.nrow b{display:block;font:600 14px/1.2 var(--body);color:var(--hud-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nrow p{margin:3px 0 0;font:12px/1.3 var(--body);color:var(--hud-text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nrow small{display:block;margin-top:3px;font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3)}
+.dcd{padding:8px 0;border-top:1px solid var(--hud-hair)}
+.dcd:first-child{border-top:0}
+.dcd b{display:block;font:600 14px/1.2 var(--body);color:var(--hud-text);overflow-wrap:anywhere}
+.dcd small{display:block;margin-top:3px;font:12px/1.2 var(--body);color:var(--hud-text2)}
 #roomBox .bigt{font:700 28px/1 var(--body);font-variant-numeric:tabular-nums lining-nums;color:var(--hud-text);letter-spacing:.01em}
 .rbtn{position:relative;min-height:44px;padding:0 15px 0 12px;display:flex;align-items:center;justify-content:center;gap:7px;font:700 14px/1 var(--hud-font);letter-spacing:.1em;color:var(--hud-ink);background:linear-gradient(315deg,transparent 4.5px,var(--hud-cyan) 0);white-space:nowrap;flex:none}
 .rbtn.ol{color:var(--hud-cyan);background:linear-gradient(315deg,var(--hud-cyan) 0 5px,transparent 0);box-shadow:inset 0 0 0 1px var(--hud-cyan-line)}
@@ -250,6 +288,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   #dataBox{display:block;right:18px;bottom:18px;width:232px}
   #roomData{display:block;right:18px;bottom:18px;width:232px;transition:opacity .25s}
   #roomBox{right:auto;width:470px;left:18px;bottom:18px}
+  #aptBox{right:auto;width:470px;left:18px;bottom:18px}
+  .aptl{max-height:min(176px,24vh)}
   .top{padding-left:18px;padding-right:18px}
   .ladder{display:block}
   #sheet{left:auto;width:min(560px,44vw);top:calc(var(--st) + 76px);transform:translateX(104%)}
@@ -268,6 +308,7 @@ const MARKUP = `
     <button class="frame brand" data-act="progress" data-m="city fly" aria-label="Progress"><div class="in"><i></i><div><b>DAYBOOK</b><small id="brandLv">LV 1</small></div></div></button>
     <button class="back" id="btnBack" data-m="room" aria-label="Back to the city"><span><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8"/></svg></span></button>
     <button class="frame brand" data-act="progress" data-m="room" data-r="shop" aria-label="Progress"><div class="in"><i></i><div><b>SHOP</b><small id="shopPer">PERIOD</small></div></div></button>
+    <button class="frame brand" data-act="progress" data-m="room" data-r="apartment" aria-label="Progress"><div class="in"><i></i><div><b>APARTMENT</b><small id="aptDate">TODAY</small></div></div></button>
     <div class="frame eqw"><div class="in"><canvas id="eq" aria-hidden="true"></canvas><div class="row"><span class="mi">SIGNAL</span><span class="mi" id="eqv">SYNC OFF</span></div></div></div>
     <div class="frame clk"><div class="in"><b id="clk">00:00</b><span class="mi" id="clkd"></span></div></div>
     <button class="q" data-act="spot-open" aria-label="Quick add"><span style="font-size:22px;font-weight:400">+</span></button>
@@ -345,6 +386,13 @@ const MARKUP = `
       </div>
     </div>
   </section>
+  <section class="dbox frame pe" id="aptBox" data-m="room" data-r="apartment" aria-label="Today's tasks">
+    <div class="in">
+      <div class="dhead"><b>TODAY</b><span class="mi" id="aptN"></span><button class="rbtn" id="btnAptSheet">PLAN</button></div>
+      <div class="tickr"></div>
+      <div class="aptl pe" id="aptList"></div>
+    </div>
+  </section>
   <div id="hint" data-m="room" style="top:calc(var(--st) + 72px)">DRAG TO LOOK</div>
 
   <aside id="sheet" class="frame" aria-label="Work" aria-hidden="true">
@@ -352,6 +400,26 @@ const MARKUP = `
       <div class="shead"><h2 id="shName">Work</h2><span class="mi" id="shPage" style="margin-left:auto">PAGE.01/03</span><button class="back" id="btnClose" aria-label="Close sheet"><span><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span></button></div>
       <div class="scroll" id="sheetScroll">
         <div class="cards">
+          <section class="card" id="cToday" data-r="apartment">
+            <div class="kick">Today<span class="mi" id="tdN"></span></div>
+            <div id="tdRows"></div>
+            <div class="acts"><button class="rbtn ol" data-go="week:">OPEN PLAN PAGE</button></div>
+          </section>
+          <section class="card" id="cWeek" data-r="apartment">
+            <div class="kick">This week<span class="mi" id="wkL"></span></div>
+            <div id="wkRows"></div>
+            <div id="wkDay" style="margin-top:8px"></div>
+            <div class="acts" id="wkActs"></div>
+          </section>
+          <section class="card" id="cNotes" data-r="apartment">
+            <div class="kick">Notes<span class="mi" id="ntN"></span></div>
+            <div id="ntRows"></div>
+            <div class="acts"><button class="rbtn ol" data-go="week:">WRITE ONE</button></div>
+          </section>
+          <section class="card" id="cDecide" data-r="apartment">
+            <div class="kick">Needs a decision<span class="mi" id="dcN"></span></div>
+            <div id="dcRows"></div>
+          </section>
           <section class="card" id="cClock" data-r="shop">
             <div class="kick">The clock<span class="mi">SYS.CLOCK/01</span></div>
             <div class="hero">
@@ -1666,7 +1734,7 @@ void main(){
 
 /* ---------- rain ---------- */
 const RAIN_VS = /* glsl */`
-precision highp float; uniform mat4 viewMatrix, projectionMatrix; uniform vec3 cameraPosition; uniform float uTime, uRainBox;
+precision highp float; uniform mat4 viewMatrix, projectionMatrix; uniform vec3 cameraPosition; uniform float uTime, uRainBox; uniform vec4 uCut;
 in vec3 position; in vec4 iR; out float vA; out float vT;
 void main(){
   vec3 b=vec3(uRainBox,uRainBox*.8,uRainBox);
@@ -1681,6 +1749,8 @@ void main(){
   vT=position.y;
   /* rain stays downtown */
   vA*=smoothstep(520.,180.,length(p.xz-vec2(0.,-40.)));
+  /* only on one side of a plane, while a room shows through its window */
+  vA*=step(0.,dot(vec4(p,1.),uCut));
   gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);
 }`;
 const RAIN_FS = /* glsl */`
@@ -3576,6 +3646,209 @@ function buildRoom() {
 /* the street the shop's mirror sees past the glass */
 function shopBackdrop() { const B = new MB(200), X = SHOP.x + SHOP.w / 2 + 4; for (const [z, y, w, h, c] of [[-3.6, 1.6, .22, 2.2, PAL.red], [-2.2, 3.1, 1.2, .14, PAL.cyan], [-.5, 1.4, .16, 1.9, 0xc09a30], [1.2, 2.5, .9, .16, 0xff2e88], [2.8, 1.2, .2, 2.4, PAL.orange], [4, 3, 1.1, .12, PAL.cyan]]) { B.set({ kind: K.PLAIN, em: 170, c: hex(c), layer: 0, id: 0 }); B.quad([X, y, SHOP.z + z + w], [X, y, SHOP.z + z - w], [X, y + h, SHOP.z + z - w], [X, y + h, SHOP.z + z + w]); B.quad([X, y + h, SHOP.z + z + w], [X, y + h, SHOP.z + z - w], [X, y, SHOP.z + z - w], [X, y, SHOP.z + z + w]); } return B.geom(); }
 
+﻿/* ---------- the apartment: Plan ---------- */
+/* In the +X side of the pale block, its glass in the block's real wall at x = -69. What the glass shows is another matter: see def.view. */
+const APT = { x: -73.52, y: 52, z: 212, w: 9, d: 8, h: 4 };
+/* its own small atlas: the shared one is full, and this one goes away with the room */
+function apartmentAtlas() {
+  const S = 1536, cv = document.createElement('canvas'); cv.width = cv.height = S; const x = cv.getContext('2d'), C = {}, R = rng(4217);
+  let cx = 0, cy = 0, rowH = 0;
+  const cell = (name, w, h, fn) => { if (cx + w > S) { cx = 0; cy += rowH + 2; rowH = 0; } if (cy + h > S) console.error('apartment atlas overflow', name); const u0 = cx / S, u1 = (cx + w) / S, v1 = 1 - cy / S, v0 = 1 - (cy + h) / S; x.save(); x.beginPath(); x.rect(cx, cy, w, h); x.clip(); x.translate(cx, cy); fn(x, w, h); x.restore(); C[name] = [u0 + .0008, v0 + .0008, u1 - .0008, v1 - .0008]; cx += w + 2; rowH = Math.max(rowH, h); };
+  const now = new Date(), CY = '#19e6e6', ICE = '#8fe8ff', ACID = '#f7e733', PINK = '#ff3c8e';
+  /* today, on a pane of smoked glass: heavy, white, two lines already ticked */
+  cell('note', 220, 440, (x, w, h) => { x.fillStyle = '#0b1018'; x.fillRect(0, 0, w, h); x.fillStyle = CY; x.fillRect(0, 0, w, 6); x.fillStyle = '#fff'; x.font = `800 50px ${FONT_DISP}`; x.textBaseline = 'middle'; x.fillText('TODAY', 16, 54); x.fillStyle = CY; x.fillRect(16, 86, 110, 5); for (let i = 0; i < 5; i++) { const y = 136 + i * 62; x.strokeStyle = i < 2 ? CY : '#fff'; x.lineWidth = 4; x.strokeRect(16, y - 16, 30, 30); x.fillStyle = i < 2 ? 'rgba(143,232,255,.5)' : '#e8eef4'; x.fillRect(60, y - 5, R.range(90, 140), 10); if (i < 2) { x.beginPath(); x.moveTo(21, y); x.lineTo(30, y + 10); x.lineTo(46, y - 14); x.stroke(); } } for (let y = 0; y < h; y += 5) { x.fillStyle = 'rgba(0,0,0,.14)'; x.fillRect(0, y, w, 1); } });
+  /* the month as a lit grid, today's square filled */
+  cell('cal', 400, 320, (x, w, h) => { x.fillStyle = '#080c14'; x.fillRect(0, 0, w, h); x.fillStyle = ICE; x.textBaseline = 'middle'; x.font = `800 44px ${FONT_DISP}`; x.fillText(now.toLocaleString('en', { month: 'long' }).toUpperCase(), 14, 34); const first = (new Date(now.getFullYear(), now.getMonth(), 1).getDay() + 6) % 7, days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), cw = (w - 20) / 7, ch = 42; x.font = `700 21px ${FONT_EN}`; x.textAlign = 'center'; for (let d = 1; d <= days; d++) { const k = d - 1 + first, X = 10 + k % 7 * cw, Y = 66 + Math.floor(k / 7) * ch; x.strokeStyle = 'rgba(143,232,255,.42)'; x.lineWidth = 2; x.strokeRect(X + 2, Y + 2, cw - 4, ch - 4); if (d === now.getDate()) { x.fillStyle = ACID; x.fillRect(X + 2, Y + 2, cw - 4, ch - 4); x.fillStyle = '#0a0a12'; } else x.fillStyle = k % 7 > 4 ? '#6fb4cc' : ICE; x.fillText(String(d), X + cw / 2, Y + ch / 2 + 1); } x.textAlign = 'left'; });
+  /* the notebook is the one yellow thing on the table */
+  cell('book', 220, 300, (x, w, h) => { x.fillStyle = ACID; x.fillRect(0, 0, w, h); x.fillStyle = '#0a0a12'; x.fillRect(0, 0, 26, h); x.font = `800 44px ${FONT_DISP}`; x.textBaseline = 'middle'; x.fillText('NOTES', 44, 70); x.fillRect(44, 102, 150, 6); x.fillStyle = '#f4f4ee'; x.fillRect(176, 0, 10, h); });
+  /* a or b on the table's screen: the two choices side by side, a bar under each */
+  cell('phone', 420, 280, (x, w, h) => { x.fillStyle = '#070a12'; x.fillRect(0, 0, w, h); x.fillStyle = CY; x.fillRect(0, 0, w, 6); x.fillStyle = ICE; x.font = `700 22px ${FONT_EN}`; x.textBaseline = 'middle'; x.fillText('PICK ONE', 18, 30); x.fillStyle = 'rgba(143,232,255,.5)'; x.fillRect(w - 66, 26, 48, 8);
+    const card = (X, c, t, pct) => { const cw = 180, ch = 170, Y = 52; x.fillStyle = c; x.beginPath(); x.moveTo(X + 22, Y); x.lineTo(X + cw, Y); x.lineTo(X + cw, Y + ch - 22); x.lineTo(X + cw - 22, Y + ch); x.lineTo(X, Y + ch); x.lineTo(X, Y + 22); x.fill(); x.fillStyle = '#0a0a12'; x.font = `800 128px ${FONT_DISP}`; x.textAlign = 'center'; x.fillText(t, X + cw / 2, Y + ch / 2 + 6); x.textAlign = 'left'; x.fillStyle = 'rgba(255,255,255,.16)'; x.fillRect(X, Y + ch + 20, cw, 8); x.fillStyle = c; x.fillRect(X, Y + ch + 20, cw * pct, 8); };
+    card(20, PINK, 'A', .62); card(w - 200, ACID, 'B', .38); x.fillStyle = 'rgba(0,0,0,.16)'; for (let y = 0; y < h; y += 5) x.fillRect(0, y, w, 1); });
+  cell('label', 240, 110, (x, w, h) => { x.fillStyle = '#0c0d14'; x.fillRect(0, 0, w, h); x.fillStyle = '#ffb35c'; x.textBaseline = 'middle'; x.font = `800 42px ${FONT_DISP}`; x.fillText('CAREER', 14, 36); x.fillStyle = PINK; x.font = `800 22px ${FONT_DISP}`; x.fillText('PAUSED', 14, 82); x.strokeStyle = PINK; x.lineWidth = 2; x.strokeRect(8, 66, 112, 32); });
+  cell('carton', 150, 170, (x, w, h) => { x.fillStyle = '#e8e8f0'; x.fillRect(0, 0, w, h); x.fillStyle = PINK; x.fillRect(0, 0, w, 44); x.fillStyle = '#fff'; x.font = `800 30px ${FONT_DISP}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('NUDLO', w / 2, 24); x.fillStyle = '#0a0a12'; x.font = `800 60px ${FONT_DISP}`; x.fillText('N', w / 2, 106); x.textAlign = 'left'; });
+  cell('can', 96, 120, (x, w, h) => { x.fillStyle = '#10121c'; x.fillRect(0, 0, w, h); x.fillStyle = CY; x.fillRect(0, 34, w, 40); x.fillStyle = '#10121c'; x.font = `800 26px ${FONT_EN}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('ZOXA', w / 2, 55); x.textAlign = 'left'; });
+  /* the media wall, on low */
+  cell('holo', 280, 158, (x, w, h) => { x.fillStyle = '#04121c'; x.fillRect(0, 0, w, h); x.fillStyle = '#39d8ff'; x.font = `700 20px ${FONT_EN}`; x.textBaseline = 'middle'; x.fillText('CH.04 ▸ WEATHER', 12, 20); x.strokeStyle = '#39d8ff'; x.lineWidth = 2; x.beginPath(); for (let i = 0; i <= 26; i++) { const X = 12 + i * 10, Y = 96 + Math.sin(i * .7) * 22 + Math.sin(i * 1.9) * 8; if (i) x.lineTo(X, Y); else x.moveTo(X, Y); } x.stroke(); x.fillStyle = '#ff2e88'; x.fillRect(12, 136, 96, 6); x.fillStyle = 'rgba(57,216,255,.5)'; x.fillRect(118, 136, 150, 6); x.fillStyle = 'rgba(0,0,0,.35)'; for (let y = 0; y < h; y += 4) x.fillRect(0, y, w, 1); });
+  /* his skis: graphite with a yellow line */
+  cell('ski', 48, 400, (x, w, h) => { x.fillStyle = '#23242e'; x.fillRect(0, 0, w, h); x.fillStyle = ACID; x.fillRect(w / 2 - 3, 0, 6, h); x.fillStyle = '#0a0a12'; x.fillRect(0, h * .42, w, 56); x.fillStyle = ACID; x.font = `800 20px ${FONT_DISP}`; x.save(); x.translate(w / 2, h * .42 + 28); x.rotate(-Math.PI / 2); x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('N/F', 0, 0); x.restore(); });
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.NoColorSpace; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter; tex.anisotropy = 8; tex.flipY = true; tex.premultiplyAlpha = false;
+  return { tex, C };
+}
+
+function buildApartment() {
+  const A = APT, W = A.w / 2, D = A.d / 2, H = A.h;
+  const { tex, C } = apartmentAtlas();
+  /* solids in M; everything he could tidy away in Z, with its own numbers, so turning it off changes nothing else */
+  const M = new MB(28000), Z = new MB(16000), FXM = new MB(1600), GL = new MB(16), R = rng(4210), Q = rng(5310);
+  const glows = [], zGlows = [], w = (x, y, z) => [A.x + x, A.y + y, A.z + z];
+  const G = (x, y, z, c, s, a = 0, list = glows) => { const k = typeof c === 'number' ? hex(c) : c; list.push({ x: A.x + x, y: A.y + y, z: A.z + z, r: k[0], g: k[1], b: k[2], s, a }); };
+  const piece = () => PIECES++;
+  const plate = (B, x, y, z, pw, ph, ry, cell, rx = 0, o = {}) => B.at(x, y, z, ry, () => B.plate(0, 0, 0, pw, ph, 0, C[cell], { kind: K.PAPER, em: 0, c: [1, 1, 1], ...o }), rx);
+  const chrome = (B = M, c = 0xa8b4c8) => B.set({ kind: K.BRASS, em: 0, layer: 0, c });
+  /* a lit line that keeps its colour: neon whitens when it faces you */
+  const line = (B, x, y, z, lw, lh, ld, c, em = 200) => { setPlain(B, c, 0, em); B.box(x, y, z, lw, lh, ld, { c }); B.set({ em: 0 }); };
+  /* anything soft: a duvet, pillows. A rounded lump with one smooth skin, x and z centred, y is the base */
+  const soft = (B, x, y, z, sw, sh, sd, c, r, o = {}) => {
+    const nr = o.rows || 6, nn = o.seg || 14, j = o.j === undefined ? .05 : o.j, ry = o.ry || 0, J = Array.from({ length: nn }, () => 1 + (r() - .5) * j * 2), rings = [];
+    for (let i = 0; i <= nr; i++) { const t = i / nr, k = Math.max(.002, Math.pow(Math.sin(t * Math.PI), .42)), yy = y + sh * t, ring = []; for (let n = 0; n < nn; n++) { const a = -n / nn * TAU, ca = Math.cos(a), sa = Math.sin(a), e = .6, px = Math.sign(ca) * Math.pow(Math.abs(ca), e) * sw / 2 * k * J[n], pz = Math.sign(sa) * Math.pow(Math.abs(sa), e) * sd / 2 * k * J[n]; ring.push([x + px * Math.cos(ry) + pz * Math.sin(ry), yy + (o.sag || 0) * (px * px + pz * pz), z - px * Math.sin(ry) + pz * Math.cos(ry)]); } rings.push(ring); }
+    setPlain(B, c, o.layer || 0); B.loft(rings, { smooth: true, c, grad: o.grad || .72, uvS: o.uvS || 1 });
+  };
+  /* hard-edged upholstery: a slab with soft corners */
+  const pad = (B, x, y, z, pw, ph, pd, c = PALE) => { setPlain(B, c, L.LEATHER); B.extrude(roundPoly(x, z, pw, pd, .05, 2), y, y + ph, { grad: .86, uvS: 3, id: B.nid() }); };
+  const SHELL = 0x1b1b2a, CEIL = 0x14131e, FLOOR = 0x0b0c14, BLK = 0x101018, JET = 0x07070c, PALE = 0x5e5c6c, GUN = 0x3c404e, CY = 0x19e6e6, ICE = 0x8fe8ff, VIO = 0xb13cff, AMB = 0xffb35c;
+  /* the glass runs wall to wall and floor to ceiling on the +X side; he rests at E */
+  const wz0 = -D + .01, wz1 = D - .01, wy0 = .05, wy1 = H - .12, GX = W, E = [-3.2, 1.62, 0];
+  /* the low table, and what stands on it */
+  const tx = 1.05, tz = .02, top = .46;
+
+  M.at(A.x, A.y, A.z, 0, () => {
+    /* floor: seamless black resin. What sells it is what lies on it, below */
+    setPlain(M, FLOOR); M.id = 11; M.quad([-W, .05, D], [W, .05, D], [W, .05, -D], [-W, .05, -D], [0, 0, 1, 1], .75, 1, 1, .75);
+    /* ceiling: flat and dark, three recessed slots running at the view */
+    setPlain(M, CEIL); M.id = 14; M.quad([-W, H, -D], [W, H, -D], [W, H, D], [-W, H, D], [0, 0, 1, 1]);
+    for (const [z, c] of [[-1.6, CY], [.2, ICE], [2.0, CY]]) { setPlain(M, 0x06060c); M.box(.2, H - .006, z, A.w - .8, .006, .09, { id: 14 }); neonStrip(M, .2, H - .014, z, A.w - .8, .008, .05, c, 0); }
+
+    /* walls: matte composite panels, each its own number so the ink draws the gaps */
+    const pane = (x0, x1, id) => { setPlain(M, SHELL); M.id = id; M.quad([x0, 0, 0], [x1, 0, 0], [x1, H, 0], [x0, H, 0], [0, 0, 1, 1], .8, .8, 1, 1); };
+    for (const v of [{ x: 0, z: -D, ry: 0, len: A.w }, { x: 0, z: D, ry: Math.PI, len: A.w }, { x: -W, z: 0, ry: Math.PI / 2, len: A.d }]) M.at(v.x, 0, v.z, v.ry, () => {
+      const n = Math.round(v.len / 1.3), s = v.len / n; for (let i = 0; i < n; i++) pane(-v.len / 2 + i * s, -v.len / 2 + (i + 1) * s, M.nid());
+      setPlain(M, JET); M.box(0, .05, .012, v.len, .07, .024, {});
+    });
+    line(M, -1.9, .05, D - .004, .006, H - .1, .006, ICE, 120); line(M, -1.9, .05, -D + .004, .006, H - .1, .006, ICE, 120);
+
+    /* the glass line: a raised step, its lit lip, black head and jambs, three thin mullions */
+    setPlain(M, 0x12121b); M.box(W - .175, .05, 0, .35, .12, A.d, { id: 12 });
+    line(M, W - .352, .163, 0, .006, .006, A.d, VIO, 170);
+    setPlain(M, JET); M.box(W - .04, wy1, 0, .08, H - wy1, A.d, {}); for (const z of [wz0, wz1]) M.box(W - .04, .05, z, .08, wy1 - .05, .05, {}); for (const z of [-2.1, 0, 2.1]) M.box(W - .035, .17, z, .07, wy1 - .17, .03, {}); piece();
+
+    /* kitchen: one black run on the -Z wall, a steel top, a floating slab with cold light under it, no handles anywhere */
+    setPlain(M, BLK); M.box(.2, .05, -D + .3, 4.4, .85, .6, { id: M.nid() });
+    setPlain(M, GUN); M.box(.2, .9, -D + .32, 4.4, .04, .64, { id: M.nid() }); line(M, .2, .905, -D + .642, 4.4, .012, .004, 0xc8d4e8, 150);
+    setPlain(M, 0x08080c); M.box(1.2, .94, -D + .3, .7, .004, .5, {});
+    chrome(M, 0x6f7787); M.tube([[-.8, .94, -D + .07], [-.8, 1.22, -D + .07], [-.8, 1.3, -D + .17], [-.8, 1.22, -D + .28]], .012, 12, 6, { c: 0x6f7787 });
+    setPlain(M, BLK); M.box(.6, 1.7, -D + .16, 3.2, .3, .32, { id: M.nid() }); neonStrip(M, .6, 1.685, -D + .26, 3.1, .012, .03, 0xcfefff, 0);
+    /* today's plinth: a slim black block, lit at the foot */
+    setPlain(M, BLK); M.box(1.1, .05, -1.2, .3, .9, .7, { id: M.nid() }); line(M, .948, .06, -1.2, .004, .012, .7, ICE, 120);
+    /* TODAY: a pane of smoked glass standing on it */
+    { const x = 1.05, z = -1.2; setPlain(M, 0x0b1018); M.box(x + .025, .95, z, .03, 1.2, .64, { id: 210 });
+      plate(M, x, 1.56, z, .6, 1.17, -Math.PI / 2, 'note', 0, { kind: K.SIGN, em: 130, c: [1, 1, 1], seed: 0, id: 210 });
+      line(M, x - .002, 2.15, z, .012, .012, .64, CY, 220); for (const dz of [-.32, .32]) line(M, x - .002, .95, z + dz, .012, 1.21, .012, CY, 220); piece(); }
+
+    /* the low table: a black slab cantilevered off one block, its near edge the only warm line in the room */
+    setPlain(M, 0x15151f); M.extrude(roundPoly(tx, tz, 1.1, 1.3, .06, 2), .41, top, { grad: .9, id: 213 });
+    setPlain(M, 0x0c0c14); M.box(tx + .2, .05, tz + .3, .4, .36, .4, { id: 213 });
+    line(M, tx - .555, .435, tz, .004, .008, 1.3, AMB, 200); piece();
+    /* DECIDE: a slim screen on a chrome stand, A beside B, lit along the top like TODAY */
+    { const x = tx - .25, z = tz - .3, y = .84; setPlain(M, 0x08090c); M.box(x + .06, top, z, .16, .015, .22, { id: 211 }); chrome(M, GUN); M.tube([[x + .06, top + .01, z], [x + .06, y - .2, z]], .014, 12, 5, { c: GUN });
+      setPlain(M, 0x0b1018); M.box(x + .025, y - .22, z, .03, .44, .64, { id: 211 }); plate(M, x, y, z, .6, .4, -Math.PI / 2, 'phone', 0, { kind: K.SIGN, em: 200, c: [1, 1, 1], seed: 0, id: 211 });
+      line(M, x - .002, y + .22, z, .012, .012, .64, CY, 220); G(x - .05, y, z, [.3, .18, .3], .6); piece(); }
+    /* NOTES: the yellow notebook, tipped up on a wedge */
+    { const x = tx - .25, z = tz + .32; setPlain(M, 0x0a0a12); M.box(x + .05, top, z, .2, .06, .3, { id: 212 });
+      M.at(x, .6, z, -Math.PI / 2, () => { setPlain(M, 0xe8e8f0); M.box(0, -.045, 0, .3, .045, .38, { id: 212 }); M.at(0, .001, 0, 0, () => M.plate(0, 0, 0, .3, .38, 0, C.book, { kind: K.SIGN, em: 190, c: [1, 1, 1], id: 212, seed: 0 }), -Math.PI / 2); }, .75); piece(); }
+
+    /* a chrome sled chair by the glass, its back to the room */
+    { const cx = 3.7, cz = -2.6; pad(M, cx, .3, cz, .62, .12, .6); pad(M, cx - .26, .38, cz, .12, .38, .6); chrome(M, GUN); for (const dz of [-.3, .3]) M.tube([[cx + .28, .06, cz + dz], [cx - .32, .06, cz + dz], [cx - .36, .4, cz + dz], [cx - .32, .76, cz + dz]], .012, 12, 5, { c: GUN }); piece(); }
+
+    /* CAREER: a steel drawer tower beside the lounge, one drawer left open */
+    { const x0 = 1.85, x1 = 2.35, zc = 1.35; setPlain(M, 0x3c4150); M.box((x0 + x1) / 2, .05, zc, x1 - x0, 1.1, .44, { id: M.nid() }); line(M, x0 - .002, .05, zc - .22, .004, 1.1, .012, 0xdde6f5, 160);
+      for (let i = 0; i < 3; i++) { const y = .1 + i * .34, id = M.nid(); setPlain(M, i === 1 ? 0x4a5062 : 0x343946); if (i === 1) M.box(x0 - .14, y, zc, .26, .3, .4, { id }); else M.box(x0 - .006, y, zc, .012, .3, .4, { id }); line(M, i === 1 ? x0 - .272 : x0 - .014, y + .22, zc, .006, .03, .13, AMB, 190); }
+      for (const [i, c] of [[0, CY], [1, 0xf7e733], [2, 0xff3c8e]]) line(M, x0 - .21 + i * .055, .54, zc - .09 + i * .09, .03, .05, .11, c, 180);
+      plate(M, x0 - .004, .98, zc, .38, .16, -Math.PI / 2, 'label', 0, { kind: K.SIGN, em: 130, c: [1, 1, 1], seed: 0 }); piece(); }
+
+    /* the bed, up on its own lit platform by the glass, its head against the south wall */
+    { const px0 = 2.2, px1 = W - .35, pz0 = 1.2, pz1 = D, bx = 3.35, bz = 2.85;
+      setPlain(M, 0x15151f); M.box((px0 + px1) / 2, .05, (pz0 + pz1) / 2, px1 - px0, .22, pz1 - pz0, { id: M.nid() }); line(M, px0 - .002, .2, (pz0 + pz1) / 2, .006, .012, pz1 - pz0, VIO, 190); line(M, (px0 + px1) / 2, .2, pz0 - .002, px1 - px0, .012, .006, VIO, 190);
+      setPlain(M, BLK); M.box(bx, .27, bz, 1.9, .14, 2.2, { id: M.nid() });
+      soft(M, bx, .4, bz - .05, 1.86, .2, 2.1, 0x34344a, R, { j: .02, seg: 22, rows: 5 }); soft(M, bx, .52, bz - .62, 1.84, .1, .7, 0x6a6884, R, { j: .07, seg: 16, rows: 4 }); for (const dx of [-.45, .45]) soft(M, bx + dx, .56, D - .3, .72, .18, .34, 0xb4b2c8, R, { j: .04, seg: 14 });
+      setPlain(M, 0x1a1a26, L.LEATHER); M.box(bx, .27, D - .06, 2.3, 1.1, .1, { id: M.nid() }); line(M, bx, 1.38, D - .12, 2.3, .01, .01, ICE, 160); piece(); }
+
+    /* the long pale sofa against the south wall, on a lit kick */
+    { setPlain(M, BLK); M.box(-1.1, .05, 3.35, 3, .08, .9, { id: M.nid() }); line(M, -1.1, .055, 2.898, 3, .012, .004, ICE, 120); for (let i = 0; i < 3; i++) pad(M, -2.1 + i * 1, .13, 3.3, .98, .22, .86); for (let i = 0; i < 3; i++) pad(M, -2.1 + i * 1, .35, 3.7, .98, .38, .2); piece(); }
+
+    /* the door, flush, by the back corner */
+    setPlain(M, 0x15151e); M.box(-3.5, .05, D - .03, 1.1, 2.5, .06, {}); setPlain(M, CEIL); M.box(-3.5, .06, D - .06, .96, 2.42, .03, {}); chrome(M, 0x6f7787); M.box(-3.1, .9, D - .08, .012, .7, .012, { c: 0x6f7787 }); piece();
+    /* the media wall's dark back */
+    setPlain(M, 0x0e0e16); M.box(-3.1, .55, -D + .015, 2.4, 1.8, .012, { id: M.nid() });
+    /* WEEK: a lit grid hung from the ceiling in front of the glass, over the foot of the bed */
+    { const x = W - .5, y = 2.45, z = 1.7; setPlain(M, 0x080c14); M.box(x + .045, y - .55, z, .06, 1.1, 1.36, { id: 214 }); plate(M, x, y, z, 1.3, 1.04, -Math.PI / 2, 'cal', 0, { kind: K.SIGN, em: 130, c: [1, 1, 1], seed: 0, id: 214 }); line(M, x - .004, y + .53, z, .012, .012, 1.34, ICE, 200); chrome(M, 0x6f7787); for (const dz of [-.5, .5]) M.box(x + .03, y + .55, z + dz, .012, H - y - .55, .012, { c: 0x6f7787 }); piece(); }
+  });
+
+  /* the glass: what it shows comes from def.view */
+  { const x = A.x + W, q = (z0, z1, y0, y1) => { GL.set({ kind: K.GLASS, c: [1, 1, 1], id: 0 }); const u0 = (z0 + D) / (2 * D), u1 = (z1 + D) / (2 * D), v0 = y0 / 4, v1 = y1 / 4; GL.quad([x, A.y + y0, A.z + z1], [x, A.y + y0, A.z + z0], [x, A.y + y1, A.z + z0], [x, A.y + y1, A.z + z1], [u1, v0, u0, v1]); }; q(wz0, wz1, wy0, wy1); }
+
+  /* the city lying on the floor. Wedges fan out from where he rests, so they read as reflections and not as rectangles */
+  { const X = v => A.x + v, Z2 = v => A.z + v, Y = A.y, Zf = (zw, x) => E[2] + (zw - E[2]) * (x - E[0]) / (GX - E[0]);
+    const wedge = (zw0, zw1, c, a, y = .06, xa = GX - .36, xb = -1.7) => { FXM.set({ kind: 3, a, c }); FXM.quad([X(xa), Y + y, Z2(Zf(zw1, xa))], [X(xa), Y + y, Z2(Zf(zw0, xa))], [X(xb), Y + y, Z2(Zf(zw0, xb))], [X(xb), Y + y, Z2(Zf(zw1, xb))], [0, 0, 1, 1]); };
+    const bands = [[-D, -1.7, [.88, .14, .5], 150], [-1.6, -.15, [1, .48, .24], 120], [-.15, 1.3, [.62, .16, .72], 140], [1.4, D, [.22, .62, 1], 130]];
+    for (const [a, b, c, s] of bands) wedge(a, b, c, s * .32);
+    /* the towers and their signs, smeared down the resin: thin, uneven, in the colour of that part of the skyline */
+    for (let i = 0; i < 52; i++) { const z = Q.range(-D + .05, D - .2), ww = Q.range(.03, .24), zone = z < -1.7 ? [[.95, .16, .55], [.72, .1, .6]] : z < -.15 ? [[1, .5, .24], [.95, .2, .5]] : z < 1.3 ? [[.66, .18, .8], [.95, .2, .55]] : [[.2, .6, 1], [.45, .88, 1]]; wedge(z, z + ww, zone[i % 2], Q.range(30, 100), .0605 + i * .00002, GX - .36, Q.range(-2.4, .4)); }
+    for (let i = 0; i < 6; i++) { const z = Q.range(-3.6, 3.6); wedge(z, z + .04, i < 5 ? [.55, .9, 1] : [.97, .9, .2], 150, .0612, GX - .36, Q.range(-1.6, .8)); }
+    /* the same bands, fainter, on the ceiling */
+    for (const [a, b, c, s] of bands) { const xa = GX - .1, xb = .7; FXM.set({ kind: 3, a: s / 4, c }); FXM.quad([X(xb), Y + H - .02, Z2(Zf(b, xb))], [X(xb), Y + H - .02, Z2(Zf(a, xb))], [X(xa), Y + H - .02, Z2(Zf(a, xa))], [X(xa), Y + H - .02, Z2(Zf(b, xa))], [0, 1, 1, 0]); }
+    /* a lift of pink in the bottom of the glass */
+    FXM.set({ kind: 3, a: 46, c: [.88, .14, .5] }); FXM.quad([X(GX - .03), Y + .06, Z2(wz1)], [X(GX - .03), Y + .06, Z2(wz0)], [X(GX - .03), Y + 1.4, Z2(wz0)], [X(GX - .03), Y + 1.4, Z2(wz1)], [0, 0, 1, 1]);
+    const blob = (x, y, z, sx, sz, c, a) => { FXM.set({ kind: 7, a, c }); FXM.quad([X(x - sx / 2), Y + y, Z2(z + sz / 2)], [X(x + sx / 2), Y + y, Z2(z + sz / 2)], [X(x + sx / 2), Y + y, Z2(z - sz / 2)], [X(x - sx / 2), Y + y, Z2(z - sz / 2)], [0, 0, 1, 1]); };
+    blob(tx, .058, tz, 2, 1.8, [1, .6, .25], 46); blob(tx, top + .003, tz, 1.1, 1.3, [.75, .2, .6], 34); blob(3.35, .28, 2.6, 2.6, 2.8, [.5, .15, .9], 60); blob(1.1, .058, -1.2, .8, 1, [.3, .7, 1], 40);
+    /* one flare, off the middle slot where it meets the glass; and magenta behind the A or B */
+    FXM.set({ kind: 7, a: 80, c: [.6, .95, 1] }); FXM.quad([X(GX - .09), Y + wy1 - .05, Z2(.2 + 1.2)], [X(GX - .09), Y + wy1 - .05, Z2(.2 - 1.2)], [X(GX - .09), Y + wy1, Z2(.2 - 1.2)], [X(GX - .09), Y + wy1, Z2(.2 + 1.2)], [0, 0, 1, 1]);
+    { const x = tx - .2, z = tz - .3; FXM.set({ kind: 7, a: 50, c: [.9, .25, .5] }); FXM.quad([X(x), Y + .5, Z2(z + .44)], [X(x), Y + .5, Z2(z - .44)], [X(x), Y + 1.18, Z2(z - .44)], [X(x), Y + 1.18, Z2(z + .44)], [0, 0, 1, 1]); }
+  }
+  const fxBase = FXM.n;
+  /* on the glass behind where she stands: the glow that keeps her off the buildings, gone with her when the room is tidied */
+  { const X = v => A.x + v, Y = A.y, Z2 = v => A.z + v; FXM.set({ kind: 7, a: 110, c: [1, .24, .56] }); FXM.quad([X(GX - .03), Y - .5, Z2(.55 + .8)], [X(GX - .03), Y - .5, Z2(.55 - .8)], [X(GX - .03), Y + 2.4, Z2(.55 - .8)], [X(GX - .03), Y + 2.4, Z2(.55 + .8)], [0, 0, 1, 1]); }
+
+  /* ---------- clutter: the second pass. His things, kept near the walls and clear of the five that matter ---------- */
+  Z.at(A.x, A.y, A.z, 0, () => {
+    const pl = (c, l = 0) => setPlain(Z, c, l);
+    /* takeaway on the counter, cans, his shaker */
+    pl(0xe8e8f0); Z.rbox(.4, .94, -D + .32, .12, .15, .12, .2, {}); plate(Z, .412, 1.015, -D + .381, .12, .15, .2, 'carton', 0, { id: M.nid() }); piece();
+    for (const [x, z] of [[.62, -D + .22], [.72, -D + .34], [.8, -D + .2]]) { Z.set({ kind: K.PLAIN, c: hex(0x10121c), layer: 0 }); Z.cyl(x, .94, z, .034, .034, .118, 12, { c: 0x10121c, topc: 0xb8bcc0 }); plate(Z, x, 1.0, z + .0345, .05, .08, 0, 'can', 0, { id: M.nid() }); piece(); }
+    Z.set({ kind: K.PLAIN, c: hex(0x1c2028), layer: 0 }); Z.lathe(-.3, .94, -D + .3, [[.04, 0], [.046, .01], [.046, .03], [.05, .035], [.05, .16], [.042, .175], [0, .18]], 14, { c: 0x1c2028, grad: .9 }); Z.set({ kind: K.PLAIN, c: hex(0xf7e733), layer: 0, em: 40 }); Z.cyl(-.3, 1.03, -D + .3, .0505, .0505, .018, 14, { c: 0xf7e733, top: false }); Z.set({ em: 0 }); piece();
+    /* a lit niche of bottles on the back wall: the one extravagance */
+    { const x0 = -2.9, x1 = -1.5, y0 = 1.2, y1 = 2.6; pl(0x08080e); Z.box((x0 + x1) / 2, y0, -D + .04, x1 - x0, y1 - y0, .08, {}); line(Z, (x0 + x1) / 2, y1 - .03, -D + .1, x1 - x0 - .04, .01, .04, 0xffb35c, 200); for (const y of [y0 + .45, y0 + .9]) { pl(GUN); Z.box((x0 + x1) / 2, y, -D + .14, x1 - x0, .02, .2, {}); }
+      for (let i = 0; i < 12; i++) { const s = i % 3, c = [0x8a4e1a, 0x3a6a5a, 0x5a1e2c, 0xc8c0a8][i % 4], x = x0 + .12 + (i % 6) * .22, y = y0 + .02 + Math.floor(i / 6) * .45 + (i >= 6 ? .02 : 0); Z.set({ kind: K.PLAIN, c: hex(c), layer: 0, em: 30 }); Z.lathe(x, y, -D + .15, [[.04, 0], [.045, .02], [.045, .2 + s * .03], [.016, .26 + s * .03], [.014, .32 + s * .03], [0, .33 + s * .03]], 10, { c }); Z.set({ em: 0 }); piece(); } piece(); }
+    /* the jacket thrown on the sofa, boots kicked off in front of it */
+    soft(Z, -1.6, .38, 3.25, .6, .1, .5, 0x24263a, Q, { j: .1, seg: 14, rows: 4, ry: .5 }); piece();
+    for (const [x, z, a] of [[-1.3, 2.5, .5], [-1.1, 2.38, -.3]]) Z.at(x, .05, z, a, () => { pl(0x10101a); Z.box(0, 0, 0, .1, .07, .26, {}); Z.box(0, .07, -.07, .09, .24, .11, {}); piece(); });
+    /* the charger's lead, off the table across the floor; the vacuum on its rounds */
+    Z.tube([[tx - .2, .47, tz + .6], [tx - .5, .44, tz + .7], [tx - .62, .07, tz + .76], [-1, .056, .6], [-2.4, .056, .3], [-W + .06, .056, .2]], .0035, 18, 3, { c: 0xdedad0 }); piece();
+    Z.set({ kind: K.PLAIN, c: hex(0x14141c), layer: 0 }); Z.cyl(-1.4, .05, -.4, .17, .17, .05, 18, { c: 0x14141c, topc: 0x1e1e28 }); line(Z, -1.36, .1, -.4, .03, .004, .01, CY, 220); piece();
+    /* a hard case left open on the floor, chrome on a towel: a new arm, not fitted yet */
+    { const x = -2.6, z = -1.4; pl(0x1c1d28); Z.box(x, .05, z, .6, .1, .42, {}); chrome(Z, 0x6f7787); Z.box(x, .15, z - .206, .6, .34, .012, { c: 0x6f7787 }); pl(0x5a5e70); Z.box(x, .15, z, .56, .006, .38, {}); chrome(Z); Z.tube([[x - .2, .17, z + .06], [x, .175, z - .02], [x + .18, .17, z + .06]], .03, 12, 6, { c: 0xa8b4c8 }); Z.blob(x + .24, .18, z + .08, .04, { c: 0xa8b4c8, sy: .7, r: Q }); piece(); piece(); }
+    /* the console and the screen on low; a thin slot of light under it */
+    { pl(BLK); Z.box(-3.1, .05, -D + .17, 2.3, .28, .3, {}); line(Z, -3.1, .055, -D + .321, 2.3, .012, .004, ICE, 120); plate(Z, -3.1, 1.45, -D + .03, 1.9, 1.07, 0, 'holo', 0, { kind: K.SIGN, em: 70, c: [.62, .82, 1], seed: 0 }); G(-3.1, 1.45, -D + .1, [.08, .34, .46], 1.4, 1, zGlows); piece(); piece(); }
+    /* the skis by the door, the old stick under the bed */
+    Z.at(-2.7, .05, D - .1, 0, () => { for (const dz of [0, .1]) Z.at(dz * 1.6, 0, 0, 0, () => { Z.at(0, .84, 0, 0, () => { pl(0x1a1a20); Z.box(0, -.84, 0, .1, 1.72, .012, {}); Z.plate(0, 0, -.0068, .092, 1.68, Math.PI, C.ski, { kind: K.PAPER, em: 0, c: [1, 1, 1], id: 220 + (dz ? 1 : 0) }); }, -.05); }); }); piece(); piece();
+    { const a = [3.0, .3, 2.4], b = [2.5, .29, 1.5]; pl(0x3a3a40); Z.beam(a, b, .016, {}); piece(); }
+    /* on the bed: a tablet left face down, a glass on the platform */
+    pl(0x14141c); Z.rbox(3.0, .6, 2.2, .2, .012, .28, .4, {}); piece(); Z.set({ kind: K.PLAIN, c: hex(0xc8d4dc), layer: 0 }); Z.lathe(2.35, .27, 1.4, [[.034, 0], [.038, .08], [.032, .08], [0, .01]], 10, { c: 0xc8d4dc }); piece();
+  });
+
+  const lights = [
+    [...w(.5, H - .3, 0), 0x7fddee, 9, .42],
+    [...w(W + 1.3, 1.2, -2), 0xff3c8e, 12, .9],
+    [...w(W + 1.3, 2.4, 2.2), 0x38b6ff, 12, .75],
+    [...w(3.2, .5, 2.2), 0xb13cff, 3.2, .55],
+    [...w(.6, 1.9, -D + .6), 0xcfefff, 3.6, .45],
+    [...w(tx + .2, .5, tz + .6), 0xffb35c, 2.4, .55],
+    [...w(-3.1, 1.5, -D + .8), 0x8fe8ff, 3, .3],
+    [...w(-2, 2.4, 0), 0x6a5cf0, 7.5, .2],
+  ];
+  const hot = [
+    { key: 'today', label: 'TODAY', hotkey: 'E', line: 16, sheet: 'cToday', p: w(1.05, 2.16, -1.2) },
+    { key: 'week', label: 'WEEK', hotkey: 'R', line: 14, sheet: 'cWeek', p: w(W - .5, 2.98, 1.7) },
+    { key: 'notes', label: 'NOTES', hotkey: 'F', line: 26, sheet: 'cNotes', p: w(tx - .25, .76, tz + .32) },
+    { key: 'decide', label: 'DECIDE', hotkey: 'G', line: 14, sheet: 'cDecide', p: w(tx - .25, 1.15, tz - .3) },
+    { key: 'career', label: 'CAREER', hotkey: 'T', line: 20, go: 'jobs:', p: w(1.85, 1.15, 1.35) },
+  ];
+  return {
+    geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(),
+    setDoor() {},
+  };
+}
+
 /* a pencil, round, with a sharpened tip and a ferrule */
 function pencilAt(M, x, y, z, ry, len, c, endC) {
   M.at(x, y, z, ry, () => { const r = .0052;
@@ -3751,7 +4024,7 @@ function buildRain() {
   const n = isPhone ? 900 : 1600; const R = rng(5);
   const g = new THREE.InstancedBufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, 0, 0, 1, 0, 0, 1, 1, 0, -1, 0, 0, 1, 1, 0, -1, 1, 0]), 3));
   const a = new Float32Array(n * 4); for (let i = 0; i < n * 4; i++) a[i] = R(); g.setAttribute('iR', new THREE.InstancedBufferAttribute(a, 4)); g.instanceCount = n;
-  const m = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: RAIN_VS, fragmentShader: RAIN_FS, uniforms: { uTime: TIME, uRainBox: { value: 60 }, uRainC: { value: new THREE.Color(.55, .55, .75) } }, ...addBlend, side: THREE.DoubleSide, depthTest: true });
+  const m = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: RAIN_VS, fragmentShader: RAIN_FS, uniforms: { uTime: TIME, uRainBox: { value: 60 }, uRainC: { value: new THREE.Color(.55, .55, .75) }, uCut: { value: new THREE.Vector4(0, 0, 0, 1) } }, ...addBlend, side: THREE.DoubleSide, depthTest: true });
   const me = new THREE.Mesh(g, m); me.frustumCulled = false; return me;
 }
 
@@ -3761,7 +4034,7 @@ async function initGraphics() {
   if (!renderer.capabilities.isWebGL2) { FAIL('The city needs WebGL 2.'); throw new Error('webgl2'); }
   /* a phone can drop the context in the background: wait, then rebuild what only lived on the GPU */
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lost = true; APP.log('webgl context lost'); });
-  canvas.addEventListener('webglcontextrestored', () => { S.lost = false; try { bakeShadows(); resize(); } catch (e) { APP.log(e); } });
+  canvas.addEventListener('webglcontextrestored', () => { S.lost = false; try { bakeShadows(); } catch (e) { APP.log(e); } try { resize(); } catch (e) { APP.log(e); } });
   renderer.debug.checkShaderErrors = RIG;   /* only the test rig: checking costs compile time and the look is settled */
   renderer.autoClear = false; renderer.info.autoReset = false; renderer.setPixelRatio(1);
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace; renderer.toneMapping = THREE.NoToneMapping;
@@ -3800,7 +4073,7 @@ async function initGraphics() {
   const fx = new THREE.Mesh(gFx, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FX_VS, fragmentShader: FX_FS, uniforms: { uTime: TIME, uAds: { value: TEX.ads } }, ...addBlend, side: THREE.DoubleSide })); fx.frustumCulled = false;
   setBoot('Starting traffic', .6); await yieldFrame();
   const tr = buildTraffic(trafficSetup());
-  const rain = buildRain();
+  const rain = city.rain = buildRain();
   const tGeo = trainCar(); city.train = []; for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(tGeo, city.mat); m.frustumCulled = false; city.train.push(m); }
   /* the giant koi: one clean silhouette swimming up past the tower */
   { const nu = 44, nv = 4, pos = [], idx = []; for (let j = 0; j <= nv; j++) for (let i = 0; i <= nu; i++) pos.push(i / nu, j / nv, 0); for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) { const a = j * (nu + 1) + i, b = a + 1, c = a + nu + 1, d = c + 1; idx.push(a, b, d, a, d, c); }
@@ -3829,6 +4102,8 @@ async function initGraphics() {
   room.glass = blank(room.glassMat); room.glass.renderOrder = 5;
   room.doorGlass = blank(room.glassMat); room.doorGlass.renderOrder = 5;
   SC.room = new THREE.Scene(); SC.room.add(room.mesh, room.door, room.glass, room.doorGlass, room.fx, room.glowMesh, room.clutter);
+  /* a room inside a solid block is seen from outside through its window: this quad draws no colour, it only pushes the city's depth back so the room can show in that one shape */
+  room.hole = blank(new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: 'in vec3 position; uniform mat4 modelViewMatrix, projectionMatrix; void main(){ gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); gl_Position.z = 0.; }', fragmentShader: 'precision highp float; layout(location=0) out vec4 O; void main(){ O = vec4(0.); gl_FragDepth = 1.; }', side: THREE.DoubleSide, colorWrite: false, depthFunc: THREE.AlwaysDepth })); SC.hole = new THREE.Scene(); SC.hole.add(room.hole);
   loadRoom('shop');
   /* passes */
   setBoot('Sharpening ink', .82); await yieldFrame();
@@ -3840,7 +4115,7 @@ async function initGraphics() {
   /* shadows: one sharp bake per scene */
   bakeShadows();
   setBoot('Warming shaders', .92); await yieldFrame();
-  renderer.compile(SC.city, CAM); renderer.compile(SC.mirror, CAM); renderer.compile(SC.room, CAM);
+  renderer.compile(SC.city, CAM); renderer.compile(SC.mirror, CAM); renderer.compile(SC.room, CAM); renderer.compile(SC.hole, CAM);
 }
 
 let depthMat = null;
@@ -3870,27 +4145,97 @@ function bakeShadows() {
   bakeRoom();
 }
 
+/* ---------- a figure from a model file: posed once, baked still, drawn in the window's light ----------
+   The file is private like Dex's (KV, never in git). If it can't be fetched the room simply has no one in it. */
+const FIG_VS = /* glsl */`
+precision highp float; in vec3 position; in vec3 normal; in vec2 uv; uniform mat4 modelMatrix, viewMatrix, projectionMatrix;
+out vec3 vW; out vec3 vN; out vec2 vU;
+void main(){ vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; vN=mat3(modelMatrix)*normal; vU=uv; gl_Position=projectionMatrix*viewMatrix*w; }`;
+const FIG_FS = /* glsl */`
+precision highp float; in vec3 vW; in vec3 vN; in vec2 vU; layout(location=0) out vec4 O;
+uniform sampler2D map; uniform vec3 cameraPosition, uBase; uniform float uHasMap, uHair, uId;
+void main(){
+  vec4 t=uHasMap>.5?texture(map,vU):vec4(1.); if(t.a<.45) discard;
+  vec3 c=t.rgb*uBase;
+  /* hair goes near-black, its painted highlights turn magenta */
+  if(uHair>.5){ float l=dot(t.rgb,vec3(.3,.59,.11)); c=mix(vec3(.04,.032,.065),vec3(.15,.11,.22),smoothstep(.12,.55,l)); c=mix(c,vec3(1.,.24,.62),smoothstep(.62,.9,l)*.9); }
+  vec3 N=normalize(vN); if(!gl_FrontFacing) N=-N; vec3 V=normalize(cameraPosition-vW);
+  /* the city is the light: pink from one side of the glass, blue from the other, in hard anime steps */
+  float a=max(dot(N,normalize(vec3(1.,.15,-.55))),0.), b=max(dot(N,normalize(vec3(1.,.35,.6))),0.);
+  a=smoothstep(.12,.2,a)*.55+smoothstep(.5,.58,a)*.45; b=smoothstep(.12,.2,b)*.55+smoothstep(.5,.58,b)*.45;
+  /* and a soft violet from the room behind the viewer, so whoever faces in still has a face */
+  float f=max(dot(N,normalize(vec3(-1.,.5,-.2))),0.); f=smoothstep(.1,.25,f)*.6+smoothstep(.55,.65,f)*.4;
+  vec3 L=vec3(.24,.2,.36)+vec3(1.,.3,.6)*a*.85+vec3(.3,.66,1.)*b*.7+vec3(.62,.5,.85)*f*.55;
+  float r=smoothstep(.55,.75,pow(1.-max(dot(N,V),0.),1.6));
+  vec3 rim=mix(vec3(1.,.28,.6),vec3(.35,.82,1.),smoothstep(-.2,.2,N.z))*r;
+  O=vec4(c*L+rim*.75,uId/255.);
+}`;
+let FIG = null, figTok = 0, figP = null;
+function dropFigure() { figTok++; figP = null; if (!FIG) return; SC.room.remove(FIG); FIG.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { const m = o.material.uniforms.map.value; if (m) m.dispose(); o.material.dispose(); } }); FIG = null; }
+function addFigure(f) {
+  const tok = ++figTok;
+  figP = import('./vendor/jsm/loaders/GLTFLoader.js').then(({ GLTFLoader }) => new GLTFLoader().loadAsync(f.url)).then(g => {
+    if (tok !== figTok) return;
+    FIG = bakeFigure(g.scene, f); FIG.visible = room.clutter.visible; SC.room.add(FIG);
+  }).catch(e => APP.log(e));
+  return figP;
+}
+/* stands her up from her rest pose: one hand on her hip, the other arm loose, weight on one leg, head turned by f.look */
+function poseFigure(root, f) {
+  const B = {}; root.traverse(o => { if (o.isBone) B[o.name.toLowerCase().replace(/mixamorig\d*:?|j_bip_|[\s._:-]/g, '')] = o; });
+  const find = (...k) => k.map(n => B[n]).find(Boolean) || null;
+  const bone = (s, part) => { const L = s === 'l' ? 'left' : 'right'; return { up: find(s + 'upperarm', L + 'arm', 'upperarm' + s, L + 'upperarm'), lo: find(s + 'lowerarm', L + 'forearm', 'forearm' + s, 'lowerarm' + s, L + 'lowerarm'), hand: find(s + 'hand', L + 'hand', 'hand' + s), leg: find(s + 'upperleg', L + 'upleg', 'thigh' + s, 'upperleg' + s, L + 'upperleg'), shin: find(s + 'lowerleg', L + 'leg', 'shin' + s, 'lowerleg' + s, L + 'lowerleg') }[part]; };
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), q = new THREE.Quaternion(), pq = new THREE.Quaternion();
+  const aim = (bn, child, dir) => { if (!bn || !child) return; root.updateMatrixWorld(true); bn.getWorldPosition(a); child.getWorldPosition(b); q.setFromUnitVectors(b.sub(a).normalize(), dir.clone().normalize()); bn.parent.getWorldQuaternion(pq); bn.quaternion.premultiply(pq.clone().invert().multiply(q).multiply(pq)); };
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  aim(bone('l', 'up'), bone('l', 'lo'), V(.18, -1, -.04)); aim(bone('l', 'lo'), bone('l', 'hand'), V(.05, -1, .18));
+  aim(bone('r', 'up'), bone('r', 'lo'), V(-.5, -.82, -.2)); aim(bone('r', 'lo'), bone('r', 'hand'), V(.62, -.6, .2));
+  aim(bone('l', 'leg'), bone('l', 'shin'), V(.07, -1, 0)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.12, -1, .03));
+  const head = find('head'); if (head) { root.updateMatrixWorld(true); head.parent.getWorldQuaternion(pq); q.setFromAxisAngle(V(0, 1, 0), f.look || 0); head.quaternion.premultiply(pq.clone().invert().multiply(q).multiply(pq)); }
+  root.updateMatrixWorld(true);
+}
+/* bakes the posed skin into still geometry: no skinning at draw time, and she costs one draw per material */
+function bakeFigure(root, f) {
+  root.updateMatrixWorld(true); poseFigure(root, f);
+  const parts = [], v = new THREE.Vector3(), u = new THREE.Vector3(), nm = new THREE.Matrix3(), box = new THREE.Box3();
+  root.traverse(o => {
+    if (!o.isMesh) return; const g = o.geometry, pos = g.attributes.position, nrm = g.attributes.normal, n = pos.count, P = new Float32Array(n * 3), N = nrm ? new Float32Array(n * 3) : null; nm.getNormalMatrix(o.matrixWorld);
+    /* the model's own smooth normals ride along: skinning is affine, so skin(p + n) - skin(p) is the bent normal */
+    for (let i = 0; i < n; i++) { v.fromBufferAttribute(pos, i); if (N) u.fromBufferAttribute(nrm, i).add(v); if (o.isSkinnedMesh) { o.applyBoneTransform(i, v); if (N) o.applyBoneTransform(i, u); } if (N) { u.sub(v).applyMatrix3(nm).normalize(); N.set([u.x, u.y, u.z], i * 3); } v.applyMatrix4(o.matrixWorld); P.set([v.x, v.y, v.z], i * 3); box.expandByPoint(v); }
+    const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.BufferAttribute(P, 3)); if (N) ng.setAttribute('normal', new THREE.BufferAttribute(N, 3)); if (g.attributes.uv) ng.setAttribute('uv', g.attributes.uv); if (g.index) ng.setIndex(g.index); for (const gr of g.groups) ng.addGroup(gr.start, gr.count, gr.materialIndex);
+    parts.push({ g: ng, mats: [].concat(o.material) });
+  });
+  const s = f.h / (box.max.y - box.min.y), cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2, grp = new THREE.Group();
+  let id = 150; const mat = m => { const map = m && m.map; if (map) { map.colorSpace = THREE.NoColorSpace; map.needsUpdate = true; } return new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FIG_VS, fragmentShader: FIG_FS, side: THREE.DoubleSide, uniforms: { map: { value: map || null }, uBase: { value: (map ? new THREE.Color(1, 1, 1) : (m && m.color ? m.color.clone() : new THREE.Color(.5, .5, .5))) }, uHasMap: { value: map ? 1 : 0 }, uHair: { value: /hair/i.test((m && m.name) || '') ? 1 : 0 }, uId: { value: (id = id + 7 > 240 ? 150 : id + 7) } } }); };
+  for (const p of parts) { const P = p.g.attributes.position.array; for (let i = 0; i < P.length; i += 3) { P[i] = (P[i] - cx) * s; P[i + 1] = (P[i + 1] - box.min.y) * s; P[i + 2] = (P[i + 2] - cz) * s; } if (!p.g.attributes.normal) p.g.computeVertexNormals(); p.g.computeBoundingSphere(); const ms = p.mats.map(m => mat(m)); const mesh = new THREE.Mesh(p.g, ms.length > 1 ? ms : ms[0]); mesh.frustumCulled = false; grp.add(mesh); }
+  grp.position.set(...f.at.map((x, i) => x + [room.box.x, room.box.y, room.box.z][i])); grp.rotation.y = f.ry; grp.updateMatrixWorld(true);
+  return grp;
+}
+
 /* One room in memory at a time. A swap changes geometry and uniform values only, so no shader ever recompiles.
    room.id is set last: if a build throws, the next tap simply tries again. */
+const EMPTY_GEOM = new THREE.BufferGeometry();
 function loadRoom(id) {
-  if (room.id === id) return;
+  if (room.id === id && (!room.day || room.day === new Date().toDateString())) return;
   const def = ROOM_DEF[id]; PIECES = 0;
   for (const g of [room.geom, room.clutterGeom, room.doorGeom, room.glassGeom, room.doorGlassGeom, room.fxGeom, room.backGeom]) if (g) g.dispose();
   if (room.atlas) room.atlas.dispose();
-  const d = def.build();
-  Object.assign(room, { clutterGeom: null, doorGeom: null, glassGeom: null, doorGlassGeom: null, backGeom: null, gobo: null, atlas: null, mirDone: false }, d, { def, box: def.box });
-  const put = (m, g) => { m.visible = !!g; if (g) m.geometry = g; };
-  put(room.mesh, room.geom); put(room.clutter, room.clutterGeom); put(room.door, room.doorGeom); put(room.glass, room.glassGeom); put(room.doorGlass, room.doorGlassGeom); put(room.fx, room.fxGeom);
+  const d = def.build(); dropFigure();
+  Object.assign(room, { clutterGeom: null, doorGeom: null, glassGeom: null, doorGlassGeom: null, backGeom: null, gobo: null, atlas: null, day: null, mirDone: false }, d, { def, box: def.box });
+  const put = (m, g) => { m.visible = !!g; m.geometry = g || EMPTY_GEOM; };
+  put(room.mesh, room.geom); put(room.clutter, room.clutterGeom); put(room.door, room.doorGeom); put(room.glass, room.glassGeom); put(room.doorGlass, room.doorGlassGeom); put(room.fx, room.fxGeom); room.fx.renderOrder = def.fxOverGlass ? 6 : 0;
   put(room.mirMesh, def.mirror && room.geom); put(room.mirBack, def.mirror && room.backGeom);
   const gm = buildGlowMesh(room.glows); room.glowMesh.geometry.dispose(); room.glowMesh.geometry = gm.geometry; gm.material.dispose();
   setLights(room.u, room.lights);
   room.u.uAmbHi.value.setRGB(...def.amb[0]); room.u.uAmbLo.value.setRGB(...def.amb[1]); room.u.uAmbSide.value.setRGB(...def.amb[2]); room.u.uRim.value.setRGB(...def.amb[3]);
   if (room.gobo) { Object.assign(room.u.uGobo.value, room.gobo.rect); room.u.uGoboX.value = room.gobo.x; room.u.uGoboD.value.copy(room.gobo.dir); room.u.uGoboC.value.setRGB(...room.gobo.color); } else room.u.uGoboC.value.setRGB(0, 0, 0);
   room.u.uSigns.value = room.atlas || TEX.signs;
+  if (def.hole) { const { zs, ys } = def.window, x = def.box.x + def.box.w / 2 + .01, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([x, ys[0], zs[0], x, ys[0], zs[1], x, ys[1], zs[1], x, ys[0], zs[0], x, ys[1], zs[1], x, ys[1], zs[0]]), 3)); room.hole.geometry.dispose(); room.hole.geometry = g; }
   if (def.mirror) room.mirU.uClipZ.value = def.mirror[2];
   room.id = id; hudEl.dataset.room = id; room.setDoor(0);
   setText('#shName', def.sheet[0]); setText('#shPage', def.sheet[1]); $('#sheet').setAttribute('aria-label', def.sheet[0]);
-  if (ready) { bakeRoom(); buildTags(); }
+  if (def.figure) addFigure(def.figure);
+  if (ready) { bakeRoom(); buildTags(); refreshRoom(); }
 }
 
 function resize() {
@@ -3946,6 +4291,29 @@ const ROOM_DEF = {
         L: [c.l, [4, 80, 150], [0, 16, 150], [2, a < .8 ? 15 : 8, 90], [0, a < .8 ? 12.5 : 5, 80], [-12, a < .8 ? 3.4 : 2.4, 66], [-17.4, 1.9, 63.6], [-23, 1.5, 63.2], local(-2.85, 1.22, .95), local(-2.85, 1.2, .2), local(-2.85, 1.2 + up * .7, -.8), local(-2.7, 1.2 + up * .5, -.9), r.l],
         /* weights: how long each hop lasts */
         W: [1.15, 1, .95, .6, .55, .62, .62, .42, .46, .44, .4, .5],
+      };
+    },
+  },
+  apartment: {
+    box: APT, name: 'APARTMENT', build: buildApartment, panel: '#aptBox', sheet: ['Plan', 'PAGE.01/04'], shadow: [134, 10], refresh: refreshApt,
+    /* inside a solid block: the flight sees it through a window-shaped hole in the city's depth */
+    hole: true,
+    amb: [[.12, .1, .22], [.07, .05, .15], [.03, .03, .08], [1.5, .55, 1.45]],
+    window: { x: APT.x + APT.w / 2 + .05, zs: [APT.z - APT.d / 2 + .01, APT.z + APT.d / 2 - .01], ys: [APT.y + .05, APT.y + APT.h - .12] },
+    /* once he is inside, the glass shows the city from up here, looking at downtown, carried rigidly from where he rests. The swap is never on screen: the camera has its back to the glass when it crosses */
+    view: { eye: [10, 210, 300], theta: 1.62, far: 2500, from: [-3.2, 1.62, 0] },
+    /* the room's own light lies on the glass as well */
+    fxOverGlass: true,
+    /* someone at the glass, turned to the room, in no hurry: a model file, private like Dex's */
+    figure: { url: 'models/her.glb?v=1', at: [3.7, .05, .55], ry: -2.3, look: .45, h: 1.7 },
+    rest: a => a < .8 ? { p: local(-3.2, 1.62, 0), l: local(3, 1.1, 0) } : { p: local(-3.25, 1.6, -.1), l: local(3, 1.25, -.1) },
+    flight(c, r, a) {
+      const y = APT.y, z = APT.z;
+      return {
+        /* down past the front of the block, over the pink roof, into the gap between the two, in through the window clear of her, then round by the lit kitchen to face it */
+        P: [c.p, a < .8 ? [-14, 74, 372] : [14, 118, 436], [-22, 92, 330], [-40, 82, 276], [-52, y + 18, z + 16], [-60, y + 7, z + 3], [-65.4, y + 2.1, z - .5], local(5.2, 1.72, -.75), local(2.4, 1.76, -.1), local(-.5, 1.76, .45), local(-2.6, 1.68, .4), r.p],
+        L: [c.l, [-30, 90, 230], [-60, 62, z + 4], [-68, y + 6, z], [-69, y + 4, z], [-69, y + 2, z], [-70, y + 1.7, z - .5], local(-4.3, 1.45, -.3), local(-2.2, 1.45, -3.8), local(.4, 1.25, -3.8), local(2.8, 1.15, -2.6), r.l],
+        W: [1.15, 1, .9, .7, .55, .55, .5, .4, .32, .3, .42],
       };
     },
   },
@@ -4009,7 +4377,8 @@ function drawScene(t) {
   /* train runs by time alone */
   const period = 62; for (let i = 0; i < city.train.length; i++) { const a = trainPos(t / period - i * .0088); const m = city.train[i]; m.position.set(a.p[0], a.p[1] + .1, a.p[2]); m.rotation.y = Math.atan2(a.d[0], a.d[2]); m.updateMatrixWorld(true); }
   CAM.updateMatrixWorld();
-  SHAFTS.forEach((s, i) => city.skyU.uShaft.value[i].set(s.e[0] - CAM.position.x, s.e[1] - CAM.position.y, s.e[2] - CAM.position.z).normalize());
+  const sp = inside && room.def.view ? _vp.setFromMatrixPosition(streetCam(true).matrixWorld) : CAM.position;
+  SHAFTS.forEach((s, i) => city.skyU.uShaft.value[i].set(s.e[0] - sp.x, s.e[1] - sp.y, s.e[2] - sp.z).normalize());
   /* reflections for wet ground and water */
   S.fc = (S.fc || 0) + 1;
   const reflNow = Q.refl;
@@ -4020,22 +4389,26 @@ function drawScene(t) {
   if (reflNow && (S.fc % reflEvery === 0 || !city.u.uRefl.value)) {
     const saveNear = CAM.near; const n = Math.max(saveNear, 1); setNear(n, CAM.far);
     renderer.setRenderTarget(RT.refl); renderer.setClearColor(0x05040a, 1); renderer.clear(true, true, false);
-    renderer.render(SC.mirror, CAM); setNear(saveNear, CAM.far);
+    renderer.render(SC.mirror, streetCam(inside)); setNear(saveNear, CAM.far);
     city.u.uRefl.value = RT.refl.texture;
   }
   city.u.uRes.value.set(inside ? RT.bg.width : S.W, inside ? RT.bg.height : S.H);
   if (inside) {
     /* the street, seen through glass, is drawn on its own at half size */
     const saveNear = CAM.near;
-    if (!calm || S.idle || S.fc % 2 === 0 || !room.glassU.uBg.value) { setNear(1, 900); windowRect(RT.bg);
-    renderer.setRenderTarget(RT.bg); renderer.clear(true, true, false); renderer.render(SC.city, CAM); setNear(saveNear, CAM.far); }
+    if (!calm || S.idle || S.fc % 2 === 0 || !room.glassU.uBg.value) { setNear(1, room.def.view ? room.def.view.far : 900); windowRect(RT.bg);
+    renderer.setRenderTarget(RT.bg); renderer.clear(true, true, false); renderer.render(SC.city, streetCam(inside)); setNear(saveNear, CAM.far); }
     room.glassU.uBg.value = RT.bg.texture; room.glassU.uInside.value = 1;
   } else room.glassU.uInside.value = 0;
   /* the mirror is drawn only while it can be seen */
   const mir = room.def.mirror; if (mir && showRoom && (inside || S.mode === 'room')) { const zm = mir[2]; _wr.set(mir[0], mir[1], zm).applyMatrix4(CAM.matrixWorldInverse); const seen = _wr.z < -.2; if (seen) { _wr.applyMatrix4(CAM.projectionMatrix); } if (seen && Math.abs(_wr.x) < 1.5 && (RIG || !room.mirDone || S.fc % (isPhone ? 3 : 2) === 0)) { room.mirDone = true; _rm.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 2 * zm, 0, 0, 0, 1); _mc.projectionMatrix.copy(CAM.projectionMatrix); _mc.projectionMatrixInverse.copy(CAM.projectionMatrixInverse); _mc.matrixWorldInverse.multiplyMatrices(CAM.matrixWorldInverse, _rm); _mc.matrixWorld.copy(_mc.matrixWorldInverse).invert(); renderer.setRenderTarget(RT.mir); renderer.setClearColor(0x0a1420, 1); renderer.clear(true, true, false); renderer.render(SC.roomMir, _mc); } }
   renderer.setRenderTarget(RT.main); renderer.setClearColor(0x05040a, 1); renderer.clear(true, true, false);
-  if (showCity) renderer.render(SC.city, CAM);
-  if (showRoom) renderer.render(SC.room, CAM);
+  /* from as far off as the window can be seen on the way in: nearer than that, the room would pop into it */
+  const holed = showCity && showRoom && room.def.hole && CAM.position.x > room.def.window.x - .04 && CAM.position.distanceTo(_v.set(room.def.window.x, room.box.y + 1.4, room.box.z)) < 140;
+  if (showCity) { city.rain.visible = !holed; renderer.render(SC.city, CAM); city.rain.visible = true; }
+  if (showRoom) { if (holed) renderer.render(SC.hole, CAM); renderer.render(SC.room, CAM); }
+  /* the hole resets depth in the window's shape, so rain goes on after the room, cut at the glass */
+  if (holed) { const c = city.rain.material.uniforms.uCut.value; c.set(1, 0, 0, -room.def.window.x); renderer.render(city.rain, CAM); c.set(0, 0, 0, 1); }
   /* bloom */
   const u = MAT.post.m.uniforms;
   if (Q.bloom) {
@@ -4052,6 +4425,15 @@ function drawScene(t) {
   const a = MAT.aa.m.uniforms; a.t.value = RT.ldr.texture; a.uGrain.value = Q.grain; renderer.setRenderTarget(null); renderer.render(MAT.aa.s, fsCam);
 }
 const _wr = new THREE.Vector3(), _rm = new THREE.Matrix4(), _mc = new THREE.PerspectiveCamera(); _mc.matrixWorldAutoUpdate = false;
+/* a room can show the street from somewhere better than where it stands: the same camera, carried rigidly from his resting place to def.view.eye */
+const _vc = new THREE.PerspectiveCamera(), _vp = new THREE.Vector3(); _vc.matrixWorldAutoUpdate = false;
+function streetCam(inside) {
+  const v = room.def.view; if (!inside || !v) return CAM;
+  if (!v.T) { const b = room.box; v.T = new THREE.Matrix4().makeTranslation(v.eye[0], v.eye[1], v.eye[2]).multiply(new THREE.Matrix4().makeRotationY(v.theta)).multiply(new THREE.Matrix4().makeTranslation(-(b.x + v.from[0]), -(b.y + v.from[1]), -(b.z + v.from[2]))); }
+  _vc.matrixWorld.multiplyMatrices(v.T, CAM.matrixWorld); _vc.matrixWorldInverse.copy(_vc.matrixWorld).invert();
+  _vc.projectionMatrix.copy(CAM.projectionMatrix); _vc.projectionMatrixInverse.copy(CAM.projectionMatrixInverse);
+  return _vc;
+}
 function windowRect(rt) {
   /* bounding box of the storefront on screen, in target pixels */
   const { x, zs, ys } = room.def.window; let x0 = 2, x1 = -2, y0 = 2, y1 = -2, full = false;
@@ -4060,7 +4442,7 @@ function windowRect(rt) {
   const X0 = Math.floor((clamp(x0, -1, 1) * .5 + .5) * rt.width) - 6, X1 = Math.ceil((clamp(x1, -1, 1) * .5 + .5) * rt.width) + 6, Y0 = Math.floor((clamp(y0, -1, 1) * .5 + .5) * rt.height) - 6, Y1 = Math.ceil((clamp(y1, -1, 1) * .5 + .5) * rt.height) + 6;
   rt.scissor.set(Math.max(0, X0), Math.max(0, Y0), Math.max(1, Math.min(rt.width, X1) - Math.max(0, X0)), Math.max(1, Math.min(rt.height, Y1) - Math.max(0, Y0)));
 }
-const isInsideRoom = () => { const p = CAM.position, b = room.box; return p.x < b.x + b.w / 2 - .08 && p.x > b.x - b.w / 2 && p.z > b.z - b.d / 2 && p.z < b.z + b.d / 2 && p.y > b.y && p.y < b.y + b.h; };
+const isInsideRoom = () => { const p = CAM.position, b = room.box; return p.x < (room.def.hole ? room.def.window.x - .02 : b.x + b.w / 2 - .08) && p.x > b.x - b.w / 2 && p.z > b.z - b.d / 2 && p.z < b.z + b.d / 2 && p.y > b.y && p.y < b.y + b.h; };
 
 /* 60 fps at most; after a few seconds untouched, 30 */
 function wake() { S.lastInput = performance.now(); if (S.idle) { S.idle = false; S.frames = 0; S.acc = 0; } }
@@ -4099,7 +4481,7 @@ function project(p) { _pv.set(p[0], p[1], p[2]).project(CAM); return { x: (_pv.x
 const hudEl = $('#hud');
 function setBoot(t, p) { const a = $('#bootT'), b = $('#bootB'); if (a) a.textContent = t.toUpperCase(); if (b) b.style.width = (p * 100) + '%'; }
 const ICONS = [
-  { k: 'plan', attr: 'focus', word: 'Plan', c: '#16e4f4', d: 'MEGABLOCK', r: 'TASKS ', svg: '<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>' },
+  { k: 'plan', room: 'apartment', attr: 'focus', word: 'Plan', c: '#16e4f4', d: 'MEGABLOCK', r: 'TASKS ', svg: '<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>' },
   { k: 'work', room: 'shop', attr: 'grind', word: 'Work', c: '#f6ee1c', d: 'DOWNTOWN', r: 'HOURS ', svg: '<path d="M12 8V6a2 2 0 1 1 2 2c-1 0-2 1-2 2M12 10 3 17v2h18v-2z"/>' },
   { k: 'train', attr: 'strength', word: 'Train', c: '#ff8a1e', d: 'NORTHSIDE', r: 'DONE ', svg: '<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>' },
   { k: 'cardio', attr: 'stamina', word: 'Cardio', c: '#ff2e88', d: 'SKI VILLAGE', r: 'WEEK ', svg: '<path d="M3 20 10 8l4 6 2-3 5 9zM9 10l2 2 2-1"/>' },
@@ -4119,6 +4501,8 @@ function sqInto(el, n, k) { let h = ''; for (let i = 0; i < n; i++) h += `<i cla
 const pct01 = v => clamp(+v || 0, 0, 1);
 const setText = (id, t) => { const el = $(id); if (el && el.textContent !== t) el.textContent = t; };
 const setHTML = (id, h) => { const el = $(id); if (el && el._h !== h) { el._h = h; el.innerHTML = h; } };
+/* swaps only the rows that changed: a finger already on another row keeps its button, so the app's render can't cancel the tap */
+const setRows = (id, h) => { const el = $(id); if (!el || el._h === h) return; el._h = h; const t = document.createElement('template'); t.innerHTML = h; const a = el.children, n = t.content.children; if (a.length !== n.length) { el.innerHTML = h; return; } for (let i = n.length - 1; i >= 0; i--) if (!a[i].isEqualNode(n[i])) a[i].replaceWith(n[i]); };
 const chkHTML = rows => rows.map(([ok, label, tag]) => `<div class="chk"><i${ok ? '' : ' class="w"'}></i><span>${label}</span><span class="mi">${tag}</span></div>`).join('');
 const hms = ms => { const s = Math.floor(ms / 1000); return String(Math.floor(s / 3600)).padStart(2, '0') + ':' + String(Math.floor(s / 60) % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
 
@@ -4189,6 +4573,16 @@ function hudInit() {
   $('#btnSheet').addEventListener('click', () => openSheet('cClock'));
   $('#btnClose').addEventListener('click', () => closeSheet());
   $('#btnClock').addEventListener('click', tapClock);
+  $('#btnAptSheet').addEventListener('click', () => openSheet('cToday'));
+  /* the apartment's rows: the tick flips at once, and refreshApt keeps every row where it was until he leaves */
+  hudEl.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-tick],[data-task],[data-dec],[data-day]'); if (!b) return;
+    const d = b.dataset;
+    if (d.tick) { aptKeep.add(d.tick + '|' + d.date); APP.tick(d.tick, d.date); const r = b.closest('.trow'), on = r.classList.toggle('done'); b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^Mark (not )?done/, 'Mark ' + (on ? 'not done' : 'done'))); kick = 1; for (const id of ['#aptList', '#tdRows', '#wkDay']) $(id)._h = null; return; }
+    if (d.task) return APP.openTask(d.task, d.date);
+    if (d.dec) return APP.decide(d.dec, d.id);
+    aptDay = d.day; refreshApt();
+  });
   hudEl.addEventListener('click', e => { if (justArrived()) { e.stopPropagation(); e.preventDefault(); } }, true);
   /* A held Enter would click again with every repeat, and focus moving between WORK and close would flap the sheet. */
   hudEl.addEventListener('keydown', e => { if (e.repeat && e.key === 'Enter' && e.target.closest('button')) e.preventDefault(); }, true);
@@ -4205,7 +4599,7 @@ function hudInit() {
     if (e.key === 'Escape' && S.mode === 'fly' && S.fly && S.fly.dir > 0) return goBack();
     if (S.mode !== 'room') return;
     if (e.key === 'Escape') { if (S.sheet) closeSheet(); else goBack(); return; }
-    const h = room.hot.find(x => x.hotkey.toLowerCase() === e.key.toLowerCase()); if (h && !S.sheet) tapHot(h.key);
+    const h = room.hot.find(x => x.hotkey.toLowerCase() === e.key.toLowerCase()); if (h && !S.sheet) { e.stopPropagation(); e.preventDefault(); tapHot(h.key); }
   }, true);
   addEventListener('popstate', () => {
     if (APP.tab() !== 'today') return;   // leaving a page: the app brings us home, the camera stays put
@@ -4242,7 +4636,7 @@ function tapIcon(k) {
 /* A room gets a history entry, so browser back flies out the same way as ‹ and Escape. */
 function flyIn(id, push = true) {
   if (S.mode === 'fly' && S.fly) S.fly.dir = 1;
-  else { closeSheet(true); loadRoom(id); flightRes(true); makeFlight(1); setMode('fly'); glitchHud(1); S.scanT = -9; }
+  else { closeSheet(true); aptOrd.clear(); loadRoom(id); refreshRoom(); flightRes(true); makeFlight(1); setMode('fly'); glitchHud(1); S.scanT = -9; }
   if (push) history.pushState({ city: id }, '');
   APP.sfx('open');
 }
@@ -4255,7 +4649,7 @@ function flyOut() {
 function goBack() { if (history.state && history.state.city) history.back(); else flyOut(); }
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
 function enterRoom() { S.fly = null; flightRes(false); setMode('room'); S.ringIn = S.t; S.yaw = S.yawGoal = 0; S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
-function enterCity() { S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
+function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
 const flyLabel = dir => setText('#flyT', (dir > 0 ? 'APPROACH: ' : 'DEPART: ') + room.def.name);
 function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideRoom() ? 0 : ''; flyLabel(dir); $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - room.box.x, CAM.position.z - room.box.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
 function tapHot(k) {
@@ -4267,8 +4661,8 @@ function tapHot(k) {
 }
 /* The same state change as the Work page. The app shows the toast with Undo, then calls City.update. */
 function tapClock() { if (APP.clock().on) APP.act('clock-out'); else APP.clockIn(); }
-function openSheet(id) { if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const c = ROOT.getElementById(id); const sc = $('#sheetScroll'); if (c && sc) sc.scrollTop = Math.max(0, c.offsetTop - sc.offsetTop - 4); scanNow(); $('#btnClose').focus({ preventScroll: true }); }
-function closeSheet(quiet) { S.sheet = false; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); if (!quiet && S.sheetFrom) S.sheetFrom.focus({ preventScroll: true }); S.sheetFrom = null; }
+function openSheet(id) { refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) $('#aptBox').inert = true; const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const c = ROOT.getElementById(id); const sc = $('#sheetScroll'); if (c && sc) sc.scrollTop = Math.max(0, c.offsetTop - sc.offsetTop - 4); scanNow(); $('#btnClose').focus({ preventScroll: true }); }
+function closeSheet(quiet) { S.sheet = false; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
 function updateSel() {
   if (!HOME) return;
   const o = ICONS[sel], a = HOME.attrs[o.attr], v = Math.round(pct01(a.bar) * 100);
@@ -4300,6 +4694,35 @@ function refreshWork() {
   $('#btnFill').hidden = !W.win;
   setText('#vG', W.dayOf + '/' + W.cyc); setBar($('#bG'), W.dayOf / W.cyc);
   paintClock();
+}
+/* a room's panels read through the app; a throw here must not stop the app's own render */
+function refreshRoom() { if (room.def && room.def.refresh && APP.tab() === 'today') try { room.def.refresh(); } catch (e) { APP.log(e); } }
+let aptDay = null;
+/* rows ticked on this visit stay in the list, in the order he found them, so nothing moves under his thumb until he leaves */
+const aptKeep = new Set(), aptOrd = new Map();
+const rowKey = t => t.id + '|' + t.d;
+const aptSort = l => { for (const t of l) if (!aptOrd.has(rowKey(t))) aptOrd.set(rowKey(t), aptOrd.size); return [...l].sort((a, b) => aptOrd.get(rowKey(a)) - aptOrd.get(rowKey(b))); };
+const taskRow = t => `<div class="trow${t.done ? ' done' : ''}" style="--c:${t.c}"><button class="tick" data-tick="${t.id}" data-date="${t.d}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-task="${t.id}" data-date="${t.d}"><b>${t.title}</b>${t.meta ? `<small>${t.meta}</small>` : ''}</button></div>`;
+const noneRow = s => `<div class="none">${s}</div>`;
+function refreshApt() {
+  /* rows are rewritten below: note what had focus, to hand it back */
+  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['day', 'tick', 'task', 'dec'].find(k => fo.dataset[k]) : null, fv = fk && fo.dataset[fk], fi = fk && fo.dataset.id, zone = fk && fo.closest('#sheet') ? $('#sheet') : hudEl;
+  const P = APP.plan(), list = aptSort(P.today), open = list.filter(t => !t.done || aptKeep.has(rowKey(t))), n = `${P.done}/${P.today.length}` + (P.overdue ? ` / ${P.overdue} LATE` : '');
+  setText('#aptDate', P.date); setText('#aptN', n); setText('#tdN', n);
+  setRows('#aptList', open.length ? open.map(taskRow).join('') : noneRow(P.today.length ? 'All done today.' : 'Nothing due today.'));
+  setRows('#tdRows', list.length ? list.map(taskRow).join('') : noneRow('Nothing due today.'));
+  const day = P.week.find(d => d.d === aptDay) || P.week.find(d => d.today) || P.week[0];
+  setText('#wkL', P.weekLabel);
+  setHTML('#wkRows', P.week.map(d => `<button class="wk${d.today ? ' today' : ''}${d === day ? ' sel' : ''}" data-day="${d.d}" aria-pressed="${d === day}" aria-label="${d.long}: ${d.left} open"><b>${d.dow}</b><span>${d.day}</span><div>${d.note}</div><em>${d.total ? `${d.total - d.left}/${d.total}` : '-'}</em></button>`).join(''));
+  setRows('#wkDay', day.tasks.length ? aptSort(day.tasks).map(taskRow).join('') : noneRow(`Nothing on ${day.long}.`));
+  setHTML('#wkActs', `<button class="rbtn ol" data-act="open-shift" data-date="${day.d}">SHIFT</button><button class="rbtn ol" data-act="open-session" data-date="${day.d}">SESSION</button><button class="rbtn ol" data-go="week:">OPEN WEEK</button>`);
+  setText('#ntN', String(P.noteCount));
+  setHTML('#ntRows', P.notes.length ? P.notes.map(o => `<button class="nrow" data-act="open-note" data-id="${o.id}"><b>${o.title}</b>${o.body ? `<p>${o.body}</p>` : ''}<small>${o.pin ? 'PINNED / ' : ''}${o.when}</small></button>`).join('') : noneRow('Nothing written down yet.'));
+  setText('#dcN', String(P.decide.length));
+  setHTML('#dcRows', P.decide.length ? P.decide.map(t => `<div class="dcd"><b>${t.title}</b><small>Was due ${t.was}</small><div class="acts"><button class="rbtn" data-dec="rm-done" data-id="${t.id}">DONE</button><button class="rbtn ol" data-dec="rm-later" data-id="${t.id}">+2H</button><button class="rbtn ol" data-dec="rm-tomorrow" data-id="${t.id}">TOMORROW</button></div></div>`).join('') : noneRow('Nothing waiting on you.'));
+  const tag = k => tagEls.find(g => g.h.key === k), say = (g, s) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, s); m.hidden = !s; };
+  say(tag('today'), P.today.length ? `${P.done}/${P.today.length}` : ''); say(tag('decide'), P.decide.length ? String(P.decide.length) : '');
+  if (fk && !fo.isConnected) { const same = [...zone.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv && (!fi || b.dataset.id === fi && !b.dataset.dec || b.dataset.id === fi)); const to = same || (S.sheet ? $('#btnClose') : $(room.def.panel + ' button')); if (to) to.focus({ preventScroll: true }); }
 }
 function paintClock() {
   const c = CLOCK = APP.clock(), f = c.on ? hms(c.ms) : '00:00:00';
@@ -4391,7 +4814,9 @@ function update() {
   host.hidden = !home;
   if (home && !started) { started = true; boot(); }
   if (!ready) return;
-  refreshWork();
+  /* a room paints today's date: if he comes back to it the next morning, paint it again */
+  if (home && S.mode === 'room' && room.day && room.day !== new Date().toDateString()) try { loadRoom(room.id); } catch (e) { APP.log(e); }
+  refreshWork(); refreshRoom();
   if (home) { refreshHome(); resume(); }
 }
 function rig() {
@@ -4404,11 +4829,14 @@ function rig() {
     fly(u, dir = 1) { makeFlight(dir); setMode('fly'); S.fly.u = u; S.fly.dur = 1e9; applyFov(); return frame(); },
     load(id) { loadRoom(id); return frame(); },
     reload(id) { room.id = null; loadRoom(id); return frame(); },
+    mem: () => ({ ...renderer.info.memory, programs: renderer.info.programs.length }),
+    clutter(on) { room.clutter.visible = on; if (FIG) FIG.visible = on; const gm = buildGlowMesh(on ? room.glows : room.glowsPlain); room.glowMesh.geometry.dispose(); room.glowMesh.geometry = gm.geometry; gm.material.dispose(); room.fx.geometry.setDrawRange(0, on ? Infinity : room.fxPlain); setLights(room.u, room.lights.map((l, i) => !on && i === room.clutterLight ? [0, 0, 0, 0, -1, 0] : l)); bakeRoom(); return frame(); },
     room(yaw = 0) { setMode('room'); S.fly = null; S.yaw = S.yawGoal = yaw; S.flyK = 1; applyFov(); room.setDoor(0); return frame(); },
     sheet(id) { openSheet(id); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     close() { closeSheet(); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
-    stats() { return { pieces: room.pieces, roomTris: room.tris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
+    figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
+    stats() { return { id: room.id, day: room.day, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
   };
 }
 window.City = {

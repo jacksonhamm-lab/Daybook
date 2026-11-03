@@ -37,7 +37,7 @@ behind a per-device flag, and the Dex home stays the default until the switch-ov
 
 | Icon | `k`, colour | District | Opens (`go`) | Room | Phase 1 hotspots |
 |---|---|---|---|---|---|
-| Plan | `focus` `#64d2ff` | A stacked megablock: balconies, one warm top-floor window, a rooftop | `week:` | `apartment` | Fridge note, Calendar, Notebook, Phone |
+| Plan | `focus` `#64d2ff` | A stacked megablock: balconies, one warm top-floor window, a rooftop | `week:` | `apartment` | Today pane, Week grid, Notebook, Decide screen, Career drawers |
 | Work | `grind` `#0a84ff` | Downtown black-glass towers around the megatower, with a wood-and-brass clothing shop at street level | `hours:shifts` | `shop` | Register, Ledger, Notepad |
 | Train | `strength` `#ff9f0a` | A pale-concrete warehouse gym: roll-up door, orange neon | `training:` | `gym` | Rack, Stopwatch, Whiteboard, Split chart |
 | Cardio | `stamina` `#ff375f` | A ski village on the mountain: chalets, a rounded lift station, gondola line, pines, snow | `training:cardio` | `ski` | Lift board, Ticket window |
@@ -57,7 +57,8 @@ the icons keep their exact colours.
   and carry no claims.
 - **Real 3D, built in code:** geometry, materials and light. No paintings, image layers, depth maps, panoramas or
   flat picture planes. Nothing generated, no credits. The style is flat cel shading: bold colour blocks, neon rim
-  light, violet and teal shadows (never grey), ink outlines, banded skies and a big moon.
+  light, violet and teal shadows (never grey), ink outlines, banded skies and a big moon. One exception: the
+  apartment's figure is his own model file, served from KV like Dex's and never committed (see the handoff).
 - **Original shapes and neutral names** in code, ids, comments and data: `megatower`, `megablock`, `highway`, `rail`,
   `skyline`, `palms`, `ads`, `signs`, `holo`, `lanes`, and the era ids `concrete`, `kitsch`, `corp`, `luxe`, `stone`.
 - **One menu.** In city mode the six icons are the menu and replace the chips. No bottom nav, tab strips, in-page
@@ -275,62 +276,52 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 ## Handoff
 
-Technical state only. Updated 2026-10-31.
+Technical state only. Updated 2026-11-02.
 
-- **Branch:** `city-p1`, local only, never pushed. It was the same as live `main` at `bdacab4` (Phase 0 and the XP change
-  are live), and the city commits sit on top. `git log --oneline bdacab4..city-p1` lists them. `BUILD` is `'p3'` on this
-  branch only. Don't push `city-p1` itself until Cloudflare branch builds are confirmed off (§15).
-- **Built (Phase 1):** `city.js` (the look test's world, people, flights, HUD and quality logic, in a shadow root), the
-  flag and loader, and `window.CityApp`. See [The flag](#the-flag).
-  - Home: the city replaces the Dex home with the flag on. Work flies into the shop. Plan, Train, Cardio, Fuel and Jobs
-    open their existing pages through `openPage`, and back returns to the city. The sixth icon says Jobs because that's
-    the existing route; it becomes School in Phase 2.
-  - The app's Progress, Quick add and Settings are reached from the HUD's top strip (DAYBOOK, +, the initial).
-  - Shop: real clock (Undo on clock in and clock out, Break), the real period's shifts (a row opens the existing shift
-    sheet) and pay. Pins and panels on the home read `attributes()`, tasks, level and sync.
-  - Removed: `SHIFT_ROWS`, EXAMPLE DATA, the fake toasts, fake hours on the till, ledger and notepad props, the fake
-    audio readout. The till's sale lines and the tailor's measurements stay as shop props.
-  - Fixed: the clock-out timer no longer freezes, and the first friendly failure message is the one shown.
-  - Added: recovery after a lost WebGL context; the city stops drawing on other pages and under a sheet.
-  - Ad names now made up: ZENKIRA, CHISPAZ, OJIVEX-9, ZAPTRO, PLAYORA, NOCTELO, TRONZO. A quick web search found no brand
-    for any of them. That isn't a trademark clearance.
-- **Fonts, what changed:** the look test's five web fonts are gone. The HUD uses a condensed system font, signs a heavy
-  system sans, Japanese the system Gothic. Sign words were resized to fit. On Windows that's Bahnschrift, Arial Black and
-  Yu Gothic; on iPhone it should be Avenir Next Condensed, Avenir Next and Hiragino, not yet seen.
-- **Tests, all pass, headless SwiftShader, fake data, scripts outside the repo:**
-  - **Flag on,** 63/63 at 390×844 and 1366×768: city, flight, shop, clock in, Undo, clock out, Undo, break, shifts, pay,
-    back, browser back, Escape, all five other districts, Settings, Quick add, Progress. Clocking in shows on the Hours
-    page. No Dex file is requested.
-  - **Counts,** against the look test: 1366×768 is identical (city 81 calls, 603,994 triangles; shop 68, 718,254). At
-    390×844, city 74 calls and 600,394 triangles (look test 601,794), shop 61 and 646,678 (648,078).
-  - **Flag off** against `bdacab4`, reduced motion: 26/26 captures identical at both sizes (home, pages, sheets,
-    Spotlight, clock, chip and back) apart from the Build line, with the same requests and no city file.
-  - **Service worker:** with the flag on, `city.js` and three are cached, and a reload with the server gone starts the
-    city and clocks in. Registration was forced on in the scratch copy, because the app only registers it on https.
-  - **Failures:** no WebGL and a blocked `city.js` both show their message and fall back to Dex. A lost and restored
-    context draws again.
-  - **Real time, no rig,** at 280×500: flight, tap-skip, live timer, the idle stop under sheets and on pages.
-  - **Sync,** on a local scratch Worker: city device and flag-off device exchange clock in, clock out, Undo and a shift.
-    No new synced keys. Dex itself was stubbed out on the second device to keep the machine responsive.
-- **Not tested:** a real iPhone, real FPS, heat, battery, Safari, iOS fonts and memory limits, the real sync code, and
-  the Home Screen app.
+- **Live:** `main` at `25b9fa1` is build `p3`: Phase 1, the city behind `?city=1`, flag off by default. Pushes go
+  `git push origin city-rooms:main`, never the branch itself, until Cloudflare branch builds are confirmed off (§15).
+- **Branch:** `city-rooms`, local. `c07e7ab` (the room code no longer assumes the shop) plus the p4 commit: the
+  apartment. `BUILD` is `'p4'` in `city.js`, `index.html` and the `city.js?v=` query.
+- **Built (p4, the apartment, Plan's room):**
+  - A 9×8×4 m high-rise flat inside the pale megablock, its +X wall all glass. Hotspots TODAY (today's tasks: tick,
+    Undo; the row order is taken afresh on each way in and fixed for the visit), WEEK (the month, today filled), NOTES,
+    DECIDE (the A/B screen) and CAREER (Jobs, paused). Each opens its panel. Clutter on and off as in the shop.
+  - **Depth hole:** the room sits behind the block's solid facade. While flying in or out (camera on the glass side,
+    within 140 m), `SC.hole` draws the window's shape with no colour, pushing the city's depth back so the room shows
+    through. The quad's z is forced to 0 so it is never near-clipped. Rain is drawn after the room on those frames,
+    cut at the glass (`uCut` in `RAIN_VS`).
+  - **View camera:** `def.view` gives the glass a skyline seen from higher up and further off, carried rigidly from
+    the rest eye (`streetCam`). It's used for the glass background, the reflections and the light shafts.
+    `fxOverGlass` draws the room's light over the glass.
+  - **Figure:** `def.figure` loads a model file through the vendored `GLTFLoader`. It is posed once by bone names
+    (Mixamo or VRoid), the skin and its normals are baked into still geometry, and it is drawn with `FIG_FS` (window
+    light in hard steps, a violet room fill, rim). It hides with the clutter. If the file is missing, the room simply
+    has no one in it. The apartment's is `models/her.glb?v=1`: his own model, a Tripo FBX converted to GLB. It is
+    private like Dex's: gitignored, in KV as `model:her.glb` (gzipped), never in git. Bump `?v=` on any change.
+  - **Flight:** the window is entered between the mullions, clear of the figure. The turn goes by the lit kitchen to
+    the rest view.
+- **Tests, headless SwiftShader, fake data, muted, scripts outside the repo:**
+  - **Flag on,** 63/63 at 390×844 and 1366×768: the Phase 1 battery, now expecting the model and loader requests.
+  - **Apartment:** the tour and the flight in and out show no errors at both sizes; the review checks (row order,
+    Undo, re-entry, midnight, panel touches) 20/20 at 390×844 and 18/18 at 1366×768 (three checks are phone-only, one desktop-only); panels and sheets 79/79 and 78/78; earlier room checks 30/30
+    at both sizes and 39/39.
+  - **City and shop pixels** match the previous build apart from the HUD clock.
+  - **Flag off,** against live `p3` at the same moment: every page identical apart from the Build line and the Jobs
+    page's halo canvases, which take their size late (live `p3` differs between two of its own runs in the same way).
+- **Not tested:** a real iPhone (FPS, heat, memory with the figure loaded), Safari, the real sync code, the KV copy of
+  `her.glb` on the live site.
 - **Open:**
-  - He's asked to confirm the shop name "Sastrería Oro", and whether to bundle the original fonts (they weren't
-    downloaded, no assets in this phase).
+  - `her.glb` has to be uploaded to KV, with his go: `npx wrangler kv key put --binding SYNC --remote "model:her.glb"
+    --path models/her.glb.gz`. Until then the live apartment is empty of her and logs one 404 per visit.
   - The flag can't be flipped in the Home Screen app, because the quick-add words aren't built.
   - The Inter and Unbounded stylesheet still comes from Google Fonts for the existing pages, with or without the flag.
-  - Settings › Performance doesn't drive the city's quality yet, and the city is well over the older budgets above.
-  - After a context restore, three logs harmless "object does not belong to this context" warnings while it frees the
-    old targets.
-  - With `?cityrig` on Windows, shader checks log a harmless compile warning. Outside the rig they're off.
+  - Settings › Performance doesn't drive the city's quality yet.
+  - After a context restore, three logs harmless "object does not belong to this context" warnings.
   - Key 1 and the island tap go home through `switchTab`, which doesn't clear `GROW.chip` (same as `main`).
-  - `noteCard` still reads `CATS[n.cat]` directly. The app badge leaves out unknown-category reminders while the
-    Worker's push badge counts them; Phase 2 filters both.
-  - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged, so a device without one PUTs on each
-    sync (a rev bump, no data loss).
-  - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command. Dead `#v-today .grid`
-    and `#v-today .slip-card` rules remain in the first 760 px media query.
+  - `noteCard` still reads `CATS[n.cat]` directly; Phase 2 filters the badge counts.
+  - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
+  - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. He answers the two questions above.
-  2. His go to put this on the live site, still flag-off by default. Then the iPhone check at `?city=1`: looks, heat, FPS.
-  3. Fix what that finds, then Phase 2 (School) or the rooms, in his order. Sound is Phase S.
+  1. His go to push p4 and, separately, to upload `her.glb`. Then the iPhone check at `?city=1`.
+  2. Her spots by time of day (sofa by day, the window in the evening, the bed late at night): agreed, next build.
+  3. Then the gym, ski village, stall and castle. School (Phase 2) and sound (Phase S) in his order.

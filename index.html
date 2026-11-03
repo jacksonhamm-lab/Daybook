@@ -31,9 +31,9 @@
     }
     on = localStorage.getItem('daybook_home') === 'city';
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p3';
+  window.DAYBOOK_BUILD = 'p4';
   window.DAYBOOK_CITY = on;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p3' : './rider.js'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p4' : './rider.js'; document.head.appendChild(l);
   if (on) {
     document.documentElement.dataset.city = '';
     var c = document.createElement('style');
@@ -43,7 +43,7 @@
 })();
 </script>
 <script type="module">
-if (window.DAYBOOK_CITY) import('./city.js?v=p3').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
+if (window.DAYBOOK_CITY) import('./city.js?v=p4').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
 else import('./rider.js').catch(e => window.logProblem('page', e));
 </script>
 <style>
@@ -1912,7 +1912,7 @@ const island = {
     if (el.animate && !REDUCED) el.animate([{ transform: 'translateX(-50%) scale(.88)' }, { transform: 'translateX(-50%) scale(1)' }], { duration: 520, easing: 'cubic-bezier(.34,1.56,.64,1)' });
   },
   toast(text, o = {}) {
-    this.mode = 'toast'; this.key = null;
+    this.mode = 'toast'; this.key = null; this.big = !!o.big;
     this.paint(`${o.icon ? `<span class="il-ic" style="color:${o.color || '#fff'}">${o.icon}</span>` : ''}<span class="il-t">${esc(text)}</span>${o.action ? `<button class="il-a" data-il="1">${esc(o.action.label)}</button>` : ''}`, true);
     this.action = o.action ? o.action.fn : null;
     clearTimeout(this.timer);
@@ -3403,9 +3403,10 @@ document.addEventListener('touchstart', e => { const t = e.touches[0]; touchFrom
 document.addEventListener('touchend', e => {
   const now = e.timeStamp, c = e.changedTouches[0];
   const still = !!(touchFrom && c && Math.hypot(c.clientX - touchFrom.x, c.clientY - touchFrom.y) < 10);
-  if (still && now - lastTouch < 350 && e.changedTouches.length === 1 && !e.target.closest('input,textarea,select,.grab')) {
+  const to = e.composedPath()[0];   // the city's HUD is in a shadow root, where e.target is only its host
+  if (still && now - lastTouch < 350 && e.changedTouches.length === 1 && !to.closest('input,textarea,select,.grab')) {
     e.preventDefault();
-    const hit = e.target.closest('button,a,label,[data-act],[data-tab],summary');
+    const hit = to.closest('button,a,label,[data-act],[data-tab],summary');
     if (hit) hit.click();
   }
   lastTouch = still ? now : 0;
@@ -3510,6 +3511,34 @@ if (window.DAYBOOK_CITY) window.CityApp = {
     return { period: `${tip(short(p.start))} / ${tip(short(p.end))}`, periodEnd: `TO ${tip(short(p.end))}`, hours: fh(total), worked: dates.filter(d => shiftHours(S.shifts[d]) > 0).length, goal: goal ? fh(target) : '-', pct: total / target, ringSub: goal ? '% GOAL' : 'OF 80H',
       rows, pay: cash(total), payEst: rate ? ' est.' : '', six: cash(sum), sixBar: sum ? total / Math.max(...vals, 1) : 0, win: pend.length > 0, checks, cyc: p.cyc, dayOf: dates.filter(d => d <= td).length };
   },
+  // the apartment's panels. Typed text is escaped here because the HUD writes these strings straight into its markup.
+  plan() {
+    const d = today(), row = (t, x) => ({ id: esc(t.id), d: x, title: esc(t.title), done: isDone(t, x), c: catOf(t.cat).color, meta: esc([catOf(t.cat).label, t.remind ? t12(t.remind) : '', t.repeat ? repeatLabel(t.repeat) : ''].filter(Boolean).join(' · ').toUpperCase()) });
+    const list = tasksOn(d).map(t => row(t, d)), mon = mondayOf(new Date());
+    const week = datesOf(mon).map((x, i) => { const w = wo(x), h = shiftHours(S.shifts[x]), l = tasksOn(x).map(t => row(t, x)); return { d: x, dow: DOW[i].toUpperCase(), day: parse(x).getDate(), long: longDate(x), today: x === d, total: l.length, left: l.filter(t => !t.done).length, tasks: l, note: esc([h ? fh(h) + 'h shift' : '', w.s !== 'REST' ? w.s : ''].filter(Boolean).join(' · ')) }; });
+    const notes = [...S.notes].sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || (b.edited || b.created) - (a.edited || a.created));
+    return { date: short(d).toUpperCase(), today: list, done: list.filter(t => t.done).length, overdue: overdue().length, week, weekLabel: esc(weekLabel(mon)).toUpperCase(),
+      decide: slipped().map(t => ({ id: esc(t.id), title: esc(t.title), was: t12(remAt(t, d)) })),
+      noteCount: S.notes.length, notes: notes.slice(0, 6).map(n => ({ id: esc(n.id), title: esc(noteTitle(n)), body: esc(noteBody(n).slice(0, 90)), pin: !!n.pin, when: esc(rel(iso(new Date(n.edited || n.created))).toUpperCase()) })) };
+  },
+  // the Plan page's tick, with the Undo the city promises: a page can tap again, a room shouldn't have to
+  tick(id, date) {
+    if (!S.tasks.some(x => x.id === id)) return;
+    const undo = this.undoTask(id), li = document.createElement('li'); li.dataset.id = id; li.dataset.date = date; toggleTask(li);
+    const t = S.tasks.find(x => x.id === id);
+    const msg = isDone(t, date) ? 'Done' : 'Not done', me = this.tickN = (this.tickN || 0) + 1; island.toast(msg, { action: undo });
+    // clearing the day or earning a trophy celebrates over the toast: once that has had its moment, offer the Undo again
+    setTimeout(() => { if (me === this.tickN && !undo.used && island.mode === 'toast' && island.big && !island.action) island.toast(msg, { action: undo }); }, 2200);
+  },
+  openTask(id, d) { openSheet('task', { id, d }); },
+  // the action says what it really did (+2h can mean skipped for tonight); this only adds the Undo
+  decide(a, id) {
+    if (!S.tasks.some(x => x.id === id)) return;
+    const undo = this.undoTask(id); this.act(a, { id });
+    const said = island.el.querySelector('.il-t'); island.toast(said ? said.textContent : 'Done', { action: undo });
+  },
+  // only this task goes back: a sync can land while the toast is up, and restoring everything would delete what it brought
+  undoTask(id) { const snap = JSON.stringify(S.tasks.find(x => x.id === id)), u = { label: 'Undo', used: false, fn: () => { u.used = true; const i = S.tasks.findIndex(x => x.id === id); if (i >= 0) S.tasks[i] = JSON.parse(snap); commit(); island.toast('Restored'); } }; return u; },
   // no WebGL, or city.js wouldn't load: tell him why, then fall back to Dex for this session
   fallback(msg, e) {
     window.logProblem('city', e || msg);
