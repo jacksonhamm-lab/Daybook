@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p4';
+export const BUILD = 'p5';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -3676,7 +3676,8 @@ function apartmentAtlas() {
   return { tex, C };
 }
 
-function buildApartment() {
+/* spot: where she is, by the clock unless a repaint around her keeps the one she's in */
+function buildApartment(spot = figSpot()) {
   const A = APT, W = A.w / 2, D = A.d / 2, H = A.h;
   const { tex, C } = apartmentAtlas();
   /* solids in M; everything he could tidy away in Z, with its own numbers, so turning it off changes nothing else */
@@ -3796,8 +3797,8 @@ function buildApartment() {
     { const x = tx - .2, z = tz - .3; FXM.set({ kind: 7, a: 50, c: [.9, .25, .5] }); FXM.quad([X(x), Y + .5, Z2(z + .44)], [X(x), Y + .5, Z2(z - .44)], [X(x), Y + 1.18, Z2(z - .44)], [X(x), Y + 1.18, Z2(z + .44)], [0, 0, 1, 1]); }
   }
   const fxBase = FXM.n;
-  /* on the glass behind where she stands: the glow that keeps her off the buildings, gone with her when the room is tidied */
-  { const X = v => A.x + v, Y = A.y, Z2 = v => A.z + v; FXM.set({ kind: 7, a: 110, c: [1, .24, .56] }); FXM.quad([X(GX - .03), Y - .5, Z2(.55 + .8)], [X(GX - .03), Y - .5, Z2(.55 - .8)], [X(GX - .03), Y + 2.4, Z2(.55 - .8)], [X(GX - .03), Y + 2.4, Z2(.55 + .8)], [0, 0, 1, 1]); }
+  /* on the glass behind where she stands in the evening: the glow that keeps her off the buildings, gone with her when the room is tidied */
+  if (spot === 'eve') { const X = v => A.x + v, Y = A.y, Z2 = v => A.z + v; FXM.set({ kind: 7, a: 110, c: [1, .24, .56] }); FXM.quad([X(GX - .03), Y - .5, Z2(.55 + .8)], [X(GX - .03), Y - .5, Z2(.55 - .8)], [X(GX - .03), Y + 2.4, Z2(.55 - .8)], [X(GX - .03), Y + 2.4, Z2(.55 + .8)], [0, 0, 1, 1]); }
 
   /* ---------- clutter: the second pass. His things, kept near the walls and clear of the five that matter ---------- */
   Z.at(A.x, A.y, A.z, 0, () => {
@@ -3844,7 +3845,7 @@ function buildApartment() {
     { key: 'career', label: 'CAREER', hotkey: 'T', line: 20, go: 'jobs:', p: w(1.85, 1.15, 1.35) },
   ];
   return {
-    geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(),
+    geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(), spot,
     setDoor() {},
   };
 }
@@ -4145,16 +4146,26 @@ function bakeShadows() {
   bakeRoom();
 }
 
-/* ---------- a figure from a model file: posed once, baked still, drawn in the window's light ----------
-   The file is private like Dex's (KV, never in git). If it can't be fetched the room simply has no one in it. */
+/* ---------- a figure from a model file: key poses by bone names, skinned live, drawn in the window's light ----------
+   The file is private like Dex's (KV, never in git). If it can't be fetched the room simply has no one in it.
+   A spot has a few key poses. She breathes and looks about a little, and every minute or so moves into another:
+   a short blend when it's a shift where she is, a digital blink when getting there would cross the furniture. */
 const FIG_VS = /* glsl */`
-precision highp float; in vec3 position; in vec3 normal; in vec2 uv; uniform mat4 modelMatrix, viewMatrix, projectionMatrix;
+#include <skinning_pars_vertex>
 out vec3 vW; out vec3 vN; out vec2 vU;
-void main(){ vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; vN=mat3(modelMatrix)*normal; vU=uv; gl_Position=projectionMatrix*viewMatrix*w; }`;
-const FIG_FS = /* glsl */`
-precision highp float; in vec3 vW; in vec3 vN; in vec2 vU; layout(location=0) out vec4 O;
-uniform sampler2D map; uniform vec3 cameraPosition, uBase; uniform float uHasMap, uHair, uId;
 void main(){
+  vec3 objectNormal = vec3(normal);
+  #include <skinbase_vertex>
+  #include <skinnormal_vertex>
+  vec3 transformed = vec3(position);
+  #include <skinning_vertex>
+  vec4 w=modelMatrix*vec4(transformed,1.); vW=w.xyz; vN=mat3(modelMatrix)*objectNormal; vU=uv; gl_Position=projectionMatrix*viewMatrix*w; }`;
+const FIG_FS = /* glsl */`
+in vec3 vW; in vec3 vN; in vec2 vU; layout(location=0) out vec4 O;
+uniform sampler2D map; uniform vec3 uBase; uniform float uHasMap, uHair, uId, uEm, uCut; uniform vec4 uPh;
+void main(){
+  /* the blink: a scan line takes her away from the top down, and brings her back from her feet up */
+  if(vW.y>uCut) discard;
   vec4 t=uHasMap>.5?texture(map,vU):vec4(1.); if(t.a<.45) discard;
   vec3 c=t.rgb*uBase;
   /* hair goes near-black, its painted highlights turn magenta */
@@ -4166,62 +4177,225 @@ void main(){
   /* and a soft violet from the room behind the viewer, so whoever faces in still has a face */
   float f=max(dot(N,normalize(vec3(-1.,.5,-.2))),0.); f=smoothstep(.1,.25,f)*.6+smoothstep(.55,.65,f)*.4;
   vec3 L=vec3(.24,.2,.36)+vec3(1.,.3,.6)*a*.85+vec3(.3,.66,1.)*b*.7+vec3(.62,.5,.85)*f*.55;
+  /* her phone: a cold light from just in front of her face */
+  if(uPh.w>0.){ vec3 d=uPh.xyz-vW; L+=vec3(.42,.7,1.)*uPh.w*max(dot(N,normalize(d)),0.)*smoothstep(.7,.05,length(d)); }
   float r=smoothstep(.55,.75,pow(1.-max(dot(N,V),0.),1.6));
   vec3 rim=mix(vec3(1.,.28,.6),vec3(.35,.82,1.),smoothstep(-.2,.2,N.z))*r;
-  O=vec4(c*L+rim*.75,uId/255.);
+  vec3 col=uEm>.5?uBase:c*L+rim*.75;
+  if(vW.y>uCut-.04) col=vec3(.35,.95,1.);
+  O=vec4(col,uId/255.);
 }`;
-let FIG = null, figTok = 0, figP = null;
-function dropFigure() { figTok++; figP = null; if (!FIG) return; SC.room.remove(FIG); FIG.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { const m = o.material.uniforms.map.value; if (m) m.dispose(); o.material.dispose(); } }); FIG = null; }
+let FIG = null, figTok = 0, figP = null, HOUR = null;
+const FIG_PH = { value: new THREE.Vector4() }, FIG_CUT = { value: 1e4 };
+/* where she is by the clock: the window corner by day, the glass from six, in bed from eleven. Read on the way in, so she never changes spot while the room is on screen */
+const figSpot = () => { const h = HOUR != null ? HOUR : new Date().getHours(); return h >= 23 || h < 6 ? 'late' : h >= 18 ? 'eve' : 'day'; };
+/* on a phone the resting view may turn toward her spot (the bed sits at the edge of a narrow screen) */
+const restYaw = () => CAM.aspect < .8 && room.def && room.def.figure && room.def.figure.turn && room.def.figure.turn[room.spot] || 0;
+function dropFigure() {
+  figTok++; figP = null; if (!FIG) return; SC.room.remove(FIG.root);
+  /* what she holds may never have been handed to her, so it's gathered on its own */
+  const all = new Set(), maps = new Set(); FIG.root.traverse(o => all.add(o)); for (const g of Object.values(FIG.props)) g.traverse(o => all.add(o));
+  for (const o of all) { if (o.isSkinnedMesh) o.skeleton.dispose(); if (o.geometry) o.geometry.dispose(); for (const m of [].concat(o.material || [])) { if (m.uniforms.map.value) maps.add(m.uniforms.map.value); m.dispose(); } }
+  maps.forEach(m => m.dispose()); FIG = null; FIG_PH.value.set(0, 0, 0, 0); FIG_CUT.value = 1e4;
+}
+
+/* her key poses, from her rest pose. Directions are in her own frame (+Y up, +X her left, +Z her front) and absolute,
+   whatever came before; turn the hips before aiming the limbs. An arm that ends low swings forward first, then down: one
+   swing from the T leaves the palm on its side. A spot's lay then turns her whole body (onto her back, her side).
+   Each was checked by skinning it against the furniture: what rests on something sinks 0-4 cm into it, nothing else touches */
+const FIG_POSES = {
+  /* evening, at the glass: one hand on her hip, the other arm loose, weight on one leg */
+  stand: ({ aim, bone, V }) => {
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.18, -1, -.04)); aim(bone('l', 'lo'), bone('l', 'hand'), V(.05, -1, .18));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.5, -.82, -.2)); aim(bone('r', 'lo'), bone('r', 'hand'), V(.62, -.6, .2));
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.07, -1, 0)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.12, -1, .03));
+  },
+  /* looking out, her back three-quarters to the room, a palm flat on the glass at head height, weight on her left leg */
+  glassLook: ({ aim, turn, bone, B, V }) => {
+    turn(B('spine'), V(.819, 0, -.574), .06);
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(-.03, -1, 0));
+    aim(bone('r', 'leg'), bone('r', 'shin'), V(-.01, -1, .1)); aim(bone('r', 'shin'), bone('r', 'foot'), V(-.03, -1, -.08));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.601, -.225, .767)); aim(bone('l', 'lo'), bone('l', 'hand'), V(.481, .391, .785)); aim(bone('l', 'hand'), bone('l', 'mid'), V(.068, .993, .098));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.28, -1, -.03)); aim(bone('r', 'lo'), bone('r', 'hand'), V(-.17, -1, .12));
+  },
+  /* on the window step, her side to the glass: one leg along the step, the other knee up, the phone in both hands */
+  stepSit: ({ aim, turn, twist, bone, B, neck, head, top, V }) => {
+    turn(B('spine'), V(1, 0, 0), .06);
+    aim(neck, head, V(0, .9, .44)); aim(head, top, V(0, .85, .53));
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(-.03, .5, .866)); aim(bone('r', 'leg'), bone('r', 'shin'), V(.02, .04, 1));
+    aim(bone('l', 'shin'), bone('l', 'foot'), V(0, -.512, .859)); aim(bone('r', 'shin'), bone('r', 'foot'), V(.02, -.16, 1));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.2, -.5, 1)); aim(bone('l', 'up'), bone('l', 'lo'), V(.192, -.475, .859)); twist(bone('l', 'up'), bone('l', 'lo'), -.3);
+    aim(bone('l', 'lo'), bone('l', 'hand'), V(-.566, .315, .761)); twist(bone('l', 'lo'), bone('l', 'hand'), -.3); aim(bone('l', 'hand'), bone('l', 'mid'), V(-.301, .531, .792)); twist(bone('l', 'hand'), bone('l', 'mid'), -.29);
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.2, -.5, 1)); aim(bone('r', 'up'), bone('r', 'lo'), V(-.331, -.491, .806)); twist(bone('r', 'up'), bone('r', 'lo'), .3);
+    aim(bone('r', 'lo'), bone('r', 'hand'), V(.486, .325, .811)); twist(bone('r', 'lo'), bone('r', 'hand'), .3); aim(bone('r', 'hand'), bone('r', 'mid'), V(.301, .531, .792)); twist(bone('r', 'hand'), bone('r', 'mid'), .4);
+  },
+  /* daytime, in the window corner: a stretch on the floor facing the room, arms overhead, fingers laced. Each arm swings
+     forward, then up, then twists, so the palms face in and the elbows don't lock */
+  dayStretch: ({ aim, twist, bone, head, top, V }) => {
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(0, -1, .06)); aim(bone('l', 'shin'), bone('l', 'foot'), V(0, -1, .03));
+    aim(bone('r', 'leg'), bone('r', 'shin'), V(.01, -1, -.01)); aim(bone('r', 'shin'), bone('r', 'foot'), V(.01, -1, 0));
+    aim(head, top, V(0, .99, .1));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.1, 0, 1)); aim(bone('l', 'up'), bone('l', 'lo'), V(.28, .95, .06)); twist(bone('l', 'up'), bone('l', 'lo'), -.6);
+    aim(bone('l', 'lo'), bone('l', 'hand'), V(-.43, .9, .08)); aim(bone('l', 'hand'), bone('l', 'mid'), V(-.78, .6, .1));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.1, 0, 1)); aim(bone('r', 'up'), bone('r', 'lo'), V(-.28, .95, .06)); twist(bone('r', 'up'), bone('r', 'lo'), .6);
+    aim(bone('r', 'lo'), bone('r', 'hand'), V(.43, .9, .08)); aim(bone('r', 'hand'), bone('r', 'mid'), V(.78, .6, .1));
+  },
+  /* on the window step, her hip against the glass (her hair is too long to lean back on it), legs down to the floor, a
+     tablet in both hands by its short sides, head bowed to it */
+  dayRead: ({ aim, turn, arms, bone, B, hips, neck, head, top, V }) => {
+    turn(hips, V(1, 0, 0), .12); turn(B('spine'), V(0, 0, 1), -.06);
+    aim(neck, head, V(0, .85, .53)); aim(head, top, V(0, .6, .8));
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(-.02, 0, 1)); aim(bone('r', 'leg'), bone('r', 'shin'), V(.02, 0, 1));
+    aim(bone('l', 'shin'), bone('l', 'foot'), V(-.02, -.501, 1)); aim(bone('r', 'shin'), bone('r', 'foot'), V(.02, -.501, 1));
+    aim(bone('l', 'foot'), bone('l', 'toe'), V(0, .55, .83)); aim(bone('r', 'foot'), bone('r', 'toe'), V(0, .55, .83));
+    arms([[.25, -.95, .15]], [-.1, .25, 1], [-.32, .1, .95]);
+  },
+  /* standing on the step, a shoulder on the glass, ankles crossed, the other arm loose along it, the phone low in one hand */
+  dayLean: ({ aim, turn, twist, bone, hips, neck, head, top, V }) => {
+    turn(hips, V(0, 0, 1), -.08);
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(-.084, -.993, .087)); aim(bone('l', 'shin'), bone('l', 'foot'), V(-.084, -.983, -.164));
+    aim(bone('r', 'leg'), bone('r', 'shin'), V(.06, -.93, .36)); aim(bone('r', 'shin'), bone('r', 'foot'), V(.342, -.939, -.042));
+    aim(bone('r', 'foot'), bone('r', 'toe'), V(.12, -.97, .2));
+    aim(neck, head, V(0, .87, .47)); aim(head, top, V(0, .66, .75));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.19, -1, .07)); aim(bone('l', 'lo'), bone('l', 'hand'), V(.14, -1, .2)); aim(bone('l', 'hand'), bone('l', 'mid'), V(.1, -1, .15));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.3, -.93, .12));
+    aim(bone('r', 'lo'), bone('r', 'hand'), V(.2, .12, .97)); twist(bone('r', 'lo'), bone('r', 'hand'), .6);
+    aim(bone('r', 'hand'), bone('r', 'mid'), V(.12, .6, .79)); twist(bone('r', 'hand'), bone('r', 'mid'), .5);
+  },
+  /* late, on her back (with lay), propped a little on the pillow, legs together, one knee a little up, the phone over her face */
+  lie: ({ aim, turn, twist, arms, bone, B, hips, neck, head, top, V }) => {
+    turn(hips, V(1, 0, 0), -.25); turn(B('spine'), V(1, 0, 0), .35); turn(B('spine2'), V(1, 0, 0), .4);
+    aim(neck, head, V(0, .94, .35)); aim(head, top, V(0, .86, .51));
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.02, -1, .06)); aim(bone('l', 'shin'), bone('l', 'foot'), V(0, -1, -.08));
+    aim(bone('r', 'leg'), bone('r', 'shin'), V(-.02, -.97, .22)); aim(bone('r', 'shin'), bone('r', 'foot'), V(.01, -.97, -.24));
+    arms([[.45, -.45, .77]], [-.72, .12, .68], [-.3, .78, .55]);
+    twist(bone('l', 'hand'), bone('l', 'mid'), -.35); twist(bone('r', 'hand'), bone('r', 'mid'), .35);
+  },
+  /* on her left side (with lay), facing the room, knees bent together, the phone upright in her top hand */
+  sideLie: ({ aim, turn, twist, bone, B, neck, head, top, V }) => {
+    turn(B('spine'), V(1, 0, 0), .08);
+    aim(neck, head, V(-.17, .95, .2)); aim(head, top, V(-.22, .93, .3));
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.05, -.75, .66)); aim(bone('l', 'shin'), bone('l', 'foot'), V(-.03, -.95, -.3));
+    aim(bone('r', 'leg'), bone('r', 'shin'), V(.25, -.7, .67)); aim(bone('r', 'shin'), bone('r', 'foot'), V(.01, -.95, -.32));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(0, 1, 0)); aim(bone('l', 'up'), bone('l', 'lo'), V(.082, -.156, .984));
+    aim(bone('l', 'lo'), bone('l', 'hand'), V(0, .7, .7)); aim(bone('l', 'lo'), bone('l', 'hand'), V(-.108, -.873, .476)); aim(bone('l', 'hand'), bone('l', 'mid'), V(.255, -.917, .306));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(0, -1, .1)); aim(bone('r', 'up'), bone('r', 'lo'), V(.033, -.168, .985));
+    aim(bone('r', 'lo'), bone('r', 'hand'), V(0, -1, 0)); aim(bone('r', 'lo'), bone('r', 'hand'), V(.643, .408, .649)); aim(bone('r', 'hand'), bone('r', 'mid'), V(-.25, .968, 0));
+    twist(bone('r', 'hand'), bone('r', 'mid'), .3);
+  },
+  /* sitting up against the headboard, legs out together, the phone in both hands, elbows out at her sides */
+  headboardSit: ({ aim, turn, arms, bone, hips, neck, head, top, V }) => {
+    turn(hips, V(1, 0, 0), -.4);
+    aim(neck, head, V(0, .78, .65)); aim(head, top, V(0, .66, .75));
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(-.02, .04, 1)); aim(bone('l', 'shin'), bone('l', 'foot'), V(-.03, -.2, 1)); aim(bone('l', 'foot'), bone('l', 'toe'), V(.12, .55, .82));
+    aim(bone('r', 'leg'), bone('r', 'shin'), V(.02, -.08, 1)); aim(bone('r', 'shin'), bone('r', 'foot'), V(.02, -.12, 1)); aim(bone('r', 'foot'), bone('r', 'toe'), V(-.15, .5, .85));
+    arms([[.323, -.626, .71]], [-.531, -.125, .838], [-.401, .551, .732]);
+  },
+};
+/* poses her by bone names (Mixamo or VRoid) and turns her head by f.look. Returns where she holds a phone, if she does */
+function poseFigure(root, f) {
+  const B = {}; root.traverse(o => { if (o.isBone) B[o.name.toLowerCase().replace(/mixamorig\d*:?|j_bip_|[\s._:-]/g, '')] = o; });
+  const find = (...k) => k.map(n => B[n]).find(Boolean) || null;
+  const bone = (s, part) => { const L = s === 'l' ? 'left' : 'right'; return { up: find(s + 'upperarm', L + 'arm', 'upperarm' + s, L + 'upperarm'), lo: find(s + 'lowerarm', L + 'forearm', 'forearm' + s, 'lowerarm' + s, L + 'lowerarm'), hand: find(s + 'hand', L + 'hand', 'hand' + s), leg: find(s + 'upperleg', L + 'upleg', 'thigh' + s, 'upperleg' + s, L + 'upperleg'), shin: find(s + 'lowerleg', L + 'leg', 'shin' + s, 'lowerleg' + s, L + 'lowerleg'), foot: find(L + 'foot', s + 'foot'), toe: find(L + 'toebase', s + 'toebase', s + 'toes'), mid: find(L + 'handmiddle1', s + 'middle1'), index: find(L + 'handindex1', s + 'index1'), pinky: find(L + 'handpinky1', s + 'little1') }[part]; };
+  const hips = find('hips', 'chips'), neck = find('neck', 'cneck'), head = find('head', 'chead'), top = find('headtopend');
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), q = new THREE.Quaternion(), pq = new THREE.Quaternion(), V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const turn = (bn, axis, ang) => { if (!bn) return; root.updateMatrixWorld(true); bn.parent.getWorldQuaternion(pq); q.setFromAxisAngle(axis.normalize(), ang); bn.quaternion.premultiply(pq.clone().invert().multiply(q).multiply(pq)); };
+  const aim = (bn, child, dir) => { if (!bn || !child) return; root.updateMatrixWorld(true); bn.getWorldPosition(a); child.getWorldPosition(b); q.setFromUnitVectors(b.sub(a).normalize(), dir.clone().normalize()); bn.parent.getWorldQuaternion(pq); bn.quaternion.premultiply(pq.clone().invert().multiply(q).multiply(pq)); };
+  const twist = (bn, child, ang) => { if (!bn || !child) return; root.updateMatrixWorld(true); bn.getWorldPosition(a); child.getWorldPosition(b); turn(bn, b.clone().sub(a), ang); };
+  /* both arms, mirrored: x flips for the right */
+  const arms = (up, lo, hand) => { for (const [s, k] of [['l', 1], ['r', -1]]) { for (const d of up) aim(bone(s, 'up'), bone(s, 'lo'), V(d[0] * k, d[1], d[2])); aim(bone(s, 'lo'), bone(s, 'hand'), V(lo[0] * k, lo[1], lo[2])); aim(bone(s, 'hand'), bone(s, 'mid'), V(hand[0] * k, hand[1], hand[2])); } };
+  (FIG_POSES[f.pose] || FIG_POSES.stand)({ aim, turn, twist, arms, bone, hips, neck, head, top, V, B: n => find(n) });
+  if (head) { root.updateMatrixWorld(true); head.parent.getWorldQuaternion(pq); q.setFromAxisAngle(V(0, 1, 0), f.look || 0); head.quaternion.premultiply(pq.clone().invert().multiply(q).multiply(pq)); }
+  root.updateMatrixWorld(true);
+  const s = f.phone === 'l' ? 'l' : 'r', two = f.phone === 'both' || f.phone === 'tablet', pts = two ? [bone('l', 'mid') || bone('l', 'hand'), bone('r', 'mid') || bone('r', 'hand')] : [bone(s, 'index'), bone(s, 'pinky')];
+  const grip = f.phone && pts[0] && pts[1] && head ? { a: pts[0].getWorldPosition(V(0, 0, 0)), b: pts[1].getWorldPosition(V(0, 0, 0)), head: head.getWorldPosition(V(0, 0, 0)), hold: bone(s, 'hand') } : null;
+  return { grip, idle: { chest: find('spine2', 'upperchest', 'cupperchest'), neck, head, hand: grip && !two ? grip.hold : null } };
+}
+
 function addFigure(f) {
   const tok = ++figTok;
   figP = import('./vendor/jsm/loaders/GLTFLoader.js').then(({ GLTFLoader }) => new GLTFLoader().loadAsync(f.url)).then(g => {
     if (tok !== figTok) return;
-    FIG = bakeFigure(g.scene, f); FIG.visible = room.clutter.visible; SC.room.add(FIG);
+    const root = g.scene, bones = [], meshes = [], v = new THREE.Vector3(), box = new THREE.Box3(), Y = new THREE.Vector3(0, 1, 0);
+    root.traverse(o => { if (o.isBone) bones.push(o); if (o.isMesh) meshes.push(o); });
+    const rest = bones.map(b => b.quaternion.clone());
+    /* her skin's extent, every third vertex is plenty: for her size, and for where each pose's lowest point and middle are */
+    const span = lay => { box.makeEmpty(); root.updateMatrixWorld(true); for (const o of meshes) { const pos = o.geometry.attributes.position; for (let i = 0; i < pos.count; i += 3) { v.fromBufferAttribute(pos, i); if (o.isSkinnedMesh) o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld); if (lay) v.applyQuaternion(lay); box.expandByPoint(v); } } return box; };
+    /* her size comes from the rest pose: sitting or lying she is the same woman */
+    const s = f.h / (span(null).max.y - box.min.y);
+    let id = 150; const mat = m => { const map = m && m.map; if (map) { map.colorSpace = THREE.NoColorSpace; map.needsUpdate = true; } return new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FIG_VS, fragmentShader: FIG_FS, side: THREE.DoubleSide, uniforms: { map: { value: map || null }, uBase: { value: (map ? new THREE.Color(1, 1, 1) : (m && m.color ? m.color.clone() : new THREE.Color(.5, .5, .5))) }, uHasMap: { value: map ? 1 : 0 }, uHair: { value: /hair/i.test((m && m.name) || '') ? 1 : 0 }, uId: { value: (id = id + 7 > 240 ? 150 : id + 7) }, uEm: { value: m && m.em ? 1 : 0 }, uCut: FIG_CUT, uPh: FIG_PH } }); };
+    for (const o of meshes) { const ms = [].concat(o.material).map(mat); o.material = ms.length > 1 ? ms : ms[0]; o.frustumCulled = false; }
+    /* what she holds, her phone or a tablet: a dark slab, its lit face turned to her. It rides in the hand that holds it */
+    const slab = (w, h) => { const g = new THREE.Group(); g.matrixAutoUpdate = false; g.visible = false; g.add(new THREE.Mesh(new THREE.BoxGeometry(w / s, h / s, .009 / s), mat({ color: new THREE.Color(.05, .05, .07) })), new THREE.Mesh(new THREE.PlaneGeometry((w - .008) / s, (h - .01) / s).translate(0, 0, .0047 / s), mat({ color: new THREE.Color(.55, .8, 1), em: 1 }))); g.children.forEach(m => { m.frustumCulled = false; }); return g; };
+    const props = { phone: slab(.074, .152), tablet: slab(.25, .17) };
+    /* each key pose: every bone's turn, and where her body goes so the pose's lowest point sits at `at` */
+    const keys = (f.poses || [f]).map(p => {
+      bones.forEach((b, i) => b.quaternion.copy(rest[i]));
+      const { grip, idle } = poseFigure(root, p), qq = new THREE.Quaternion();
+      const lay = p.lay ? new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(p.lay[0], p.lay[1], p.lay[2]).normalize(), p.lay[3]) : null;
+      const bx = span(lay).clone(), ry = new THREE.Quaternion().setFromAxisAngle(Y, p.ry || 0);
+      const c = new THREE.Vector3((bx.min.x + bx.max.x) / 2, bx.min.y, (bx.min.z + bx.max.z) / 2);
+      const P = new THREE.Vector3(room.box.x + p.at[0], room.box.y + p.at[1], room.box.z + p.at[2]).sub(c.applyQuaternion(ry).multiplyScalar(s));
+      const R = lay ? ry.clone().multiply(lay) : ry.clone();
+      /* her box in the room, for tests */
+      const out = new THREE.Box3(); for (let k = 0; k < 8; k++) out.expandByPoint(v.set(k & 1 ? bx.max.x : bx.min.x, k & 2 ? bx.max.y : bx.min.y, k & 4 ? bx.max.z : bx.min.z).applyQuaternion(ry).multiplyScalar(s).add(P));
+      /* the idle turns happen in each bone's own frame: her chest's and head's axes, as this pose leaves them */
+      const ax = {}; for (const [k, bn] of Object.entries(idle)) if (bn) { bn.getWorldQuaternion(qq).invert(); ax[k] = { bone: bones.indexOf(bn), x: new THREE.Vector3(1, 0, 0).applyQuaternion(qq), y: new THREE.Vector3(0, 1, 0).applyQuaternion(qq) }; }
+      let ph = null;
+      /* held in one hand, the phone lies on the palm side of the knuckles, toward her face, not inside the hand */
+      if (grip) { const X = grip.a.clone().sub(grip.b).normalize(), m = grip.a.clone().add(grip.b).multiplyScalar(.5), n = grip.head.clone().sub(m); n.addScaledVector(X, -n.dot(X)).normalize(); if (p.phone === 'l' || p.phone === 'r') m.addScaledVector(n, .022 / s); ph = { prop: p.phone === 'tablet' ? 'tablet' : 'phone', bone: grip.hold, m: grip.hold.matrixWorld.clone().invert().multiply(new THREE.Matrix4().makeBasis(X, new THREE.Vector3().crossVectors(n, X), n).setPosition(m)) }; }
+      return { q: bones.map(b => b.quaternion.clone()), P, R, ph, ax, y0: out.min.y, y1: out.max.y, box: [out.min, out.max].map(e => [e.x - room.box.x, e.y - room.box.y, e.z - room.box.z].map(x => Math.round(x * 1e3) / 1e3)) };
+    });
+    /* both her programs now (skinned, and the plain one for what she holds), not in the middle of a blink */
+    root.add(props.phone, props.tablet); renderer.compile(root, CAM, SC.room); root.remove(props.phone, props.tablet);
+    root.scale.setScalar(s); root.visible = room.clutter.visible; SC.room.add(root);
+    FIG = { root, bones, keys, props, s, i: Math.floor(Date.now() / 6e4) % keys.length, go: null, n: 0, next: S.t + 30, ph: null, q: new THREE.Quaternion(), v: new THREE.Vector3() };
+    figTick(S.t);
   }).catch(e => APP.log(e));
   return figP;
 }
-/* stands her up from her rest pose: one hand on her hip, the other arm loose, weight on one leg, head turned by f.look */
-function poseFigure(root, f) {
-  const B = {}; root.traverse(o => { if (o.isBone) B[o.name.toLowerCase().replace(/mixamorig\d*:?|j_bip_|[\s._:-]/g, '')] = o; });
-  const find = (...k) => k.map(n => B[n]).find(Boolean) || null;
-  const bone = (s, part) => { const L = s === 'l' ? 'left' : 'right'; return { up: find(s + 'upperarm', L + 'arm', 'upperarm' + s, L + 'upperarm'), lo: find(s + 'lowerarm', L + 'forearm', 'forearm' + s, 'lowerarm' + s, L + 'lowerarm'), hand: find(s + 'hand', L + 'hand', 'hand' + s), leg: find(s + 'upperleg', L + 'upleg', 'thigh' + s, 'upperleg' + s, L + 'upperleg'), shin: find(s + 'lowerleg', L + 'leg', 'shin' + s, 'lowerleg' + s, L + 'lowerleg') }[part]; };
-  const a = new THREE.Vector3(), b = new THREE.Vector3(), q = new THREE.Quaternion(), pq = new THREE.Quaternion();
-  const aim = (bn, child, dir) => { if (!bn || !child) return; root.updateMatrixWorld(true); bn.getWorldPosition(a); child.getWorldPosition(b); q.setFromUnitVectors(b.sub(a).normalize(), dir.clone().normalize()); bn.parent.getWorldQuaternion(pq); bn.quaternion.premultiply(pq.clone().invert().multiply(q).multiply(pq)); };
-  const V = (x, y, z) => new THREE.Vector3(x, y, z);
-  aim(bone('l', 'up'), bone('l', 'lo'), V(.18, -1, -.04)); aim(bone('l', 'lo'), bone('l', 'hand'), V(.05, -1, .18));
-  aim(bone('r', 'up'), bone('r', 'lo'), V(-.5, -.82, -.2)); aim(bone('r', 'lo'), bone('r', 'hand'), V(.62, -.6, .2));
-  aim(bone('l', 'leg'), bone('l', 'shin'), V(.07, -1, 0)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.12, -1, .03));
-  const head = find('head'); if (head) { root.updateMatrixWorld(true); head.parent.getWorldQuaternion(pq); q.setFromAxisAngle(V(0, 1, 0), f.look || 0); head.quaternion.premultiply(pq.clone().invert().multiply(q).multiply(pq)); }
-  root.updateMatrixWorld(true);
-}
-/* bakes the posed skin into still geometry: no skinning at draw time, and she costs one draw per material */
-function bakeFigure(root, f) {
-  root.updateMatrixWorld(true); poseFigure(root, f);
-  const parts = [], v = new THREE.Vector3(), u = new THREE.Vector3(), nm = new THREE.Matrix3(), box = new THREE.Box3();
-  root.traverse(o => {
-    if (!o.isMesh) return; const g = o.geometry, pos = g.attributes.position, nrm = g.attributes.normal, n = pos.count, P = new Float32Array(n * 3), N = nrm ? new Float32Array(n * 3) : null; nm.getNormalMatrix(o.matrixWorld);
-    /* the model's own smooth normals ride along: skinning is affine, so skin(p + n) - skin(p) is the bent normal */
-    for (let i = 0; i < n; i++) { v.fromBufferAttribute(pos, i); if (N) u.fromBufferAttribute(nrm, i).add(v); if (o.isSkinnedMesh) { o.applyBoneTransform(i, v); if (N) o.applyBoneTransform(i, u); } if (N) { u.sub(v).applyMatrix3(nm).normalize(); N.set([u.x, u.y, u.z], i * 3); } v.applyMatrix4(o.matrixWorld); P.set([v.x, v.y, v.z], i * 3); box.expandByPoint(v); }
-    const ng = new THREE.BufferGeometry(); ng.setAttribute('position', new THREE.BufferAttribute(P, 3)); if (N) ng.setAttribute('normal', new THREE.BufferAttribute(N, 3)); if (g.attributes.uv) ng.setAttribute('uv', g.attributes.uv); if (g.index) ng.setIndex(g.index); for (const gr of g.groups) ng.addGroup(gr.start, gr.count, gr.materialIndex);
-    parts.push({ g: ng, mats: [].concat(o.material) });
-  });
-  const s = f.h / (box.max.y - box.min.y), cx = (box.min.x + box.max.x) / 2, cz = (box.min.z + box.max.z) / 2, grp = new THREE.Group();
-  let id = 150; const mat = m => { const map = m && m.map; if (map) { map.colorSpace = THREE.NoColorSpace; map.needsUpdate = true; } return new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FIG_VS, fragmentShader: FIG_FS, side: THREE.DoubleSide, uniforms: { map: { value: map || null }, uBase: { value: (map ? new THREE.Color(1, 1, 1) : (m && m.color ? m.color.clone() : new THREE.Color(.5, .5, .5))) }, uHasMap: { value: map ? 1 : 0 }, uHair: { value: /hair/i.test((m && m.name) || '') ? 1 : 0 }, uId: { value: (id = id + 7 > 240 ? 150 : id + 7) } } }); };
-  for (const p of parts) { const P = p.g.attributes.position.array; for (let i = 0; i < P.length; i += 3) { P[i] = (P[i] - cx) * s; P[i + 1] = (P[i + 1] - box.min.y) * s; P[i + 2] = (P[i + 2] - cz) * s; } if (!p.g.attributes.normal) p.g.computeVertexNormals(); p.g.computeBoundingSphere(); const ms = p.mats.map(m => mat(m)); const mesh = new THREE.Mesh(p.g, ms.length > 1 ? ms : ms[0]); mesh.frustumCulled = false; grp.add(mesh); }
-  grp.position.set(...f.at.map((x, i) => x + [room.box.x, room.box.y, room.box.z][i])); grp.rotation.y = f.ry; grp.updateMatrixWorld(true);
-  return grp;
+/* every frame she's drawn: her pose (or the blend between two), then breath, a wandering look, a thumb on the phone */
+const ease = u => u * u * (3 - 2 * u);
+/* into key pose j: a blend if it's a shift where she is, a blink if she'd have to pass through the furniture */
+function figGo(j, t) { const F = FIG, a = F.keys[F.i], b = F.keys[j]; const far = a.P.distanceTo(b.P) > .45 || a.R.angleTo(b.R) > .7; F.go = { j, t0: t, far, dur: far ? .8 : 2.2 }; }
+function figTick(t) {
+  const F = FIG; if (!F || !F.root.visible || S.mode === 'city') return;
+  const K = F.keys;
+  if (K.length > 1 && !F.go && t > F.next) figGo((F.i + 1) % K.length, t);
+  let w = 0, k = K[F.i];
+  if (F.go) {
+    const u = Math.min(1, (t - F.go.t0) / F.go.dur);
+    if (F.go.far) { const c = K[u < .5 ? F.i : F.go.j]; FIG_CUT.value = REDUCED ? 1e4 : c.y0 - .05 + (c.y1 - c.y0 + .1) * ease(Math.abs(u * 2 - 1)); if (u >= .5) k = K[F.go.j]; }
+    else w = ease(u);
+    if (u >= 1) { F.i = F.go.j; k = K[F.i]; F.go = null; FIG_CUT.value = 1e4; w = 0; F.n++; if (F.next !== Infinity) F.next = t + 40 + (F.n * 13.7) % 30; }
+  }
+  const b = F.go && !F.go.far ? K[F.go.j] : null;
+  for (let i = 0; i < F.bones.length; i++) { const q = F.bones[i].quaternion.copy(k.q[i]); if (b) q.slerp(b.q[i], w); }
+  if (b) { F.root.position.lerpVectors(k.P, b.P, w); F.root.quaternion.slerpQuaternions(k.R, b.R, w); } else { F.root.position.copy(k.P); F.root.quaternion.copy(k.R); }
+  const on = b && w > .5 ? b : k;
+  if (!REDUCED) {
+    const turn = (x, axis, ang) => { if (x) F.bones[x.bone].quaternion.multiply(F.q.setFromAxisAngle(x[axis], ang)); };
+    turn(on.ax.chest, 'x', -(.5 + .5 * Math.sin(t * 1.5)) * .016); turn(on.ax.neck, 'x', (.5 + .5 * Math.sin(t * 1.5)) * .01);
+    const calm = on.ph ? .35 : 1;
+    turn(on.ax.head, 'y', (Math.sin(t * .23) * .16 + Math.sin(t * .61 + 1.3) * .07) * calm); turn(on.ax.head, 'x', Math.sin(t * .17 + .5) * .05 * calm);
+    turn(on.ax.hand, 'x', Math.pow(Math.max(0, Math.sin(t * 2.6)), 8) * .08);
+  }
+  if (F.ph !== on.ph) { if (F.ph) F.props[F.ph.prop].visible = false; F.ph = on.ph; if (on.ph) { const g = F.props[on.ph.prop]; on.ph.bone.add(g); g.matrix.copy(on.ph.m); g.visible = true; } }
+  F.root.updateMatrixWorld(true);
+  if (F.ph) { F.props[F.ph.prop].localToWorld(F.v.set(0, 0, .03 / F.s)); FIG_PH.value.set(F.v.x, F.v.y, F.v.z, 1); } else FIG_PH.value.w = 0;
 }
 
 /* One room in memory at a time. A swap changes geometry and uniform values only, so no shader ever recompiles.
    room.id is set last: if a build throws, the next tap simply tries again. */
 const EMPTY_GEOM = new THREE.BufferGeometry();
-function loadRoom(id) {
-  if (room.id === id && (!room.day || room.day === new Date().toDateString())) return;
-  const def = ROOM_DEF[id]; PIECES = 0;
+/* keep: a repaint of the room he's watching (a new day) leaves her where she is and as she is. Only a way in moves her */
+function loadRoom(id, keep) {
+  if (room.id === id && (!room.day || room.day === new Date().toDateString()) && (!room.spot || room.spot === figSpot())) return;
+  const def = ROOM_DEF[id], pin = keep && room.id === id ? room.spot : null, same = !!pin && !!(FIG || figP); PIECES = 0;
   for (const g of [room.geom, room.clutterGeom, room.doorGeom, room.glassGeom, room.doorGlassGeom, room.fxGeom, room.backGeom]) if (g) g.dispose();
   if (room.atlas) room.atlas.dispose();
-  const d = def.build(); dropFigure();
-  Object.assign(room, { clutterGeom: null, doorGeom: null, glassGeom: null, doorGlassGeom: null, backGeom: null, gobo: null, atlas: null, day: null, mirDone: false }, d, { def, box: def.box });
+  const d = def.build(pin || undefined); if (!same) dropFigure();
+  Object.assign(room, { clutterGeom: null, doorGeom: null, glassGeom: null, doorGlassGeom: null, backGeom: null, gobo: null, atlas: null, day: null, spot: null, mirDone: false }, d, { def, box: def.box });
   const put = (m, g) => { m.visible = !!g; m.geometry = g || EMPTY_GEOM; };
   put(room.mesh, room.geom); put(room.clutter, room.clutterGeom); put(room.door, room.doorGeom); put(room.glass, room.glassGeom); put(room.doorGlass, room.doorGlassGeom); put(room.fx, room.fxGeom); room.fx.renderOrder = def.fxOverGlass ? 6 : 0;
   put(room.mirMesh, def.mirror && room.geom); put(room.mirBack, def.mirror && room.backGeom);
@@ -4234,7 +4408,7 @@ function loadRoom(id) {
   if (def.mirror) room.mirU.uClipZ.value = def.mirror[2];
   room.id = id; hudEl.dataset.room = id; room.setDoor(0);
   setText('#shName', def.sheet[0]); setText('#shPage', def.sheet[1]); $('#sheet').setAttribute('aria-label', def.sheet[0]);
-  if (def.figure) addFigure(def.figure);
+  if (def.figure && !same) addFigure(room.spot ? { ...def.figure, poses: def.figure.spots[room.spot] } : def.figure);
   if (ready) { bakeRoom(); buildTags(); refreshRoom(); }
 }
 
@@ -4304,8 +4478,20 @@ const ROOM_DEF = {
     view: { eye: [10, 210, 300], theta: 1.62, far: 2500, from: [-3.2, 1.62, 0] },
     /* the room's own light lies on the glass as well */
     fxOverGlass: true,
-    /* someone at the glass, turned to the room, in no hurry: a model file, private like Dex's */
-    figure: { url: 'models/her.glb?v=1', at: [3.7, .05, .55], ry: -2.3, look: .45, h: 1.7 },
+    /* someone who lives here, in no hurry: by the window in the day, at the glass in the evening, in bed with her phone late.
+       A model file, private like Dex's. Each spot lists her key poses: at is the middle of her posed footprint at its
+       lowest point, ry her heading, lay turns her whole body after the pose (onto her back), phone 'both' | 'l' | 'r' | 'tablet'.
+       turn: on a phone the resting view leans this far toward her spot (late: the bed) */
+    figure: { url: 'models/her.glb?v=1', h: 1.7, turn: { late: .18 }, spots: {
+      day: [{ pose: 'dayStretch', at: [3.82, .05, .98], ry: -1.9, look: 0 },
+        { pose: 'dayRead', at: [4.087, .05, .85], ry: -2.36, look: 0, phone: 'tablet' },
+        { pose: 'dayLean', at: [4.27, .17, .291], ry: -.5, look: -.25, phone: 'r' }],
+      eve: [{ pose: 'stand', at: [3.7, .05, .55], ry: -2.3, look: .45 },
+        { pose: 'glassLook', at: [4.094, .05, .565], ry: .96, look: .4 },
+        { pose: 'stepSit', at: [4.274, .16, .65], ry: .03, look: 0, phone: 'both' }],
+      late: [{ pose: 'lie', at: [3.8, .535, 3.0], ry: Math.PI, look: 0, phone: 'both', lay: [1, 0, 0, -Math.PI / 2] },
+        { pose: 'sideLie', at: [3.75, .556, 3.0], ry: -Math.PI / 2, look: 0, phone: 'r', lay: [0, 0, 1, -Math.PI / 2] },
+        { pose: 'headboardSit', at: [3.75, .559, 3.208], ry: Math.PI, look: 0, phone: 'both' }] } },
     rest: a => a < .8 ? { p: local(-3.2, 1.62, 0), l: local(3, 1.1, 0) } : { p: local(-3.25, 1.6, -.1), l: local(3, 1.25, -.1) },
     flight(c, r, a) {
       const y = APT.y, z = APT.z;
@@ -4318,14 +4504,21 @@ const ROOM_DEF = {
     },
   },
 };
-function flightKeys() { return room.def.flight(cityPose(), ROOM_REST(), CAM.aspect); }
-function makeFlight(dir) {
+/* the room view turned by y: the head moves when you look, so what is near the glass shifts against the street */
+function restView(y) {
+  const r = ROOM_REST(), dx = r.l[0] - r.p[0], dy = r.l[1] - r.p[1], dz = r.l[2] - r.p[2], ca = Math.cos(y), sa = Math.sin(y);
+  const p = [r.p[0] + (1 - ca) * .22, r.p[1], r.p[2] + sa * .34];
+  return { p, l: [p[0] + dx * ca - dz * sa, p[1] + dy, p[2] + dx * sa + dz * ca] };
+}
+/* a flight ends on the view as it is turned (y), so leaving or arriving never jumps */
+function flightKeys(y = 0) { return room.def.flight(cityPose(), restView(y), CAM.aspect); }
+function makeFlight(dir, y = 0) {
   flyLabel(dir);
-  const k = flightKeys();
+  const k = flightKeys(y);
   const toV = a => a.map(p => new THREE.Vector3(...p));
   const cp = new THREE.CatmullRomCurve3(toV(k.P), false, 'centripetal'), cl = new THREE.CatmullRomCurve3(toV(k.L), false, 'centripetal');
   const tot = k.W.reduce((a, b) => a + b, 0); let acc = 0; const stops = [0]; for (const w of k.W) { acc += w; stops.push(acc / tot); }
-  S.fly = { dir, u: dir > 0 ? 0 : 1, dur: REDUCED ? 1.2 : dir > 0 ? 6.4 : 5, cp, cl, stops, n: k.P.length - 1 };
+  S.fly = { dir, u: dir > 0 ? 0 : 1, dur: REDUCED ? 1.2 : dir > 0 ? 6.4 : 5, cp, cl, stops, n: k.P.length - 1, yaw: y };
 }
 function flightSample(f, u, outP, outL) {
   /* eased, then spent per hop */
@@ -4354,17 +4547,11 @@ function updateCamera(dt) {
     if (f.dir > 0 && f.u >= 1) enterRoom(); if (f.dir < 0 && f.u <= 0) enterCity();
   } else {
     /* first person: drag to look, eases back after three seconds */
-    const r = ROOM_REST();
-    if (!S.drag && performance.now() - S.lastDrag > 3000 && !RIG) S.yawGoal = 0;
+    if (!S.drag && performance.now() - S.lastDrag > 3000 && !RIG) S.yawGoal = restYaw();
     S.yaw = lerp(S.yaw, S.yawGoal, 1 - Math.exp(-dt * 6));
     const breathe = RIG ? 0 : Math.sin(S.t * .6) * .004;
-    const yaw = S.yaw + Math.sin(S.t * .23) * (RIG ? 0 : .006);
-    const dx = r.l[0] - r.p[0], dy = r.l[1] - r.p[1], dz = r.l[2] - r.p[2];
-    const ca = Math.cos(yaw), sa = Math.sin(yaw);
-    /* the head moves when you look, so what is near the glass shifts against the street */
-    const hx = (1 - ca) * .22, hz = sa * .34;
-    CAM.position.set(r.p[0] + hx, r.p[1] + breathe, r.p[2] + hz);
-    CAM.lookAt(r.p[0] + hx + dx * ca - dz * sa, r.p[1] + dy, r.p[2] + hz + dx * sa + dz * ca);
+    const v = restView(S.yaw + Math.sin(S.t * .23) * (RIG ? 0 : .006));
+    CAM.position.set(v.p[0], v.p[1] + breathe, v.p[2]); CAM.lookAt(...v.l);
     setNear(.06, 6000); S.flyK = 1;
   }
 }
@@ -4372,7 +4559,7 @@ function flightRes(on) { if (!isPhone) return; if (on && S.fps && S.fps < 50 && 
 function setNear(n, f) { if (CAM.near !== n || CAM.far !== f) { CAM.near = n; CAM.far = f; CAM.updateProjectionMatrix(); } }
 
 function drawScene(t) {
-  renderer.info.reset();
+  renderer.info.reset(); figTick(t);
   const inside = isInsideRoom(); const showCity = !inside; const showRoom = S.mode !== 'city' || CAM.position.distanceTo(_v.set(room.box.x, room.box.y + 2, room.box.z)) < 140;
   /* train runs by time alone */
   const period = 62; for (let i = 0; i < city.train.length; i++) { const a = trainPos(t / period - i * .0088); const m = city.train[i]; m.position.set(a.p[0], a.p[1] + .1, a.p[2]); m.rotation.y = Math.atan2(a.d[0], a.d[2]); m.updateMatrixWorld(true); }
@@ -4613,7 +4800,7 @@ function hudInit() {
   const up = e => { const d = S.drag; S.drag = null; if (!d) return; if (!d.moved && d.mode === S.mode && performance.now() - d.t < 500) tapWorld(e.clientX, e.clientY); else S.lastDrag = performance.now(); };
   dom.addEventListener('pointerup', up); dom.addEventListener('pointercancel', () => { S.drag = null; S.lastDrag = performance.now(); });
   addEventListener('resize', () => { if (host.hidden) S.sizeStale = true; else resize(); });
-  document.addEventListener('visibilitychange', () => { S.last = performance.now(); });
+  document.addEventListener('visibilitychange', () => { S.last = performance.now(); if (document.hidden) S.away = true; });
   S.lastDrag = 0;
   for (const ev of ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart']) addEventListener(ev, wake, { passive: true, capture: true });
   setRealClock(); setInterval(setRealClock, 1000);
@@ -4636,19 +4823,20 @@ function tapIcon(k) {
 /* A room gets a history entry, so browser back flies out the same way as ‹ and Escape. */
 function flyIn(id, push = true) {
   if (S.mode === 'fly' && S.fly) S.fly.dir = 1;
-  else { closeSheet(true); aptOrd.clear(); loadRoom(id); refreshRoom(); flightRes(true); makeFlight(1); setMode('fly'); glitchHud(1); S.scanT = -9; }
+  else { closeSheet(true); aptOrd.clear(); loadRoom(id); refreshRoom(); flightRes(true); makeFlight(1, restYaw()); setMode('fly'); glitchHud(1); S.scanT = -9; }
   if (push) history.pushState({ city: id }, '');
   APP.sfx('open');
 }
 function flyOut() {
+  const y = S.mode === 'room' ? S.yaw : 0;
   closeSheet(true); S.yaw = S.yawGoal = 0;
   if (S.mode === 'fly' && S.fly) S.fly.dir = -1;
-  else { flightRes(true); makeFlight(-1); setMode('fly'); glitchHud(1); }
+  else { flightRes(true); makeFlight(-1, y); setMode('fly'); glitchHud(1); }
   APP.sfx('back');
 }
 function goBack() { if (history.state && history.state.city) history.back(); else flyOut(); }
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
-function enterRoom() { S.fly = null; flightRes(false); setMode('room'); S.ringIn = S.t; S.yaw = S.yawGoal = 0; S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
+function enterRoom() { const y = S.fly && S.fly.yaw || 0; S.fly = null; flightRes(false); setMode('room'); S.ringIn = S.t; S.yaw = y; S.yawGoal = RIG ? y : restYaw(); S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
 function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
 const flyLabel = dir => setText('#flyT', (dir > 0 ? 'APPROACH: ' : 'DEPART: ') + room.def.name);
 function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideRoom() ? 0 : ''; flyLabel(dir); $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - room.box.x, CAM.position.z - room.box.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
@@ -4811,11 +4999,14 @@ function resume() {
 /* index.html calls this at the end of every render(). */
 function update() {
   const home = APP.tab() === 'today';
+  if (ready && host.hidden) S.away = true;
   host.hidden = !home;
   if (home && !started) { started = true; boot(); }
   if (!ready) return;
-  /* a room paints today's date: if he comes back to it the next morning, paint it again */
-  if (home && S.mode === 'room' && room.day && room.day !== new Date().toDateString()) try { loadRoom(room.id); } catch (e) { APP.log(e); }
+  /* a room paints today's date, and her spot by the clock. A new day while he watches repaints the room around her as she
+     is; back from another page or the Home Screen, she may have moved on */
+  if (home && S.mode === 'room') { const day = room.day && room.day !== new Date().toDateString(), moved = S.away && room.spot && room.spot !== figSpot(); if (day || moved) try { loadRoom(room.id, !S.away); } catch (e) { APP.log(e); } }
+  if (home && !document.hidden) S.away = false;
   refreshWork(); refreshRoom();
   if (home) { refreshHome(); resume(); }
 }
@@ -4830,13 +5021,18 @@ function rig() {
     load(id) { loadRoom(id); return frame(); },
     reload(id) { room.id = null; loadRoom(id); return frame(); },
     mem: () => ({ ...renderer.info.memory, programs: renderer.info.programs.length }),
-    clutter(on) { room.clutter.visible = on; if (FIG) FIG.visible = on; const gm = buildGlowMesh(on ? room.glows : room.glowsPlain); room.glowMesh.geometry.dispose(); room.glowMesh.geometry = gm.geometry; gm.material.dispose(); room.fx.geometry.setDrawRange(0, on ? Infinity : room.fxPlain); setLights(room.u, room.lights.map((l, i) => !on && i === room.clutterLight ? [0, 0, 0, 0, -1, 0] : l)); bakeRoom(); return frame(); },
+    clutter(on) { room.clutter.visible = on; if (FIG) FIG.root.visible = on; const gm = buildGlowMesh(on ? room.glows : room.glowsPlain); room.glowMesh.geometry.dispose(); room.glowMesh.geometry = gm.geometry; gm.material.dispose(); room.fx.geometry.setDrawRange(0, on ? Infinity : room.fxPlain); setLights(room.u, room.lights.map((l, i) => !on && i === room.clutterLight ? [0, 0, 0, 0, -1, 0] : l)); bakeRoom(); return frame(); },
     room(yaw = 0) { setMode('room'); S.fly = null; S.yaw = S.yawGoal = yaw; S.flyK = 1; applyFov(); room.setDoor(0); return frame(); },
     sheet(id) { openSheet(id); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     close() { closeSheet(); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
     figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
-    stats() { return { id: room.id, day: room.day, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
+    hour(h) { HOUR = h; return figSpot(); },
+    rest: () => restYaw(),
+    view: () => ({ p: CAM.position.toArray(), d: CAM.getWorldDirection(new THREE.Vector3()).toArray() }),
+    figBox() { return FIG ? FIG.keys[FIG.i].box : null; },
+    pose(i, go) { if (!FIG) return 0; const n = FIG.keys.length; if (go) figGo(i % n, S.t); else { FIG.i = i % n; FIG.go = null; FIG_CUT.value = 1e4; } FIG.next = Infinity; return n; },
+    stats() { return { id: room.id, day: room.day, spot: room.spot, pose: FIG ? FIG.i : null, poses: FIG ? FIG.keys.length : 0, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
   };
 }
 window.City = {

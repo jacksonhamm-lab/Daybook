@@ -276,12 +276,32 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 ## Handoff
 
-Technical state only. Updated 2026-11-02.
+Technical state only. Updated 2026-11-03.
 
-- **Live:** `main` at `25b9fa1` is build `p3`: Phase 1, the city behind `?city=1`, flag off by default. Pushes go
-  `git push origin city-rooms:main`, never the branch itself, until Cloudflare branch builds are confirmed off (§15).
-- **Branch:** `city-rooms`, local. `c07e7ab` (the room code no longer assumes the shop) plus the p4 commit: the
-  apartment. `BUILD` is `'p4'` in `city.js`, `index.html` and the `city.js?v=` query.
+- **Live:** `main` at `7f1ccc4` is build `p4`: the apartment, behind `?city=1`, flag off by default. `her.glb` is in
+  KV. Pushes go `git push origin city-rooms:main`, never the branch itself, until Cloudflare branch builds are
+  confirmed off (§15).
+- **Branch:** `city-rooms`, local: the p5 commit on top of `7f1ccc4`. `BUILD` is `'p5'` in `city.js`, `index.html`
+  and the `city.js?v=` query. No KV change: `her.glb?v=1` is the same file.
+- **Built (p5, her spots and live motion):**
+  - **Spots:** `figSpot()` reads the clock: `day` 6:00 to 18:00 (the window corner), `eve` to 23:00 (at the glass),
+    `late` until 6:00 (the bed). `def.figure.spots` lists three key poses per spot (`FIG_POSES` by name, placed by
+    `at`, `ry`, `lay`, holding `phone` 'both' | 'l' | 'r' | 'tablet'). `buildApartment(spot)` draws what goes with
+    the spot (the window glow only in the evening).
+  - **Live rig:** the model's skinned mesh is kept and drawn with `FIG_FS` through three's skinning chunks (GLSL3).
+    Each key pose is a set of bone rotations plus a root placement measured from a CPU-skinned box. `figTick` (in
+    `drawScene`) moves to the next key every 40 to 70 s: a 2.2 s blend when the move is small, a scan-line wipe
+    (0.8 s, `FIG_CUT`) when it isn't. Idle: breath, a slow head drift, a hand flick for one-handed holds. None of it
+    under reduced motion. Both programs compile when she loads, not mid-wipe.
+  - **What she holds:** a phone or a tablet slab, parented to the hand bone; `FIG_PH` lights her face from it.
+  - **Moving on:** a new day while the room is on screen repaints it but pins her spot (`loadRoom(id, keep)`). After
+    time away (another page, or the app hidden: `S.away`), she has moved on to the clock's spot.
+  - **Rest view on a phone:** `restYaw()` turns the resting view by `def.figure.turn[spot]` when the screen is
+    narrower than .8 (late: .18, so the bed is in view; the TODAY pane is then off the left edge, and the bottom panel
+    carries today's list). `restView(y)` is the room view turned by `y`. Flights end on it: the way in lands on the
+    turned view and the way out leaves from wherever the view is, so neither jumps.
+  - **Rig hooks:** `hour(h)` overrides the clock, `pose(i, go)` (holds), `figBox()` (a loose box: the posed box's
+    corners turned by `ry`), `rest()`, `view()`, and `stats()` reports spot and pose. Rig flights land at yaw 0.
 - **Built (p4, the apartment, Plan's room):**
   - A 9×8×4 m high-rise flat inside the pale megablock, its +X wall all glass. Hotspots TODAY (today's tasks: tick,
     Undo; the row order is taken afresh on each way in and fixed for the visit), WEEK (the month, today filled), NOTES,
@@ -293,26 +313,31 @@ Technical state only. Updated 2026-11-02.
   - **View camera:** `def.view` gives the glass a skyline seen from higher up and further off, carried rigidly from
     the rest eye (`streetCam`). It's used for the glass background, the reflections and the light shafts.
     `fxOverGlass` draws the room's light over the glass.
-  - **Figure:** `def.figure` loads a model file through the vendored `GLTFLoader`. It is posed once by bone names
-    (Mixamo or VRoid), the skin and its normals are baked into still geometry, and it is drawn with `FIG_FS` (window
-    light in hard steps, a violet room fill, rim). It hides with the clutter. If the file is missing, the room simply
+  - **Figure:** `def.figure` loads a model file through the vendored `GLTFLoader`. It is posed by bone names (Mixamo
+    or VRoid) and drawn with `FIG_FS` (window light in hard steps, a violet room fill, rim); since p5 it stays skinned
+    and moves (above). It hides with the clutter. If the file is missing, the room simply
     has no one in it. The apartment's is `models/her.glb?v=1`: his own model, a Tripo FBX converted to GLB. It is
     private like Dex's: gitignored, in KV as `model:her.glb` (gzipped), never in git. Bump `?v=` on any change.
   - **Flight:** the window is entered between the mullions, clear of the figure. The turn goes by the lit kitchen to
     the rest view.
 - **Tests, headless SwiftShader, fake data, muted, scripts outside the repo:**
   - **Flag on,** 63/63 at 390×844 and 1366×768: the Phase 1 battery, now expecting the model and loader requests.
-  - **Apartment:** the tour and the flight in and out show no errors at both sizes; the review checks (row order,
-    Undo, re-entry, midnight, panel touches) 20/20 at 390×844 and 18/18 at 1366×768 (three checks are phone-only, one desktop-only); panels and sheets 79/79 and 78/78; earlier room checks 30/30
-    at both sizes and 39/39.
+    At 390×844 the break-via-the-sheet tap can land while the sheet is still sliding under load; it passes alone.
+  - **Apartment:** the tour and the flight in and out show no errors at both sizes, in every spot; the review checks
+    (row order, Undo, re-entry, midnight, panel touches) 20/20 at 390×844 and 18/18 at 1366×768 (three checks are
+    phone-only, one desktop-only); panels and sheets 79/79 and 78/78; earlier room checks 30/30 at both sizes and 39/39.
+  - **Her (p5):** each pose checked for support, no penetration of the sofa, bed or glass, in frame at both sizes and
+    clear of the flight path, by the designer and again by a separate checker; spot changes 8/8 at 1366×768.
+  - **Rest view (p5):** 11/11 at both sizes: the way in lands on the turned view, the way out and a reversed flight
+    don't jump, rig flights hold yaw 0, and loading the page isn't counted as time away.
   - **City and shop pixels** match the previous build apart from the HUD clock.
-  - **Flag off,** against live `p3` at the same moment: every page identical apart from the Build line and the Jobs
-    page's halo canvases, which take their size late (live `p3` differs between two of its own runs in the same way).
-- **Not tested:** a real iPhone (FPS, heat, memory with the figure loaded), Safari, the real sync code, the KV copy of
-  `her.glb` on the live site.
+  - **Flag off,** against live `p4`: identical at 390×844; at 1366×768 only Dex's clock-dependent bedtime state and a
+    count-up caught mid-way differ (Dex's files are unchanged).
+- **Not tested:** a real iPhone (FPS, heat, memory with the live rig), Safari, the real sync code.
 - **Open:**
-  - `her.glb` has to be uploaded to KV, with his go: `npx wrangler kv key put --binding SYNC --remote "model:her.glb"
-    --path models/her.glb.gz`. Until then the live apartment is empty of her and logs one 404 per visit.
+  - `her.glb` changes need a `?v=` bump and a new KV upload (its own go): `npx wrangler kv key put --binding SYNC
+    --remote "model:her.glb" --path models/her.glb.gz`.
+  - The city is always night and always raining: no weather or time-of-day states yet (asked, not agreed).
   - The flag can't be flipped in the Home Screen app, because the quick-add words aren't built.
   - The Inter and Unbounded stylesheet still comes from Google Fonts for the existing pages, with or without the flag.
   - Settings › Performance doesn't drive the city's quality yet.
@@ -322,6 +347,6 @@ Technical state only. Updated 2026-11-02.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. His go to push p4 and, separately, to upload `her.glb`. Then the iPhone check at `?city=1`.
-  2. Her spots by time of day (sofa by day, the window in the evening, the bed late at night): agreed, next build.
-  3. Then the gym, ski village, stall and castle. School (Phase 2) and sound (Phase S) in his order.
+  1. A go to push p5. Then the iPhone check at `?city=1`.
+  2. Weather and time of day, if agreed.
+  3. Then the gym, ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.
