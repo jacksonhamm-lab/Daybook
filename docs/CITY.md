@@ -278,8 +278,9 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 Technical state only. Updated 2026-11-03.
 
-- **Live:** `main` at `5680bac` is build `p5`: the apartment with her spots and live motion, behind `?city=1`, flag
-  off by default. Live `city.js` checked byte-identical to the repo; `her.glb?v=1` (KV, unchanged since p4) serves.
+- **Live:** `main` at `c5ffce3` is build `p6`: the sky following the real sun and weather, behind `?city=1`, flag
+  off by default. Live `city.js` checked byte-identical to the repo; `/api/sky` answers from `SKY_AT` (set as a
+  secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin city-rooms:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push.
 - **Branch:** `city-sky`, local, on top of `city-rooms`: build `p6`. `BUILD` is `'p6'` in `city.js`, `index.html` and
@@ -369,8 +370,8 @@ Technical state only. Updated 2026-11-03.
 - **Open:**
   - `her.glb` changes need a `?v=` bump and a new KV upload (its own go): `npx wrangler kv key put --binding SYNC
     --remote "model:her.glb" --path models/her.glb.gz`.
-  - The secret `SKY_AT` (the place the sky follows) is set in the dashboard, never in the repo; until it is, the sky
-    follows wherever the visitor is.
+  - The secret `SKY_AT` (the place the sky follows) lives only in Cloudflare (`wrangler secret put SKY_AT`), never in
+    the repo; without it the sky follows wherever the visitor is.
   - The ski village (when built) only switches between snow and sun, and has night too.
   - People on the street still carry umbrellas when it's dry.
   - The weather reaches the room's window light and her, but not yet the room's own lamps.
