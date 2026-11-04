@@ -278,12 +278,13 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 Technical state only. Updated 2026-11-04.
 
-- **Live:** `main` at `8a08832` is build `p7`: the close up on her, the DECIDE monitor and the city opening, behind
+- **Live:** `main` at `aa169a0` is build `p8`: p7 (the close up on her, the DECIDE monitor, the city opening) plus
+  her natural close-up motion and her card, behind
   `?city=1`, flag off by default. Live `city.js` checked byte-identical to the repo; `/api/sky` answers from `SKY_AT`
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
-  off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 and p7.
-- **Branch:** `city-close`, local: build `p8`. `BUILD` is `'p8'` in `city.js`, `index.html` and the `city.js?v=`
+  off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6, p7 and p8.
+- **Branch:** `city-close`, local: build `p9`. `BUILD` is `'p9'` in `city.js`, `index.html` and the `city.js?v=`
   query.
 - **Built (p8, her motion close up, her card):**
   - **Moves between close-up poses** are staggered (`FIG.lag`: body first, upper arms .1 later, forearms .17,
@@ -297,6 +298,10 @@ Technical state only. Updated 2026-11-04.
     (today's tasks done, .35 to 1, .8 with nothing due) and LINK (overall progress); a LIKES line on a laptop only.
     Fades in once the view has moved in; bottom right on a laptop, along the bottom on a phone.
   - **Rig hook:** `closeGo(j)` starts the move into close pose j.
+- **Built (p9, her forearms):** `figSwing` steers each forearm by where it points too (`key.arm[].e`), not just
+  its bend, so hello to hips brings the hand down in front of her instead of flipping it over at the elbow. To or
+  from a raised upper arm (hand in hair) the forearm passes straight up halfway, so the hand rises and falls by the
+  side of her head instead of sweeping across her face.
 - **Built (p7, close up on her, the monitor, the opening):**
   - **Close up:** a tap on her (her posed box on screen, a little generous; hotspots win) or V moves the view in on
     her at the glass in 1.15 s, with a longer lens (fov × .78). `def.figure.view(aspect)` places the camera: hips up

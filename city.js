@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p8';
+export const BUILD = 'p9';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -4581,7 +4581,7 @@ function addFigure(f) {
       const ax = {}; for (const [k, bn] of Object.entries(idle)) if (bn) { bn.getWorldQuaternion(qq).invert(); ax[k] = { bone: bones.indexOf(bn), x: new THREE.Vector3(1, 0, 0).applyQuaternion(qq), y: new THREE.Vector3(0, 1, 0).applyQuaternion(qq), z: new THREE.Vector3(0, 0, 1).applyQuaternion(qq) }; }
       /* close up: where each upper arm points (her frame), for how far it swings between poses */
       const dir = (x, y) => idle[y].getWorldPosition(new THREE.Vector3()).sub(idle[x].getWorldPosition(v)).normalize();
-      const arm = idle.armL && idle.foreL && idle.handL && idle.armR && idle.foreR && idle.handR ? [['armL', 'foreL', 'handL'], ['armR', 'foreR', 'handR']].map(([u, l, h]) => { const d = dir(u, l); return { d, bend: d.angleTo(dir(l, h)) }; }) : null;
+      const arm = idle.armL && idle.foreL && idle.handL && idle.armR && idle.foreR && idle.handR ? [['armL', 'foreL', 'handL'], ['armR', 'foreR', 'handR']].map(([u, l, h]) => { const d = dir(u, l), e = dir(l, h); return { d, e, bend: d.angleTo(e) }; }) : null;
       let ph = null;
       /* held in one hand, the phone lies on the palm side of the knuckles, toward her face, not inside the hand */
       if (grip) { const X = grip.a.clone().sub(grip.b).normalize(), m = grip.a.clone().add(grip.b).multiplyScalar(.5), n = grip.head.clone().sub(m); n.addScaledVector(X, -n.dot(X)).normalize(); if (p.phone === 'l' || p.phone === 'r') m.addScaledVector(n, .022 / s); ph = { prop: p.phone === 'tablet' ? 'tablet' : 'phone', bone: grip.hold, m: grip.hold.matrixWorld.clone().invert().multiply(new THREE.Matrix4().makeBasis(X, new THREE.Vector3().crossVectors(n, X), n).setPosition(m)) }; }
@@ -4613,23 +4613,27 @@ function figGo(j, t) {
 /* close up, mid-move: each upper arm travels straight from where it was to where it's going, bowed out in front of
    her (not round through her side, over her head or through her body), and the elbow folds in on the way, the way a
    hand travels. The bone blend keeps the twist; this only sets where the arm points and how bent it is */
-const SW = { A: new THREE.Vector3(), E: new THREE.Vector3(), H: new THREE.Vector3(), d: new THREE.Vector3(), d2: new THREE.Vector3(), f: new THREE.Vector3(), q: new THREE.Quaternion(), pq: new THREE.Quaternion() };
+const SW = { A: new THREE.Vector3(), E: new THREE.Vector3(), H: new THREE.Vector3(), d: new THREE.Vector3(), d2: new THREE.Vector3(), f: new THREE.Vector3(), U: new THREE.Vector3(0, 1, 0), q: new THREE.Quaternion(), pq: new THREE.Quaternion() };
 function figSwing(k, b, u) {
   const F = FIG, ax = k.ax, { A, E, H, d, d2, f, q, pq } = SW;
   const rot = (bn, qw) => { bn.parent.getWorldQuaternion(pq); bn.quaternion.premultiply(pq.clone().invert().multiply(qw).multiply(pq)); bn.updateMatrixWorld(true); };
   const lw = bn => ease(Math.min(1, Math.max(0, (u - F.lag[bn]) / .76)));
   F.root.updateMatrixWorld(true); f.set(0, 0, 1);
   ['L', 'R'].forEach((s, i) => {
-    const arc = F.go.arc[i], xu = ax['arm' + s], xl = ax['fore' + s], xh = ax['hand' + s]; if (arc < .1 || !xu || !xl || !xh) return;
+    const xu = ax['arm' + s], xl = ax['fore' + s], xh = ax['hand' + s]; if (!xu || !xl || !xh) return;
     const up = F.bones[xu.bone], lo = F.bones[xl.bone], hd = F.bones[xh.bone], ka = k.arm[i], kb = b.arm[i];
-    const wa = lw(xu.bone), wl = lw(xl.bone), bump = Math.sin(Math.PI * wa);
-    d2.copy(ka.d).multiplyScalar(1 - wa).addScaledVector(kb.d, wa).addScaledVector(f, Math.min(.8, arc * .4) * bump).normalize().applyQuaternion(F.root.quaternion);
-    up.getWorldPosition(A); lo.getWorldPosition(E); d.subVectors(E, A).normalize();
-    rot(up, q.setFromUnitVectors(d, d2));
-    up.getWorldPosition(A); lo.getWorldPosition(E); hd.getWorldPosition(H); d.subVectors(E, A).normalize(); d2.subVectors(H, E).normalize();
-    const now = d.angleTo(d2), want = Math.min(2.5, ka.bend * (1 - wl) + kb.bend * wl + Math.min(.6, arc * .4) * Math.sin(Math.PI * wl));
-    const n = d.cross(d2); if (n.length() < .08) return;
-    rot(lo, q.setFromAxisAngle(n.normalize(), want - now));
+    /* where a bone points, part way from one pose to the next, bowed out in front of her by how far it has to go */
+    const via = (pa, pb, w, bow) => d2.copy(pa).multiplyScalar(1 - w).addScaledVector(pb, w).addScaledVector(bow, Math.min(.8, pa.angleTo(pb) * .4) * Math.sin(Math.PI * w)).normalize().applyQuaternion(F.root.quaternion);
+    if (F.go.arc[i] > .1) { up.getWorldPosition(A); lo.getWorldPosition(E); d.subVectors(E, A).normalize(); via(ka.d, kb.d, lw(xu.bone), f); rot(up, q.setFromUnitVectors(d, d2)); }
+    /* the forearm too: steered by where it points, not just how bent, so the hand comes down in front of her the short
+       way rather than flipping over at the elbow. To or from a raised arm (a hand in her hair) the forearm passes
+       straight up halfway, so the hand rises and falls by the side of her head instead of sweeping across her face */
+    if (ka.e.angleTo(kb.e) > .1) {
+      lo.getWorldPosition(E); hd.getWorldPosition(H); d.subVectors(H, E).normalize(); const wl = lw(xl.bone);
+      if (ka.d.y > 0 || kb.d.y > 0) { const W = SW.U.set(i ? -.15 : .15, 1, .05).normalize(); if (wl < .5) via(ka.e, W, wl * 2, f); else via(W, kb.e, wl * 2 - 1, f); }
+      else via(ka.e, kb.e, wl, f);
+      rot(lo, q.setFromUnitVectors(d, d2));
+    }
   });
 }
 /* into the close-up poses (and back to the one she left, as the view pulls back). snap: no blend, for leaving the room */
