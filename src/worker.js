@@ -271,6 +271,30 @@ async function modelApi(url, env) {
   });
 }
 
+// The city's sky: the weather where he lives, from Open-Meteo, cached ten minutes. The place is the secret SKY_AT
+// ("lat,lon", set in the dashboard so it stays out of the repo); without it, the visitor's rough place from Cloudflare.
+// The page works the sun out itself from the place and the clock.
+async function skyApi(request, env, ctx) {
+  const cf = request.cf || {};
+  const [la, lo] = (env.SKY_AT || '').split(',').map(s => parseFloat(s));
+  const ok = (a, b) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a) <= 90 && Math.abs(b) <= 180;
+  const [lat, lon] = ok(la, lo) ? [la, lo] : [parseFloat(cf.latitude), parseFloat(cf.longitude)];
+  if (!ok(lat, lon)) return json({ error: 'no place' }, 404);
+  const at = [Math.round(lat * 100) / 100, Math.round(lon * 100) / 100];
+  const key = new Request(`https://sky.daybook/${at[0]},${at[1]}`), cache = caches.default;
+  const priv = body => new Response(body, { headers: { 'content-type': 'application/json', 'cache-control': 'private, max-age=600' } });
+  const hit = await cache.match(key); if (hit) return priv(hit.body);
+  const q = `https://api.open-meteo.com/v1/forecast?latitude=${at[0]}&longitude=${at[1]}&current=weather_code,cloud_cover,precipitation,snowfall,temperature_2m,visibility&hourly=precipitation,snow_depth&past_hours=3&forecast_hours=1&timezone=GMT`;
+  let w; try { const r = await fetch(q); if (!r.ok) throw new Error(r.status); w = await r.json(); } catch (e) { return json({ at, error: 'weather' }, 502); }
+  const c = w.current || {}, h = w.hourly || {};
+  const recent = (h.precipitation || []).reduce((s, x) => s + (x || 0), 0);
+  const depth = (h.snow_depth || []).filter(x => x != null).pop() || 0;
+  const body = JSON.stringify({ at, t: Date.now(), code: c.weather_code, cloud: c.cloud_cover, precip: c.precipitation, snowfall: c.snowfall, temp: c.temperature_2m, vis: c.visibility, recent, depth });
+  // the Cache API won't keep a private response, so the kept copy says public; browsers get private
+  ctx.waitUntil(cache.put(key, new Response(body, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=600' } })));
+  return priv(body);
+}
+
 export default {
   async scheduled(event, env, ctx) {
     const index = (await env.SYNC.get('subs-index', 'json')) || [];
@@ -279,10 +303,11 @@ export default {
     }
   },
 
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (new URL(request.url).pathname.startsWith('/models/')) return modelApi(new URL(request.url), env);
     const url = new URL(request.url);
     if (url.pathname === '/api/state') return syncApi(request, env);
+    if (url.pathname === '/api/sky') return skyApi(request, env, ctx);
     if (url.pathname.startsWith('/api/push/')) return pushApi(request, env, url);
     if (url.pathname === '/api/reminder' && request.method === 'POST') return reminderApi(request, env);
     if (url.pathname === '/api/vapid') return json({ key: env.VAPID_PUBLIC || '' });

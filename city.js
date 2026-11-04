@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p5';
+export const BUILD = 'p6';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -973,6 +973,8 @@ uniform mat4 uShadowM;
 uniform vec3 uLP[${NL}]; uniform vec4 uLC[${NL}];
 uniform vec3 uMoon, uMoonC, uAmbHi, uAmbLo, uAmbSide, uFogHi, uFogLo, uRim;
 uniform float uFogD, uFogH, uPoolR, uPoolK;
+uniform vec4 uSky;   /* x daylight (0 is the night as painted), y unused, z wet, w snow lying */
+uniform vec3 uSkyH, uSkyZ;   /* the sky now: horizon and overhead, for what glass reflects by day */
 uniform vec4 uTill;
 uniform vec4 uGobo;   /* window light in the shop: x0, x1 (z range), y0, y1 */
 uniform vec3 uGoboD, uGoboC; uniform float uGoboX;
@@ -1018,7 +1020,8 @@ vec3 lightAll(vec3 P, vec3 N, vec3 V, float gl, out float keyL){
         float mull=step(.035,abs(fract(wv.x*4.)-.5)*2.)*step(.03,abs(fract(wv.y*2.)-.5)*2.)*step(.08,abs(fract(wv.x*4.)-.5)*2.+.2);
         float rain=smoothstep(.2,.55,texture(uTiles,vec3(wv.x*2.,wv.y*.5+uTime*.05,9.)).r);
         float side=max(dot(N,-uGoboD),0.);
-        c+=mix(vec3(.04,.5,.66),vec3(.62,.07,.4),smoothstep(.3,.72,wv.x))*(uGoboC.b*1.5)*mull*(.55+.45*rain)*smoothstep(0.,.2,side);
+        /* by day the window throws daylight (a room keeps its colour in uSkyH); its rain streaks only while it rains */
+        c+=mix(mix(vec3(.04,.5,.66),vec3(.62,.07,.4),smoothstep(.3,.72,wv.x))*(uGoboC.b*1.5),uSkyH,uSky.x)*mull*mix(1.,.55+.45*rain,uSky.z)*smoothstep(0.,.2,side);
       }
     }
   }
@@ -1040,17 +1043,19 @@ vec3 fogIt(vec3 c, vec3 P, float e){
   a=1.-(1.-a)*(1.-street*.7);
   vec3 fc=mix(uFogHi,uFogLo,low);
   /* near air is cool, far air is the warm smog */
-  fc=mix(fc*vec3(.62,.95,1.3),fc,smoothstep(140.,1000.,d));
+  fc=mix(fc*mix(vec3(.62,.95,1.3),vec3(.94,.98,1.04),uSky.x),fc,smoothstep(140.,1000.,d));
 #ifndef MIRROR
   fc+=textureLod(uPool,(P.xz+uPoolR)/(2.*uPoolR),4.5).rgb*uPoolK*(low*1.3+street*1.9)+uFogLo*street*.45;
 #endif
-  fc=min(fc,vec3(.5,.31,.28));
+  fc=min(fc,mix(vec3(.5,.31,.28),vec3(1.),uSky.x));
   vec3 outC=mix(c,fc,clamp(a*(1.-e*.42),0.,1.));
   /* each row of blocks back from the water sits in its own step of coloured air */
   float s1=smoothstep(160.,138.,P.z), s2=smoothstep(-16.,-42.,P.z), s3=smoothstep(-158.,-184.,P.z), s4=smoothstep(-296.,-326.,P.z);
   float hz=s1*.08+s2*.15+s3*.17+s4*.2+.3*smoothstep(900.,1500.,d);
   vec3 hc=vec3(.46,.17,.21); hc=mix(hc,vec3(.1,.3,.37),s2); hc=mix(hc,vec3(.56,.2,.27),s3); hc=mix(hc,vec3(.46,.2,.33),s4);
-  hz*=smoothstep(120.,360.,d)*exp(-max(P.y,0.)*.0024)*(1.-e*.5);
+  /* by day the steps of coloured air are plain haze */
+  hc=mix(hc,uFogLo,uSky.x);
+  hz*=smoothstep(120.,360.,d)*exp(-max(P.y,0.)*.0024)*(1.-e*.5)*(1.-uSky.x*.35);
   return mix(outC,hc,hz);
 }
 /* a room behind the glass: trace a box per window, with a furniture layer */
@@ -1106,6 +1111,8 @@ const vec4 ST[8]=vec4[8](
   vec4(4.,4.,.7,.6));    /* 7 far */
 vec3 facade(vec3 P, vec3 N, vec3 V, vec3 base, float lit, float seed, int style, out float em){
   vec4 st=ST[style];
+  /* by day most rooms are dark against the light outside */
+  lit*=1.-uSky.x*.72;
   vec2 q=vU/st.xy; vec2 c=floor(q); vec2 f=fract(q)-.5;
   float fw=max(length(dFdx(q)),length(dFdy(q)));
   float gr=texture(uTiles,vec3(vU*.021+seed,8.)).r;
@@ -1132,11 +1139,13 @@ vec3 facade(vec3 P, vec3 N, vec3 V, vec3 base, float lit, float seed, int style,
   vec3 wall=w0*L;
   vec3 Rr=reflect(V,N);
   float upR=clamp(Rr.y*1.5+.12,0.,1.);
-  vec3 skyRefl=mix(vec3(.32,.11,.17),vec3(.035,.11,.15),upR);
+  vec3 skyRefl=mix(mix(vec3(.32,.11,.17),vec3(.035,.11,.15),upR),mix(uSkyH,uSkyZ,upR)*.82,uSky.x);
   if(style<2){ wall+=skyRefl*.55*(.75+.25*gr); }
   vec3 pool=poolAt(P.xz)*uPoolK; wall+=w0*pool*exp(-max(P.y,0.)*.017)*1.9;
   /* the street lights every wall from under */
-  wall+=(w0+.03)*vec3(.5,.3,.34)*exp(-max(P.y,0.)*.011)*.55;
+  wall+=(w0+.03)*vec3(.5,.3,.34)*exp(-max(P.y,0.)*.011)*.55*(1.-uSky.x*.92);
+  /* by day the street is lit by the sky bouncing between the walls instead */
+  wall+=(w0+.03)*uAmbLo*exp(-max(P.y,0.)*.008)*.9*uSky.x;
   float hc=h21(c+seed*57.);
   float floorDark=step(h21(vec2(c.y*.37,seed*91.)),.16);
   float blocks=h21(floor(c/vec2(5.,3.))+seed*13.);
@@ -1188,6 +1197,7 @@ vec3 facade(vec3 P, vec3 N, vec3 V, vec3 base, float lit, float seed, int style,
   if(style==1){ m*=smoothstep(.0,.05+aa,abs(f.x)-.0)+.0; }
   vec3 R=Rr;
   vec3 skyR=mix(uFogLo*.45,vec3(.018,.026,.05),clamp(R.y*1.6+.2,0.,1.));
+  skyR=mix(skyR,mix(uSkyH,uSkyZ,clamp(R.y*1.6+.2,0.,1.))*.7,uSky.x);
   vec3 poolR=pool*exp(-max(P.y,0.)*.02)*1.6;
   vec3 glass=mix(base*.16,skyR,.72)+poolR*.28;
   float nearK=0.;
@@ -1266,6 +1276,7 @@ void main(){
     float fl=1.;
     if(seed>.82){ float t=uTime*(1.+seed*2.)+seed*40.; fl=.72+.28*step(.2,fract(sin(floor(t*3.))*43.7)); }
     col=mix(alb,vec3(1.,.97,.9),smoothstep(.45,.95,nd)*.82)*(1.05)*fl; e=1.; id=0.;
+    col*=1.-uSky.x*.38;
   } else if(kind==5){ /* sign face from the atlas */
 #ifdef MIRROR
     vec4 s=textureLod(uSigns,vU,3.);
@@ -1318,7 +1329,7 @@ void main(){
 #endif
     col=a*em0*.94; e=.9; id=0.;
   } else if(kind==7){ /* street glass seen from outside */
-    col=vec3(.04,.05,.08); e=0.;
+    col=mix(vec3(.04,.05,.08),vec3(.2,.23,.27)*(uAmbHi+.2),uSky.x); e=0.;
   } else if(kind==9){ /* brass, painted highlight bands */
     float kL; vec3 L=lightAll(P,N,V,0.,kL);
     vec3 R=reflect(V,N);
@@ -1349,17 +1360,22 @@ void main(){
     col=a*1.2; e=.7; id=0.;
   } else if(kind==8){ /* the mountain: a hazy near-silhouette with real snow lines */
     float n=texture(uTiles,vec3(P.xz*.0017,9.)).r, n2=texture(uTiles,vec3(P.xz*.0068+.3,9.)).r;
-    float line=340.+(n-.5)*190.+(n2-.5)*120.;
+    float line=340.+(n-.5)*190.+(n2-.5)*120.-uSky.w*90.;
     float snow=smoothstep(line-5.,line+7.,P.y);
     float gully=texture(uTiles,vec3(P.xz*vec2(.021,.0052)+.1,9.)).r; snow*=smoothstep(.42,.56,gully+(n2-.5)*.4);
     vec3 rock=vec3(.05,.042,.075)+vec3(.012,.012,.016)*n2;
     col=mix(rock,vec3(.14,.14,.17)*(.6+.7*n2),snow*.8);
     /* its feet sink into the warm air over the water */
     col=mix(col,vec3(.42,.14,.2),exp(-max(P.y,0.)*.0062)*.92); e=1.;
+    /* by day: blue rock, white snow lit by the sun, its feet in the plain haze */
+    if(uSky.x>0.){ vec3 dr=mix(vec3(.36,.37,.44),vec3(.46,.46,.52),n2)*(uAmbHi*.95+uMoonC*.4); vec3 ds=vec3(.9,.92,.97)*(uAmbHi*.75+uMoonC*.55);
+      vec3 dc=mix(dr,ds,snow); dc=mix(dc,uFogLo,.28+.6*exp(-max(P.y,0.)*.0045)); col=mix(col,dc,uSky.x); }
   } else if(kind==3){ /* wet road and paving */
     float tile=texture(uTiles,vec3(vU*.09,float(layer))).r;
     float kL; vec3 L=lightAll(P,N,V,0.,kL);
     vec3 pl=poolAt(P.xz)*uPoolK;
+    /* asphalt painted for the night reads near black in daylight: lighter by day */
+    alb=mix(alb,alb*1.7+vec3(.035,.035,.04),uSky.x);
     col=alb*mix(1.,tile,.7)*(L*.9)+alb*pl*2.2+pl*.1;
     float trk=0.;
     if(layer==10){
@@ -1376,6 +1392,8 @@ void main(){
       pud=max(pud,trk*.55);
       float fres=pow(1.-max(-V.y,0.),3.);
       float k=mix(.14,.86,pud)*mix(.2,1.,fres); if(P.y>2.) k*=.3;
+      /* a dry street keeps a little sheen; snow hides it */
+      k*=mix(.3,1.,uSky.z)*(1.-uSky.w*.85);
       vec2 suv=gl_FragCoord.xy/uRes; float wob=tile-.75; suv.x+=wob*.004+(pud2-.5)*.006;
       float jit=h21(gl_FragCoord.xy*.73)-.5; float sp=mix(.05,.016,pud);
       vec3 r=vec3(0.); for(int i=0;i<5;i++){ float o=(float(i)-2.+jit)*sp; r+=texture(uRefl,suv+vec2(jit*.0016,o)).rgb; } r*=.2*(1.+.22*pud);
@@ -1386,6 +1404,7 @@ void main(){
     vec2 w1=P.xz*.018+vec2(uTime*.02,uTime*.031), w2=P.xz*.05-vec2(uTime*.04,-uTime*.018);
     float n1=texture(uTiles,vec3(w1,9.)).r-.5, n2=texture(uTiles,vec3(w2,9.)).r-.5; float nn=n1+n2*.6;
     vec3 base=mix(vec3(.008,.02,.034),vec3(.012,.018,.04),smoothstep(0.,1.,-V.y*3.));
+    base=mix(base,vec3(.05,.09,.12)*(uAmbHi+.3),uSky.x);
     float fres=.32+.68*pow(1.-max(-V.y,0.),2.2);
     vec3 r=vec3(.02,.03,.05);
 #ifndef MIRROR
@@ -1408,6 +1427,13 @@ void main(){
     if(kind==14){ vec4 s=texture(uSigns,vU); if(s.a<.04) discard; col=s.rgb*alb*L; }
     if(em0>0.){ col+=alb*em0*(kind==14?.0:1.); e=em0; if(em0>.6) id=0.; }
   }
+  /* snow lying on whatever faces up, in drifts first */
+  if(uSky.w>0.&&uRoomMode<.5&&(kind==0||kind==2||kind==3||kind==9)&&N.y>.5){
+    float sn=texture(uTiles,vec3(P.xz*.043,9.)).r;
+    float cov=smoothstep(.5,.85,N.y)*clamp(uSky.w*1.6-(1.-sn)*.9,0.,1.);
+    vec3 sc=vec3(.93,.95,1.)*(uAmbHi*1.05+uMoonC*max(dot(N,uMoon),0.)*.9*shadowAt(P,N))+poolAt(P.xz)*uPoolK*1.5;
+    col=mix(col,sc,cov);
+  }
   if(kind!=8) col=fogIt(col,P,e);
   O=vec4(col,id/255.);
 }`;
@@ -1424,6 +1450,8 @@ void main(){ vD=position; vec3 d=position;
 const SKY_FS = /* glsl */`
 precision highp float; precision highp sampler2DArray; in vec3 vD; layout(location=0) out vec4 O;
 uniform vec3 uMoonDir; uniform vec3 uShaft[3]; uniform float uTime; uniform sampler2DArray uTiles;
+/* uSky: x daylight (0 is the night as painted), z cloud cover; the day sky's own colours come from the page */
+uniform vec4 uSky; uniform vec3 uSunDir, uSunC, uSkyH, uSkyZ, uHazeC, uCloudB, uCloudR;
 ${NOISE_GLSL}
 float vn(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h21(i),h21(i+vec2(1.,0.)),f.x),mix(h21(i+vec2(0.,1.)),h21(i+vec2(1.,1.)),f.x),f.y); }
 float tx(vec2 p){ return texture(uTiles,vec3(p,9.)).r; }
@@ -1453,27 +1481,46 @@ void main(){
     mo=mix(mo,mo*vec3(1.1,.72,.58),smoothstep(.2,-1.,mp.y)*.7);
     c=mix(c,mo,smoothstep(R,R-.0018,ang));
   }
-  /* cloud deck in perspective: long stratus, hard edges, the edge toward the city catches its light */
+  /* stars, only where the night is clear */
+  if(uSky.z<1.&&y>.08){ vec2 sg=vec2(az*170.,y*170.); float hs=h21(floor(sg)); float sp=step(.994,hs)*smoothstep(.42,.1,length(fract(sg)-.5));
+    c+=vec3(.8,.85,1.)*sp*(.35+.65*fract(hs*91.7))*(1.-uSky.z)*smoothstep(.08,.3,y)*(1.-uSky.x); }
+  /* the day sky, worked out alongside and laid over the night by daylight */
+  vec3 dc=mix(uSkyH,uSkyZ,smoothstep(-.02,.6,y));
+  float sd=max(dot(d,uSunDir),0.);
+  dc+=uSunC*(pow(sd,6.)*.16+pow(sd,48.)*.3)*(1.-uSky.z*.6);
+  /* cloud deck in perspective: long stratus, hard edges, the edge toward the city catches its light.
+     A clear sky raises the edge the noise must pass, so fewer and smaller clouds */
   vec2 cp=d.xz/(max(y,.016)+.1); vec2 dr=vec2(uTime*.0012,0.);
   float hk=smoothstep(.022,.1,y), hiK=smoothstep(.07,.42,y);
   vec3 bodyLo=vec3(.26,.075,.2), bodyHi=vec3(.075,.2,.25), rimLo=vec3(1.,.5,.27), rimHi=vec3(.2,.5,.54);
-  float lightAcc=0.;
+  float lightAcc=0., cT=(1.-uSky.z)*.16, occ=0.;
+  /* by day a cloud's lit edge faces the sun */
+  vec3 dB=uCloudB, dR=uCloudR*(1.+sd*.4);
+  /* overhead the noise is stretched into one blob: on a clear day leave it open */
+  float zk=1.-smoothstep(.45,.75,y)*(1.-uSky.z);
   /* wide slow bands */
-  { vec2 a=vec2(cp.x*.021+.37,cp.y*.155+.11)+dr*.5; float n=cloudN(a), e=smoothstep(.5,.508,n), eB=smoothstep(.5,.508,cloudN(a+vec2(0.,-.0075)));
-    c=mix(c,mix(bodyLo*.8,bodyHi*.72,hiK),e*hk); c=mix(c,mix(rimLo*.72,rimHi*.6,hiK),e*(1.-eB)*hk); lightAcc=e; }
+  { vec2 a=vec2(cp.x*.021+.37,cp.y*.155+.11)+dr*.5; float n=cloudN(a), e=smoothstep(.5+cT,.508+cT,n), eB=smoothstep(.5+cT,.508+cT,cloudN(a+vec2(0.,-.0075)));
+    c=mix(c,mix(bodyLo*.8,bodyHi*.72,hiK),e*hk*zk); c=mix(c,mix(rimLo*.72,rimHi*.6,hiK),e*(1.-eB)*hk*zk); lightAcc=e*zk;
+    dc=mix(dc,dB*.94,e*hk*zk); dc=mix(dc,dR*.96,e*(1.-eB)*hk*zk); occ=e*hk*zk; }
   /* the main stratus */
-  { vec2 a=vec2(cp.x*.047,cp.y*.36)+dr; float n=cloudN(a), e=smoothstep(.515,.524,n), eB=smoothstep(.515,.524,cloudN(a+vec2(0.,-.016)));
-    c=mix(c,mix(bodyLo,bodyHi,hiK),e*hk); c=mix(c,mix(rimLo,rimHi,hiK),e*(1.-eB)*hk); lightAcc=max(lightAcc,e); }
+  { vec2 a=vec2(cp.x*.047,cp.y*.36)+dr; float n=cloudN(a), e=smoothstep(.515+cT,.524+cT,n), eB=smoothstep(.515+cT,.524+cT,cloudN(a+vec2(0.,-.016)));
+    c=mix(c,mix(bodyLo,bodyHi,hiK),e*hk*zk); c=mix(c,mix(rimLo,rimHi,hiK),e*(1.-eB)*hk*zk); lightAcc=max(lightAcc,e*zk);
+    dc=mix(dc,dB,e*hk*zk); dc=mix(dc,dR,e*(1.-eB)*hk*zk); occ=max(occ,e*hk*zk); }
   /* short flat scraps high up */
-  { vec2 a=vec2(cp.x*.13+.2,cp.y*.62+.3)+dr*1.2; float n=cloudN(a), e=smoothstep(.535,.545,n), eB=smoothstep(.535,.545,cloudN(a+vec2(0.,-.03))); float kk=smoothstep(.16,.42,y)*.9; c=mix(c,bodyHi*1.05,e*kk); c=mix(c,rimHi*.82,e*(1.-eB)*kk); lightAcc=max(lightAcc,e*kk); }
+  { vec2 a=vec2(cp.x*.13+.2,cp.y*.62+.3)+dr*1.2; float n=cloudN(a), e=smoothstep(.535+cT,.545+cT,n), eB=smoothstep(.535+cT,.545+cT,cloudN(a+vec2(0.,-.03))); float kk=smoothstep(.16,.42,y)*.9*zk; c=mix(c,bodyHi*1.05,e*kk); c=mix(c,rimHi*.82,e*(1.-eB)*kk); lightAcc=max(lightAcc,e*kk);
+    dc=mix(dc,dB*1.04,e*kk); dc=mix(dc,dR,e*(1.-eB)*kk); occ=max(occ,e*kk); }
   /* thin high lines */
-  { vec2 a=vec2(cp.x*.03+.61,cp.y*1.15+.4)+dr*1.4; float e=smoothstep(.56,.572,cloudN(a)); c=mix(c,mix(rimLo*.55,rimHi*.55,hiK),e*hk*.5); }
+  { vec2 a=vec2(cp.x*.03+.61,cp.y*1.15+.4)+dr*1.4; float e=smoothstep(.56+cT,.572+cT,cloudN(a)); c=mix(c,mix(rimLo*.55,rimHi*.55,hiK),e*hk*.5); dc=mix(dc,dR,e*hk*.4); }
   /* tower searchlights land on the deck */
-  for(int i=0;i<3;i++){ float a=dot(d,uShaft[i]); float h=smoothstep(.9985,.9999,a); c+=vec3(.62,.8,.9)*h*h*(lightAcc*.55+.03); }
+  for(int i=0;i<3;i++){ float a=dot(d,uShaft[i]); float h=smoothstep(.9985,.9999,a); c+=vec3(.62,.8,.9)*h*h*(lightAcc*.55+.03*uSky.z); }
   /* smog right at the horizon */
   c=mix(c,vec3(.8,.34,.15)*mix(.5,1.,cityK),smoothstep(.02,-.022,y)*.9);
   /* haze the far towers melt into, so a gap between them never opens onto bare horizon */
   c=mix(c,mix(vec3(.16,.07,.14),vec3(.3,.11,.2),cityK),1.-smoothstep(.035,.12,y));
+  /* the sun's disc, behind cloud when there is cloud, then the day's own haze at the horizon */
+  dc=mix(dc,uSunC*1.25+.25,smoothstep(.99962,.99972,sd)*(1.-occ)*(1.-uSky.z*.85));
+  dc=mix(dc,uHazeC,smoothstep(.03,-.03,y)*.85); dc=mix(dc,uHazeC,(1.-smoothstep(.035,.14,y))*.55);
+  c=mix(c,dc,uSky.x);
   O=vec4(c,0.);
 }`;
 
@@ -1584,6 +1631,7 @@ void main(){
 const CAR_FS = /* glsl */`
 precision highp float; in vec3 vW; in vec3 vN; in vec4 vC; flat in vec4 vI; layout(location=0) out vec4 O;
 uniform vec3 cameraPosition, uMoon, uAmbHi, uAmbLo, uFogHi, uFogLo; uniform float uFogD, uFogH, uPoolR, uPoolK; uniform sampler2D uPool;
+uniform vec4 uSky; uniform vec3 uMoonC, uSkyH, uSkyZ;
 void main(){
   vec3 N=normalize(vN); if(!gl_FrontFacing) N=-N; vec3 V=normalize(vW-cameraPosition);
   /* vertex alpha picks a part: 0 own colour, 1 paint, 2 dark glass, 3 light */
@@ -1597,12 +1645,13 @@ void main(){
   else {
     vec3 pool=texture(uPool,(vW.xz+uPoolR)/(2.*uPoolR)).rgb*uPoolK;
     vec3 L=mix(uAmbLo,uAmbHi,N.y*.5+.5)+pool*1.5*exp(-max(vW.y,0.)*.03);
-    float m=dot(N,uMoon); L+=vec3(.3,.34,.46)*.5*step(.25,m);
-    L=min(L,vec3(.72));
+    float m=dot(N,uMoon); L+=mix(vec3(.3,.34,.46)*.5,uMoonC*.8,uSky.x)*step(.25,m);
+    L=min(L,vec3(mix(.72,1.5,uSky.x)));
     if(tag>1.5){
       /* glass: near black, a band of sky and street lying across it */
       vec3 R=reflect(V,N); float h=clamp(R.y*1.4+.25,0.,1.);
       vec3 sky=mix(vec3(.2,.1,.06),vec3(.02,.05,.09),h);
+      sky=mix(sky,mix(uSkyH,uSkyZ,h)*.6,uSky.x);
       c=vec3(.004,.006,.011)+sky*(.14+.86*pow(1.+dot(V,N),3.))*.62+pool*.07;
       c+=vec3(.5,.62,.75)*step(.9,sin((vW.x+vW.z)*3.1+vW.y*11.)*.5+.5)*.12;
     } else {
@@ -1618,7 +1667,7 @@ void main(){
 #else
       c+=vec3(.2,.34,.5)*.26*smoothstep(.72,.76,rim);
 #endif
-      c=min(c,vec3(.74));
+      c=min(c,vec3(mix(.74,1.2,uSky.x)));
     }
   }
   vec3 D=vW-cameraPosition; float d=length(D); float k=uFogH; float f=abs(D.y)>.01?(exp(-k*cameraPosition.y)-exp(-k*(cameraPosition.y+D.y)))/(k*D.y):exp(-k*cameraPosition.y);
@@ -1664,11 +1713,11 @@ void main(){
   gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);
 }`;
 const CARGLOW_FS = /* glsl */`
-precision highp float; in vec3 vQ; in vec3 vC2; layout(location=0) out vec4 O;
+precision highp float; in vec3 vQ; in vec3 vC2; layout(location=0) out vec4 O; uniform vec2 uLamp;   /* lamps, and their streaks on the road: less by day, none on a dry road */
 void main(){
   float a;
-  if(vQ.z>.5){ float across=1.-abs(vQ.x); float along=1.-(vQ.y*.5+.5); a=across*across*pow(1.-along,1.4)*smoothstep(0.,.14,along); }
-  else { float d=length(vQ.xy); if(d>1.) discard; a=pow(1.-d,2.)*.8+smoothstep(.3,.12,d)*.9; }
+  if(vQ.z>.5){ float across=1.-abs(vQ.x); float along=1.-(vQ.y*.5+.5); a=across*across*pow(1.-along,1.4)*smoothstep(0.,.14,along)*uLamp.y; }
+  else { float d=length(vQ.xy); if(d>1.) discard; a=(pow(1.-d,2.)*.8+smoothstep(.3,.12,d)*.9)*uLamp.x; }
   O=vec4(vC2*a,0.);
 }`;
 
@@ -1687,8 +1736,8 @@ void main(){
   gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);
 }`;
 const STREAM_FS = /* glsl */`
-precision highp float; in vec2 vQ; in vec3 vC2; layout(location=0) out vec4 O;
-void main(){ float a=(1.-vQ.x*vQ.x); a*=a; float l=vQ.y*.5+.5; a*=smoothstep(0.,.5,l)*smoothstep(1.,.92,l); O=vec4(vC2*a,0.); }`;
+precision highp float; in vec2 vQ; in vec3 vC2; layout(location=0) out vec4 O; uniform vec2 uLamp;
+void main(){ float a=(1.-vQ.x*vQ.x); a*=a; float l=vQ.y*.5+.5; a*=smoothstep(0.,.5,l)*smoothstep(1.,.92,l)*uLamp.x; O=vec4(vC2*a,0.); }`;
 
 /* ---------- additive shapes in space: searchlights, light shafts, hologram ---------- */
 const FX_VS = /* glsl */`
@@ -1698,9 +1747,11 @@ out vec3 vW; out vec3 vN; out vec4 vC; out vec2 vU; flat out vec4 vM;
 void main(){ vec3 p0=position; if((int(aMat.x)&15)==8) p0.y+=fract(uTime*.19+aMat.w/255.)*1.62; vec4 w=modelMatrix*vec4(p0,1.); vW=w.xyz; vN=mat3(modelMatrix)*normal.xyz; vC=aCol; vU=aUv; vM=aMat; gl_Position=projectionMatrix*viewMatrix*w; }`;
 const FX_FS = /* glsl */`
 precision highp float; in vec3 vW; in vec3 vN; in vec4 vC; in vec2 vU; flat in vec4 vM; layout(location=0) out vec4 O;
-uniform float uTime; uniform vec3 cameraPosition; uniform sampler2D uAds;
+uniform float uTime, uDayFx; uniform vec3 cameraPosition; uniform sampler2D uAds;
 void main(){
   int kind=int(vM.x)&15; vec3 V=normalize(vW-cameraPosition); vec3 N=normalize(vN);
+  /* by day light in the air hardly shows */
+  float dayK= kind==1||kind==4 ? 1.-uDayFx*.92 : 1.-uDayFx*.6;
   float a=vC.a; vec3 c=vC.rgb;
   if(kind==1){ /* soft cone or shaft, fades along its length and at its grazing edges */
     float ed=abs(dot(V,N)); float l=1.-clamp(vU.y,0.,1.); a*=pow(ed,2.6)*l*l;
@@ -1729,24 +1780,26 @@ void main(){
   } else if(kind==8){ /* scan ring climbing the form */
     float hy=clamp((vW.y-.1)/1.62,0.,1.); a*=sin(hy*3.14159);
   }
-  O=vec4(c*a,0.);
+  O=vec4(c*a*dayK,0.);
 }`;
 
 /* ---------- rain ---------- */
 const RAIN_VS = /* glsl */`
 precision highp float; uniform mat4 viewMatrix, projectionMatrix; uniform vec3 cameraPosition; uniform float uTime, uRainBox; uniform vec4 uCut;
-in vec3 position; in vec4 iR; out float vA; out float vT;
+uniform vec4 uRainK;   /* x how much is falling, y snow instead of rain */
+in vec3 position; in vec4 iR; out float vA; out float vT; out float vX;
 void main(){
-  vec3 b=vec3(uRainBox,uRainBox*.8,uRainBox);
-  vec3 p=iR.xyz*b; p.y-=uTime*(46.+iR.w*18.); p.x+=uTime*3.;
+  vec3 b=vec3(uRainBox,uRainBox*.8,uRainBox); float sn=uRainK.y;
+  /* snow drifts down slowly and wanders */
+  vec3 p=iR.xyz*b; p.y-=uTime*mix(46.+iR.w*18.,1.7+iR.w*1.3,sn); p.x+=uTime*mix(3.,.6,sn)+sn*sin(uTime*.7+iR.w*40.)*1.3; p.z+=sn*cos(uTime*.5+iR.x*30.)*.9;
   p=mod(p-cameraPosition+b*.5,b)-b*.5+cameraPosition;
-  float L=1.4+iR.w*1.5;
-  vec3 dir=normalize(vec3(.065,-1.,0.));
+  float L=mix(1.4+iR.w*1.5,.05+iR.w*.04,sn);
+  vec3 dir=normalize(vec3(mix(.065,0.,sn),-1.,0.));
   vec3 toC=normalize(cameraPosition-p); vec3 S=normalize(cross(dir,toC));
-  vec3 w=p+dir*L*position.y+S*.0075*(1.+length(p-cameraPosition)*.03)*position.x;
+  vec3 w=p+dir*L*position.y+S*mix(.0075,.028,sn)*(1.+length(p-cameraPosition)*.03)*position.x;
   float d=length(p-cameraPosition);
-  vA=smoothstep(uRainBox*.5,uRainBox*.2,d)*smoothstep(.8,3.,d)*(.5+.5*iR.w);
-  vT=position.y;
+  vA=smoothstep(uRainBox*.5,uRainBox*.2,d)*smoothstep(.8,3.,d)*(.5+.5*iR.w)*uRainK.x;
+  vT=position.y; vX=position.x;
   /* rain stays downtown */
   vA*=smoothstep(520.,180.,length(p.xz-vec2(0.,-40.)));
   /* only on one side of a plane, while a room shows through its window */
@@ -1754,14 +1807,14 @@ void main(){
   gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);
 }`;
 const RAIN_FS = /* glsl */`
-precision highp float; in float vA; in float vT; layout(location=0) out vec4 O; uniform vec3 uRainC;
-void main(){ O=vec4(uRainC*vA*(1.-vT*.8),0.); }`;
+precision highp float; in float vA; in float vT; in float vX; layout(location=0) out vec4 O; uniform vec3 uRainC; uniform vec4 uRainK;
+void main(){ O=vec4(uRainC*vA*mix(1.-vT*.8,max(1.-length(vec2(vX,vT*2.-1.)),0.)*1.7,uRainK.y),0.); }`;
 
 /* ---------- shop glass: real 3D city behind running rain ---------- */
 const GLASS_VS = WORLD_VS;
 const GLASS_FS = /* glsl */`
 precision highp float; precision highp sampler2DArray; in vec3 vW; in vec3 vN; in vec4 vC; in vec2 vU; flat in vec4 vM; layout(location=0) out vec4 O;
-uniform sampler2D uBg, uSigns; uniform sampler2DArray uTiles; uniform float uTime, uInside; uniform vec2 uRes; uniform vec3 cameraPosition;
+uniform sampler2D uBg, uSigns; uniform sampler2DArray uTiles; uniform float uTime, uInside, uDrops; uniform vec4 uSky; uniform vec2 uRes; uniform vec3 cameraPosition;
 ${NOISE_GLSL}
 vec3 drops(vec2 uv){ /* running drops: returns offset xy and a mask */
   vec2 g=vec2(uv.x*13.,uv.y*3.2); float cx=floor(g.x); float hx=h11(cx*1.73);
@@ -1777,14 +1830,15 @@ void main(){
   vec2 suv=gl_FragCoord.xy/uRes; vec2 uv=vU;
   vec3 d1=drops(uv), d2=drops(uv*1.8+vec2(.31,.2));
   float small=step(.965,h21(floor(uv*vec2(120.,160.))))*smoothstep(.5,.2,length(fract(uv*vec2(120.,160.))-.5));
-  vec2 off=d1.xy+d2.xy*.6;
-  float mask=clamp(d1.z+d2.z*.7+small,0.,1.);
+  /* drops only while it rains */
+  vec2 off=(d1.xy+d2.xy*.6)*uDrops;
+  float mask=clamp(d1.z+d2.z*.7+small,0.,1.)*uDrops;
   vec3 bg;
   if(uInside>.5){
     vec2 q=suv+off;
     bg=texture(uBg,q).rgb;
     /* only a drop smears what is behind it */
-    if(mask>.02){ vec3 sm=(texture(uBg,q+vec2(.002,.005)).rgb+texture(uBg,q-vec2(.002,.005)).rgb+texture(uBg,q+vec2(-.003,.008)).rgb)/3.; bg=mix(bg,sm,mask); bg=bg*1.2+vec3(.03,.03,.05)*mask; }
+    if(mask>.02){ vec3 sm=(texture(uBg,q+vec2(.002,.005)).rgb+texture(uBg,q-vec2(.002,.005)).rgb+texture(uBg,q+vec2(-.003,.008)).rgb)/3.; bg=mix(bg,sm,mask); bg=bg*(1.2-.2*uSky.x)+vec3(.03,.03,.05)*mask*(1.-uSky.x); }
     /* the pane has a faint breath at the bottom */
     float breath=smoothstep(.34,.0,uv.y)*.05;
     O=vec4(pow(max(bg,0.),vec3(1.08))*.96*vec3(.97,.99,1.02)+vec3(.14,.12,.13)*breath+vec3(.004,.004,.008),1.);
@@ -3881,6 +3935,109 @@ const moonDir = new THREE.Vector3(.13, .262, -.956).normalize();
 const moonSkyDir = new THREE.Vector3(.15, .31, -.94).normalize();
 const shU = { uTime: TIME };
 
+/* ---------- sky: the sun where he lives, and the weather there ----------
+   /api/sky gives the place and its weather now; the sun is worked out here from the place and the clock. Daylight 0 is
+   the night exactly as painted (rain and the moon). That is also what shows before the first answer, offline with
+   nothing kept, and in the test rig until a test sets the sky. The scene's -z is south, so the sun crosses the
+   opening view from left to right, as the moon hangs there. */
+const SKY_U = { sky: { value: new THREE.Vector4(0, 0, 1, 0) }, skyH: { value: new THREE.Color() }, skyZ: { value: new THREE.Color() }, lamp: { value: new THREE.Vector2(1, 1) }, dayFx: { value: 0 }, rainK: { value: new THREE.Vector4(1, 0, 0, 0) }, drops: { value: 1 },
+  look: { value: new THREE.Vector4(0, 0, 1, 0) }, sun: { value: new THREE.Vector3(0, -1, 0) }, sunC: { value: new THREE.Color() }, haze: { value: new THREE.Color() }, cloudB: { value: new THREE.Color() }, cloudR: { value: new THREE.Color() } };
+const SKY_RAIN = { cloud: 1, rain: 1, snow: 0, wet: 1, cover: 0, fog: 0 };
+const SKY = { at: null, wx: null, over: null, el: -90, az: 0, L: -1, w: { ...SKY_RAIN }, key: moonDir.clone(), baked: moonDir.clone(), next: 0, ask: 0 };
+const mixN = (a, b, t) => a * (1 - t) + b * t;   /* exact at both ends, so daylight 0 leaves the night as it was */
+const mixO = (a, b, t) => { const o = {}; for (const k in a) o[k] = Array.isArray(a[k]) ? a[k].map((v, i) => mixN(v, b[k][i], t)) : mixN(a[k], b[k], t); return o; };
+const SKY_N = { key: [.22, .28, .42], hi: [.14, .18, .28], lo: [.085, .06, .07], side: [.44, .35, .34], fogHi: [.05, .068, .09], fogLo: [.27, .15, .105], rim: [.16, .38, .55], fogD: .002, pool: .62 };
+/* clear and overcast, at full day and in the warm hours either side of it */
+const SKY_D = [
+  { key: [1.25, 1.16, 1.02], hi: [.64, .68, .76], lo: [.42, .39, .36], side: [.24, .24, .26], fogHi: [.62, .7, .8], fogLo: [.72, .74, .76], rim: [.32, .34, .36], fogD: .0011, pool: .05, h: [.68, .76, .86], z: [.24, .45, .74], sunC: [1, .95, .85], cb: [.92, .93, .95], cr: [1, 1, 1] },
+  { key: [.3, .31, .33], hi: [.78, .8, .84], lo: [.46, .45, .45], side: [.2, .2, .21], fogHi: [.62, .64, .68], fogLo: [.64, .65, .67], rim: [.22, .23, .25], fogD: .0017, pool: .08, h: [.66, .68, .71], z: [.5, .53, .58], sunC: [.6, .6, .6], cb: [.6, .62, .66], cr: [.74, .75, .78] }];
+const SKY_W = [
+  { key: [1, .55, .3], hi: [.3, .28, .42], lo: [.22, .13, .12], side: [.32, .2, .18], fogHi: [.42, .34, .45], fogLo: [.86, .52, .36], rim: [.55, .32, .3], fogD: .0014, pool: .3, h: [1, .56, .32], z: [.2, .24, .46], sunC: [1, .6, .3], cb: [.42, .3, .42], cr: [1, .66, .42] },
+  { key: [.3, .22, .2], hi: [.4, .36, .42], lo: [.24, .2, .2], side: [.15, .12, .12], fogHi: [.42, .38, .42], fogLo: [.55, .45, .44], rim: [.3, .26, .27], fogD: .0018, pool: .35, h: [.55, .44, .44], z: [.3, .3, .36], sunC: [.6, .45, .35], cb: [.38, .34, .38], cr: [.62, .5, .48] }];
+/* named skies for the rig and ?sky=: a time [elevation, azimuth from south, west positive] and a weather */
+const SKY_TIMES = { night: [-30, 0], dawn: [-2, -72], morning: [14, -45], day: [24, -5], noon: [24, -5], afternoon: [16, 40], dusk: [1, 64] };
+const SKY_WX = { rain: SKY_RAIN, clear: { cloud: .12, rain: 0, snow: 0, wet: 0, cover: 0, fog: 0 }, cloud: { cloud: .92, rain: 0, snow: 0, wet: 0, cover: 0, fog: 0 }, snow: { cloud: 1, rain: 0, snow: .85, wet: 0, cover: 1, fog: 0 }, fog: { cloud: 1, rain: 0, snow: 0, wet: .4, cover: 0, fog: 1 }, wet: { cloud: .6, rain: 0, snow: 0, wet: .7, cover: 0, fog: 0 } };
+function sunAt(ms, lat, lon) {
+  const R = Math.PI / 180, d = ms / 864e5 - 10957.5;
+  const g = (357.529 + .98560028 * d) * R, q = 280.459 + .98564736 * d;
+  const L = (q + 1.915 * Math.sin(g) + .02 * Math.sin(2 * g)) * R, e = (23.439 - .00000036 * d) * R;
+  const ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L)), dec = Math.asin(Math.sin(e) * Math.sin(L));
+  const H = ((18.697374558 + 24.06570982441908 * d) * 15 + lon) * R - ra, la = lat * R;
+  return { el: Math.asin(Math.sin(la) * Math.sin(dec) + Math.cos(la) * Math.cos(dec) * Math.cos(H)) / R, az: Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(la) - Math.tan(dec) * Math.cos(la)) / R };
+}
+/* the weather codes (WMO) and amounts the Worker passes on, as what the city shows */
+function skyWeather(x) {
+  const c = x.code | 0, snowing = (c >= 71 && c <= 77) || c === 85 || c === 86, raining = !snowing && ((c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95), fog = c === 45 || c === 48;
+  const rain = raining ? clamp(.45 + (x.precip || 0) * .3, .45, 1) : 0, snow = snowing ? clamp(.45 + (x.snowfall || 0) * .6, .45, 1) : 0;
+  const cover = clamp((x.depth || 0) / .05);
+  return { cloud: clamp(Math.max((x.cloud == null ? 100 : x.cloud) / 100, rain || snow || fog ? .92 : 0)), rain, snow, cover, fog: fog ? 1 : 0,
+    wet: rain ? 1 : (x.recent || 0) > .2 ? .7 : cover > 0 && (x.temp || 0) > 1 ? .5 : 0 };
+}
+/* a room by day: its ambient lifted toward daylight, the window throwing daylight, her in it. At night the room is as painted */
+const ROOM_DAY = [[.6, .6, .64], [.38, .36, .36], [.1, .1, .11], [.62, .64, .68]];
+function skyRoom() {
+  if (!room.def || !room.u || !SKY.T) return;
+  const L = Math.max(SKY.L, 0), w = SKY.w, a = room.def.amb, d = room.def.ambDay || ROOM_DAY, dim = mixN(1, .78, w.cloud), warm = [1, mixN(1, .88, SKY.W), mixN(1, .76, SKY.W)];
+  const m = i => [0, 1, 2].map(j => mixN(a[i][j], d[i][j] * dim * warm[j], L));
+  room.u.uAmbHi.value.setRGB(...m(0)); room.u.uAmbLo.value.setRGB(...m(1)); room.u.uAmbSide.value.setRGB(...m(2)); room.u.uRim.value.setRGB(...m(3));
+  room.u.uSky.value.set(L, SKY.W, clamp(w.rain * 2), 0); room.u.uSkyH.value.setRGB(...SKY.T.sunC.map(v => v * 1.1));
+  FIG_DAY.value = L;
+}
+function skyAsk() {
+  /* every 15 minutes while the city is on; what came back last is kept for the next start */
+  SKY.ask = performance.now() + 9e5;
+  fetch('./api/sky', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(x => { if (!x || !x.at) return; if (!SKY.wx) SKY.snap = true; SKY.at = x.at; SKY.wx = skyWeather(x); try { localStorage.setItem('city.sky', JSON.stringify({ at: x.at, wx: SKY.wx, t: Date.now() })); } catch (e) { } SKY.next = 0; }).catch(() => { });
+}
+function skyKept() {
+  try { const k = JSON.parse(localStorage.getItem('city.sky') || 'null'); if (k && k.at) { SKY.at = k.at; if (Date.now() - k.t < 3 * 36e5) SKY.wx = k.wx; } } catch (e) { }
+}
+/* a sky by name ('day,snow'), or { el, az, cloud, rain, snow, wet, cover, fog }; null goes back to the real one */
+function skyParse(s) {
+  if (!s) return null; if (typeof s === 'object') return s;
+  const o = {}; for (const w of String(s).split(/[ ,]+/)) { if (SKY_TIMES[w]) { o.el = SKY_TIMES[w][0]; o.az = SKY_TIMES[w][1]; } if (SKY_WX[w]) Object.assign(o, SKY_WX[w]); }
+  return o;
+}
+function skyTick(t, now = Date.now()) {
+  if (!RIG && SKY.ask && performance.now() > SKY.ask) skyAsk();
+  if (!RIG && t < SKY.next) return;
+  SKY.next = t + .25;
+  const o = SKY.over;
+  if (o && o.el != null) { SKY.el = o.el; SKY.az = o.az || 0; }
+  else if (SKY.at) { const s = sunAt(now, SKY.at[0], SKY.at[1]); SKY.el = s.el; SKY.az = s.az; }
+  else { SKY.el = -90; SKY.az = 0; }
+  /* weather eases over a minute or so; the rig takes it at once */
+  const want = { ...SKY_RAIN, ...(SKY.at && SKY.wx ? SKY.wx : {}), ...(o || {}) };
+  const k = RIG || SKY.snap || SKY.L < 0 ? 1 : .006; SKY.snap = false; for (const n in SKY.w) SKY.w[n] = n in want ? mixN(SKY.w[n], want[n], k) : SKY.w[n];
+  const el = SKY.el, w = SKY.w, L = sstep(-10, 7, el), W = (1 - sstep(4, 16, el)) * sstep(-14, -4, el), R = Math.PI / 180;
+  const T = mixO(mixO(SKY_D[0], SKY_D[1], w.cloud), mixO(SKY_W[0], SKY_W[1], w.cloud), W), U = mixO(SKY_N, T, L);
+  /* light: the sun while it is up or nearly, kept a little above the roofs so streets aren't all in shade; the moon after */
+  const up = el > -3, le = Math.max(el, 7) * R, az = SKY.az * R;
+  if (up) SKY.key.set(Math.cos(le) * Math.sin(az), Math.sin(le), -Math.cos(le) * Math.cos(az)).normalize(); else SKY.key.copy(moonDir);
+  /* the night's air was painted for rain: drier air is clearer, fog is thick */
+  const keyK = up ? sstep(-3, 4, el) : 1 - sstep(-10, -3, el), fogK = 1 - .7 * (1 - Math.max(w.rain, w.snow)) + 2.5 * w.fog;
+  const u = city.u;
+  if (u) {
+    u.uMoon.value = SKY.key; u.uMoonC.value.setRGB(...U.key.map(v => v * keyK));
+    u.uAmbHi.value.setRGB(...U.hi); u.uAmbLo.value.setRGB(...U.lo.map(v => v + w.cover * .22 * L)); u.uAmbSide.value.setRGB(...U.side);
+    u.uFogHi.value.setRGB(...U.fogHi); u.uFogLo.value.setRGB(...U.fogLo.map(v => mixN(v, .7 * L + .12, w.fog * .6))); u.uRim.value.setRGB(...U.rim);
+    u.uFogD.value = U.fogD * fogK; u.uPoolK.value = U.pool;
+    if (Math.abs(L - SKY.L) > .004) { setLights(u, city.lightList.map(l => [l[0], l[1], l[2], l[3], l[4], l[5] * (1 - L * .85)])); city.glow.material.uniforms.uGlowK.value = city.glowMir.material.uniforms.uGlowK.value = 1 - L * .7; }
+  }
+  SKY_U.sky.value.set(L, W, w.wet, w.cover);
+  SKY_U.skyH.value.setRGB(...T.h); SKY_U.skyZ.value.setRGB(...T.z);
+  SKY_U.look.value.set(L, W, w.cloud, 0); SKY_U.sunC.value.setRGB(...T.sunC); SKY_U.cloudB.value.setRGB(...T.cb); SKY_U.cloudR.value.setRGB(...T.cr); SKY_U.haze.value.setRGB(...U.fogLo);
+  SKY_U.sun.value.set(Math.cos(el * R) * Math.sin(az), Math.sin(el * R), -Math.cos(el * R) * Math.cos(az));
+  SKY_U.lamp.value.set(1 - L * .65, (1 - L * .7) * mixN(.15, 1, w.wet)); SKY_U.dayFx.value = L;
+  const fall = Math.max(w.rain, w.snow), sn = w.snow > w.rain ? 1 : 0;
+  SKY_U.rainK.value.set(fall, sn, 0, 0);
+  if (city.rain) { city.rain.geometry.instanceCount = fall > .02 ? Math.ceil(city.rain.userData.n * Math.min(1, fall * 1.15)) : 0; city.rain.material.uniforms.uRainC.value.setRGB(...(sn ? [.82, .85, .92] : [mixN(.55, .2, L), mixN(.55, .21, L), mixN(.75, .24, L)])); }
+  SKY.L = L; SKY.W = W; SKY.T = T;
+  SKY_U.drops.value = clamp(w.rain * 1.6);
+  skyRoom();
+  /* the shadows follow the light once it has moved a degree or so; never mid-flight */
+  if (city.world && SKY.key.angleTo(SKY.baked) > .022 && (RIG || S.mode !== 'fly')) { SKY.baked.copy(SKY.key); bakeCity(); }
+}
+
 function makeRT(w, h, o = {}) { const rt = new THREE.WebGLRenderTarget(w, h, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, type: THREE.UnsignedByteType, format: THREE.RGBAFormat, depthBuffer: !!o.depth, stencilBuffer: false, samples: o.samples || 0, generateMipmaps: false }); rt.texture.colorSpace = THREE.NoColorSpace; if (o.depthTex) { rt.depthTexture = new THREE.DepthTexture(w, h, THREE.UnsignedIntType); rt.depthTexture.minFilter = rt.depthTexture.magFilter = THREE.NearestFilter; } return rt; }
 
 let RT = {}; let TEX = {}; let MAT = {}; let SC = {}; let CAM; let city = {}, room = {};
@@ -3899,6 +4056,8 @@ function worldUniforms(isRoom) {
     uFogHi: { value: new THREE.Color(.05, .068, .09) }, uFogLo: { value: new THREE.Color(.27, .15, .105) }, uRim: { value: isRoom ? new THREE.Color(.3, .72, .85) : new THREE.Color(.16, .38, .55) },
     uFogD: { value: isRoom ? 0 : .002 }, uFogH: { value: isRoom ? .01 : .0027 }, uPoolR: { value: POOL_R }, uPoolK: { value: isRoom ? 0 : .62 },
     uGobo: { value: new THREE.Vector4(0, 1, 0, 1) }, uGoboD: { value: new THREE.Vector3(1, 1, 0).normalize() }, uGoboC: { value: new THREE.Color(0, 0, 0) }, uGoboX: { value: 0 },
+    /* the city shares the one sky; a room keeps its own, night until it is lit for the day */
+    uSky: isRoom ? { value: new THREE.Vector4(0, 0, 1, 0) } : SKY_U.sky, uSkyH: isRoom ? { value: new THREE.Color() } : SKY_U.skyH, uSkyZ: isRoom ? { value: new THREE.Color() } : SKY_U.skyZ,
   };
 }
 function setLights(u, list) { for (let i = 0; i < NL; i++) { const l = list[i]; if (l) { u.uLP.value[i].set(l[0], l[1], l[2]); const c = hex(l[3]); u.uLC.value[i].set(c[0] * l[5], c[1] * l[5], c[2] * l[5], l[4]); } else u.uLC.value[i].w = 0; } }
@@ -3992,7 +4151,7 @@ function trafficSetup() {
 function buildTraffic({ inst, peds, streams }) {
   const lanes = buildLaneTexture(); TEX.lanes = lanes; S.carCount = inst.length;
   const shared = city.u;
-  const fsU = () => ({ uLanes: { value: lanes }, uTime: TIME, uMY: { value: .2 }, uMoon: shared.uMoon, uAmbHi: shared.uAmbHi, uAmbLo: shared.uAmbLo, uFogHi: shared.uFogHi, uFogLo: shared.uFogLo, uFogD: shared.uFogD, uFogH: shared.uFogH, uPoolR: shared.uPoolR, uPoolK: shared.uPoolK, uPool: shared.uPool });
+  const fsU = () => ({ uLanes: { value: lanes }, uTime: TIME, uMY: { value: .2 }, uMoon: shared.uMoon, uAmbHi: shared.uAmbHi, uAmbLo: shared.uAmbLo, uFogHi: shared.uFogHi, uFogLo: shared.uFogLo, uFogD: shared.uFogD, uFogH: shared.uFogH, uPoolR: shared.uPoolR, uPoolK: shared.uPoolK, uPool: shared.uPool, uSky: shared.uSky, uMoonC: shared.uMoonC, uSkyH: shared.uSkyH, uSkyZ: shared.uSkyZ });
   const wire = (g, list) => { const iLane = new Float32Array(list.length * 4), iLook = new Float32Array(list.length * 4), iH = new Float32Array(list.length); list.forEach((c, i) => { iLane.set([c.row, c.ph, c.sp, c.side], i * 4); iLook.set([c.col[0], c.col[1], c.col[2], c.sc], i * 4); iH[i] = c.y; }); g.setAttribute('iLane', new THREE.InstancedBufferAttribute(iLane, 4)); g.setAttribute('iLook', new THREE.InstancedBufferAttribute(iLook, 4)); g.setAttribute('iH', new THREE.InstancedBufferAttribute(iH, 1)); g.instanceCount = list.length; return g; };
   const meshFor = (base, list, defs = {}) => { const ig = new THREE.InstancedBufferGeometry(); for (const k of ['position', 'normal', 'aCol']) ig.setAttribute(k, base.getAttribute(k)); wire(ig, list); const m = new THREE.Mesh(ig, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: CAR_VS, fragmentShader: CAR_FS, uniforms: fsU(), defines: defs, blending: THREE.NoBlending, side: THREE.DoubleSide })); m.frustumCulled = false; return m; };
   const models = [carLow(), carModel('muscle'), carModel('cab'), carModel('sedan'), flyerModel()];
@@ -4013,20 +4172,20 @@ function buildTraffic({ inst, peds, streams }) {
   /* lamps, tail lights and their streaks on the road */
   const parts = []; for (let k = 0; k < 4; k++) parts.push(-.5, -.5, k, .5, -.5, k, .5, .5, k, -.5, -.5, k, .5, .5, k, -.5, .5, k);
   const qg = new THREE.InstancedBufferGeometry(); qg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(parts), 3)); wire(qg, inst);
-  const mk = (defs) => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: CARGLOW_VS, fragmentShader: CARGLOW_FS, defines: defs, uniforms: { uLanes: { value: lanes }, uTime: TIME, uMY: { value: .2 } }, ...addBlend, side: THREE.DoubleSide });
+  const mk = (defs) => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: CARGLOW_VS, fragmentShader: CARGLOW_FS, defines: defs, uniforms: { uLanes: { value: lanes }, uTime: TIME, uMY: { value: .2 }, uLamp: SKY_U.lamp }, ...addBlend, side: THREE.DoubleSide });
   const lights = new THREE.Mesh(qg, mk({})); lights.frustumCulled = false;
   const mirLights = new THREE.Mesh(qg, mk({ MIRROR: 1 })); mirLights.frustumCulled = false;
   /* streams */
   const sg = new THREE.InstancedBufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-.5, -.5, 0, .5, -.5, 0, .5, .5, 0, -.5, -.5, 0, .5, .5, 0, -.5, .5, 0]), 3)); wire(sg, streams);
-  const flow = new THREE.Mesh(sg, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: STREAM_VS, fragmentShader: STREAM_FS, uniforms: { uLanes: { value: lanes }, uTime: TIME }, ...addBlend, side: THREE.DoubleSide })); flow.frustumCulled = false;
+  const flow = new THREE.Mesh(sg, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: STREAM_VS, fragmentShader: STREAM_FS, uniforms: { uLanes: { value: lanes }, uTime: TIME, uLamp: SKY_U.lamp }, ...addBlend, side: THREE.DoubleSide })); flow.frustumCulled = false;
   return { cars: [...bodies, ...people], lights, mirLights, flow };
 }
 function buildRain() {
   const n = isPhone ? 900 : 1600; const R = rng(5);
   const g = new THREE.InstancedBufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-1, 0, 0, 1, 0, 0, 1, 1, 0, -1, 0, 0, 1, 1, 0, -1, 1, 0]), 3));
   const a = new Float32Array(n * 4); for (let i = 0; i < n * 4; i++) a[i] = R(); g.setAttribute('iR', new THREE.InstancedBufferAttribute(a, 4)); g.instanceCount = n;
-  const m = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: RAIN_VS, fragmentShader: RAIN_FS, uniforms: { uTime: TIME, uRainBox: { value: 60 }, uRainC: { value: new THREE.Color(.55, .55, .75) }, uCut: { value: new THREE.Vector4(0, 0, 0, 1) } }, ...addBlend, side: THREE.DoubleSide, depthTest: true });
-  const me = new THREE.Mesh(g, m); me.frustumCulled = false; return me;
+  const m = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: RAIN_VS, fragmentShader: RAIN_FS, uniforms: { uTime: TIME, uRainBox: { value: 60 }, uRainC: { value: new THREE.Color(.55, .55, .75) }, uCut: { value: new THREE.Vector4(0, 0, 0, 1) }, uRainK: SKY_U.rainK }, ...addBlend, side: THREE.DoubleSide, depthTest: true });
+  const me = new THREE.Mesh(g, m); me.frustumCulled = false; me.userData.n = n; return me;
 }
 
 async function initGraphics() {
@@ -4053,14 +4212,16 @@ async function initGraphics() {
   TEX.pool = drawPools();
   city.u = worldUniforms(false); city.mat = worldMat(city.u);
   const ex = SHOP.x + SHOP.w / 2;
-  setLights(city.u, [
+  city.lightList = [
     [0, 0, 0, 0, -1, 0],
     [ex + 2.2, 3.4, SHOP.z, 0xffc98a, 16, .95], [-12, 7, 110, PAL.red, 34, .85], [12, 8, 36, PAL.cyan, 34, .8], [0, 16, 200, PAL.yellow, 46, .5],
     [195, 26, 195, PAL.red, 130, .55], [290, 22, -112, PAL.orange, 120, .6], [-280, 34, 44, PAL.cyan, 150, .5],
-  ]);
+  ];
+  setLights(city.u, city.lightList);
   city.mirrorU = { ...city.u, uReflOn: { value: 0 } }; city.mirrorMat = worldMat(city.mirrorU, { MIRROR: 1 }, THREE.BackSide);
   const skyG = new THREE.IcosahedronGeometry(100, 2);
-  const skyU = { uMoonDir: { value: moonSkyDir }, uShaft: { value: SHAFTS.map(() => new THREE.Vector3(0, 1, 0)) }, uTime: TIME, uTiles: { value: TEX.tiles }, uMY: { value: 0 } }; city.skyU = skyU;
+  const skyU = { uMoonDir: { value: moonSkyDir }, uShaft: { value: SHAFTS.map(() => new THREE.Vector3(0, 1, 0)) }, uTime: TIME, uTiles: { value: TEX.tiles }, uMY: { value: 0 },
+    uSky: SKY_U.look, uSunDir: SKY_U.sun, uSunC: SKY_U.sunC, uSkyH: SKY_U.skyH, uSkyZ: SKY_U.skyZ, uHazeC: SKY_U.haze, uCloudB: SKY_U.cloudB, uCloudR: SKY_U.cloudR }; city.skyU = skyU;
   const skyM = (d, side) => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: SKY_VS, fragmentShader: SKY_FS, uniforms: skyU, defines: d, side, depthWrite: false, depthTest: true, blending: THREE.NoBlending });
   const sky = new THREE.Mesh(skyG, skyM({}, THREE.BackSide)); sky.frustumCulled = false; sky.renderOrder = -10;
   const skyMir = new THREE.Mesh(skyG, skyM({ MIRROR: 1 }, THREE.FrontSide)); skyMir.frustumCulled = false; skyMir.renderOrder = -10;
@@ -4070,8 +4231,8 @@ async function initGraphics() {
   const world = new THREE.Mesh(gWorld, city.mat), far = new THREE.Mesh(gFar, city.mat), water = new THREE.Mesh(gWater, city.mat);
   [world, far, water].forEach(m => m.frustumCulled = false);
   const worldCells = splitCells(gWorld, 280).map(g => new THREE.Mesh(g, city.mat));
-  const glows = buildGlowMesh(GLOW); city.glowList = GLOW.length;
-  const fx = new THREE.Mesh(gFx, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FX_VS, fragmentShader: FX_FS, uniforms: { uTime: TIME, uAds: { value: TEX.ads } }, ...addBlend, side: THREE.DoubleSide })); fx.frustumCulled = false;
+  const glows = city.glow = buildGlowMesh(GLOW); city.glowList = GLOW.length;
+  const fx = new THREE.Mesh(gFx, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FX_VS, fragmentShader: FX_FS, uniforms: { uTime: TIME, uAds: { value: TEX.ads }, uDayFx: SKY_U.dayFx }, ...addBlend, side: THREE.DoubleSide })); fx.frustumCulled = false;
   setBoot('Starting traffic', .6); await yieldFrame();
   const tr = buildTraffic(trafficSetup());
   const rain = city.rain = buildRain();
@@ -4084,7 +4245,7 @@ async function initGraphics() {
   city.world = world; city.far = far; city.water = water;
   /* the reflection pass reuses geometry through a cheaper variant */
   const wMir = new THREE.Mesh(mirrorSubset(gWorld), city.mirrorMat), fMir = new THREE.Mesh(gFar, city.mirrorMat); wMir.frustumCulled = fMir.frustumCulled = false;
-  const gMir = buildGlowMesh(GLOW, { MIRROR: 1 }); gMir.material.side = THREE.DoubleSide;
+  const gMir = city.glowMir = buildGlowMesh(GLOW, { MIRROR: 1 }); gMir.material.side = THREE.DoubleSide;
   SC.mirror = new THREE.Scene(); SC.mirror.add(skyMir, wMir, fMir, gMir, tr.mirLights);
   setBoot('Dressing the shop', .7); await yieldFrame();
   /* the shell every room is loaded into: these meshes and materials live for the whole session */
@@ -4095,9 +4256,9 @@ async function initGraphics() {
   room.mesh = blank(room.mat); room.door = blank(room.mat); room.clutter = blank(room.mat);
   /* the tri-fold mirror reflects the real room: same geometry, seen from the other side of the glass */
   room.mirMesh = blank(mm); room.mirBack = blank(mm); SC.roomMir = new THREE.Scene(); SC.roomMir.add(room.mirMesh, room.mirBack);
-  room.fx = blank(fx.material);
+  room.fx = blank(new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FX_VS, fragmentShader: FX_FS, uniforms: { uTime: TIME, uAds: { value: TEX.ads }, uDayFx: { value: 0 } }, ...addBlend, side: THREE.DoubleSide }));
   room.glowMesh = buildGlowMesh([]); room.glowMesh.material.uniforms.uGlowK.value = .9;
-  room.glassU = { uBg: { value: null }, uSigns: { value: TEX.signs }, uTiles: { value: TEX.tiles }, uTime: TIME, uInside: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uMY: { value: 0 } };
+  room.glassU = { uBg: { value: null }, uSigns: { value: TEX.signs }, uTiles: { value: TEX.tiles }, uTime: TIME, uInside: { value: 0 }, uDrops: SKY_U.drops, uSky: SKY_U.sky, uRes: { value: new THREE.Vector2(1, 1) }, uMY: { value: 0 } };
   room.glassMat = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: GLASS_VS, fragmentShader: GLASS_FS, uniforms: room.glassU, side: THREE.DoubleSide, transparent: true, depthWrite: false, blending: THREE.NormalBlending });
   room.glassMat.blending = THREE.CustomBlending; room.glassMat.blendSrc = THREE.SrcAlphaFactor; room.glassMat.blendDst = THREE.OneMinusSrcAlphaFactor; room.glassMat.blendSrcAlpha = THREE.ZeroFactor; room.glassMat.blendDstAlpha = THREE.OneFactor;
   room.glass = blank(room.glassMat); room.glass.renderOrder = 5;
@@ -4138,11 +4299,15 @@ function bakeRoom() {
   pc.position.set(k[0], k[1], k[2]); pc.up.set(1, 0, 0); pc.lookAt(k[0], 0, k[2]); pc.updateMatrixWorld(); pc.updateProjectionMatrix();
   bake(room.clutterGeom && room.clutter.visible ? [room.geom, room.clutterGeom] : [room.geom], pc, 2048, room.u, room);
 }
-function bakeShadows() {
-  const size = isPhone ? 1024 : 2048;
+function bakeCity() {
+  /* from the moon, or the sun by day (SKY.key) */
+  const size = isPhone ? 1024 : 2048, k = SKY.key;
   const mc = new THREE.OrthographicCamera(-760, 760, 760, -760, 10, 2600);
-  mc.position.set(moonDir.x * 1200, moonDir.y * 1200 + 100, moonDir.z * 1200 - 90); mc.lookAt(0, 60, -90); mc.updateMatrixWorld(); mc.updateProjectionMatrix();
-  bake([city.world.geometry], mc, size, city.u);
+  mc.position.set(k.x * 1200, k.y * 1200 + 100, k.z * 1200 - 90); mc.lookAt(0, 60, -90); mc.updateMatrixWorld(); mc.updateProjectionMatrix();
+  bake([city.world.geometry], mc, size, city.u, city);
+}
+function bakeShadows() {
+  bakeCity();
   bakeRoom();
 }
 
@@ -4162,7 +4327,7 @@ void main(){
   vec4 w=modelMatrix*vec4(transformed,1.); vW=w.xyz; vN=mat3(modelMatrix)*objectNormal; vU=uv; gl_Position=projectionMatrix*viewMatrix*w; }`;
 const FIG_FS = /* glsl */`
 in vec3 vW; in vec3 vN; in vec2 vU; layout(location=0) out vec4 O;
-uniform sampler2D map; uniform vec3 uBase; uniform float uHasMap, uHair, uId, uEm, uCut; uniform vec4 uPh;
+uniform sampler2D map; uniform vec3 uBase; uniform float uHasMap, uHair, uId, uEm, uCut, uDay; uniform vec4 uPh;
 void main(){
   /* the blink: a scan line takes her away from the top down, and brings her back from her feet up */
   if(vW.y>uCut) discard;
@@ -4177,16 +4342,18 @@ void main(){
   /* and a soft violet from the room behind the viewer, so whoever faces in still has a face */
   float f=max(dot(N,normalize(vec3(-1.,.5,-.2))),0.); f=smoothstep(.1,.25,f)*.6+smoothstep(.55,.65,f)*.4;
   vec3 L=vec3(.24,.2,.36)+vec3(1.,.3,.6)*a*.85+vec3(.3,.66,1.)*b*.7+vec3(.62,.5,.85)*f*.55;
+  /* by day the glass gives plain daylight, the same hard steps */
+  L=mix(L,vec3(.36,.36,.4)+vec3(1.,.95,.86)*a*.9+vec3(.8,.88,1.)*b*.55+vec3(.55,.53,.56)*f*.5,uDay);
   /* her phone: a cold light from just in front of her face */
   if(uPh.w>0.){ vec3 d=uPh.xyz-vW; L+=vec3(.42,.7,1.)*uPh.w*max(dot(N,normalize(d)),0.)*smoothstep(.7,.05,length(d)); }
   float r=smoothstep(.55,.75,pow(1.-max(dot(N,V),0.),1.6));
-  vec3 rim=mix(vec3(1.,.28,.6),vec3(.35,.82,1.),smoothstep(-.2,.2,N.z))*r;
+  vec3 rim=mix(mix(vec3(1.,.28,.6),vec3(.35,.82,1.),smoothstep(-.2,.2,N.z)),vec3(.8,.82,.86),uDay*.8)*r;
   vec3 col=uEm>.5?uBase:c*L+rim*.75;
   if(vW.y>uCut-.04) col=vec3(.35,.95,1.);
   O=vec4(col,uId/255.);
 }`;
 let FIG = null, figTok = 0, figP = null, HOUR = null;
-const FIG_PH = { value: new THREE.Vector4() }, FIG_CUT = { value: 1e4 };
+const FIG_PH = { value: new THREE.Vector4() }, FIG_CUT = { value: 1e4 }, FIG_DAY = { value: 0 };
 /* where she is by the clock: the window corner by day, the glass from six, in bed from eleven. Read on the way in, so she never changes spot while the room is on screen */
 const figSpot = () => { const h = HOUR != null ? HOUR : new Date().getHours(); return h >= 23 || h < 6 ? 'late' : h >= 18 ? 'eve' : 'day'; };
 /* on a phone the resting view may turn toward her spot (the bed sits at the edge of a narrow screen) */
@@ -4323,7 +4490,7 @@ function addFigure(f) {
     const span = lay => { box.makeEmpty(); root.updateMatrixWorld(true); for (const o of meshes) { const pos = o.geometry.attributes.position; for (let i = 0; i < pos.count; i += 3) { v.fromBufferAttribute(pos, i); if (o.isSkinnedMesh) o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld); if (lay) v.applyQuaternion(lay); box.expandByPoint(v); } } return box; };
     /* her size comes from the rest pose: sitting or lying she is the same woman */
     const s = f.h / (span(null).max.y - box.min.y);
-    let id = 150; const mat = m => { const map = m && m.map; if (map) { map.colorSpace = THREE.NoColorSpace; map.needsUpdate = true; } return new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FIG_VS, fragmentShader: FIG_FS, side: THREE.DoubleSide, uniforms: { map: { value: map || null }, uBase: { value: (map ? new THREE.Color(1, 1, 1) : (m && m.color ? m.color.clone() : new THREE.Color(.5, .5, .5))) }, uHasMap: { value: map ? 1 : 0 }, uHair: { value: /hair/i.test((m && m.name) || '') ? 1 : 0 }, uId: { value: (id = id + 7 > 240 ? 150 : id + 7) }, uEm: { value: m && m.em ? 1 : 0 }, uCut: FIG_CUT, uPh: FIG_PH } }); };
+    let id = 150; const mat = m => { const map = m && m.map; if (map) { map.colorSpace = THREE.NoColorSpace; map.needsUpdate = true; } return new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FIG_VS, fragmentShader: FIG_FS, side: THREE.DoubleSide, uniforms: { map: { value: map || null }, uBase: { value: (map ? new THREE.Color(1, 1, 1) : (m && m.color ? m.color.clone() : new THREE.Color(.5, .5, .5))) }, uHasMap: { value: map ? 1 : 0 }, uHair: { value: /hair/i.test((m && m.name) || '') ? 1 : 0 }, uId: { value: (id = id + 7 > 240 ? 150 : id + 7) }, uEm: { value: m && m.em ? 1 : 0 }, uCut: FIG_CUT, uPh: FIG_PH, uDay: FIG_DAY } }); };
     for (const o of meshes) { const ms = [].concat(o.material).map(mat); o.material = ms.length > 1 ? ms : ms[0]; o.frustumCulled = false; }
     /* what she holds, her phone or a tablet: a dark slab, its lit face turned to her. It rides in the hand that holds it */
     const slab = (w, h) => { const g = new THREE.Group(); g.matrixAutoUpdate = false; g.visible = false; g.add(new THREE.Mesh(new THREE.BoxGeometry(w / s, h / s, .009 / s), mat({ color: new THREE.Color(.05, .05, .07) })), new THREE.Mesh(new THREE.PlaneGeometry((w - .008) / s, (h - .01) / s).translate(0, 0, .0047 / s), mat({ color: new THREE.Color(.55, .8, 1), em: 1 }))); g.children.forEach(m => { m.frustumCulled = false; }); return g; };
@@ -4406,6 +4573,7 @@ function loadRoom(id, keep) {
   room.u.uSigns.value = room.atlas || TEX.signs;
   if (def.hole) { const { zs, ys } = def.window, x = def.box.x + def.box.w / 2 + .01, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([x, ys[0], zs[0], x, ys[0], zs[1], x, ys[1], zs[1], x, ys[0], zs[0], x, ys[1], zs[1], x, ys[1], zs[0]]), 3)); room.hole.geometry.dispose(); room.hole.geometry = g; }
   if (def.mirror) room.mirU.uClipZ.value = def.mirror[2];
+  skyRoom();
   room.id = id; hudEl.dataset.room = id; room.setDoor(0);
   setText('#shName', def.sheet[0]); setText('#shPage', def.sheet[1]); $('#sheet').setAttribute('aria-label', def.sheet[0]);
   if (def.figure && !same) addFigure(room.spot ? { ...def.figure, poses: def.figure.spots[room.spot] } : def.figure);
@@ -4559,7 +4727,7 @@ function flightRes(on) { if (!isPhone) return; if (on && S.fps && S.fps < 50 && 
 function setNear(n, f) { if (CAM.near !== n || CAM.far !== f) { CAM.near = n; CAM.far = f; CAM.updateProjectionMatrix(); } }
 
 function drawScene(t) {
-  renderer.info.reset(); figTick(t);
+  renderer.info.reset(); skyTick(t); figTick(t);
   const inside = isInsideRoom(); const showCity = !inside; const showRoom = S.mode !== 'city' || CAM.position.distanceTo(_v.set(room.box.x, room.box.y + 2, room.box.z)) < 140;
   /* train runs by time alone */
   const period = 62; for (let i = 0; i < city.train.length; i++) { const a = trainPos(t / period - i * .0088); const m = city.train[i]; m.position.set(a.p[0], a.p[1] + .1, a.p[2]); m.rotation.y = Math.atan2(a.d[0], a.d[2]); m.updateMatrixWorld(true); }
@@ -4599,12 +4767,13 @@ function drawScene(t) {
   /* bloom */
   const u = MAT.post.m.uniforms;
   if (Q.bloom) {
-    MAT.bright.m.uniforms.t.value = RT.main.texture; renderer.setRenderTarget(RT.b0); renderer.render(MAT.bright.s, fsCam);
+    /* by day only what is really bright blooms, and less */
+    MAT.bright.m.uniforms.t.value = RT.main.texture; MAT.bright.m.uniforms.th.value = .86 + SKY.L * .1; renderer.setRenderTarget(RT.b0); renderer.render(MAT.bright.s, fsCam);
     const br = MAT.blur.m.uniforms; br.t.value = RT.b0.texture; br.dir.value.set(1 / RT.b0.width, 0); renderer.setRenderTarget(RT.b1); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b1.texture; br.dir.value.set(0, 1 / RT.b0.height); renderer.setRenderTarget(RT.b0); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b0.texture; br.dir.value.set(2 / RT.b2.width, 0); renderer.setRenderTarget(RT.b2); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b2.texture; br.dir.value.set(0, 2 / RT.b2.height); renderer.setRenderTarget(RT.b3); renderer.render(MAT.blur.s, fsCam);
-    u.tB.value = RT.b0.texture; u.tB2.value = RT.b3.texture; u.uBloom.value = inside ? .34 : .42;
+    u.tB.value = RT.b0.texture; u.tB2.value = RT.b3.texture; u.uBloom.value = (inside ? .34 : .42) * (1 - SKY.L * .75);
   } else { u.uBloom.value = 0; u.tB.value = RT.main.texture; u.tB2.value = RT.main.texture; }
   u.tC.value = RT.main.texture; u.tD.value = RT.main.depthTexture; u.nearZ.value = CAM.near; u.farZ.value = CAM.far; u.uInkOn.value = Q.ink ? 1 : 0;
   u.uGlitch.value = Math.max(0, 1 - (t - S.glitchT) / .42); u.uScan.value = clamp((t - S.scanT) / 1.1, 0, 1);
@@ -4983,6 +5152,8 @@ async function boot() {
   try {
     /* a reload inside the shop starts back in the city */
     if (history.state && history.state.city) history.replaceState(null, '');
+    /* the sky: what came back last time, then ask again; ?sky=dusk,snow shows one by name */
+    SKY.over = skyParse(QS.get('sky')); if (!RIG) { skyKept(); skyAsk(); }
     await initGraphics();
     hudInit(); ready = true; refreshHome(); refreshWork(); room.setDoor(0);
     setBoot('Ready', 1);
@@ -5028,6 +5199,10 @@ function rig() {
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
     figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
     hour(h) { HOUR = h; return figSpot(); },
+    /* the sky by name ('dusk,snow') or as numbers; null goes back to the real one (in the rig: the painted night) */
+    sky(s) { SKY.over = skyParse(s); SKY.next = 0; return frame().then(() => ({ el: SKY.el, L: SKY.L, w: { ...SKY.w } })); },
+    sun: sunAt, wx: skyWeather,
+    skyNow: () => { const c = v => v.toArray().map(x => +x.toFixed(4)); return { L: SKY.L, key: c(city.u.uMoon.value), keyC: c(city.u.uMoonC.value), hi: c(city.u.uAmbHi.value), fogD: city.u.uFogD.value, pool: city.u.uPoolK.value, sky: c(SKY_U.sky.value), look: c(SKY_U.look.value), lamp: c(SKY_U.lamp.value), rain: city.rain.geometry.instanceCount, rainN: city.rain.userData.n, rainK: c(SKY_U.rainK.value), drops: SKY_U.drops.value, glowK: city.glow.material.uniforms.uGlowK.value, roomHi: c(room.u.uAmbHi.value), roomSky: c(room.u.uSky.value), fig: FIG_DAY.value, light1: c(city.u.uLC.value[1]) }; },
     rest: () => restYaw(),
     view: () => ({ p: CAM.position.toArray(), d: CAM.getWorldDirection(new THREE.Vector3()).toArray() }),
     figBox() { return FIG ? FIG.keys[FIG.i].box : null; },

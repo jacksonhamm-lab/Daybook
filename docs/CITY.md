@@ -282,8 +282,35 @@ Technical state only. Updated 2026-11-03.
   off by default. Live `city.js` checked byte-identical to the repo; `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin city-rooms:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push.
-- **Branch:** `city-rooms`, the same as `main` apart from this note. `BUILD` is `'p5'` in `city.js`, `index.html`
-  and the `city.js?v=` query.
+- **Branch:** `city-sky`, local, on top of `city-rooms`: build `p6`. `BUILD` is `'p6'` in `city.js`, `index.html` and
+  the `city.js?v=` query.
+- **Built (p6, the sky):**
+  - **Where and what:** `/api/sky` (Worker) reads the secret `SKY_AT` ("lat,lon"; without it, the visitor's rough
+    place from Cloudflare), asks Open-Meteo for the weather there now (code, cloud, precipitation, snowfall, the last
+    three hours' precipitation, snow depth) and keeps it ten minutes in the Cache API. The page asks on start and
+    every 15 minutes, keeps the last answer in `localStorage` (`city.sky`, weather good for three hours) and works
+    the sun out itself (`sunAt`, from the place and the clock). The scene's -z is south: the sun crosses the opening
+    view left to right.
+  - **One sky state:** `skyTick` (in `drawScene`, four times a second) turns the sun's height into daylight `L`
+    (0 below -10°, 1 above 7°) and warm hours `W` (around sunrise and sunset), and the weather into cloud, rain, snow,
+    wet street, snow lying and fog (`skyWeather`, WMO codes). Weather eases over about a minute. The colours are
+    tables (`SKY_N`, the night exactly as painted; `SKY_D` and `SKY_W`, clear and overcast) mixed with `mixN`, which
+    is exact at both ends.
+  - **Daylight 0 is the night as it was:** every shader change is a `mix(night, day, uSky.x)` or a scale that is 1 at
+    night, and the default weather is rain, so with no answer (first start offline, the rig) nothing changes. Checked
+    by pixels against p5.
+  - **What changes:** the key light becomes the sun (kept 7° up for lighting) and the city's shadows are baked again
+    once it has moved about a degree, never mid-flight (`bakeCity`). Ambient, fog, rim and the street pools come from
+    the tables; lamps, glows, light in the air and bloom fade by day; windows: fewer lit, glass reflects the day sky;
+    asphalt lighter by day; the mountain blue and hazed. The sky (`SKY_FS`) draws the day sky beside the night one:
+    gradient, sun and its disc behind cloud, clouds coloured by day. A clear night thins the clouds and shows stars.
+  - **Weather:** rain falls as before, scaled by how hard it rains; snow is the same particles slowed, wandering,
+    round (`uRainK`). Snow lying whitens whatever faces up, drifts first (`uSky.w`). A dry street keeps a little
+    sheen. Fog thickens the air. The shop glass has drops only while it rains (`uDrops`).
+  - **Rooms by day:** `skyRoom()` lifts a room's ambient toward daylight (`def.ambDay`, else `ROOM_DAY`), the window
+    throws daylight instead of its neon colours, and she is lit by daylight (`FIG_DAY`).
+  - **Previews:** `?sky=dusk,snow` shows a sky by name (times: night, dawn, morning, day, afternoon, dusk; weather:
+    rain, clear, cloud, snow, fog, wet). Rig hooks: `sky(s)`, `skyNow()`, `sun(ms, lat, lon)`, `wx(record)`.
 - **Built (p5, her spots and live motion):**
   - **Spots:** `figSpot()` reads the clock: `day` 6:00 to 18:00 (the window corner), `eve` to 23:00 (at the glass),
     `late` until 6:00 (the bed). `def.figure.spots` lists three key poses per spot (`FIG_POSES` by name, placed by
@@ -331,14 +358,22 @@ Technical state only. Updated 2026-11-03.
     clear of the flight path, by the designer and again by a separate checker; spot changes 8/8 at 1366×768.
   - **Rest view (p5):** 11/11 at both sizes: the way in lands on the turned view, the way out and a reversed flight
     don't jump, rig flights hold yaw 0, and loading the page isn't counted as time away.
-  - **City and shop pixels** match the previous build apart from the HUD clock.
+  - **Sky (p6):** the sky logic 21/21 at both sizes (night as painted, the sun's path, WMO codes, easing, the kept
+    answer, previews). Renders of the 13 named skies from the opening view and the street, and the apartment and
+    shop by day, dusk, night, rain and snow, show no errors. By day the rain and the drops on the glass are toned down
+    so a bright sky doesn't clip to white.
+  - **City and shop pixels** at night (the default) match p5 apart from the HUD clock, date and day meter.
   - **Flag off,** against live `p4`: identical at 390×844; at 1366×768 only Dex's clock-dependent bedtime state and a
     count-up caught mid-way differ (Dex's files are unchanged).
 - **Not tested:** a real iPhone (FPS, heat, memory with the live rig), Safari, the real sync code.
 - **Open:**
   - `her.glb` changes need a `?v=` bump and a new KV upload (its own go): `npx wrangler kv key put --binding SYNC
     --remote "model:her.glb" --path models/her.glb.gz`.
-  - The city is always night and always raining: no weather or time-of-day states yet (asked, not agreed).
+  - The secret `SKY_AT` (the place the sky follows) is set in the dashboard, never in the repo; until it is, the sky
+    follows wherever the visitor is.
+  - The ski village (when built) only switches between snow and sun, and has night too.
+  - People on the street still carry umbrellas when it's dry.
+  - The weather reaches the room's window light and her, but not yet the room's own lamps.
   - The flag can't be flipped in the Home Screen app, because the quick-add words aren't built.
   - The Inter and Unbounded stylesheet still comes from Google Fonts for the existing pages, with or without the flag.
   - Settings › Performance doesn't drive the city's quality yet.
@@ -348,6 +383,5 @@ Technical state only. Updated 2026-11-03.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. The iPhone check at `?city=1` (her live rig: FPS, heat, memory).
-  2. Weather and time of day, if agreed.
-  3. Then the gym, ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.
+  1. The iPhone check at `?city=1` (her live rig, and the sky: FPS, heat, memory).
+  2. Then the gym, ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.
