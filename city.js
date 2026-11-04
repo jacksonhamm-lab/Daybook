@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p6';
+export const BUILD = 'p7';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -247,6 +247,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .chk .mi{color:var(--hud-text3);opacity:1}
 
 #hint{position:absolute;left:50%;transform:translateX(-50%);font:600 12px/1 var(--hud-font);letter-spacing:.14em;color:var(--hud-text2);background:var(--hud-plate);padding:4px 9px;white-space:nowrap;transition:opacity .4s}
+/* close up on her: the tags and the room's panel step aside */
+#tags,#aptBox,#roomBox{transition:opacity .3s}
+#hud.close #tags,#hud.close #aptBox,#hud.close #roomBox{opacity:0;pointer-events:none}
 
 /* moments */
 .dcol::before,.dcol::after{content:'';position:absolute;top:50%;height:1px;width:7px;background:var(--hud-red)}
@@ -3715,10 +3718,14 @@ function apartmentAtlas() {
   cell('cal', 400, 320, (x, w, h) => { x.fillStyle = '#080c14'; x.fillRect(0, 0, w, h); x.fillStyle = ICE; x.textBaseline = 'middle'; x.font = `800 44px ${FONT_DISP}`; x.fillText(now.toLocaleString('en', { month: 'long' }).toUpperCase(), 14, 34); const first = (new Date(now.getFullYear(), now.getMonth(), 1).getDay() + 6) % 7, days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), cw = (w - 20) / 7, ch = 42; x.font = `700 21px ${FONT_EN}`; x.textAlign = 'center'; for (let d = 1; d <= days; d++) { const k = d - 1 + first, X = 10 + k % 7 * cw, Y = 66 + Math.floor(k / 7) * ch; x.strokeStyle = 'rgba(143,232,255,.42)'; x.lineWidth = 2; x.strokeRect(X + 2, Y + 2, cw - 4, ch - 4); if (d === now.getDate()) { x.fillStyle = ACID; x.fillRect(X + 2, Y + 2, cw - 4, ch - 4); x.fillStyle = '#0a0a12'; } else x.fillStyle = k % 7 > 4 ? '#6fb4cc' : ICE; x.fillText(String(d), X + cw / 2, Y + ch / 2 + 1); } x.textAlign = 'left'; });
   /* the notebook is the one yellow thing on the table */
   cell('book', 220, 300, (x, w, h) => { x.fillStyle = ACID; x.fillRect(0, 0, w, h); x.fillStyle = '#0a0a12'; x.fillRect(0, 0, 26, h); x.font = `800 44px ${FONT_DISP}`; x.textBaseline = 'middle'; x.fillText('NOTES', 44, 70); x.fillRect(44, 102, 150, 6); x.fillStyle = '#f4f4ee'; x.fillRect(176, 0, 10, h); });
-  /* a or b on the table's screen: the two choices side by side, a bar under each */
-  cell('phone', 420, 280, (x, w, h) => { x.fillStyle = '#070a12'; x.fillRect(0, 0, w, h); x.fillStyle = CY; x.fillRect(0, 0, w, 6); x.fillStyle = ICE; x.font = `700 22px ${FONT_EN}`; x.textBaseline = 'middle'; x.fillText('PICK ONE', 18, 30); x.fillStyle = 'rgba(143,232,255,.5)'; x.fillRect(w - 66, 26, 48, 8);
-    const card = (X, c, t, pct) => { const cw = 180, ch = 170, Y = 52; x.fillStyle = c; x.beginPath(); x.moveTo(X + 22, Y); x.lineTo(X + cw, Y); x.lineTo(X + cw, Y + ch - 22); x.lineTo(X + cw - 22, Y + ch); x.lineTo(X, Y + ch); x.lineTo(X, Y + 22); x.fill(); x.fillStyle = '#0a0a12'; x.font = `800 128px ${FONT_DISP}`; x.textAlign = 'center'; x.fillText(t, X + cw / 2, Y + ch / 2 + 6); x.textAlign = 'left'; x.fillStyle = 'rgba(255,255,255,.16)'; x.fillRect(X, Y + ch + 20, cw, 8); x.fillStyle = c; x.fillRect(X, Y + ch + 20, cw * pct, 8); };
-    card(20, PINK, 'A', .62); card(w - 200, ACID, 'B', .38); x.fillStyle = 'rgba(0,0,0,.16)'; for (let y = 0; y < h; y += 5) x.fillRect(0, y, w, 1); });
+  /* the table's monitor: just a screen in use, a sidebar, a few windows of text, a graph ticking along */
+  cell('phone', 420, 280, (x, w, h) => { x.fillStyle = '#070a12'; x.fillRect(0, 0, w, h); x.fillStyle = CY; x.fillRect(0, 0, w, 6); x.textBaseline = 'middle';
+    x.fillStyle = 'rgba(143,232,255,.08)'; x.fillRect(0, 6, 62, h - 6); for (let i = 0; i < 5; i++) { x.fillStyle = i === 1 ? CY : 'rgba(143,232,255,.32)'; x.fillRect(16, 24 + i * 34, 30, 18); }
+    const win = (X, Y, ww, hh, title, rows) => { x.strokeStyle = 'rgba(143,232,255,.45)'; x.lineWidth = 2; x.strokeRect(X, Y, ww, hh); x.fillStyle = 'rgba(143,232,255,.16)'; x.fillRect(X, Y, ww, 20); x.fillStyle = ICE; x.font = `700 13px ${FONT_EN}`; x.fillText(title, X + 8, Y + 11); for (let i = 0; i < rows.length; i++) { x.fillStyle = i === 0 ? 'rgba(237,230,214,.75)' : 'rgba(143,232,255,.4)'; x.fillRect(X + 10, Y + 32 + i * 15, (ww - 20) * rows[i], 6); } };
+    win(76, 18, 196, 120, 'MAIL', [.7, .9, .55, .8, .4, .62]); win(284, 18, 122, 120, 'QUEUE', [.8, .5, .7, .35, .6, .45]);
+    x.strokeStyle = 'rgba(143,232,255,.45)'; x.lineWidth = 2; x.strokeRect(76, 150, 330, 112); x.fillStyle = 'rgba(143,232,255,.16)'; x.fillRect(76, 150, 330, 20); x.fillStyle = ICE; x.font = `700 13px ${FONT_EN}`; x.fillText('LOAD', 84, 161);
+    x.strokeStyle = CY; x.lineWidth = 2.5; x.beginPath(); for (let i = 0; i <= 30; i++) { const X = 88 + i * 10.4, Y = 232 - (Math.sin(i * .55) * .5 + Math.sin(i * 1.7 + 1) * .25 + .9) * 26; i ? x.lineTo(X, Y) : x.moveTo(X, Y); } x.stroke();
+    x.fillStyle = PINK; x.fillRect(374, 158, 22, 6); x.fillStyle = 'rgba(0,0,0,.16)'; for (let y = 0; y < h; y += 5) x.fillRect(0, y, w, 1); });
   cell('label', 240, 110, (x, w, h) => { x.fillStyle = '#0c0d14'; x.fillRect(0, 0, w, h); x.fillStyle = '#ffb35c'; x.textBaseline = 'middle'; x.font = `800 42px ${FONT_DISP}`; x.fillText('CAREER', 14, 36); x.fillStyle = PINK; x.font = `800 22px ${FONT_DISP}`; x.fillText('PAUSED', 14, 82); x.strokeStyle = PINK; x.lineWidth = 2; x.strokeRect(8, 66, 112, 32); });
   cell('carton', 150, 170, (x, w, h) => { x.fillStyle = '#e8e8f0'; x.fillRect(0, 0, w, h); x.fillStyle = PINK; x.fillRect(0, 0, w, 44); x.fillStyle = '#fff'; x.font = `800 30px ${FONT_DISP}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('NUDLO', w / 2, 24); x.fillStyle = '#0a0a12'; x.font = `800 60px ${FONT_DISP}`; x.fillText('N', w / 2, 106); x.textAlign = 'left'; });
   cell('can', 96, 120, (x, w, h) => { x.fillStyle = '#10121c'; x.fillRect(0, 0, w, h); x.fillStyle = CY; x.fillRect(0, 34, w, 40); x.fillStyle = '#10121c'; x.font = `800 26px ${FONT_EN}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('ZOXA', w / 2, 55); x.textAlign = 'left'; });
@@ -3794,7 +3801,7 @@ function buildApartment(spot = figSpot()) {
     setPlain(M, 0x15151f); M.extrude(roundPoly(tx, tz, 1.1, 1.3, .06, 2), .41, top, { grad: .9, id: 213 });
     setPlain(M, 0x0c0c14); M.box(tx + .2, .05, tz + .3, .4, .36, .4, { id: 213 });
     line(M, tx - .555, .435, tz, .004, .008, 1.3, AMB, 200); piece();
-    /* DECIDE: a slim screen on a chrome stand, A beside B, lit along the top like TODAY */
+    /* DECIDE: a slim monitor on a chrome stand, lit along the top like TODAY */
     { const x = tx - .25, z = tz - .3, y = .84; setPlain(M, 0x08090c); M.box(x + .06, top, z, .16, .015, .22, { id: 211 }); chrome(M, GUN); M.tube([[x + .06, top + .01, z], [x + .06, y - .2, z]], .014, 12, 5, { c: GUN });
       setPlain(M, 0x0b1018); M.box(x + .025, y - .22, z, .03, .44, .64, { id: 211 }); plate(M, x, y, z, .6, .4, -Math.PI / 2, 'phone', 0, { kind: K.SIGN, em: 200, c: [1, 1, 1], seed: 0, id: 211 });
       line(M, x - .002, y + .22, z, .012, .012, .64, CY, 220); G(x - .05, y, z, [.3, .18, .3], .6); piece(); }
@@ -4458,6 +4465,43 @@ const FIG_POSES = {
     aim(bone('r', 'leg'), bone('r', 'shin'), V(.02, -.08, 1)); aim(bone('r', 'shin'), bone('r', 'foot'), V(.02, -.12, 1)); aim(bone('r', 'foot'), bone('r', 'toe'), V(-.15, .5, .85));
     arms([[.323, -.626, .71]], [-.531, -.125, .838], [-.401, .551, .732]);
   },
+  /* close up, at the glass, facing him. She knows he's there: a wave hello, hands on her hips, arms folded, and the model's
+     poses (a hand back in her hair, a look over her shoulder). Waist up in the frame; confident, nothing more */
+  closeWave: ({ aim, twist, bone, neck, head, V }) => {
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.07, -1, 0)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.12, -1, .03));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.5, -.82, -.2)); aim(bone('l', 'lo'), bone('l', 'hand'), V(-.62, -.6, .2));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.2, -.6, .8)); aim(bone('r', 'up'), bone('r', 'lo'), V(-.4, -.72, .55));
+    aim(bone('r', 'lo'), bone('r', 'hand'), V(.02, .95, .3)); aim(bone('r', 'hand'), bone('r', 'mid'), V(-.06, 1, .1));
+    aim(neck, head, V(-.05, .98, .12));
+  },
+  closeHips: ({ aim, turn, bone, hips, neck, head, V }) => {
+    turn(hips, V(0, 0, 1), .07);
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.12, -1, .05)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.05, -1, 0));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.5, -.82, -.2)); aim(bone('l', 'lo'), bone('l', 'hand'), V(-.62, -.6, .2));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.5, -.82, -.2)); aim(bone('r', 'lo'), bone('r', 'hand'), V(.62, -.6, .2));
+    aim(neck, head, V(.08, .97, .1));
+  },
+  closeFold: ({ aim, bone, neck, head, V }) => {
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.06, -1, 0)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.06, -1, .02));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.3, -.88, .32)); aim(bone('l', 'lo'), bone('l', 'hand'), V(-.95, .1, .26));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.3, -.86, .38)); aim(bone('r', 'lo'), bone('r', 'hand'), V(.95, .18, .3));
+    aim(neck, head, V(-.06, .98, .08));
+  },
+  closeHair: ({ aim, turn, bone, B, hips, neck, head, V }) => {
+    turn(hips, V(0, 1, 0), .22); turn(B('spine'), V(0, 1, 0), -.16);
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.1, -1, .12)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.04, -1, -.02));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.5, -.82, -.2)); aim(bone('l', 'lo'), bone('l', 'hand'), V(-.62, -.6, .2));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.2, -.4, .9)); aim(bone('r', 'up'), bone('r', 'lo'), V(-.55, .8, .15));
+    aim(bone('r', 'lo'), bone('r', 'hand'), V(.6, .35, -.7));
+    aim(neck, head, V(-.1, .97, .14));
+  },
+  /* side on to him, her chest and head turned back over her shoulder */
+  closeShoulder: ({ aim, turn, bone, B, V }) => {
+    turn(B('spine'), V(0, 1, 0), -.25); turn(B('spine2'), V(0, 1, 0), -.2);
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.04, -1, .05)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.1, -1, -.04));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.18, -1, -.04)); aim(bone('l', 'lo'), bone('l', 'hand'), V(.05, -1, .18));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.5, -.82, -.2)); aim(bone('r', 'lo'), bone('r', 'hand'), V(.62, -.6, .2));
+  },
 };
 /* poses her by bone names (Mixamo or VRoid) and turns her head by f.look. Returns where she holds a phone, if she does */
 function poseFigure(root, f) {
@@ -4476,7 +4520,7 @@ function poseFigure(root, f) {
   root.updateMatrixWorld(true);
   const s = f.phone === 'l' ? 'l' : 'r', two = f.phone === 'both' || f.phone === 'tablet', pts = two ? [bone('l', 'mid') || bone('l', 'hand'), bone('r', 'mid') || bone('r', 'hand')] : [bone(s, 'index'), bone(s, 'pinky')];
   const grip = f.phone && pts[0] && pts[1] && head ? { a: pts[0].getWorldPosition(V(0, 0, 0)), b: pts[1].getWorldPosition(V(0, 0, 0)), head: head.getWorldPosition(V(0, 0, 0)), hold: bone(s, 'hand') } : null;
-  return { grip, idle: { chest: find('spine2', 'upperchest', 'cupperchest'), neck, head, hand: grip && !two ? grip.hold : null } };
+  return { grip, idle: { chest: find('spine2', 'upperchest', 'cupperchest'), neck, head, hand: grip && !two ? grip.hold : null, wave: f.wave ? bone('r', 'lo') : null } };
 }
 
 function addFigure(f) {
@@ -4507,16 +4551,19 @@ function addFigure(f) {
       /* her box in the room, for tests */
       const out = new THREE.Box3(); for (let k = 0; k < 8; k++) out.expandByPoint(v.set(k & 1 ? bx.max.x : bx.min.x, k & 2 ? bx.max.y : bx.min.y, k & 4 ? bx.max.z : bx.min.z).applyQuaternion(ry).multiplyScalar(s).add(P));
       /* the idle turns happen in each bone's own frame: her chest's and head's axes, as this pose leaves them */
-      const ax = {}; for (const [k, bn] of Object.entries(idle)) if (bn) { bn.getWorldQuaternion(qq).invert(); ax[k] = { bone: bones.indexOf(bn), x: new THREE.Vector3(1, 0, 0).applyQuaternion(qq), y: new THREE.Vector3(0, 1, 0).applyQuaternion(qq) }; }
+      const ax = {}; for (const [k, bn] of Object.entries(idle)) if (bn) { bn.getWorldQuaternion(qq).invert(); ax[k] = { bone: bones.indexOf(bn), x: new THREE.Vector3(1, 0, 0).applyQuaternion(qq), y: new THREE.Vector3(0, 1, 0).applyQuaternion(qq), z: new THREE.Vector3(0, 0, 1).applyQuaternion(qq) }; }
       let ph = null;
       /* held in one hand, the phone lies on the palm side of the knuckles, toward her face, not inside the hand */
       if (grip) { const X = grip.a.clone().sub(grip.b).normalize(), m = grip.a.clone().add(grip.b).multiplyScalar(.5), n = grip.head.clone().sub(m); n.addScaledVector(X, -n.dot(X)).normalize(); if (p.phone === 'l' || p.phone === 'r') m.addScaledVector(n, .022 / s); ph = { prop: p.phone === 'tablet' ? 'tablet' : 'phone', bone: grip.hold, m: grip.hold.matrixWorld.clone().invert().multiply(new THREE.Matrix4().makeBasis(X, new THREE.Vector3().crossVectors(n, X), n).setPosition(m)) }; }
-      return { q: bones.map(b => b.quaternion.clone()), P, R, ph, ax, y0: out.min.y, y1: out.max.y, box: [out.min, out.max].map(e => [e.x - room.box.x, e.y - room.box.y, e.z - room.box.z].map(x => Math.round(x * 1e3) / 1e3)) };
+      return { q: bones.map(b => b.quaternion.clone()), P, R, ph, ax, close: !!p.close, y0: out.min.y, y1: out.max.y, box: [out.min, out.max].map(e => [e.x - room.box.x, e.y - room.box.y, e.z - room.box.z].map(x => Math.round(x * 1e3) / 1e3)) };
     });
     /* both her programs now (skinned, and the plain one for what she holds), not in the middle of a blink */
     root.add(props.phone, props.tablet); renderer.compile(root, CAM, SC.room); root.remove(props.phone, props.tablet);
     root.scale.setScalar(s); root.visible = room.clutter.visible; SC.room.add(root);
-    FIG = { root, bones, keys, props, s, i: Math.floor(Date.now() / 6e4) % keys.length, go: null, n: 0, next: S.t + 30, ph: null, q: new THREE.Quaternion(), v: new THREE.Vector3() };
+    /* the spot's poses come first, then the close-up ones (f.nS: how many are the spot's) */
+    const nS = f.nS || keys.length;
+    FIG = { root, bones, keys, props, s, nS, lo: 0, hi: nS, i: Math.floor(Date.now() / 6e4) % nS, go: null, n: 0, next: S.t + 30, t1: S.t, ph: null, q: new THREE.Quaternion(), v: new THREE.Vector3() };
+    if (S.close) figClose(true);
     figTick(S.t);
   }).catch(e => APP.log(e));
   return figP;
@@ -4524,17 +4571,27 @@ function addFigure(f) {
 /* every frame she's drawn: her pose (or the blend between two), then breath, a wandering look, a thumb on the phone */
 const ease = u => u * u * (3 - 2 * u);
 /* into key pose j: a blend if it's a shift where she is, a blink if she'd have to pass through the furniture */
-function figGo(j, t) { const F = FIG, a = F.keys[F.i], b = F.keys[j]; const far = a.P.distanceTo(b.P) > .45 || a.R.angleTo(b.R) > .7; F.go = { j, t0: t, far, dur: far ? .8 : 2.2 }; }
+/* close up she turns where she stands, so a big turn there is a blend too */
+function figGo(j, t) { const F = FIG, a = F.keys[F.i], b = F.keys[j]; const far = a.P.distanceTo(b.P) > .45 || (a.R.angleTo(b.R) > .7 && !(a.close && b.close)); F.go = { j, t0: t, far, dur: far ? .8 : 2.2 }; }
+/* into the close-up poses (and back to the one she left, as the view pulls back). snap: no blend, for leaving the room */
+function figClose(on, snap) {
+  const F = FIG; if (!F || F.keys.length <= F.nS || on === (F.lo === F.nS)) return;
+  if (on) { F.prev = F.go && !F.keys[F.go.j].close ? F.go.j : F.i; F.lo = F.nS; F.hi = F.keys.length; }
+  else { F.lo = 0; F.hi = F.nS; }
+  const j = on ? F.nS : F.prev != null && F.prev < F.nS ? F.prev : 0;
+  if (snap) { F.i = j; F.go = null; FIG_CUT.value = 1e4; F.t1 = S.t; } else figGo(j, S.t);
+  if (F.next !== Infinity) F.next = S.t + (on ? 9 : 40);
+}
 function figTick(t) {
   const F = FIG; if (!F || !F.root.visible || S.mode === 'city') return;
-  const K = F.keys;
-  if (K.length > 1 && !F.go && t > F.next) figGo((F.i + 1) % K.length, t);
+  const K = F.keys, nR = F.hi - F.lo;
+  if (nR > 1 && !F.go && t > F.next) figGo(F.lo + ((F.i - F.lo + 1) % nR + nR) % nR, t);
   let w = 0, k = K[F.i];
   if (F.go) {
     const u = Math.min(1, (t - F.go.t0) / F.go.dur);
     if (F.go.far) { const c = K[u < .5 ? F.i : F.go.j]; FIG_CUT.value = REDUCED ? 1e4 : c.y0 - .05 + (c.y1 - c.y0 + .1) * ease(Math.abs(u * 2 - 1)); if (u >= .5) k = K[F.go.j]; }
     else w = ease(u);
-    if (u >= 1) { F.i = F.go.j; k = K[F.i]; F.go = null; FIG_CUT.value = 1e4; w = 0; F.n++; if (F.next !== Infinity) F.next = t + 40 + (F.n * 13.7) % 30; }
+    if (u >= 1) { F.i = F.go.j; k = K[F.i]; F.go = null; FIG_CUT.value = 1e4; w = 0; F.n++; F.t1 = t; if (F.next !== Infinity) F.next = t + (k.close ? 7 + (F.n * 3.7) % 4 : 40 + (F.n * 13.7) % 30); }
   }
   const b = F.go && !F.go.far ? K[F.go.j] : null;
   for (let i = 0; i < F.bones.length; i++) { const q = F.bones[i].quaternion.copy(k.q[i]); if (b) q.slerp(b.q[i], w); }
@@ -4543,9 +4600,12 @@ function figTick(t) {
   if (!REDUCED) {
     const turn = (x, axis, ang) => { if (x) F.bones[x.bone].quaternion.multiply(F.q.setFromAxisAngle(x[axis], ang)); };
     turn(on.ax.chest, 'x', -(.5 + .5 * Math.sin(t * 1.5)) * .016); turn(on.ax.neck, 'x', (.5 + .5 * Math.sin(t * 1.5)) * .01);
-    const calm = on.ph ? .35 : 1;
+    /* close up her eyes stay on him: the head barely wanders */
+    const calm = on.close ? .3 : on.ph ? .35 : 1;
     turn(on.ax.head, 'y', (Math.sin(t * .23) * .16 + Math.sin(t * .61 + 1.3) * .07) * calm); turn(on.ax.head, 'x', Math.sin(t * .17 + .5) * .05 * calm);
     turn(on.ax.hand, 'x', Math.pow(Math.max(0, Math.sin(t * 2.6)), 8) * .08);
+    /* the wave: a few seconds once she's turned to him, then the hand rests up */
+    if (on.ax.wave && !F.go) { const u = t - F.t1; turn(on.ax.wave, 'z', Math.sin(u * 8) * .3 * Math.max(0, 1 - u / 3.2)); }
   }
   if (F.ph !== on.ph) { if (F.ph) F.props[F.ph.prop].visible = false; F.ph = on.ph; if (on.ph) { const g = F.props[on.ph.prop]; on.ph.bone.add(g); g.matrix.copy(on.ph.m); g.visible = true; } }
   F.root.updateMatrixWorld(true);
@@ -4576,7 +4636,7 @@ function loadRoom(id, keep) {
   skyRoom();
   room.id = id; hudEl.dataset.room = id; room.setDoor(0);
   setText('#shName', def.sheet[0]); setText('#shPage', def.sheet[1]); $('#sheet').setAttribute('aria-label', def.sheet[0]);
-  if (def.figure && !same) addFigure(room.spot ? { ...def.figure, poses: def.figure.spots[room.spot] } : def.figure);
+  if (def.figure && !same) addFigure(room.spot ? { ...def.figure, poses: def.figure.spots[room.spot].concat((def.figure.close || []).map(p => ({ ...p, close: true }))), nS: def.figure.spots[room.spot].length } : def.figure);
   if (ready) { bakeRoom(); buildTags(); refreshRoom(); }
 }
 
@@ -4604,10 +4664,12 @@ function resize() {
 }
 
 /* ---------- state ---------- */
-const S = { mode: 'city', t: 0, az: 0, azGoal: 0, el: 0, elGoal: 0, yaw: 0, yawGoal: 0, pitch: 0, fly: null, last: 0, frames: 0, acc: 0, fps: 0, scanT: -9, glitchT: -9, needsPlace: true, sheet: false, drag: null };
+const S = { mode: 'city', t: 0, az: 0, azGoal: 0, el: 0, elGoal: 0, yaw: 0, yawGoal: 0, pitch: 0, fly: null, last: 0, frames: 0, acc: 0, fps: 0, scanT: -9, glitchT: -9, needsPlace: true, sheet: false, drag: null, close: false, closeK: 0 };
 /* low over the harbour, a third of the way up the tower, one near tower cropping the frame */
 const POSE = () => CAM.aspect < .8 ? { p: [-8, 22, 408], l: [-8, 112, -200], fov: 84 } : CAM.aspect < 1.3 ? { p: [66, 50, 505], l: [-10, 220, -180], fov: 66 } : { p: [66, 52, 505], l: [-10, 196, -160], fov: 58 };
-function applyFov() { const a = CAM.aspect; const cf = POSE().fov; const rf = a < .8 ? 74 : a < 1.3 ? 66 : 56; const k = S.mode === 'city' ? 0 : S.mode === 'room' ? 1 : (S.fly ? S.flyK : 0); const mid = S.mode === 'fly' && a < .8 ? S.flyMid || 0 : 0; CAM.fov = lerp(lerp(cf, rf, k), lerp(58, 49, S.flyIn || 0), mid); CAM.updateProjectionMatrix(); }
+/* how far in on her the view is, eased (0 at rest) */
+const closeE = () => { const u = S.closeK || 0; return u * u * (3 - 2 * u); };
+function applyFov() { const a = CAM.aspect; const cf = POSE().fov; const rf = (a < .8 ? 74 : a < 1.3 ? 66 : 56) * (1 - .22 * closeE()); const k = S.mode === 'city' ? 0 : S.mode === 'room' ? 1 : (S.fly ? S.flyK : 0); const mid = S.mode === 'fly' && a < .8 ? S.flyMid || 0 : 0; CAM.fov = lerp(lerp(cf, rf, k), lerp(58, 49, S.flyIn || 0), mid); CAM.updateProjectionMatrix(); }
 const local = (x, y, z) => [room.box.x + x, room.box.y + y, room.box.z + z];
 
 function cityPose(out = {}) {
@@ -4659,7 +4721,15 @@ const ROOM_DEF = {
         { pose: 'stepSit', at: [4.274, .16, .65], ry: .03, look: 0, phone: 'both' }],
       late: [{ pose: 'lie', at: [3.8, .535, 3.0], ry: Math.PI, look: 0, phone: 'both', lay: [1, 0, 0, -Math.PI / 2] },
         { pose: 'sideLie', at: [3.75, .556, 3.0], ry: -Math.PI / 2, look: 0, phone: 'r', lay: [0, 0, 1, -Math.PI / 2] },
-        { pose: 'headboardSit', at: [3.75, .559, 3.208], ry: Math.PI, look: 0, phone: 'both' }] } },
+        { pose: 'headboardSit', at: [3.75, .559, 3.208], ry: Math.PI, look: 0, phone: 'both' }] },
+      /* tap her: the view moves in on her at the glass (whatever the hour, she comes to it) and she turns to him. Each
+         pose in turn, every 7 to 11 s; the wave first. view: where the camera stands, a longer lens (fov x .78) */
+      close: [{ pose: 'closeWave', at: [3.7, .05, .55], ry: -1.76, look: 0, wave: true },
+        { pose: 'closeHips', at: [3.7, .05, .55], ry: -1.76, look: .05 },
+        { pose: 'closeHair', at: [3.7, .05, .55], ry: -1.76, look: -.05 },
+        { pose: 'closeFold', at: [3.7, .05, .55], ry: -1.76, look: 0 },
+        { pose: 'closeShoulder', at: [3.7, .05, .55], ry: -.01, look: -1.1 }],
+      view: a => a < .8 ? { p: local(2.57, 1.46, .33), l: local(3.7, 1.38, .55) } : { p: local(2.42, 1.5, .31), l: local(3.7, 1.42, .55) } },
     rest: a => a < .8 ? { p: local(-3.2, 1.62, 0), l: local(3, 1.1, 0) } : { p: local(-3.25, 1.6, -.1), l: local(3, 1.25, -.1) },
     flight(c, r, a) {
       const y = APT.y, z = APT.z;
@@ -4719,6 +4789,11 @@ function updateCamera(dt) {
     S.yaw = lerp(S.yaw, S.yawGoal, 1 - Math.exp(-dt * 6));
     const breathe = RIG ? 0 : Math.sin(S.t * .6) * .004;
     const v = restView(S.yaw + Math.sin(S.t * .23) * (RIG ? 0 : .006));
+    /* tapping her moves the view in on her, and back */
+    const ck = clamp(S.closeK + (S.close ? 1 : -1) * dt / (REDUCED ? .25 : 1.15));
+    if (ck !== S.closeK) { S.closeK = ck; applyFov(); }
+    const fv = room.def.figure && room.def.figure.view, e = closeE();
+    if (fv && e > 0) { const c = fv(CAM.aspect); for (let i = 0; i < 3; i++) { v.p[i] = lerp(v.p[i], c.p[i], e); v.l[i] = lerp(v.l[i], c.l[i], e); } }
     CAM.position.set(v.p[0], v.p[1] + breathe, v.p[2]); CAM.lookAt(...v.l);
     setNear(.06, 6000); S.flyK = 1;
   }
@@ -4955,17 +5030,24 @@ function hudInit() {
     if (e.key === 'Escape' && S.mode === 'fly' && S.fly && S.fly.dir > 0) return goBack();
     if (S.mode !== 'room') return;
     if (e.key === 'Escape') { if (S.sheet) closeSheet(); else goBack(); return; }
+    /* V: in on her and back out */
+    if (e.key.toLowerCase() === 'v' && !S.sheet && room.def.figure && room.def.figure.close) { e.stopPropagation(); e.preventDefault(); if (S.close) stepBack(); else closeUp(true); return; }
+    if (S.close) return;
     const h = room.hot.find(x => x.hotkey.toLowerCase() === e.key.toLowerCase()); if (h && !S.sheet) { e.stopPropagation(); e.preventDefault(); tapHot(h.key); }
   }, true);
   addEventListener('popstate', () => {
     if (APP.tab() !== 'today') return;   // leaving a page: the app brings us home, the camera stays put
+    /* back out of the close-up first; forward into it again */
+    const cl = !!(history.state && history.state.close);
+    if (S.close && !cl && history.state && history.state.city === room.id) { closeUp(false, true); return; }
+    if (!S.close && cl && S.mode === 'room' && history.state.city === room.id) { closeUp(true, true); return; }
     const inRoom = S.mode === 'room' || (S.mode === 'fly' && S.fly && S.fly.dir > 0), want = history.state && history.state.city;
     if (want && !inRoom) flyIn(want, false); else if (!want && inRoom) flyOut();
   });
   /* drag: small orbit in the city, look around in the room; vertical stays with the page */
   const dom = canvas;
   dom.addEventListener('pointerdown', e => { S.drag = { x: e.clientX, y: e.clientY, a: S.azGoal, e: S.elGoal, yaw: S.yawGoal, moved: false, id: e.pointerId, t: performance.now(), mode: S.mode }; try { dom.setPointerCapture(e.pointerId); } catch (_) {} });
-  dom.addEventListener('pointermove', e => { const d = S.drag; if (!d) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; if (Math.abs(dx) + Math.abs(dy) > 8) d.moved = true; if (S.mode === 'city') { S.azGoal = clamp(d.a - dx * .0016, -.3, .3); if (e.pointerType === 'mouse') S.elGoal = clamp(d.e + dy * .0024, -.3, .4); } else if (S.mode === 'room' && !S.sheet) { S.yawGoal = clamp(d.yaw + dx * (isPhone ? .0052 : .0028), -.61, .61); S.lastDrag = performance.now(); } });
+  dom.addEventListener('pointermove', e => { const d = S.drag; if (!d) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; if (Math.abs(dx) + Math.abs(dy) > 8) d.moved = true; if (S.mode === 'city') { S.azGoal = clamp(d.a - dx * .0016, -.3, .3); if (e.pointerType === 'mouse') S.elGoal = clamp(d.e + dy * .0024, -.3, .4); } else if (S.mode === 'room' && !S.sheet && !S.close) { S.yawGoal = clamp(d.yaw + dx * (isPhone ? .0052 : .0028), -.61, .61); S.lastDrag = performance.now(); } });
   const up = e => { const d = S.drag; S.drag = null; if (!d) return; if (!d.moved && d.mode === S.mode && performance.now() - d.t < 500) tapWorld(e.clientX, e.clientY); else S.lastDrag = performance.now(); };
   dom.addEventListener('pointerup', up); dom.addEventListener('pointercancel', () => { S.drag = null; S.lastDrag = performance.now(); });
   addEventListener('resize', () => { if (host.hidden) S.sizeStale = true; else resize(); });
@@ -4979,8 +5061,31 @@ function tapWorld(x, y) {
   if (justArrived()) return;
   if (S.mode === 'fly') { skipFlight(); return; }
   if (S.mode === 'city') { let best = null, bd = 56; for (const o of iconEls) { const p = project(o.a); const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = o; } } if (best) tapIcon(best.k); return; }
-  if (S.mode === 'room' && !S.sheet) { let best = null, bd = 44; for (const o of room.hot) { const p = project(o.p); const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = o; } } if (best) tapHot(best.key); }
+  if (S.mode === 'room' && !S.sheet) {
+    /* close up, a tap anywhere steps back */
+    if (S.close) { stepBack(); return; }
+    let best = null, bd = 44; for (const o of room.hot) { const p = project(o.p); const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = o; } } if (best) { tapHot(best.key); return; }
+    if (onHer(x, y)) closeUp(true);
+  }
 }
+/* is (x, y) on her? Her posed box, on screen, a little generous */
+function onHer(x, y) {
+  if (!FIG || !FIG.root.visible || !room.def.figure || !room.def.figure.close) return false;
+  const b = FIG.keys[FIG.i].box; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (let k = 0; k < 8; k++) { const p = project([room.box.x + b[k & 1][0], room.box.y + b[k & 2 ? 1 : 0][1], room.box.z + b[k & 4 ? 1 : 0][2]]); x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+  return x > x0 - 8 && x < x1 + 8 && y > y0 - 8 && y < y1 + 8;
+}
+/* the close-up: the view moves in on her and she turns to him. It has its own history entry, so back steps out of it first */
+function closeUp(on, pop) {
+  if (on === S.close) return;
+  if (on) { if (S.mode !== 'room' || S.sheet || !FIG || !room.def.figure || !room.def.figure.close) return; if (!pop) history.pushState({ city: room.id, close: 1 }, ''); }
+  S.close = on; figClose(on); hudEl.classList.toggle('close', on); $(room.def.panel).inert = on;
+  const h = $('#hint'); h.textContent = on ? 'TAP TO STEP BACK' : 'DRAG TO LOOK'; h.style.opacity = 1; clearTimeout(S.hintT); S.hintT = setTimeout(() => { h.style.opacity = 0; }, on ? 2600 : 1800);
+  glitchHud(.2); APP.sfx(on ? 'open' : 'back');
+}
+function stepBack() { if (history.state && history.state.close) history.back(); else closeUp(false); }
+/* leaving the room from close up: no pull back, she's simply where the clock says */
+function closeReset() { if (!S.close && !S.closeK) return; S.close = false; S.closeK = 0; figClose(false, true); hudEl.classList.remove('close'); const p = room.def && $(room.def.panel); if (p) p.inert = false; applyFov(); }
 function tapIcon(k) {
   if (S.mode !== 'city') return;
   const e = iconEls.find(i => i.k === k);
@@ -4997,13 +5102,14 @@ function flyIn(id, push = true) {
   APP.sfx('open');
 }
 function flyOut() {
+  closeReset();
   const y = S.mode === 'room' ? S.yaw : 0;
   closeSheet(true); S.yaw = S.yawGoal = 0;
   if (S.mode === 'fly' && S.fly) S.fly.dir = -1;
   else { flightRes(true); makeFlight(-1, y); setMode('fly'); glitchHud(1); }
   APP.sfx('back');
 }
-function goBack() { if (history.state && history.state.city) history.back(); else flyOut(); }
+function goBack() { if (S.close) return stepBack(); if (history.state && history.state.city) history.back(); else flyOut(); }
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
 function enterRoom() { const y = S.fly && S.fly.yaw || 0; S.fly = null; flightRes(false); setMode('room'); S.ringIn = S.t; S.yaw = y; S.yawGoal = RIG ? y : restYaw(); S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
 function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
@@ -5206,8 +5312,11 @@ function rig() {
     rest: () => restYaw(),
     view: () => ({ p: CAM.position.toArray(), d: CAM.getWorldDirection(new THREE.Vector3()).toArray() }),
     figBox() { return FIG ? FIG.keys[FIG.i].box : null; },
-    pose(i, go) { if (!FIG) return 0; const n = FIG.keys.length; if (go) figGo(i % n, S.t); else { FIG.i = i % n; FIG.go = null; FIG_CUT.value = 1e4; } FIG.next = Infinity; return n; },
-    stats() { return { id: room.id, day: room.day, spot: room.spot, pose: FIG ? FIG.i : null, poses: FIG ? FIG.keys.length : 0, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
+    pose(i, go) { if (!FIG) return 0; const n = FIG.nS; if (go) figGo(i % n, S.t); else { FIG.i = i % n; FIG.go = null; FIG_CUT.value = 1e4; } FIG.next = Infinity; return n; },
+    /* close up on her: on, and pose i of the close-up set held (null: let them run). Snapped, no easing */
+    close(on, i = 0) { closeUp(!!on, true); S.closeK = on ? 1 : 0; applyFov(); if (!FIG) return 0; const n = FIG.keys.length - FIG.nS; if (on && i != null) { FIG.i = FIG.nS + i % n; FIG.go = null; FIG_CUT.value = 1e4; FIG.t1 = S.t; FIG.next = Infinity; } else if (!on) { if (FIG.go) FIG.i = FIG.go.j; FIG.go = null; FIG_CUT.value = 1e4; } return n; },
+    tapHer() { const b = FIG && FIG.keys[FIG.i].box; if (!b) return null; const p = project([room.box.x + (b[0][0] + b[1][0]) / 2, room.box.y + (b[0][1] + b[1][1]) / 2, room.box.z + (b[0][2] + b[1][2]) / 2]); return [p.x, p.y]; },
+    stats() { return { id: room.id, day: room.day, spot: room.spot, pose: FIG ? FIG.i : null, poses: FIG ? FIG.nS : 0, close: S.close, closeK: S.closeK, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
   };
 }
 window.City = {

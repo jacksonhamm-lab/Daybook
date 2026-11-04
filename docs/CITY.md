@@ -281,10 +281,27 @@ Technical state only. Updated 2026-11-03.
 - **Live:** `main` at `c5ffce3` is build `p6`: the sky following the real sun and weather, behind `?city=1`, flag
   off by default. Live `city.js` checked byte-identical to the repo; `/api/sky` answers from `SKY_AT` (set as a
   secret); `her.glb?v=1` (KV, unchanged since p4) serves.
-  Pushes go `git push origin city-rooms:main`, never the branch itself, until Cloudflare branch builds are confirmed
-  off (§15). Workers Builds took about 15 minutes to pick up the p5 push.
-- **Branch:** `city-sky`, local, on top of `city-rooms`: build `p6`. `BUILD` is `'p6'` in `city.js`, `index.html` and
+  Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
+  off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6.
+- **Branch:** `city-close`, local, on top of `city-sky`: build `p7`. `BUILD` is `'p7'` in `city.js`, `index.html` and
   the `city.js?v=` query.
+- **Built (p7, close up on her, the monitor, the opening):**
+  - **Close up:** a tap on her (her posed box on screen, a little generous; hotspots win) or V moves the view in on
+    her at the glass in 1.15 s, with a longer lens (fov × .78). `def.figure.view(aspect)` places the camera: hips up
+    on a laptop, thighs up on a phone, her face in the top third. Whatever the hour she comes to the glass:
+    `def.figure.close` lists the close-up poses (a wave first, hands on hips, a hand in her hair, arms folded, a look
+    over her shoulder), every 7 to 11 s. They follow the spot's poses in `FIG.keys` (`FIG.nS` is how many are the
+    spot's; `lo`/`hi` the range she cycles). Close-up poses blend even through a big turn; the wave swings for 3 s.
+  - **Stepping back:** a tap anywhere, ‹, Escape, V or browser back. The close-up has its own history entry, so back
+    leaves it before leaving the room. She goes back to the pose she left. Flying out from close up snaps her back
+    (`closeReset`). The tags and the room panel fade out while close; drag-to-look is off.
+  - **DECIDE monitor:** the table's screen is now an ordinary monitor in use (sidebar, two windows of text, a graph),
+    not the A and B cards.
+  - **Opening:** with the flag on, the app's cold-open screen (the rings) is the city's: red corners close in, a scan
+    line opens on DAYBOOK with a red and cyan split that settles, `CITY` and `LV · DAY · TIME` typed below, then the
+    city's own loading bar. With the flag off the rings stay.
+  - **Rig hooks:** `close(on, i)` (snapped, pose i held), `tapHer()` (her middle on screen); `stats()` adds `close`,
+    `closeK`; `pose(i)` and `stats().poses` still count the spot's poses only.
 - **Built (p6, the sky):**
   - **Where and what:** `/api/sky` (Worker) reads the secret `SKY_AT` ("lat,lon"; without it, the visitor's rough
     place from Cloudflare), asks Open-Meteo for the weather there now (code, cloud, precipitation, snowfall, the last
@@ -363,6 +380,9 @@ Technical state only. Updated 2026-11-03.
     answer, previews). Renders of the 13 named skies from the opening view and the street, and the apartment and
     shop by day, dusk, night, rain and snow, show no errors. By day the rain and the drops on the glass are toned down
     so a bright sky doesn't clip to white.
+  - **Close up (p7):** 10/10 at both sizes: she's on screen, a tap on her goes close and the view moves in, a tap
+    steps back and she returns to her spot's poses, in the evening (at the glass) and late (from the bed). Each
+    close-up pose rendered and looked at, at both sizes.
   - **City and shop pixels** at night (the default) match p5 apart from the HUD clock, date and day meter.
   - **Flag off,** against live `p4`: identical at 390×844; at 1366×768 only Dex's clock-dependent bedtime state and a
     count-up caught mid-way differ (Dex's files are unchanged).

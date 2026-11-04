@@ -31,9 +31,9 @@
     }
     on = localStorage.getItem('daybook_home') === 'city';
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p6';
+  window.DAYBOOK_BUILD = 'p7';
   window.DAYBOOK_CITY = on;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p6' : './rider.js'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p7' : './rider.js'; document.head.appendChild(l);
   if (on) {
     document.documentElement.dataset.city = '';
     var c = document.createElement('style');
@@ -43,7 +43,7 @@
 })();
 </script>
 <script type="module">
-if (window.DAYBOOK_CITY) import('./city.js?v=p6').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
+if (window.DAYBOOK_CITY) import('./city.js?v=p7').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
 else import('./rider.js').catch(e => window.logProblem('page', e));
 </script>
 <style>
@@ -96,6 +96,32 @@ input[type=number]{-moz-appearance:textfield}
 .boot-sweep{position:absolute;inset:-25%;pointer-events:none;background:linear-gradient(100deg,transparent 38%,rgba(255,255,255,.10) 50%,transparent 62%);transform:translate3d(-75%,0,0);opacity:0;will-change:transform,opacity;backface-visibility:hidden;animation:sweep 1.3s cubic-bezier(.4,0,.2,1) .25s forwards}
 @keyframes sweep{0%{transform:translate3d(-75%,0,0);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translate3d(75%,0,0);opacity:0}}
 @media (prefers-reduced-motion:reduce){#boot{display:none}}
+/* with the city on, the opening is the city's: red HUD corners close in, a scan line opens on the word, then the city's own loading bar takes over */
+#boot.cb{background:#05040a;font-family:"Avenir Next Condensed","DIN Condensed","Bahnschrift SemiCondensed","Arial Narrow",system-ui,sans-serif;color:#ede6d6}
+.cb-frame{position:relative;width:min(340px,80vw);height:150px;display:grid;place-items:center}
+.cb-c{position:absolute;width:18px;height:18px;border:0 solid #ff4646;opacity:0;animation:cbIn .32s cubic-bezier(.2,.8,.2,1) .05s forwards}
+.cb-c.tl{left:0;top:0;border-width:2px 0 0 2px;transform:translate(-16px,-16px)}.cb-c.tr{right:0;top:0;border-width:2px 2px 0 0;transform:translate(16px,-16px)}
+.cb-c.bl{left:0;bottom:0;border-width:0 0 2px 2px;transform:translate(-16px,16px)}.cb-c.br{right:0;bottom:0;border-width:0 2px 2px 0;transform:translate(16px,16px)}
+@keyframes cbIn{to{opacity:1;transform:none}}
+.cb-line{position:absolute;left:8%;right:8%;top:50%;height:2px;margin-top:-1px;background:#ff4646;box-shadow:0 0 14px rgba(255,70,70,.85);transform:scaleX(0);animation:cbLine .34s cubic-bezier(.6,0,.2,1) .14s forwards,cbLineOut .26s ease-in .56s forwards}
+@keyframes cbLine{to{transform:scaleX(1)}}
+@keyframes cbLineOut{from{transform:scaleX(1)}to{transform:scaleX(1.06) scaleY(26);opacity:0}}
+.cb-word{position:relative;font-weight:800;font-size:clamp(40px,12vw,58px);line-height:1;letter-spacing:.2em;text-indent:.2em;clip-path:inset(50% 0 50% 0);animation:cbOpen .3s cubic-bezier(.2,.8,.2,1) .58s forwards}
+.cb-word::before,.cb-word::after{content:attr(data-t);position:absolute;inset:0;opacity:.85}
+.cb-word::before{color:#ff4646;transform:translateX(-7px);animation:cbG .55s steps(5) .58s forwards}
+.cb-word::after{color:#5ae4ec;transform:translateX(7px);mix-blend-mode:screen;animation:cbG .55s steps(5) .62s forwards}
+@keyframes cbOpen{to{clip-path:inset(0 0 0 0)}}
+@keyframes cbG{40%{transform:translateX(3px)}70%{transform:translateX(-2px)}to{transform:none;opacity:0}}
+.cb-top,.cb-sub{position:absolute;left:26px;right:26px;display:flex;justify-content:space-between;align-items:center;font:600 10px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.14em;color:#958d81;opacity:0;animation:cbFade .3s ease forwards}
+.cb-top{top:14px;animation-delay:.3s}.cb-sub{bottom:14px;animation-delay:.86s}
+.cb-hatch{width:42px;height:8px;background:repeating-linear-gradient(135deg,#ff4646 0 2px,transparent 2px 6px)}
+.cb-tag{background:#ff4646;color:#05040a;padding:3px 6px;font-weight:700}
+.cb-meta{clip-path:inset(0 100% 0 0);animation:cbType .5s steps(22) .95s forwards}
+.cb-meta::after{content:'';display:inline-block;width:6px;height:10px;margin-left:4px;vertical-align:-1px;background:#ff4646;animation:cbBlink .5s steps(1) infinite}
+@keyframes cbFade{to{opacity:1}}
+@keyframes cbType{to{clip-path:inset(0 0 0 0)}}
+@keyframes cbBlink{50%{opacity:0}}
+.cb-scan{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
 .ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .ambient::before{content:"";position:absolute;inset:-20%;background:
   radial-gradient(40% 35% at 18% 8%,color-mix(in srgb,var(--glow) 42%,transparent),transparent 70%),
@@ -3563,10 +3589,18 @@ island.el = $('#island');
   try { sessionStorage.setItem('daybook_booted', '1'); } catch (e) {}
   const { lvl } = levelFor(xpTotal());
   const n = new Date();
-  $('#bootLine').textContent = `Level ${lvl} · ${DOW_LONG[(n.getDay() + 6) % 7]}`;
+  // the city has its own opening, in its HUD style; it hands over to the city's loading bar
+  if (window.DAYBOOK_CITY) {
+    el.className = 'cb';
+    el.innerHTML = '<div class="cb-frame"><i class="cb-c tl"></i><i class="cb-c tr"></i><i class="cb-c bl"></i><i class="cb-c br"></i>'
+      + '<div class="cb-top"><span>SYS // LINK</span><span class="cb-hatch"></span></div><div class="cb-line"></div>'
+      + '<div class="cb-word" data-t="DAYBOOK">DAYBOOK</div><div class="cb-sub"><span class="cb-tag">CITY</span><span class="cb-meta" id="bootLine"></span></div></div><div class="cb-scan"></div>';
+  }
+  const hm = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+  $('#bootLine').textContent = window.DAYBOOK_CITY ? `LV ${lvl} // ${DOW_LONG[(n.getDay() + 6) % 7].toUpperCase()} // ${hm}` : `Level ${lvl} · ${DOW_LONG[(n.getDay() + 6) % 7]}`;
   const end = () => { el.classList.add('gone'); setTimeout(() => el.remove(), 500); };
   el.addEventListener('click', end);
-  setTimeout(end, 1500);
+  setTimeout(end, window.DAYBOOK_CITY ? 1750 : 1500);
 })();
 
 FX.enter = 'enter';
