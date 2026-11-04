@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p7';
+export const BUILD = 'p8';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -250,6 +250,17 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 /* close up on her: the tags and the room's panel step aside */
 #tags,#aptBox,#roomBox{transition:opacity .3s}
 #hud.close #tags,#hud.close #aptBox,#hud.close #roomBox{opacity:0;pointer-events:none}
+/* and her card comes in: who she is, her pose, her mood (his day) and their link (his progress) */
+#herBox{left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px);opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .3s,transform .3s}
+#hud.close #herBox{opacity:1;transform:none;transition:opacity .4s .35s,transform .4s .35s}
+.hon{display:flex;align-items:center;gap:5px;margin-left:10px;font:600 11px/1 var(--hud-font);letter-spacing:.1em;color:var(--hud-green)}
+.hon i{width:6px;height:6px;border-radius:50%;background:var(--hud-green);animation:hon 1.6s steps(2) infinite}
+@keyframes hon{50%{opacity:.25}}
+.hbody{padding:7px 9px 8px;display:grid;gap:5px}
+.hrow{display:flex;align-items:center;gap:6px;min-width:0}
+.hlike{white-space:normal;line-height:1.45}
+@media (max-width:899px){#herBox .hlike{display:none}}
+@media (prefers-reduced-motion:reduce){.hon i{animation:none}}
 
 /* moments */
 .dcol::before,.dcol::after{content:'';position:absolute;top:50%;height:1px;width:7px;background:var(--hud-red)}
@@ -292,6 +303,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   #roomData{display:block;right:18px;bottom:18px;width:232px;transition:opacity .25s}
   #roomBox{right:auto;width:470px;left:18px;bottom:18px}
   #aptBox{right:auto;width:470px;left:18px;bottom:18px}
+  #herBox{left:auto;right:18px;bottom:18px;width:300px}
   .aptl{max-height:min(176px,24vh)}
   .top{padding-left:18px;padding-right:18px}
   .ladder{display:block}
@@ -394,6 +406,19 @@ const MARKUP = `
       <div class="dhead"><b>TODAY</b><span class="mi" id="aptN"></span><button class="rbtn" id="btnAptSheet">PLAN</button></div>
       <div class="tickr"></div>
       <div class="aptl pe" id="aptList"></div>
+    </div>
+  </section>
+  <section class="dbox frame" id="herBox" data-m="room" data-r="apartment" aria-label="Mira Kade" aria-hidden="true">
+    <div class="in">
+      <div class="dhead"><b>MIRA KADE</b><span class="hon"><i></i>ONLINE</span><div class="sq" id="sqH"></div></div>
+      <div class="tickr"></div>
+      <div class="hbody">
+        <div class="mi">RESIDENT // FL 88 // AGE 27</div>
+        <div class="hrow"><div class="pl" id="hPose">HELLO</div><div class="conn" aria-hidden="true"><i></i><b></b></div><span class="mi" id="hPoseN">POSE 01/05</span></div>
+        <div class="rw"><span>MOOD</span><div class="bar" id="bH1"></div><em id="vH1">0</em></div>
+        <div class="rw"><span>LINK</span><div class="bar c" id="bH2"></div><em id="vH2">0</em></div>
+        <div class="mi hlike">LIKES // RAIN ON GLASS / LATE RAMEN / A FINISHED LIST</div>
+      </div>
     </div>
   </section>
   <div id="hint" data-m="room" style="top:calc(var(--st) + 72px)">DRAG TO LOOK</div>
@@ -4497,7 +4522,7 @@ const FIG_POSES = {
   },
   /* side on to him, her chest and head turned back over her shoulder */
   closeShoulder: ({ aim, turn, bone, B, V }) => {
-    turn(B('spine'), V(0, 1, 0), -.25); turn(B('spine2'), V(0, 1, 0), -.2);
+    turn(B('spine'), V(0, 1, 0), -.15); turn(B('spine2'), V(0, 1, 0), -.1);
     aim(bone('l', 'leg'), bone('l', 'shin'), V(.04, -1, .05)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.1, -1, -.04));
     aim(bone('l', 'up'), bone('l', 'lo'), V(.18, -1, -.04)); aim(bone('l', 'lo'), bone('l', 'hand'), V(.05, -1, .18));
     aim(bone('r', 'up'), bone('r', 'lo'), V(-.5, -.82, -.2)); aim(bone('r', 'lo'), bone('r', 'hand'), V(.62, -.6, .2));
@@ -4520,7 +4545,9 @@ function poseFigure(root, f) {
   root.updateMatrixWorld(true);
   const s = f.phone === 'l' ? 'l' : 'r', two = f.phone === 'both' || f.phone === 'tablet', pts = two ? [bone('l', 'mid') || bone('l', 'hand'), bone('r', 'mid') || bone('r', 'hand')] : [bone(s, 'index'), bone(s, 'pinky')];
   const grip = f.phone && pts[0] && pts[1] && head ? { a: pts[0].getWorldPosition(V(0, 0, 0)), b: pts[1].getWorldPosition(V(0, 0, 0)), head: head.getWorldPosition(V(0, 0, 0)), hold: bone(s, 'hand') } : null;
-  return { grip, idle: { chest: find('spine2', 'upperchest', 'cupperchest'), neck, head, hand: grip && !two ? grip.hold : null, wave: f.wave ? bone('r', 'lo') : null } };
+  /* close up she also shifts her weight (hips, legs, low back) and her arms swing clear of her body between poses */
+  const cl = f.close ? { hips, spine: find('spine', 'cspine'), legL: bone('l', 'leg'), legR: bone('r', 'leg'), armL: bone('l', 'up'), armR: bone('r', 'up'), foreL: bone('l', 'lo'), foreR: bone('r', 'lo'), handL: bone('l', 'hand'), handR: bone('r', 'hand') } : {};
+  return { grip, idle: { chest: find('spine2', 'upperchest', 'cupperchest'), neck, head, hand: grip && !two ? grip.hold : null, wave: f.wave ? bone('r', 'lo') : null, ...cl } };
 }
 
 function addFigure(f) {
@@ -4552,17 +4579,22 @@ function addFigure(f) {
       const out = new THREE.Box3(); for (let k = 0; k < 8; k++) out.expandByPoint(v.set(k & 1 ? bx.max.x : bx.min.x, k & 2 ? bx.max.y : bx.min.y, k & 4 ? bx.max.z : bx.min.z).applyQuaternion(ry).multiplyScalar(s).add(P));
       /* the idle turns happen in each bone's own frame: her chest's and head's axes, as this pose leaves them */
       const ax = {}; for (const [k, bn] of Object.entries(idle)) if (bn) { bn.getWorldQuaternion(qq).invert(); ax[k] = { bone: bones.indexOf(bn), x: new THREE.Vector3(1, 0, 0).applyQuaternion(qq), y: new THREE.Vector3(0, 1, 0).applyQuaternion(qq), z: new THREE.Vector3(0, 0, 1).applyQuaternion(qq) }; }
+      /* close up: where each upper arm points (her frame), for how far it swings between poses */
+      const dir = (x, y) => idle[y].getWorldPosition(new THREE.Vector3()).sub(idle[x].getWorldPosition(v)).normalize();
+      const arm = idle.armL && idle.foreL && idle.handL && idle.armR && idle.foreR && idle.handR ? [['armL', 'foreL', 'handL'], ['armR', 'foreR', 'handR']].map(([u, l, h]) => { const d = dir(u, l); return { d, bend: d.angleTo(dir(l, h)) }; }) : null;
       let ph = null;
       /* held in one hand, the phone lies on the palm side of the knuckles, toward her face, not inside the hand */
       if (grip) { const X = grip.a.clone().sub(grip.b).normalize(), m = grip.a.clone().add(grip.b).multiplyScalar(.5), n = grip.head.clone().sub(m); n.addScaledVector(X, -n.dot(X)).normalize(); if (p.phone === 'l' || p.phone === 'r') m.addScaledVector(n, .022 / s); ph = { prop: p.phone === 'tablet' ? 'tablet' : 'phone', bone: grip.hold, m: grip.hold.matrixWorld.clone().invert().multiply(new THREE.Matrix4().makeBasis(X, new THREE.Vector3().crossVectors(n, X), n).setPosition(m)) }; }
-      return { q: bones.map(b => b.quaternion.clone()), P, R, ph, ax, close: !!p.close, y0: out.min.y, y1: out.max.y, box: [out.min, out.max].map(e => [e.x - room.box.x, e.y - room.box.y, e.z - room.box.z].map(x => Math.round(x * 1e3) / 1e3)) };
+      return { q: bones.map(b => b.quaternion.clone()), P, R, ph, ax, arm, pose: p.pose, close: !!p.close, y0: out.min.y, y1: out.max.y, box: [out.min, out.max].map(e => [e.x - room.box.x, e.y - room.box.y, e.z - room.box.z].map(x => Math.round(x * 1e3) / 1e3)) };
     });
     /* both her programs now (skinned, and the plain one for what she holds), not in the middle of a blink */
     root.add(props.phone, props.tablet); renderer.compile(root, CAM, SC.room); root.remove(props.phone, props.tablet);
     root.scale.setScalar(s); root.visible = room.clutter.visible; SC.room.add(root);
     /* the spot's poses come first, then the close-up ones (f.nS: how many are the spot's) */
     const nS = f.nS || keys.length;
-    FIG = { root, bones, keys, props, s, nS, lo: 0, hi: nS, i: Math.floor(Date.now() / 6e4) % nS, go: null, n: 0, next: S.t + 30, t1: S.t, ph: null, q: new THREE.Quaternion(), v: new THREE.Vector3() };
+    /* close up, between poses: her body moves first, her arms a beat later, her hands last */
+    const lag = new Float32Array(bones.map(b => { const n = b.name.toLowerCase(); return /hand|thumb|index|middle|ring|pinky|little/.test(n) ? .24 : /forearm|lowerarm/.test(n) ? .17 : /arm/.test(n) ? .1 : /shoulder/.test(n) ? .05 : 0; }));
+    FIG = { root, bones, keys, props, s, nS, lag, lo: 0, hi: nS, i: Math.floor(Date.now() / 6e4) % nS, go: null, n: 0, next: S.t + 30, t1: S.t, ph: null, q: new THREE.Quaternion(), v: new THREE.Vector3() };
     if (S.close) figClose(true);
     figTick(S.t);
   }).catch(e => APP.log(e));
@@ -4572,7 +4604,34 @@ function addFigure(f) {
 const ease = u => u * u * (3 - 2 * u);
 /* into key pose j: a blend if it's a shift where she is, a blink if she'd have to pass through the furniture */
 /* close up she turns where she stands, so a big turn there is a blend too */
-function figGo(j, t) { const F = FIG, a = F.keys[F.i], b = F.keys[j]; const far = a.P.distanceTo(b.P) > .45 || (a.R.angleTo(b.R) > .7 && !(a.close && b.close)); F.go = { j, t0: t, far, dur: far ? .8 : 2.2 }; }
+function figGo(j, t) {
+  const F = FIG, a = F.keys[F.i], b = F.keys[j], st = a.close && b.close && !!a.arm && !!b.arm;
+  const far = a.P.distanceTo(b.P) > .45 || (a.R.angleTo(b.R) > .7 && !st);
+  /* close up: staggered, and each arm swings out in front of her by how far it has to go */
+  F.go = { j, t0: t, far, st, arc: st ? [0, 1].map(s => a.arm[s].d.angleTo(b.arm[s].d)) : null, dur: far ? .8 : st ? 2.6 : 2.2 };
+}
+/* close up, mid-move: each upper arm travels straight from where it was to where it's going, bowed out in front of
+   her (not round through her side, over her head or through her body), and the elbow folds in on the way, the way a
+   hand travels. The bone blend keeps the twist; this only sets where the arm points and how bent it is */
+const SW = { A: new THREE.Vector3(), E: new THREE.Vector3(), H: new THREE.Vector3(), d: new THREE.Vector3(), d2: new THREE.Vector3(), f: new THREE.Vector3(), q: new THREE.Quaternion(), pq: new THREE.Quaternion() };
+function figSwing(k, b, u) {
+  const F = FIG, ax = k.ax, { A, E, H, d, d2, f, q, pq } = SW;
+  const rot = (bn, qw) => { bn.parent.getWorldQuaternion(pq); bn.quaternion.premultiply(pq.clone().invert().multiply(qw).multiply(pq)); bn.updateMatrixWorld(true); };
+  const lw = bn => ease(Math.min(1, Math.max(0, (u - F.lag[bn]) / .76)));
+  F.root.updateMatrixWorld(true); f.set(0, 0, 1);
+  ['L', 'R'].forEach((s, i) => {
+    const arc = F.go.arc[i], xu = ax['arm' + s], xl = ax['fore' + s], xh = ax['hand' + s]; if (arc < .1 || !xu || !xl || !xh) return;
+    const up = F.bones[xu.bone], lo = F.bones[xl.bone], hd = F.bones[xh.bone], ka = k.arm[i], kb = b.arm[i];
+    const wa = lw(xu.bone), wl = lw(xl.bone), bump = Math.sin(Math.PI * wa);
+    d2.copy(ka.d).multiplyScalar(1 - wa).addScaledVector(kb.d, wa).addScaledVector(f, Math.min(.8, arc * .4) * bump).normalize().applyQuaternion(F.root.quaternion);
+    up.getWorldPosition(A); lo.getWorldPosition(E); d.subVectors(E, A).normalize();
+    rot(up, q.setFromUnitVectors(d, d2));
+    up.getWorldPosition(A); lo.getWorldPosition(E); hd.getWorldPosition(H); d.subVectors(E, A).normalize(); d2.subVectors(H, E).normalize();
+    const now = d.angleTo(d2), want = Math.min(2.5, ka.bend * (1 - wl) + kb.bend * wl + Math.min(.6, arc * .4) * Math.sin(Math.PI * wl));
+    const n = d.cross(d2); if (n.length() < .08) return;
+    rot(lo, q.setFromAxisAngle(n.normalize(), want - now));
+  });
+}
 /* into the close-up poses (and back to the one she left, as the view pulls back). snap: no blend, for leaving the room */
 function figClose(on, snap) {
   const F = FIG; if (!F || F.keys.length <= F.nS || on === (F.lo === F.nS)) return;
@@ -4586,22 +4645,31 @@ function figTick(t) {
   const F = FIG; if (!F || !F.root.visible || S.mode === 'city') return;
   const K = F.keys, nR = F.hi - F.lo;
   if (nR > 1 && !F.go && t > F.next) figGo(F.lo + ((F.i - F.lo + 1) % nR + nR) % nR, t);
-  let w = 0, k = K[F.i];
+  let w = 0, u = 0, k = K[F.i];
   if (F.go) {
-    const u = Math.min(1, (t - F.go.t0) / F.go.dur);
+    u = Math.min(1, (t - F.go.t0) / F.go.dur);
     if (F.go.far) { const c = K[u < .5 ? F.i : F.go.j]; FIG_CUT.value = REDUCED ? 1e4 : c.y0 - .05 + (c.y1 - c.y0 + .1) * ease(Math.abs(u * 2 - 1)); if (u >= .5) k = K[F.go.j]; }
-    else w = ease(u);
+    else w = ease(F.go.st ? Math.min(1, u / .76) : u);
     if (u >= 1) { F.i = F.go.j; k = K[F.i]; F.go = null; FIG_CUT.value = 1e4; w = 0; F.n++; F.t1 = t; if (F.next !== Infinity) F.next = t + (k.close ? 7 + (F.n * 3.7) % 4 : 40 + (F.n * 13.7) % 30); }
   }
-  const b = F.go && !F.go.far ? K[F.go.j] : null;
-  for (let i = 0; i < F.bones.length; i++) { const q = F.bones[i].quaternion.copy(k.q[i]); if (b) q.slerp(b.q[i], w); }
+  const b = F.go && !F.go.far ? K[F.go.j] : null, G = b && F.go.st ? F.lag : null;
+  for (let i = 0; i < F.bones.length; i++) { const q = F.bones[i].quaternion.copy(k.q[i]); if (b) q.slerp(b.q[i], G ? ease(Math.min(1, Math.max(0, (u - G[i]) / .76))) : w); }
   if (b) { F.root.position.lerpVectors(k.P, b.P, w); F.root.quaternion.slerpQuaternions(k.R, b.R, w); } else { F.root.position.copy(k.P); F.root.quaternion.copy(k.R); }
+  if (G) figSwing(k, b, u);
   const on = b && w > .5 ? b : k;
   if (!REDUCED) {
     const turn = (x, axis, ang) => { if (x) F.bones[x.bone].quaternion.multiply(F.q.setFromAxisAngle(x[axis], ang)); };
-    turn(on.ax.chest, 'x', -(.5 + .5 * Math.sin(t * 1.5)) * .016); turn(on.ax.neck, 'x', (.5 + .5 * Math.sin(t * 1.5)) * .01);
-    /* close up her eyes stay on him: the head barely wanders */
-    const calm = on.close ? .3 : on.ph ? .35 : 1;
+    /* close up she breathes deeper and her weight rolls slowly from hip to hip (her legs held, so her feet stay put) */
+    const br = .5 + .5 * Math.sin(t * 1.5), cl = on.close ? 1.8 : 1;
+    turn(on.ax.chest, 'x', -br * .016 * cl); turn(on.ax.neck, 'x', br * .01 * cl);
+    if (on.close) {
+      const sw = Math.sin(t * .42) * .04 + Math.sin(t * .17 + 2) * .015;
+      turn(on.ax.hips, 'z', sw); turn(on.ax.legL, 'z', -sw); turn(on.ax.legR, 'z', -sw);
+      turn(on.ax.spine, 'z', -sw * .6); turn(on.ax.spine, 'y', Math.sin(t * .29 + 1) * .03);
+      turn(on.ax.head, 'z', Math.sin(t * .21 + .7) * .04);
+    }
+    /* close up her eyes stay on him: the head wanders less */
+    const calm = on.close ? .5 : on.ph ? .35 : 1;
     turn(on.ax.head, 'y', (Math.sin(t * .23) * .16 + Math.sin(t * .61 + 1.3) * .07) * calm); turn(on.ax.head, 'x', Math.sin(t * .17 + .5) * .05 * calm);
     turn(on.ax.hand, 'x', Math.pow(Math.max(0, Math.sin(t * 2.6)), 8) * .08);
     /* the wave: a few seconds once she's turned to him, then the hand rests up */
@@ -4728,7 +4796,7 @@ const ROOM_DEF = {
         { pose: 'closeHips', at: [3.7, .05, .55], ry: -1.76, look: .05 },
         { pose: 'closeHair', at: [3.7, .05, .55], ry: -1.76, look: -.05 },
         { pose: 'closeFold', at: [3.7, .05, .55], ry: -1.76, look: 0 },
-        { pose: 'closeShoulder', at: [3.7, .05, .55], ry: -.01, look: -1.1 }],
+        { pose: 'closeShoulder', at: [3.7, .05, .55], ry: -.8, look: -.6 }],
       view: a => a < .8 ? { p: local(2.57, 1.46, .33), l: local(3.7, 1.38, .55) } : { p: local(2.42, 1.5, .31), l: local(3.7, 1.42, .55) } },
     rest: a => a < .8 ? { p: local(-3.2, 1.62, 0), l: local(3, 1.1, 0) } : { p: local(-3.25, 1.6, -.1), l: local(3, 1.25, -.1) },
     flight(c, r, a) {
@@ -4994,6 +5062,7 @@ function hudInit() {
   /* readouts */
   $('#ringA').innerHTML = ringHTML('0', 0, 'PROGRESS'); $('#ringB').innerHTML = ringHTML('0', 0, 'PERIOD'); $('#ringC').innerHTML = ringHTML('0', 0, '% GOAL');
   barInto($('#bG'), 18, 0); S.ringIn = 0; for (const id of ['#cellsA', '#cellsB']) { const el = $(id); el.innerHTML = '<i class="on"></i>'.repeat(3) + '<i></i>'.repeat(1); }
+  barInto($('#bH1'), 18, 0); barInto($('#bH2'), 18, 0);
   barInto($('#bA'), 18, 0); barInto($('#bB'), 18, 0); barInto($('#bC'), 18, 0); barInto($('#bD'), 18, 0); barInto($('#bE'), 18, 0); barInto($('#bF'), 18, 0);
   sqInto($('#sqA'), 9, 6); sqInto($('#sqB'), 9, 3);
   /* ladder on the side, laptop only */
@@ -5079,13 +5148,27 @@ function onHer(x, y) {
 function closeUp(on, pop) {
   if (on === S.close) return;
   if (on) { if (S.mode !== 'room' || S.sheet || !FIG || !room.def.figure || !room.def.figure.close) return; if (!pop) history.pushState({ city: room.id, close: 1 }, ''); }
-  S.close = on; figClose(on); hudEl.classList.toggle('close', on); $(room.def.panel).inert = on;
+  S.close = on; figClose(on); hudEl.classList.toggle('close', on); $(room.def.panel).inert = on; $('#herBox').setAttribute('aria-hidden', String(!on)); if (on) herCard();
   const h = $('#hint'); h.textContent = on ? 'TAP TO STEP BACK' : 'DRAG TO LOOK'; h.style.opacity = 1; clearTimeout(S.hintT); S.hintT = setTimeout(() => { h.style.opacity = 0; }, on ? 2600 : 1800);
   glitchHud(.2); APP.sfx(on ? 'open' : 'back');
 }
+/* her card: mood follows his day (today's tasks done), link his overall progress; the pose line follows her */
+const HER_POSE = { closeWave: 'HELLO', closeHips: 'HANDS ON HIPS', closeHair: 'HAND IN HAIR', closeFold: 'ARMS FOLDED', closeShoulder: 'OVER THE SHOULDER' };
+function herCard() {
+  try {
+    const P = APP.plan(), n = P.today.length, mood = n ? .35 + .65 * P.done / n : .8, link = HOME ? pct01(HOME.overall) : 0;
+    setBar($('#bH1'), mood); setText('#vH1', String(Math.round(mood * 100))); setBar($('#bH2'), link); setText('#vH2', Math.round(link * 100) + '%');
+    sqInto($('#sqH'), 5, Math.max(1, Math.round(mood * 5)));
+  } catch (e) { APP.log(e); }
+  herPose();
+}
+function herPose() {
+  if (!FIG) return; const j = FIG.go ? FIG.go.j : FIG.i, k = FIG.keys[j]; if (!k.close) return;
+  setText('#hPose', HER_POSE[k.pose] || 'HELLO'); setText('#hPoseN', `POSE ${String(j - FIG.nS + 1).padStart(2, '0')}/${String(FIG.keys.length - FIG.nS).padStart(2, '0')}`);
+}
 function stepBack() { if (history.state && history.state.close) history.back(); else closeUp(false); }
 /* leaving the room from close up: no pull back, she's simply where the clock says */
-function closeReset() { if (!S.close && !S.closeK) return; S.close = false; S.closeK = 0; figClose(false, true); hudEl.classList.remove('close'); const p = room.def && $(room.def.panel); if (p) p.inert = false; applyFov(); }
+function closeReset() { if (!S.close && !S.closeK) return; S.close = false; S.closeK = 0; figClose(false, true); hudEl.classList.remove('close'); $('#herBox').setAttribute('aria-hidden', 'true'); const p = room.def && $(room.def.panel); if (p) p.inert = false; applyFov(); }
 function tapIcon(k) {
   if (S.mode !== 'city') return;
   const e = iconEls.find(i => i.k === k);
@@ -5210,6 +5293,7 @@ function hudFrame(dt) {
   const t = S.t; hudFrameN++;
   eqStep(dt, t);
   wave($('#eq'), (x, w, h, d) => drawEq(x, w, h, d, t));
+  if (S.close) herPose();
   if (S.mode === 'city') {
     const safeTop = (parseFloat(getComputedStyle(hudEl).getPropertyValue('--st')) || 0) + 84;
     const cover = $('#cityBox').getBoundingClientRect();
@@ -5315,6 +5399,8 @@ function rig() {
     pose(i, go) { if (!FIG) return 0; const n = FIG.nS; if (go) figGo(i % n, S.t); else { FIG.i = i % n; FIG.go = null; FIG_CUT.value = 1e4; } FIG.next = Infinity; return n; },
     /* close up on her: on, and pose i of the close-up set held (null: let them run). Snapped, no easing */
     close(on, i = 0) { closeUp(!!on, true); S.closeK = on ? 1 : 0; applyFov(); if (!FIG) return 0; const n = FIG.keys.length - FIG.nS; if (on && i != null) { FIG.i = FIG.nS + i % n; FIG.go = null; FIG_CUT.value = 1e4; FIG.t1 = S.t; FIG.next = Infinity; } else if (!on) { if (FIG.go) FIG.i = FIG.go.j; FIG.go = null; FIG_CUT.value = 1e4; } return n; },
+    /* close up, start the move into close pose j now (held there once it's done) */
+    closeGo(j) { if (!FIG) return 0; figGo(FIG.nS + j % (FIG.keys.length - FIG.nS), S.t); FIG.next = Infinity; return FIG.go.dur; },
     tapHer() { const b = FIG && FIG.keys[FIG.i].box; if (!b) return null; const p = project([room.box.x + (b[0][0] + b[1][0]) / 2, room.box.y + (b[0][1] + b[1][1]) / 2, room.box.z + (b[0][2] + b[1][2]) / 2]); return [p.x, p.y]; },
     stats() { return { id: room.id, day: room.day, spot: room.spot, pose: FIG ? FIG.i : null, poses: FIG ? FIG.nS : 0, close: S.close, closeK: S.closeK, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
   };

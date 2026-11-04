@@ -276,15 +276,27 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 ## Handoff
 
-Technical state only. Updated 2026-11-03.
+Technical state only. Updated 2026-11-04.
 
-- **Live:** `main` at `c5ffce3` is build `p6`: the sky following the real sun and weather, behind `?city=1`, flag
-  off by default. Live `city.js` checked byte-identical to the repo; `/api/sky` answers from `SKY_AT` (set as a
-  secret); `her.glb?v=1` (KV, unchanged since p4) serves.
+- **Live:** `main` at `8a08832` is build `p7`: the close up on her, the DECIDE monitor and the city opening, behind
+  `?city=1`, flag off by default. Live `city.js` checked byte-identical to the repo; `/api/sky` answers from `SKY_AT`
+  (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
-  off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6.
-- **Branch:** `city-close`, local, on top of `city-sky`: build `p7`. `BUILD` is `'p7'` in `city.js`, `index.html` and
-  the `city.js?v=` query.
+  off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 and p7.
+- **Branch:** `city-close`, local: build `p8`. `BUILD` is `'p8'` in `city.js`, `index.html` and the `city.js?v=`
+  query.
+- **Built (p8, her motion close up, her card):**
+  - **Moves between close-up poses** are staggered (`FIG.lag`: body first, upper arms .1 later, forearms .17,
+    hands .24, over 2.6 s). `figSwing` then sets where each upper arm points, straight from the old pose's direction
+    to the new one's, bowed out in front of her, and folds the elbow in on the way (`key.arm`: each upper arm's
+    direction and elbow bend, her frame). No more arms swinging out through her side, over her head or through her.
+  - **Over the shoulder** turns her about half as far (ry -.8, look -.6), so she doesn't spin on the spot.
+  - **Holding a pose** close up: deeper breath, her weight rolling slowly hip to hip (hips tilt, legs counter, so
+    her feet stay put), the low back answering, a little head tilt; the head wanders at .5 (was .3).
+  - **Her card** (`#herBox`): MIRA KADE, online, resident FL 88, age 27; her current pose and its number; MOOD
+    (today's tasks done, .35 to 1, .8 with nothing due) and LINK (overall progress); a LIKES line on a laptop only.
+    Fades in once the view has moved in; bottom right on a laptop, along the bottom on a phone.
+  - **Rig hook:** `closeGo(j)` starts the move into close pose j.
 - **Built (p7, close up on her, the monitor, the opening):**
   - **Close up:** a tap on her (her posed box on screen, a little generous; hotspots win) or V moves the view in on
     her at the glass in 1.15 s, with a longer lens (fov × .78). `def.figure.view(aspect)` places the camera: hips up
