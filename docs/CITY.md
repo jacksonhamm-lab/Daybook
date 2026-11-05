@@ -278,13 +278,13 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 Technical state only. Updated 2026-11-04.
 
-- **Live:** `main` at `51a4f8b` is build `p10`: p7 (the close up on her, the DECIDE monitor, the city opening), p8
-  (her natural close-up motion and her card), p9 (her forearms) and p10 (the gym, every room usable in place), behind
+- **Live:** `main` at `cf88005` is build `p11`: p7 (the close up on her, the DECIDE monitor, the city opening), p8
+  (her natural close-up motion and her card), p9 (her forearms), p10 (the gym, every room usable in place) and p11 (split edits, one card at a time), behind
   `?city=1`, flag off by default. Live `city.js` checked byte-identical to the repo; `/api/sky` answers from `SKY_AT`
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-close`, local: build `p11`. `BUILD` is `'p11'` in `city.js`, `index.html` and the `city.js?v=`
+- **Branch:** `city-close`, pushed as build `p11`. `BUILD` is `'p11'` in `city.js`, `index.html` and the `city.js?v=`
   query.
 - **Built (p11, his notes on p10, 2026-11-05):**
   - **The split edits in the gym.** SPLIT card: EDIT THE SPLIT, a select per weekday (`data-gtpl`, `CityApp.tplSet(i, k)`,
@@ -475,5 +475,5 @@ Technical state only. Updated 2026-11-04.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. His go to push p11. Then his review of the gym live; the rainy-glass street through the door is open to tweak.
+  1. His review of p11 live (pushed 2026-11-05); the rainy-glass street through the door is open to tweak.
   2. Then the ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.
