@@ -278,13 +278,13 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 Technical state only. Updated 2026-11-04.
 
-- **Live:** `main` at `dffa385` is build `p9`: p7 (the close up on her, the DECIDE monitor, the city opening), p8
-  (her natural close-up motion and her card) and p9 (her forearms), behind
+- **Live:** `main` at `51a4f8b` is build `p10`: p7 (the close up on her, the DECIDE monitor, the city opening), p8
+  (her natural close-up motion and her card), p9 (her forearms) and p10 (the gym, every room usable in place), behind
   `?city=1`, flag off by default. Live `city.js` checked byte-identical to the repo; `/api/sky` answers from `SKY_AT`
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
-  off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p9. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-close`, local: build `p10`. `BUILD` is `'p10'` in `city.js`, `index.html` and the `city.js?v=`
+  off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
+- **Branch:** `city-close`, pushed as build `p10`. `BUILD` is `'p10'` in `city.js`, `index.html` and the `city.js?v=`
   query.
 - **Built (p10, the gym, round 1 for his review):** Train now flies into the gym (`ICONS` train `room: 'gym'`).
   - **Where:** `GR`, a 12 x 10 x 5 bay inside the northside gym, its +X wall the building's real east wall
@@ -466,5 +466,5 @@ Technical state only. Updated 2026-11-04.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. His review of the gym (round 1 screenshots sent 2026-11-04); then a go to push p10.
+  1. His review of the gym live (p10 pushed 2026-11-04); the rainy-glass street through the door is open to tweak.
   2. Then the ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.
