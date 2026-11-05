@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p9';
+export const BUILD = 'p10';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -172,6 +172,113 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #hud.room[data-room=apartment] .brand{min-width:0}
 #hud.room[data-room=apartment] .brand b{display:block;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:430px){#hud.room[data-room=apartment] .eqw{display:none}#hud.room[data-room=apartment] .brand{flex:1}}
+/* the gym: today's session over the week, and its sheet's cards */
+#gymBox{left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px)}
+#gymBox .dhead{padding-right:6px}
+#gymBox .rbtn{margin-left:auto}
+#gymBox .dhead .mi{margin-left:10px}
+#hud[data-room=gym] .cards{grid-template-columns:minmax(0,1fr)}
+#hud.room[data-room=gym] .q,#hud.room[data-room=gym] .back{flex:none}
+#hud.room[data-room=gym] .brand{min-width:0}
+@media (max-width:430px){#hud.room[data-room=gym] .eqw{display:none}#hud.room[data-room=gym] .brand{flex:1}}
+.gyb{padding:6px 9px 8px;display:grid;gap:6px}
+#gyName{color:var(--hud-text);opacity:1;overflow:hidden;text-overflow:ellipsis}
+.gwk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.gwk i{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0 6px;font-style:normal;box-shadow:inset 0 0 0 1px var(--hud-hair)}
+.gwk i b{font:600 9px/1 var(--micro);letter-spacing:.06em;color:var(--hud-text3)}
+.gwk i span{font:700 13px/1 var(--hud-font);letter-spacing:.04em;color:var(--hud-text2)}
+.gwk i.on{box-shadow:inset 0 -3px 0 var(--c),inset 0 0 0 1px var(--hud-hair)}
+.gwk i.on span{color:var(--hud-text)}
+.gwk i.td{box-shadow:inset 0 0 0 1.5px var(--hud-yellow)}
+.gwk i.td.on{box-shadow:inset 0 -3px 0 var(--c),inset 0 0 0 1.5px var(--hud-yellow)}
+.ssh{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.ssh>b{font:700 20px/1 var(--hud-font);color:var(--hud-ink);background:var(--c);padding:7px 8px;flex:none}
+.ssh strong{display:block;font:600 16px/1.2 var(--body);color:var(--hud-text)}
+.ssh small{display:block;margin-top:2px;font:12px/1.3 var(--body);color:var(--hud-text2)}
+.exr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;min-height:42px;border-top:1px solid var(--hud-hair)}
+.exr:first-child{border-top:0}
+.exr b{display:block;font:600 14px/1.2 var(--body);color:var(--hud-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exr small{display:block;margin-top:3px;font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3)}
+.exr>span{display:flex;gap:4px}
+.exr.warm b{color:var(--hud-text2);font-weight:500}
+.exr.done b{opacity:.55}
+.st{width:40px;height:40px;display:grid;place-items:center;font:700 14px/1 var(--hud-font);color:var(--hud-cyan);box-shadow:inset 0 0 0 1.5px var(--hud-cyan-line);clip-path:polygon(0 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%);transition:background .12s,color .12s}
+.st.on{background:var(--hud-cyan);color:var(--hud-ink);box-shadow:none}
+.exr.warm .st{--hud-cyan:var(--hud-text3)}
+.bnf{display:flex;gap:6px;grid-column:1/-1;padding-bottom:9px}
+.bnf input{flex:1;min-width:0;min-height:44px;padding:0 10px;font:600 16px/1 var(--body);color:var(--hud-text);background:var(--hud-s2);border:0;box-shadow:inset 0 0 0 1px var(--hud-hair2);border-radius:0;-webkit-appearance:none;appearance:none}
+.bnf input:focus{outline:none;box-shadow:inset 0 0 0 1.5px var(--hud-cyan)}
+.bnf input::placeholder{color:var(--hud-text3);font-size:12px;letter-spacing:.08em}
+.wk.sel b{box-shadow:inset 0 -2px 0 var(--hud-red)}
+/* the rooms' own editors: fields in the HUD's style */
+.hin{width:100%;min-width:0;min-height:44px;padding:0 10px;font:600 16px/1.3 var(--body);color:var(--hud-text);background:var(--hud-s2);border:0;border-radius:0;box-shadow:inset 0 0 0 1px var(--hud-hair2);-webkit-appearance:none;appearance:none}
+textarea.hin{padding:10px;resize:vertical;min-height:64px;display:block}
+.hin:focus{outline:none;box-shadow:inset 0 0 0 1.5px var(--hud-cyan)}
+.hin::placeholder{color:var(--hud-text3);font-size:12px;letter-spacing:.08em}
+input.hin[type=time],input.hin[type=number]{font-variant-numeric:tabular-nums;color-scheme:dark}
+.hadd{display:flex;gap:6px;margin-top:9px;align-items:flex-start}
+.nadd{margin:0 0 8px}
+.ted{grid-column:1/-1;padding:2px 0 10px 44px;display:grid;gap:7px}
+.tacts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tacts .rbtn,.sed .rbtn{min-height:40px;padding:0 11px}
+.tm{display:flex;align-items:center;gap:6px;font:600 10px/1 var(--micro);letter-spacing:.06em;color:var(--hud-text3)}
+.tm .hin{width:118px;min-height:40px}
+.rbtn.dng{color:var(--hud-alert);box-shadow:inset 0 0 0 1px rgba(255,61,79,.45);background:linear-gradient(315deg,var(--hud-alert) 0 5px,transparent 0)}
+.trow.open{background:var(--hud-s2)}
+.trow.open .ttl b{white-space:normal}
+.nhit{display:block;width:100%;text-align:left;min-height:30px}
+.nrow.open{background:var(--hud-s2);padding:7px 8px}
+.ned{display:grid;gap:7px;padding:4px 0 10px}
+.sed{margin-top:10px;padding-top:9px;border-top:1px solid var(--hud-red-line);display:grid;gap:8px}
+.sedh{display:flex;justify-content:space-between;align-items:baseline;font:700 13px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-text)}
+.sedh em{font-style:normal;color:var(--hud-text2)}
+.sedg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.sedg label{display:grid;gap:4px;font:600 9px/1 var(--micro);letter-spacing:.06em;color:var(--hud-text3);min-width:0}
+.sh.sel{box-shadow:inset 2px 0 0 var(--hud-red);background:var(--hud-s2)}
+/* the sheet's global cards (quick add, progress, system) show alone, and the room's cards without them */
+#sheet:not(.g) .card[data-g],#sheet.g .card:not([data-g]),#sheet .card[data-g]:not(.on){display:none}
+.qprev{margin-top:8px;min-height:40px;display:grid;gap:5px;font:13px/1.3 var(--body);color:var(--hud-text2)}
+.qprev b{font:600 15px/1.2 var(--body);color:var(--hud-text)}
+.qprev .pills{display:flex;flex-wrap:wrap;gap:5px}
+.qprev .pills span{font:600 10px/1 var(--micro);letter-spacing:.05em;padding:4px 6px;color:var(--hud-ink);background:var(--k,var(--hud-cyan))}
+.gtr{display:grid;gap:4px;margin-top:8px}
+.gtr div{display:grid;grid-template-columns:18px minmax(0,1fr);gap:8px;align-items:start;padding:6px 0;border-top:1px solid var(--hud-hair);font:12px/1.3 var(--body);color:var(--hud-text3)}
+.gtr div i{width:12px;height:12px;margin-top:2px;box-shadow:inset 0 0 0 1.5px var(--hud-text3)}
+.gtr div.got i{background:var(--hud-yellow);box-shadow:none}
+.gtr div b{display:block;font:600 14px/1.2 var(--body);color:var(--hud-text2)}
+.gtr div.got b{color:var(--hud-text)}
+.sgp{border-top:1px solid var(--hud-hair);padding:8px 0}
+.sgp:first-child{border-top:0}
+.sgp>b{display:block;font:700 12px/1 var(--hud-font);letter-spacing:.1em;color:var(--hud-text);margin-bottom:7px}
+.sgp p{margin:6px 0 0;font:12px/1.35 var(--body);color:var(--hud-text3)}
+.sgg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.sgg label{display:grid;gap:4px;font:600 9px/1 var(--micro);letter-spacing:.06em;color:var(--hud-text3);min-width:0}
+.sgg label.w{grid-column:1/-1}
+select.hin{color-scheme:dark}
+.seg2{display:flex;flex-wrap:wrap;gap:6px}
+.seg2 .rbtn{min-height:40px;padding:0 11px}
+.jrow{padding:8px 0;border-top:1px solid var(--hud-hair);display:grid;gap:6px}
+.jrow:first-child{border-top:0}
+.jrow .jt{display:flex;align-items:baseline;gap:8px;min-width:0}
+.jrow .jt b{font:600 14px/1.2 var(--body);color:var(--hud-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jrow .jt small{font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3);white-space:nowrap}
+.jrow .jt a{margin-left:auto;font:700 11px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-cyan);text-decoration:none;padding:8px 0 8px 8px}
+.jst{display:flex;flex-wrap:wrap;gap:4px}
+.jst button{min-height:32px;padding:0 8px;font:700 10px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-text3);box-shadow:inset 0 0 0 1px var(--hud-hair2)}
+.jst button.on{color:var(--hud-ink);background:var(--k);box-shadow:none}
+.jadd{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:9px}
+.jadd input[name=link]{grid-column:1/-1}
+.jadd .rbtn{grid-column:1/-1}
+.cd{display:inline-block;min-width:28px;margin-right:7px;padding:3px 4px;font:700 11px/1 var(--hud-font);font-style:normal;text-align:center;color:var(--hud-ink);background:var(--c)}
+.bn{display:grid;grid-template-columns:minmax(0,1fr) 72px 70px;gap:8px 8px;align-items:center;min-height:50px;padding-top:8px;border-top:1px solid var(--hud-hair)}
+.bn:first-child{border-top:0}
+.bn b{display:block;font:700 13px/1.1 var(--hud-font);letter-spacing:.08em;color:var(--hud-text)}
+.bn small{display:block;margin-top:4px;font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3)}
+.bn svg{width:72px;height:24px;display:block}
+.bn em{font:700 24px/1 var(--hud-font);font-style:normal;color:var(--hud-text);text-align:right;white-space:nowrap}
+.bn em small{display:inline;margin-left:3px}
+.rst{font:700 54px/1 var(--body);font-variant-numeric:tabular-nums;color:var(--hud-text);margin:4px 0 2px}
+.rst.on{color:var(--hud-yellow)}
 .aptl{max-height:min(132px,18vh);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:0 8px 0 4px}
 .trow{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:stretch;border-top:1px solid var(--hud-hair)}
 .trow:first-child{border-top:0}
@@ -248,7 +355,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 
 #hint{position:absolute;left:50%;transform:translateX(-50%);font:600 12px/1 var(--hud-font);letter-spacing:.14em;color:var(--hud-text2);background:var(--hud-plate);padding:4px 9px;white-space:nowrap;transition:opacity .4s}
 /* close up on her: the tags and the room's panel step aside */
-#tags,#aptBox,#roomBox{transition:opacity .3s}
+#tags,#aptBox,#roomBox,#gymBox{transition:opacity .3s}
 #hud.close #tags,#hud.close #aptBox,#hud.close #roomBox{opacity:0;pointer-events:none}
 /* and her card comes in: who she is, her pose, her mood (his day) and their link (his progress) */
 #herBox{left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px);opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .3s,transform .3s}
@@ -281,7 +388,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #hud.gl>.scanl.go{animation:scan 1s var(--ease) 1}
 @keyframes gl{0%{transform:translateX(-5px);filter:hue-rotate(-14deg)}33%{transform:translateX(4px) skewX(-.6deg)}66%{transform:translateX(-2px)}100%{transform:none}}
 #hud.city [data-m]:not([data-m~=city]),#hud.room [data-m]:not([data-m~=room]),#hud.fly [data-m]:not([data-m~=fly]){display:none!important}
-#hud:not([data-room=shop]) [data-r=shop],#hud:not([data-room=apartment]) [data-r=apartment]{display:none!important}
+#hud:not([data-room=shop]) [data-r=shop],#hud:not([data-room=apartment]) [data-r=apartment],#hud:not([data-room=gym]) [data-r=gym]{display:none!important}
 .scanl{position:absolute;left:0;right:0;top:0;height:2px;background:var(--hud-red);box-shadow:0 0 14px var(--hud-red);opacity:0;pointer-events:none}
 .scanl.go{animation:scan 1s var(--ease) 1}
 @keyframes scan{0%{top:0;opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
@@ -303,6 +410,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   #roomData{display:block;right:18px;bottom:18px;width:232px;transition:opacity .25s}
   #roomBox{right:auto;width:470px;left:18px;bottom:18px}
   #aptBox{right:auto;width:470px;left:18px;bottom:18px}
+  #gymBox{right:auto;width:400px;left:18px;bottom:18px}
   #herBox{left:auto;right:18px;bottom:18px;width:300px}
   .aptl{max-height:min(176px,24vh)}
   .top{padding-left:18px;padding-right:18px}
@@ -320,14 +428,15 @@ const MARKUP = `
 <div id="hud" class="city" data-room="shop">
   <div class="vgn"></div>
   <div class="top">
-    <button class="frame brand" data-act="progress" data-m="city fly" aria-label="Progress"><div class="in"><i></i><div><b>DAYBOOK</b><small id="brandLv">LV 1</small></div></div></button>
+    <button class="frame brand" data-hud="prog" data-m="city fly" aria-label="Progress"><div class="in"><i></i><div><b>DAYBOOK</b><small id="brandLv">LV 1</small></div></div></button>
     <button class="back" id="btnBack" data-m="room" aria-label="Back to the city"><span><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8"/></svg></span></button>
-    <button class="frame brand" data-act="progress" data-m="room" data-r="shop" aria-label="Progress"><div class="in"><i></i><div><b>SHOP</b><small id="shopPer">PERIOD</small></div></div></button>
-    <button class="frame brand" data-act="progress" data-m="room" data-r="apartment" aria-label="Progress"><div class="in"><i></i><div><b>APARTMENT</b><small id="aptDate">TODAY</small></div></div></button>
+    <button class="frame brand" data-hud="prog" data-m="room" data-r="shop" aria-label="Progress"><div class="in"><i></i><div><b>SHOP</b><small id="shopPer">PERIOD</small></div></div></button>
+    <button class="frame brand" data-hud="prog" data-m="room" data-r="apartment" aria-label="Progress"><div class="in"><i></i><div><b>APARTMENT</b><small id="aptDate">TODAY</small></div></div></button>
+    <button class="frame brand" data-hud="prog" data-m="room" data-r="gym" aria-label="Progress"><div class="in"><i></i><div><b>GYM</b><small id="gymDate">TODAY</small></div></div></button>
     <div class="frame eqw"><div class="in"><canvas id="eq" aria-hidden="true"></canvas><div class="row"><span class="mi">SIGNAL</span><span class="mi" id="eqv">SYNC OFF</span></div></div></div>
     <div class="frame clk"><div class="in"><b id="clk">00:00</b><span class="mi" id="clkd"></span></div></div>
-    <button class="q" data-act="spot-open" aria-label="Quick add"><span style="font-size:22px;font-weight:400">+</span></button>
-    <button class="q" data-act="settings" aria-label="Settings"><span id="btnMe">J</span></button>
+    <button class="q" data-hud="add" aria-label="Quick add"><span style="font-size:22px;font-weight:400">+</span></button>
+    <button class="q" data-hud="sys" aria-label="System settings"><span id="btnMe">J</span></button>
     <button class="q" id="btnQ" aria-pressed="false" aria-label="Show quality readout"><span>GFX</span></button>
   </div>
   <div id="perf" class="frame" hidden><div class="in"><h4>QUALITY</h4>FPS <b id="pF">-</b><br>DRAW CALLS <b id="pC">-</b><br>TRIANGLES <b id="pT">-</b><br>RENDER <b id="pR">-</b><br>SCALE <b id="pS">-</b><br>BLOOM/REFL <b id="pB">-</b></div></div>
@@ -421,6 +530,17 @@ const MARKUP = `
       </div>
     </div>
   </section>
+  <section class="dbox frame" id="gymBox" data-m="room" data-r="gym" aria-label="Today's session">
+    <div class="in">
+      <div class="dhead"><b>TODAY</b><span class="mi" id="gyN"></span><button class="rbtn" id="btnGymSheet">SESSION</button></div>
+      <div class="tickr"></div>
+      <div class="gyb">
+        <div class="hrow"><div class="pl" id="gyS">D1</div><div class="conn" aria-hidden="true"><i></i><b></b></div><span class="mi" id="gyName"></span></div>
+        <div class="rw"><span>SETS</span><div class="bar" id="bY1"></div><em id="vY1">0</em></div>
+        <div class="gwk" id="gyWk" role="img" aria-label="This week"></div>
+      </div>
+    </div>
+  </section>
   <div id="hint" data-m="room" style="top:calc(var(--st) + 72px)">DRAG TO LOOK</div>
 
   <aside id="sheet" class="frame" aria-label="Work" aria-hidden="true">
@@ -428,25 +548,64 @@ const MARKUP = `
       <div class="shead"><h2 id="shName">Work</h2><span class="mi" id="shPage" style="margin-left:auto">PAGE.01/03</span><button class="back" id="btnClose" aria-label="Close sheet"><span><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span></button></div>
       <div class="scroll" id="sheetScroll">
         <div class="cards">
+          <section class="card" id="gAdd" data-g="add">
+            <div class="kick">Quick add<span class="mi">SYS.INPUT/01</span></div>
+            <form class="hadd" id="gAddF" style="margin-top:0"><input class="hin" id="gAddI" type="text" enterkeyhint="done" autocomplete="off" spellcheck="false" placeholder="A TASK, A SHIFT, AN APPLICATION" aria-label="Quick add" aria-describedby="gAddP"><button class="rbtn" type="submit">ADD</button></form>
+            <div class="qprev" id="gAddP" aria-live="polite"></div>
+          </section>
+          <section class="card" id="gProg" data-g="prog">
+            <div class="kick">Progress<span class="mi" id="gpN"></span></div>
+            <div id="gProgB"></div>
+          </section>
+          <section class="card" id="gSys" data-g="sys">
+            <div class="kick">System<span class="mi" id="gsB"></span></div>
+            <div id="gSysB"></div>
+          </section>
+          <section class="card" id="cCareer" data-r="apartment">
+            <div class="kick">Career<span class="mi" id="crN">PAUSED</span></div>
+            <div id="crRows"></div>
+            <form class="jadd" id="crAdd"><input class="hin" name="company" type="text" autocomplete="off" placeholder="COMPANY" aria-label="Company"><input class="hin" name="role" type="text" autocomplete="off" placeholder="ROLE" aria-label="Role"><input class="hin" name="link" type="url" autocomplete="off" placeholder="LINK (OPTIONAL)" aria-label="Link to the posting"><button class="rbtn" type="submit">ADD</button></form>
+          </section>
           <section class="card" id="cToday" data-r="apartment">
             <div class="kick">Today<span class="mi" id="tdN"></span></div>
             <div id="tdRows"></div>
-            <div class="acts"><button class="rbtn ol" data-go="week:">OPEN PLAN PAGE</button></div>
+            <form class="hadd" id="tdAdd" data-hadd=""><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD A TASK, E.G. CALL LEN 3PM" aria-label="Add a task for today"><button class="rbtn" type="submit">ADD</button></form>
           </section>
           <section class="card" id="cWeek" data-r="apartment">
             <div class="kick">This week<span class="mi" id="wkL"></span></div>
             <div id="wkRows"></div>
             <div id="wkDay" style="margin-top:8px"></div>
-            <div class="acts" id="wkActs"></div>
+            <div id="wkAdd"></div>
+            <div id="wkShift"></div>
           </section>
           <section class="card" id="cNotes" data-r="apartment">
             <div class="kick">Notes<span class="mi" id="ntN"></span></div>
+            <form class="hadd nadd" data-nadd="1"><textarea class="hin" rows="2" placeholder="WRITE ONE" aria-label="Write a note"></textarea><button class="rbtn" type="submit">SAVE</button></form>
             <div id="ntRows"></div>
-            <div class="acts"><button class="rbtn ol" data-go="week:">WRITE ONE</button></div>
           </section>
           <section class="card" id="cDecide" data-r="apartment">
             <div class="kick">Needs a decision<span class="mi" id="dcN"></span></div>
             <div id="dcRows"></div>
+          </section>
+          <section class="card" id="cSess" data-r="gym">
+            <div class="kick"><span id="ssK">Today's session</span><span class="mi" id="ssN"></span></div>
+            <div class="ssh" id="ssHead"></div>
+            <div id="ssRows"></div>
+            <div class="acts" id="ssActs"></div>
+          </section>
+          <section class="card" id="cSplit" data-r="gym">
+            <div class="kick">The split: this week<span class="mi" id="spN"></span></div>
+            <div id="spRows"></div>
+            <div class="acts"><span class="mi" id="spSt" style="align-self:center"></span></div>
+          </section>
+          <section class="card" id="cBench" data-r="gym">
+            <div class="kick">Benchmarks<span class="mi">THE RACK</span></div>
+            <div id="bnRows"></div>
+          </section>
+          <section class="card" id="cRest" data-r="gym">
+            <div class="kick">Rest timer<span class="mi">SYS.REST/01</span></div>
+            <div class="rst" id="rsC" role="timer" aria-live="off">0:00</div>
+            <div class="acts"><button class="rbtn" data-rest="60">60S</button><button class="rbtn" data-rest="90">90S</button><button class="rbtn" data-rest="120">2 MIN</button><button class="rbtn ol" data-act="rest-add">+30S</button><button class="rbtn ol" data-act="rest-skip">STOP</button></div>
           </section>
           <section class="card" id="cClock" data-r="shop">
             <div class="kick">The clock<span class="mi">SYS.CLOCK/01</span></div>
@@ -460,7 +619,7 @@ const MARKUP = `
             <div class="kick">Shifts: this period<span class="mi" id="shPer"></span></div>
             <div class="stats" style="margin-bottom:8px"><div class="stat"><label>Hours</label><b id="stH">0</b></div><div class="stat"><label>Shifts</label><b id="stN">0</b></div><div class="stat"><label>Goal</label><b id="stG">-</b></div></div>
             <div id="shRows"></div>
-            <div class="acts"><button class="rbtn ol" data-go="hours:shifts">OPEN WORK PAGE</button></div>
+            <div id="shEd"></div>
           </section>
           <section class="card" id="cPay" data-r="shop">
             <div class="kick">Pay<span class="mi" id="payWin"></span></div>
@@ -2451,6 +2610,14 @@ function gymDistrict(M, R) {
   setPlain(M, 0x0e0d16); M.box(gx, 15, gz + 22.1, 26, 6, .3, {}); M.plate(gx, 18, gz + 22.3, 24, 5.4, 0, CELL.p11, { seed: 20, em: 255 });
   neonStrip(M, gx - 13, 12, gz + 22.5, .3, 10, .2, PAL.orange, 0); neonStrip(M, gx + 13, 12, gz + 22.5, .3, 10, .2, PAL.orange, 0);
   blade(M, gx - 26, 24, gz + 23.5, Math.PI / 2, 12, 16, R); blade(M, gx + 30, 20, gz + 23.5, Math.PI / 2, 10, 2, R);
+  /* the side door on the east wall, rolled up, the bay behind it lit: the way into the room (GR). Close to, the hole shows the room itself */
+  { const x = GR.x + GR.w / 2, z = GR.z, dz = GDOOR.dz, dh = GDOOR.h;
+    /* one quad facing out, so from inside (the street seen through the door) it's culled */
+    setPlain(M, 0x3a2414); M.id = M.nid(); M.quad([x + .15, .02, z + dz], [x + .15, .02, z - dz], [x + .15, dh, z - dz], [x + .15, dh, z + dz], [0, 0, 1, 1]);
+    setPlain(M, 0x4a4e5a); for (const s of [-1, 1]) M.box(x + .1, 0, z + s * (dz + .1), .3, dh + .1, .2, {}); M.box(x + .2, dh, z, .5, .75, 2 * dz + .4, {});
+    setPlain(M, 0xf2c218); M.box(x + .5, 0, z, .8, .03, 2 * dz, {});
+    neonStrip(M, x + .48, dh + .8, z, .06, .06, 2 * dz + .4, PAL.orange, 0);
+    glow(x + 1, 1.8, z, PAL.orange, 9); pool(x + 4, z, 8, PAL.orange, .6); }
   /* the roof sign, big enough to read across the island */
   setPlain(M, 0x2a2a30); for (const dx of [-16, 0, 16]) { M.box(gx + dx, 34, gz + 12, .7, 28, .7, {}); M.beam([gx + dx, 34, gz + 2], [gx + dx, 50, gz + 12], .5, {}); }
   setPlain(M, 0x0e0d12); M.box(gx, 46, gz + 11.6, 45, 15, .6, {}); M.plate(gx, 53.5, gz + 12, 43, 13, 0, CELL.gymRoof, { seed: 20, em: 255 });
@@ -3928,11 +4095,212 @@ function buildApartment(spot = figSpot()) {
     { key: 'week', label: 'WEEK', hotkey: 'R', line: 14, sheet: 'cWeek', p: w(W - .5, 2.98, 1.7) },
     { key: 'notes', label: 'NOTES', hotkey: 'F', line: 26, sheet: 'cNotes', p: w(tx - .25, .76, tz + .32) },
     { key: 'decide', label: 'DECIDE', hotkey: 'G', line: 14, sheet: 'cDecide', p: w(tx - .25, 1.15, tz - .3) },
-    { key: 'career', label: 'CAREER', hotkey: 'T', line: 20, go: 'jobs:', p: w(1.85, 1.15, 1.35) },
+    { key: 'career', label: 'CAREER', hotkey: 'T', line: 20, sheet: 'cCareer', p: w(1.85, 1.15, 1.35) },
   ];
   return {
     geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(), spot,
     setDoor() {},
+  };
+}
+
+/* ---------- the gym: a pale-concrete warehouse bay at the back of the northside gym, in through its side roll-up door ---------- */
+/* Its +X wall is the building's real east wall (x = GYM.x + 31); the door is a hole in the city's depth, like the apartment's glass. */
+const GR = { x: GYM.x + 25, y: 0, z: GYM.z, w: 12, d: 10, h: 5 };
+/* the roll-up door: half its width (z) and its height */
+const GDOOR = { dz: 1.9, h: 3.4 };
+/* the app escapes his text for the HUD's markup; the canvas wants it plain */
+const unesc = s => String(s || '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+/* what the whiteboard and the chart show, so they're only repainted when it changes */
+const gymSig = T => JSON.stringify([T.s, T.ex.map(e => e.done), T.week.map(d => d.s + (d.done ? 1 : 0))]);
+let GYM_SIG = '';
+/* its own atlas. The whiteboard (today's session) and the split chart (this week) are painted from his data */
+function gymAtlas(T) {
+  const S = 1024, cv = document.createElement('canvas'); cv.width = cv.height = S; const x = cv.getContext('2d'), C = {}, cells = {};
+  let cx = 0, cy = 0, rowH = 0;
+  const cell = (name, w, h, fn) => { if (cx + w > S) { cx = 0; cy += rowH + 2; rowH = 0; } if (cy + h > S) console.error('gym atlas overflow', name); cells[name] = { px: cx, py: cy, w, h, fn }; C[name] = [cx / S + .0008, 1 - (cy + h) / S + .0008, (cx + w) / S - .0008, 1 - cy / S - .0008]; cx += w + 2; rowH = Math.max(rowH, h); };
+  const draw = (name, t) => { const c = cells[name]; x.save(); x.beginPath(); x.rect(c.px, c.py, c.w, c.h); x.clip(); x.translate(c.px, c.py); x.clearRect(0, 0, c.w, c.h); c.fn(x, c.w, c.h, t); x.restore(); };
+  const neon = (x, txt, X, Y, font, col, core = '#fff4e0', lw = 5, blur = 16) => { x.font = font; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round'; x.shadowColor = col; x.shadowBlur = blur; x.strokeStyle = col; x.lineWidth = lw; x.strokeText(txt, X, Y); x.shadowBlur = blur * .6; x.fillStyle = core; x.fillText(txt, X, Y); x.shadowBlur = 0; x.textAlign = 'left'; };
+  const fit = (x, s, max) => { if (x.measureText(s).width <= max) return s; while (s.length > 3 && x.measureText(s + '…').width > max) s = s.slice(0, -1); return s + '…'; };
+  const OR = '#ff7a1e';
+  /* the whiteboard: today's session in marker, a box per working set, the done ones ticked */
+  cell('board', 600, 400, (x, w, h, T) => {
+    x.fillStyle = '#e9ecef'; x.fillRect(0, 0, w, h);
+    x.fillStyle = 'rgba(110,120,140,.08)'; for (let i = 0; i < 9; i++) { x.beginPath(); x.ellipse((40 + i * 83) % w, 70 + (i * 131) % 300, 80, 20, .15, 0, TAU); x.fill(); }
+    const MK = '#1f3c94', RD = '#c4302a'; x.textBaseline = 'middle';
+    const code = T.s === 'REST' ? 'REST' : T.s; x.fillStyle = RD; x.font = `800 60px ${FONT_DISP}`; x.fillText(code, 22, 48); const cw = x.measureText(code).width;
+    x.fillStyle = MK; x.font = `700 42px ${FONT_EN}`; x.fillText(fit(x, unesc(T.name).toUpperCase(), w - cw - 60), cw + 40, 50);
+    x.strokeStyle = RD; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(22, 90); x.quadraticCurveTo(w / 2, 98, w - 30, 86); x.stroke();
+    const list = T.ex.filter(e => !e.warm).slice(0, 6);
+    if (!list.length) { x.fillStyle = MK; x.font = `600 34px ${FONT_EN}`; x.fillText(fit(x, (unesc(T.sub) || (T.s === 'REST' ? 'Recover' : '')).toUpperCase(), w - 50), 22, 150); }
+    list.forEach((e, i) => {
+      const y = 128 + i * 44; x.fillStyle = MK; x.font = `600 27px ${FONT_EN}`; x.fillText(fit(x, unesc(e.name), 370), 22, y);
+      for (let k = 0; k < Math.min(e.sets, 5); k++) { const bx = 408 + k * 36; x.strokeStyle = MK; x.lineWidth = 3; x.strokeRect(bx, y - 12, 24, 24); if (k < e.done) { x.strokeStyle = RD; x.lineWidth = 4; x.beginPath(); x.moveTo(bx + 3, y); x.lineTo(bx + 11, y + 9); x.lineTo(bx + 26, y - 14); x.stroke(); } }
+    });
+    x.fillStyle = 'rgba(0,0,0,.1)'; x.fillRect(0, h - 8, w, 8);
+  });
+  /* the split: a lit chart of the week, today marked, the done days ticked */
+  cell('split', 360, 500, (x, w, h, T) => {
+    x.fillStyle = '#0c0b10'; x.fillRect(0, 0, w, h); x.fillStyle = OR; x.fillRect(0, 0, w, 8); x.textBaseline = 'middle';
+    x.fillStyle = '#fff'; x.font = `800 46px ${FONT_DISP}`; x.fillText('SPLIT', 18, 46);
+    x.fillStyle = OR; x.font = `700 26px ${FONT_EN}`; x.textAlign = 'right'; x.fillText(`${T.sDone}/${T.plan}`, w - 18, 48); x.textAlign = 'left';
+    T.week.forEach((d, i) => {
+      const y = 104 + i * 56;
+      if (d.today) { x.fillStyle = 'rgba(255,122,30,.2)'; x.fillRect(8, y - 25, w - 16, 50); x.fillStyle = OR; x.fillRect(8, y - 25, 5, 50); }
+      x.fillStyle = d.today ? '#fff' : '#9aa0ac'; x.font = `700 23px ${FONT_EN}`; x.fillText(d.dow, 22, y);
+      x.fillStyle = d.c; x.fillRect(82, y - 17, 64, 34); x.fillStyle = '#0c0b10'; x.font = `800 22px ${FONT_EN}`; x.textAlign = 'center'; x.fillText(d.s === 'REST' ? 'R' : d.s, 114, y + 1); x.textAlign = 'left';
+      x.fillStyle = '#e8e6ee'; x.font = `600 22px ${FONT_EN}`; x.fillText(fit(x, unesc(d.name).toUpperCase(), 138), 160, y);
+      if (d.done) { x.strokeStyle = '#4cdc8e'; x.lineWidth = 5; x.lineCap = 'round'; x.beginPath(); x.moveTo(w - 50, y); x.lineTo(w - 39, y + 11); x.lineTo(w - 20, y - 12); x.stroke(); }
+    });
+  });
+  /* the interval clock over the door: red segments, the unlit ones faintly there */
+  cell('led', 320, 100, (x, w, h) => { x.fillStyle = '#060507'; x.fillRect(0, 0, w, h); x.textBaseline = 'middle'; x.textAlign = 'center'; x.font = `700 74px ${FONT_MONO}`; x.fillStyle = 'rgba(255,40,30,.13)'; x.fillText('88:88', w / 2 + 14, h / 2 + 4); x.shadowColor = '#ff2a1e'; x.shadowBlur = 14; x.fillStyle = '#ff3a2a'; x.fillText('00:00', w / 2 + 14, h / 2 + 4); x.shadowBlur = 0; x.font = `700 15px ${FONT_MONO}`; x.fillStyle = '#ff6a50'; x.save(); x.translate(16, h / 2); x.rotate(-Math.PI / 2); x.fillText('REST', 0, 0); x.restore(); x.textAlign = 'left'; });
+  cell('neon', 520, 130, (x, w, h) => { x.fillStyle = '#0b0908'; x.fillRect(0, 0, w, h); neon(x, 'FUERZA', 200, h / 2 + 4, `900 82px ${FONT_DISP}`, OR, '#fff0d8', 5, 16); neon(x, '鉄', 440, h / 2, `900 84px ${FONT_JP}`, '#ff3c8e', '#ffe0ee', 4, 14); });
+  /* made-up words only */
+  cell('pA', 220, 320, (x, w, h) => { x.fillStyle = '#111014'; x.fillRect(0, 0, w, h); x.fillStyle = OR; x.fillRect(0, 0, w, 120); x.fillStyle = '#111014'; x.font = `900 58px ${FONT_DISP}`; x.textBaseline = 'middle'; x.fillText('NORTH', 14, 44); x.fillText('SIDE', 14, 96); x.fillStyle = '#ede6d6'; x.font = `800 50px ${FONT_DISP}`; x.fillText('IRON', 14, 170); x.fillText('CLUB', 14, 222); x.fillStyle = OR; x.fillRect(14, 262, 120, 6); x.font = `600 18px ${FONT_EN}`; x.fillStyle = '#9a96a6'; x.fillText('EST. 2071 // BAY 4', 14, 292); });
+  cell('pB', 220, 300, (x, w, h) => { x.fillStyle = '#e8e2d2'; x.fillRect(0, 0, w, h); x.fillStyle = '#c4302a'; x.fillRect(0, 0, w, 54); x.fillStyle = '#fff'; x.font = `800 30px ${FONT_DISP}`; x.textBaseline = 'middle'; x.fillText('RULES', 14, 28); x.fillStyle = '#1a1a20'; x.font = `700 23px ${FONT_EN}`; ['RE-RACK IT', 'CHALK IN THE BOWL', 'NO DROPPED DBS', 'WIPE IT DOWN', 'LAST SET COUNTS'].forEach((s, i) => { x.fillText((i + 1) + '. ' + s, 14, 90 + i * 40); }); });
+  cell('pC', 300, 150, (x, w, h) => { x.fillStyle = '#16141c'; x.fillRect(0, 0, w, h); x.strokeStyle = '#4cdc8e'; x.lineWidth = 3; x.strokeRect(6, 6, w - 12, h - 12); x.fillStyle = '#4cdc8e'; x.font = `900 46px ${FONT_DISP}`; x.textBaseline = 'middle'; x.fillText('LIFT.', 22, 50); x.fillStyle = '#ede6d6'; x.fillText('REST.', 22, 102); x.fillStyle = OR; x.font = `900 46px ${FONT_DISP}`; x.fillText('AGAIN', 160, 102); });
+  /* the plate faces: a bumper's hub label */
+  cell('kg', 128, 128, (x, w, h) => { x.fillStyle = '#16161a'; x.fillRect(0, 0, w, h); x.fillStyle = '#d8d4cc'; x.beginPath(); x.arc(w / 2, h / 2, 22, 0, TAU); x.fill(); x.fillStyle = '#16161a'; x.beginPath(); x.arc(w / 2, h / 2, 12, 0, TAU); x.fill(); x.fillStyle = '#ede6d6'; x.font = `800 24px ${FONT_EN}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('20', w / 2, 22); x.textAlign = 'left'; });
+  cell('tape', 256, 32, (x, w, h) => { x.fillStyle = '#f2c218'; x.fillRect(0, 0, w, h); x.fillStyle = '#121214'; for (let i = -2; i < 12; i++) { x.beginPath(); x.moveTo(i * 26, h); x.lineTo(i * 26 + 13, h); x.lineTo(i * 26 + 13 + h, 0); x.lineTo(i * 26 + h, 0); x.fill(); } });
+  for (const n of Object.keys(cells)) draw(n, T);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.NoColorSpace; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter; tex.anisotropy = 8; tex.flipY = true; tex.premultiplyAlpha = false;
+  /* a tick on the Training page repaints just these two */
+  const paint = t => { draw('board', t); draw('split', t); tex.needsUpdate = true; };
+  return { tex, C, paint };
+}
+
+function buildGym() {
+  const A = GR, W = A.w / 2, D = A.d / 2, H = A.h, T = APP.train(), { dz, h: dh } = GDOOR;
+  const { tex, C, paint } = gymAtlas(T); GYM_SIG = gymSig(T);
+  const M = new MB(30000), Z = new MB(24000), FXM = new MB(1200), GL = new MB(16), R = rng(6120), Q = rng(6130);
+  const glows = [], zGlows = [], w = (x, y, z) => [A.x + x, A.y + y, A.z + z];
+  const G = (x, y, z, c, s, a = 0, list = glows) => { const k = typeof c === 'number' ? hex(c) : c; list.push({ x: A.x + x, y: A.y + y, z: A.z + z, r: k[0], g: k[1], b: k[2], s, a }); };
+  const piece = () => PIECES++;
+  const plate = (B, x, y, z, pw, ph, ry, cell, rx = 0, o = {}) => B.at(x, y, z, ry, () => B.plate(0, 0, 0, pw, ph, 0, C[cell], { kind: K.PAPER, em: 0, c: [1, 1, 1], ...o }), rx);
+  const steel = (B = M, c = 0x3a3e4a) => B.set({ kind: K.BRASS, em: 0, layer: 0, c });
+  const line = (B, x, y, z, lw, lh, ld, c, em = 200) => { setPlain(B, c, 0, em); B.box(x, y, z, lw, lh, ld, { c }); B.set({ em: 0 }); };
+  /* a cylinder lying along z (bars, plates, the door's drum) or along x */
+  const cylZ = (B, x, y, z, r, len, seg, c, o = {}) => B.at(x, y, z - len / 2, 0, () => B.cyl(0, 0, 0, r, r, len, seg, { c, bot: true, ...o }), Math.PI / 2);
+  const cylX = (B, x, y, z, r, len, seg, c, o = {}) => B.at(x - len / 2, y, z, 0, () => B.cyl(0, 0, 0, r, r, len, seg, { c, bot: true, ...o }), 0, -Math.PI / 2);
+  const CONC = 0x7a7e8a, CONC2 = 0x70747f, BAND = 0x23252d, BEAM = 0x2b2e37, OR = 0xff7a1e, AMB = 0xffb35c, HAZ = 0xf2c218, IRON = 0x1b1c22, RUB = 0x17171c;
+  /* a dumbbell lying along z: handle, two hex heads */
+  const dumbbell = (B, x, y, z, s, c = IRON) => { setPlain(B, 0x8a8e98); cylZ(B, x, y, z, .016 * s, .26 * s, 6, 0x8a8e98); setPlain(B, c); for (const e of [-1, 1]) cylZ(B, x, y, z + e * .16 * s, .085 * s, .12 * s, 6, c); };
+  /* a kettlebell: a ball and its handle */
+  const bell = (B, x, z, s, c = IRON) => { setPlain(B, c); B.lathe(x, .02, z, [[.0, 0], [.09 * s, .005], [.12 * s, .06 * s], [.125 * s, .12 * s], [.1 * s, .2 * s], [.05 * s, .23 * s], [0, .235 * s]], 12, { c }); B.tube([[x - .07 * s, .21 * s, z], [x - .08 * s, .31 * s, z], [x, .35 * s, z], [x + .08 * s, .31 * s, z], [x + .07 * s, .21 * s, z]], .016 * s, 10, 5, { c }); };
+
+  M.at(A.x, A.y, A.z, 0, () => {
+    /* floor: black rubber tiles, each its own number so the ink draws the seams */
+    for (let i = 0; i < 12; i++) for (let j = 0; j < 10; j++) { setPlain(M, (i + j) % 2 ? RUB : 0x1b1b21); M.id = 20 + (i * 7 + j * 11) % 60; const x0 = -W + i, z0 = -D + j; M.quad([x0, .02, z0 + 1], [x0 + 1, .02, z0 + 1], [x0 + 1, .02, z0], [x0, .02, z0], [0, 0, 1, 1]); }
+    /* ceiling: dark deck, steel beams across, a fat duct along the left */
+    setPlain(M, 0x14141a); M.id = 14; M.quad([-W, H, -D], [W, H, -D], [W, H, D], [-W, H, D], [0, 0, 1, 1]);
+    setPlain(M, BEAM); for (const x of [-4.5, -1.5, 1.5, 4.5]) { M.box(x, H - .42, 0, .08, .42, A.d, { id: M.nid() }); M.box(x, H - .44, 0, .22, .04, A.d, { id: M.nid() }); }
+    for (const z of [-2.5, 2.5]) M.box(0, H - .5, z, A.w, .08, .1, { id: M.nid() });
+    steel(M, 0x5a5e6a); cylX(M, 0, H - .62, -4.25, .22, A.w, 14, 0x5a5e6a); for (const x of [-3, 0, 3]) { M.box(x, H - .42, -4.25, .04, .42, .04, {}); } piece();
+
+    /* walls: pale poured concrete, the lower band painted dark with an orange stripe; each pour its own number */
+    const pane = (x0, x1, y0, y1, c) => { setPlain(M, c); M.id = M.nid(); M.quad([x0, y0, 0], [x1, y0, 0], [x1, y1, 0], [x0, y1, 0], [0, 0, 1, 1], .8, .8, 1, 1); };
+    const run = (a, b, k) => { const n = Math.max(1, Math.round((b - a) / 2)), s = (b - a) / n; for (let i = 0; i < n; i++) { const x0 = a + i * s, x1 = x0 + s; pane(x0, x1, 1.15, H, (i + k) % 2 ? CONC : CONC2); pane(x0, x1, 0, 1.15, BAND); } setPlain(M, OR, 0, 170); M.box((a + b) / 2, 1.15, .006, b - a, .05, .012, { c: OR }); M.set({ em: 0 }); };
+    const wall = (len, gap) => { if (!gap) return run(-len / 2, len / 2, 0); run(-len / 2, -gap, 0); run(gap, len / 2, 1); pane(-gap, gap, dh, H, CONC2); };
+    M.at(0, 0, -D, 0, () => wall(A.w, 0)); M.at(0, 0, D, Math.PI, () => wall(A.w, 0));
+    M.at(-W, 0, 0, Math.PI / 2, () => wall(A.d, 0)); M.at(W, 0, 0, -Math.PI / 2, () => wall(A.d, dz));
+    /* the door: steel guides up each side, the rolled drum under its hood, the bottom bar showing, hazard tape across the sill */
+    steel(M, 0x4a4e5a); for (const s of [-1, 1]) { M.box(W - .07, 0, s * (dz + .06), .14, dh + .1, .12, { id: M.nid() }); line(M, W - .145, .1, s * (dz + .06), .004, dh - .2, .02, AMB, 120); }
+    steel(M, 0x5c606c); cylZ(M, W - .32, dh + .36, 0, .3, 2 * dz + .3, 14, 0x5c606c);
+    setPlain(M, 0x34373f); M.box(W - .36, dh + .68, 0, .72, .04, 2 * dz + .4, { id: M.nid() }); for (const s of [-1, 1]) M.box(W - .36, dh, s * (dz + .19), .72, .72, .03, { id: M.nid() }); M.box(W - .32, dh - .06, 0, .06, .08, 2 * dz, { id: M.nid() });
+    plate(M, W - .3, .025, 0, 2 * dz, .24, Math.PI / 2, 'tape', -Math.PI / 2); piece();
+    /* REST: the interval clock over the door */
+    setPlain(M, 0x0c0b0e); M.box(W - .07, dh + .76, 0, .12, .5, 1.5, { id: 230 }); plate(M, W - .135, dh + 1.01, 0, 1.4, .44, -Math.PI / 2, 'led', 0, { kind: K.SIGN, em: 230, id: 230, seed: 0 }); G(W - .3, dh + 1.01, 0, [1, .16, .1], 1.1); piece();
+    /* SPLIT: the week's chart, lit, high on the wall right of the door */
+    { const z = 3.05, y = 3.1; setPlain(M, 0x0c0b10); M.box(W - .05, y - .78, z, .08, 1.56, 1.16, { id: 231 }); plate(M, W - .095, y, z, 1.06, 1.47, -Math.PI / 2, 'split', 0, { kind: K.SIGN, em: 170, id: 231, seed: 0 }); line(M, W - .1, y + .77, z, .012, .012, 1.14, OR, 230); G(W - .3, y, z, [1, .5, .2], 1.2); piece(); }
+    /* the neon over the dumbbells */
+    { setPlain(M, 0x0b0908); M.box(-.8, 3.05, -D + .03, 2.7, .7, .04, {}); plate(M, -.8, 3.4, -D + .055, 2.6, .65, 0, 'neon', 0, { kind: K.SIGN, em: 255, seed: 0 }); G(-.8, 3.4, -D + .4, [1, .45, .15], 2.6); piece(); }
+    neonStrip(M, 0, H - .06, -D + .1, A.w, .03, .03, OR, 0); neonStrip(M, 0, H - .06, D - .1, A.w, .03, .03, OR, 0);
+
+    /* RACK: a black power rack on its platform, the bar racked and loaded, a flat bench inside. Turned toward the room's middle,
+       so from where he stands the bar runs across and the plates read as plates */
+    M.at(1.0, 0, -1.5, .93, () => { const x = 0, z = 0, s = .6;
+      setPlain(M, 0x6a4a2c, L.WOOD); M.box(x, .02, z, 2.2, .05, 2.2, { id: M.nid() }); setPlain(M, RUB); for (const e of [-1, 1]) M.box(x + e * .95, .02, z, .3, .052, 2.2, { id: M.nid() });
+      setPlain(M, 0x15161b); for (const [ex, ez] of [[-s, -s], [s, -s], [-s, s], [s, s]]) M.box(x + ex, .07, z + ez, .07, 2.25, .07, { id: M.nid() });
+      for (const ex of [-s, s]) { M.box(x + ex, 2.3, z, .07, .07, 2 * s + .07, {}); M.box(x + ex, .07, z, .07, .07, 2 * s + .07, {}); } for (const ez of [-s, s]) M.box(x, 2.3, z + ez, 2 * s + .07, .07, .07, {});
+      line(M, x - s - .037, .3, z - s, .004, 1.9, .012, OR, 140); line(M, x - s - .037, .3, z + s, .004, 1.9, .012, OR, 140);
+      /* J-hooks on the front uprights, the bar across them */
+      steel(M, 0x2a2b31); for (const ez of [-s, s]) M.box(x - s - .06, 1.32, z + ez, .1, .05, .09, {});
+      const bx = x - s - .07; steel(M, 0x9aa0ac); cylZ(M, bx, 1.42, z, .014, 2.2, 8, 0x9aa0ac); steel(M, 0xb8bec8); for (const e of [-1, 1]) cylZ(M, bx, 1.42, z + e * .9, .025, .42, 10, 0xb8bec8);
+      for (const e of [-1, 1]) { setPlain(M, 0x15151a); cylZ(M, bx, 1.42, z + e * .8, .225, .07, 22, 0x15151a); setPlain(M, 0xb4302a); cylZ(M, bx, 1.42, z + e * .87, .225, .055, 22, 0xb4302a); setPlain(M, 0x264fa8); cylZ(M, bx, 1.42, z + e * .925, .2, .045, 20, 0x264fa8); setPlain(M, 0xd8d4cc); cylZ(M, bx, 1.42, z + e * .955, .05, .012, 14, 0xd8d4cc); }
+      /* the bench, along the rack */
+      setPlain(M, 0x15161b); M.box(x, .07, z, .1, .36, .25, {}); M.box(x - .45, .07, z, .1, .05, .3, {}); M.box(x + .45, .07, z, .1, .05, .3, {}); setPlain(M, 0x22232a, L.LEATHER); M.extrude(roundPoly(x, z, 1.15, .28, .04, 2), .43, .5, { grad: .86 });
+      piece(); piece(); });
+
+    /* SESSION: the rolling whiteboard */
+    { const x = .6, z = 1.4, bw = 1.5, bh = .95, y = 1.42;
+      steel(M, 0xb8bec8); for (const e of [-1, 1]) { M.box(x, .1, z + e * (bw / 2 + .03), .04, 1.85, .04, { id: M.nid() }); M.box(x, .08, z + e * (bw / 2 + .03), .55, .04, .05, {}); setPlain(M, 0x15151a); for (const f of [-1, 1]) M.cyl(x + f * .24, .02, z + e * (bw / 2 + .03), .035, .035, .06, 8, {}); steel(M, 0xb8bec8); }
+      setPlain(M, 0xc8ccd4); M.box(x, y - bh / 2 - .03, z, .05, bh + .06, bw + .06, { id: 232 }); plate(M, x - .03, y, z, bw, bh, -Math.PI / 2, 'board', 0, { kind: K.PAPER, em: 70, id: 232, seed: 0 });
+      M.box(x - .06, y - bh / 2 - .04, z, .09, .025, bw - .2, {}); for (const [dz2, c] of [[-.4, 0x1f3c94], [-.3, 0xc4302a], [-.22, 0x14141a]]) { setPlain(M, c); cylZ(M, x - .07, y - bh / 2 - .005, z + dz2, .01, .12, 6, c); }
+      G(x - .5, y, z, [.9, .8, .7], 1.4); piece(); }
+
+    /* a steel column each side of the door, as warehouses have */
+    setPlain(M, BEAM); for (const s of [-1, 1]) { const zc = s * (dz + .38); M.box(W - .45, 0, zc, .3, H, .06, { id: M.nid() }); for (const f of [-1, 1]) M.box(W - .45 + f * .13, 0, zc, .04, H, .24, { id: M.nid() }); setPlain(M, HAZ); M.box(W - .45, 0, zc, .32, .5, .26, {}); setPlain(M, BEAM); }
+    /* lamps: three dome pendants, warm */
+    for (const [x, z] of [[1, -1.5], [.4, 1.6], [-2.6, 0]]) { setPlain(M, 0x1a1a20); M.box(x, H - 1.2, z, .012, 1.2, .012, {}); M.set({ kind: K.PLAIN, c: hex(0x2a2a30), layer: 0, em: 0 }); M.lathe(x, H - 1.42, z, [[.3, 0], [.26, .08], [.14, .18], [.05, .24], [0, .25]], 16, { c: 0x2a2a30 }); setPlain(M, 0xffe2b0, 0, 255); M.cyl(x, H - 1.42, z, .2, .2, .012, 14, { c: 0xffe2b0, top: false, bot: true }); M.set({ em: 0 }); G(x, H - 1.5, z, [1, .78, .5], 1.6); }
+  });
+
+  /* the open door: what it shows is the street outside, through the hole */
+  { const x = A.x + W, q = (z0, z1, y0, y1) => { GL.set({ kind: K.GLASS, c: [1, 1, 1], id: 0 }); const u0 = (z0 + dz) / (2 * dz), u1 = (z1 + dz) / (2 * dz), v0 = y0 / dh, v1 = y1 / dh; GL.quad([x, A.y + y0, A.z + z1], [x, A.y + y0, A.z + z0], [x, A.y + y1, A.z + z0], [x, A.y + y1, A.z + z1], [u1, v0, u0, v1]); }; q(-dz, dz, .02, dh); }
+
+  /* light on the rubber: the street's orange through the door, the lamps' pools */
+  { const X = v => A.x + v, Z2 = v => A.z + v, Y = A.y;
+    const blob = (x, y, z, sx, sz, c, a) => { FXM.set({ kind: 7, a, c }); FXM.quad([X(x - sx / 2), Y + y, Z2(z + sz / 2)], [X(x + sx / 2), Y + y, Z2(z + sz / 2)], [X(x + sx / 2), Y + y, Z2(z - sz / 2)], [X(x - sx / 2), Y + y, Z2(z - sz / 2)], [0, 0, 1, 1]); };
+    blob(W - 1.6, .03, 0, 3.4, 4.2, [1, .48, .16], 70); blob(1, .075, -1.5, 2.4, 2.4, [1, .75, .45], 40); blob(.4, .03, 1.6, 2.2, 2.2, [1, .75, .45], 40); blob(-2.6, .03, 0, 2.4, 2.4, [1, .7, .45], 34); blob(-.8, .03, -D + .8, 3.4, 1.4, [1, .4, .15], 46); }
+  const fxBase = FXM.n;
+
+  /* ---------- clutter: the gym's stuff, kept to the walls and clear of the four that matter ---------- */
+  Z.at(A.x, A.y, A.z, 0, () => {
+    const pl = (c, l = 0) => setPlain(Z, c, l);
+    /* the dumbbell rack along the back wall, two tiers, pairs light to heavy */
+    { const x0 = -2.9, x1 = 1.3, z = -D + .45; steel(Z, 0x15161b); for (const x of [x0, (x0 + x1) / 2, x1]) Z.box(x, .02, z, .06, .82, .5, {}); for (const [y, dzz] of [[.42, .08], [.78, -.06]]) { Z.box((x0 + x1) / 2, y, z + dzz, x1 - x0, .03, .32, {}); }
+      for (let i = 0; i < 9; i++) { const x = x0 + .25 + i * .46, s = .75 + i * .06; dumbbell(Z, x, .46 + .085 * s, z + .08, s); dumbbell(Z, x, .82 + .085 * s * .85, z - .06, s * .85); } piece(); piece(); }
+    /* kettlebells down the wall, a pair left out */
+    for (let i = 0; i < 5; i++) bell(Z, 1.9 + i * .38, -D + .35, .8 + i * .12, i === 4 ? 0x7a2a22 : IRON); bell(Z, -.2, -3.3, 1.1); bell(Z, .05, -3.5, 1.1); piece();
+    /* the heavy bag on its chain in the corner */
+    { const x = 4.1, z = -3.2; pl(0x2a1c18, L.LEATHER); Z.cyl(x, .55, z, .2, .2, 1.1, 16, { c: 0x2a1c18 }); pl(0x101012); Z.cyl(x, 1.62, z, .2, .17, .06, 16, {}); Z.cyl(x, .5, z, .17, .2, .05, 16, {}); pl(0x8a8e98); Z.box(x, 1.68, z, .012, H - 1.68, .012, {}); pl(OR); Z.cyl(x, 1.0, z, .202, .202, .08, 16, { top: false }); piece(); }
+    /* plyo boxes stacked by the right wall, a rolled mat, a medicine ball */
+    { pl(0x7a5634, L.WOOD); Z.box(-1.4, .02, D - .5, .76, .6, .6, {}); Z.box(-1.4, .62, D - .55, .6, .45, .5, {}); Z.box(-.5, .02, D - .45, .6, .5, .5, {}); pl(OR); Z.box(-1.4, .3, D - .8, .4, .06, .006, {}); piece(); }
+    { pl(0x2a2f6a); Z.at(-2.5, .14, D - .4, 0, () => Z.cyl(0, -.3, 0, .12, .12, .6, 14, { c: 0x2a2f6a, bot: true }), 0, Math.PI / 2); pl(0x3a3a44); Z.blob(-3.2, .17, D - .7, .15, { c: 0x3a3a44, sy: .95, j: .08 }); piece(); }
+    /* a pedestal fan aimed at the platform */
+    { const x = -.4, z = 4.3; steel(Z, 0x26272e); Z.cyl(x, .02, z, .22, .22, .03, 14, {}); Z.box(x, .05, z, .04, 1.35, .04, {}); Z.at(x, 1.45, z, -2.4, () => { pl(0x1c1c22); Z.cyl(0, -.08, 0, .32, .32, .1, 18, { c: 0x1c1c22 }); pl(0x5a5e6a); Z.cyl(0, -.08, 0, .06, .06, .12, 10, {}); }, Math.PI / 2); piece(); }
+    /* lockers on the back wall behind him, a water cooler, a bench */
+    { steel(Z, 0x3a4250); for (let i = 0; i < 5; i++) { Z.box(-W + .3, .1, -3.6 + i * .5, .5, 1.9, .48, { id: Z.nid() }); line(Z, -W + .552, 1.6, -3.6 + i * .5, .004, .1, .02, AMB, 120); } piece(); }
+    { pl(0xd8dce4); Z.box(-W + .35, .02, 1.3, .36, .95, .36, {}); pl(0x4a8ad8); Z.set({ kind: K.PLAIN, c: hex(0x4a8ad8), em: 40 }); Z.lathe(-W + .35, .97, 1.3, [[.13, 0], [.15, .05], [.15, .32], [.06, .4], [0, .41]], 14, { c: 0x4a8ad8 }); Z.set({ em: 0 }); piece(); }
+    /* the gym bag, a towel on the bench, a shaker on the floor by the board */
+    { pl(0x1c1d24); Z.blob(.0, .17, 2.6, .24, { c: 0x1c1d24, sy: .65, j: .12 }); pl(OR); Z.box(0, .32, 2.6, .5, .012, .03, {}); pl(0xe8e6e0); Z.box(1.0, .5, -1.45, .26, .02, .45, {}); Z.set({ kind: K.PLAIN, c: hex(0x18181e), layer: 0 }); Z.lathe(.1, .02, 1.95, [[.04, 0], [.045, .02], [.045, .2], [.03, .22], [0, .23]], 12, { c: 0x18181e }); pl(OR); Z.cyl(.1, .2, 1.95, .046, .046, .02, 12, { top: false }); piece(); piece(); }
+    /* plates leant on the wall by the rack, the chalk bowl on its stand */
+    for (let i = 0; i < 4; i++) { const c = [0x15151a, 0xb4302a, 0x264fa8, 0x15151a][i]; pl(c); Z.at(2.4, .02 + .225 - i * .02, -D + .28 + i * .07, 0, () => Z.cyl(0, 0, 0, .225 - i * .02, .225 - i * .02, .05, 20, { c, bot: true }), Math.PI / 2 - .12); } piece();
+    { pl(0x15161b); Z.cyl(2.6, .02, -.6, .05, .05, .85, 8, {}); pl(0xdcd8d0); Z.lathe(2.6, .87, -.6, [[.0, 0], [.16, .02], [.2, .12], [.19, .13], [0, .1]], 14, { c: 0xdcd8d0 }); piece(); }
+    /* posters and the rules */
+    plate(Z, -W + .02, 2.4, -.6, .8, 1.16, Math.PI / 2, 'pA'); plate(Z, 2.9, 2.0, D - .02, .66, .9, Math.PI, 'pB'); plate(Z, -3.2, 2.4, -D + .02, 1.1, .55, 0, 'pC', 0, { kind: K.SIGN, em: 90, seed: 0 }); piece(); piece();
+    /* a pull-up bar across the left beam, battle rope coiled under it */
+    { steel(Z, 0x9aa0ac); cylZ(Z, -1.5, H - .9, -2.4, .016, 1.4, 8, 0x9aa0ac); for (const e of [-1, 1]) Z.box(-1.5, H - .9, -2.4 + e * .7, .04, .48, .04, {}); pl(0x1a1a20); const p = []; for (let k = 0; k <= 30; k++) { const a = k / 30 * TAU * 2.6, r = .32 - k * .006; p.push([-1.6 + Math.cos(a) * r, .06 + k * .004, -2.6 + Math.sin(a) * r]); } Z.tube(p, .022, 60, 5, { c: 0x1a1a20 }); piece(); }
+  });
+
+  const lights = [
+    [...w(0, H - .3, 0), 0xffd9b0, 11, .5],
+    [...w(W + 1.6, 1.8, 0), 0xff7a1e, 11, .85],
+    [...w(W - .5, dh + 1, 0), 0xff3020, 3, .5],
+    [...w(1, H - 1.6, -1.5), 0xffc890, 5, .6],
+    [...w(.4, H - 1.6, 1.6), 0xffc890, 5, .55],
+    [...w(-.8, 3, -D + .6), 0xff7a1e, 5, .5],
+    [...w(-4, 2.8, 0), 0x9a6cff, 7, .25],
+    [...w(W - .6, 3.1, 3.05), 0xffb35c, 3, .35],
+  ];
+  const hot = [
+    { key: 'board', label: 'SESSION', hotkey: 'E', line: 16, sheet: 'cSess', p: w(.6, 1.95, 1.4) },
+    { key: 'split', label: 'SPLIT', hotkey: 'R', line: 14, sheet: 'cSplit', p: w(W - .1, 3.9, 3.05) },
+    { key: 'rack', label: 'RACK', hotkey: 'F', line: 22, sheet: 'cBench', p: w(1.0, 2.38, -1.5) },
+    { key: 'timer', label: 'REST', hotkey: 'G', line: 12, sheet: 'cRest', p: w(W - .1, dh + 1.3, 0) },
+  ];
+  return {
+    geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(),
+    paint, setDoor() {},
   };
 }
 
@@ -4694,7 +5062,7 @@ function loadRoom(id, keep) {
   for (const g of [room.geom, room.clutterGeom, room.doorGeom, room.glassGeom, room.doorGlassGeom, room.fxGeom, room.backGeom]) if (g) g.dispose();
   if (room.atlas) room.atlas.dispose();
   const d = def.build(pin || undefined); if (!same) dropFigure();
-  Object.assign(room, { clutterGeom: null, doorGeom: null, glassGeom: null, doorGlassGeom: null, backGeom: null, gobo: null, atlas: null, day: null, spot: null, mirDone: false }, d, { def, box: def.box });
+  Object.assign(room, { clutterGeom: null, doorGeom: null, glassGeom: null, doorGlassGeom: null, backGeom: null, gobo: null, atlas: null, day: null, spot: null, mirDone: false, paint: null }, d, { def, box: def.box });
   const put = (m, g) => { m.visible = !!g; m.geometry = g || EMPTY_GEOM; };
   put(room.mesh, room.geom); put(room.clutter, room.clutterGeom); put(room.door, room.doorGeom); put(room.glass, room.glassGeom); put(room.doorGlass, room.doorGlassGeom); put(room.fx, room.fxGeom); room.fx.renderOrder = def.fxOverGlass ? 6 : 0;
   put(room.mirMesh, def.mirror && room.geom); put(room.mirBack, def.mirror && room.backGeom);
@@ -4810,6 +5178,24 @@ const ROOM_DEF = {
         P: [c.p, a < .8 ? [-14, 74, 372] : [14, 118, 436], [-22, 92, 330], [-40, 82, 276], [-52, y + 18, z + 16], [-60, y + 7, z + 3], [-65.4, y + 2.1, z - .5], local(5.2, 1.72, -.75), local(2.4, 1.76, -.1), local(-.5, 1.76, .45), local(-2.6, 1.68, .4), r.p],
         L: [c.l, [-30, 90, 230], [-60, 62, z + 4], [-68, y + 6, z], [-69, y + 4, z], [-69, y + 2, z], [-70, y + 1.7, z - .5], local(-4.3, 1.45, -.3), local(-2.2, 1.45, -3.8), local(.4, 1.25, -3.8), local(2.8, 1.15, -2.6), r.l],
         W: [1.15, 1, .9, .7, .55, .55, .5, .4, .32, .3, .42],
+      };
+    },
+  },
+  gym: {
+    box: GR, name: 'GYM', build: buildGym, panel: '#gymBox', sheet: ['Train', 'PAGE.01/04'], shadow: [134, 10], refresh: refreshGym,
+    /* inside the warehouse: the flight sees it through a door-shaped hole in the city's depth */
+    hole: true,
+    amb: [[.3, .24, .24], [.15, .09, .14], [.06, .05, .06], [1.4, .6, .24]],
+    window: { x: GR.x + GR.w / 2 + .05, zs: [GR.z - GDOOR.dz, GR.z + GDOOR.dz], ys: [GR.y + .02, GR.y + GDOOR.h] },
+    /* at the back of the bay, facing the open door and the street */
+    rest: a => a < .8 ? { p: local(-4.6, 1.62, 0), l: local(4, 1.3, 0) } : { p: local(-4.7, 1.6, -.1), l: local(4, 1.45, -.1) },
+    flight(c, r, a) {
+      const x = GR.x + GR.w / 2, z = GR.z;
+      return {
+        /* over the island to the gym's east side, down onto the lot, in under the door, then round by the dumbbells to face it */
+        P: [c.p, a < .8 ? [40, 110, 300] : [60, 140, 380], [150, 88, 40], [x + 40, 52, z + 60], [x + 32, 14, z + 16], [x + 16, 3.4, z + 2], [x + 6, 1.9, z + .2], local(4.4, 1.72, .3), local(1.4, 1.7, .6), local(-1.8, 1.66, .7), local(-3.9, 1.64, .35), r.p],
+        L: [c.l, [120, 30, -60], [x, 14, z], [x - 4, 6, z], [x - 2, 2.6, z], [x - 4, 1.8, z], local(-2, 1.6, 0), local(-6, 1.5, .3), local(-6, 1.45, -2.6), local(-3, 1.4, -4.8), local(1.5, 1.35, -3.6), r.l],
+        W: [1.15, 1, .9, .7, .6, .5, .42, .4, .34, .32, .42],
       };
     },
   },
@@ -4986,7 +5372,7 @@ function setBoot(t, p) { const a = $('#bootT'), b = $('#bootB'); if (a) a.textCo
 const ICONS = [
   { k: 'plan', room: 'apartment', attr: 'focus', word: 'Plan', c: '#16e4f4', d: 'MEGABLOCK', r: 'TASKS ', svg: '<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>' },
   { k: 'work', room: 'shop', attr: 'grind', word: 'Work', c: '#f6ee1c', d: 'DOWNTOWN', r: 'HOURS ', svg: '<path d="M12 8V6a2 2 0 1 1 2 2c-1 0-2 1-2 2M12 10 3 17v2h18v-2z"/>' },
-  { k: 'train', attr: 'strength', word: 'Train', c: '#ff8a1e', d: 'NORTHSIDE', r: 'DONE ', svg: '<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>' },
+  { k: 'train', room: 'gym', attr: 'strength', word: 'Train', c: '#ff8a1e', d: 'NORTHSIDE', r: 'DONE ', svg: '<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>' },
   { k: 'cardio', attr: 'stamina', word: 'Cardio', c: '#ff2e88', d: 'SKI VILLAGE', r: 'WEEK ', svg: '<path d="M3 20 10 8l4 6 2-3 5 9zM9 10l2 2 2-1"/>' },
   { k: 'fuel', attr: 'fuel', word: 'Fuel', c: '#f6ee1c', d: 'NIGHT MARKET', r: 'SHAKES ', svg: '<path d="M3 11h18a9 9 0 0 1-18 0zM8 3c-1 2 1 3 0 5M13 3c-1 2 1 3 0 5M18 4 13 11"/>' },
   { k: 'school', attr: 'hustle', word: 'Jobs', c: '#4cdc8e', d: 'CASTLE POINT', r: 'APPS ', svg: '<path d="M4 20V9h3V6h2v3h6V6h2v3h3v11zM10 20v-5h4v5"/>' },
@@ -5066,7 +5452,78 @@ function hudInit() {
   /* readouts */
   $('#ringA').innerHTML = ringHTML('0', 0, 'PROGRESS'); $('#ringB').innerHTML = ringHTML('0', 0, 'PERIOD'); $('#ringC').innerHTML = ringHTML('0', 0, '% GOAL');
   barInto($('#bG'), 18, 0); S.ringIn = 0; for (const id of ['#cellsA', '#cellsB']) { const el = $(id); el.innerHTML = '<i class="on"></i>'.repeat(3) + '<i></i>'.repeat(1); }
-  barInto($('#bH1'), 18, 0); barInto($('#bH2'), 18, 0);
+  barInto($('#bH1'), 18, 0); barInto($('#bH2'), 18, 0); barInto($('#bY1'), 18, 0);
+  $('#btnGymSheet').addEventListener('click', () => openSheet('cSess'));
+  /* the gym's rest buttons start the app's own rest timer, the one the island counts down between sets */
+  hudEl.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-rest],[data-gset],[data-gdone],[data-gday]'); if (!b) return; const d = b.dataset;
+    if (d.rest) { APP.rest(+d.rest); restSeen = -1; return; }
+    /* a set flips at once; the app's own tick (sound, rest timer, sync) follows */
+    if (d.gset) { const [i, j] = d.gset.split(':').map(Number), on = b.classList.toggle('on'); b.setAttribute('aria-pressed', String(on)); $('#ssRows')._h = null; APP.set(d.s, i, j); return; }
+    if (d.gdone) { APP.sessDone(d.gdone); return; }
+    if (d.gday !== undefined) { gymDay = d.gday || null; refreshGym(); const c = $('#cSess'), sc = $('#sheetScroll'); if (c && sc) sc.scrollTo({ top: Math.max(0, c.offsetTop - sc.offsetTop - 4), behavior: REDUCED ? 'auto' : 'smooth' }); }
+  });
+  /* the apartment's and the shop's editors: tasks, notes, shifts, all in place */
+  const focusIn = sel => requestAnimationFrame(() => { const el = ROOT.querySelector(sel); if (el) { el.focus({ preventScroll: false }); if (el.setSelectionRange && el.type === 'text') el.setSelectionRange(el.value.length, el.value.length); } });
+  hudEl.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-topen],[data-tw],[data-tdel],[data-nopen],[data-npin],[data-ndel],[data-spre],[data-sclr],[data-shday]'); if (!b) return; const d = b.dataset;
+    if (d.topen) {
+      const k = d.topen + '|' + d.date;
+      /* from the panel: the sheet opens on today, that task's editor open */
+      if (b.closest('#aptList')) { aptOpen = k; openSheet('cToday'); return focusIn(`#tdRows [data-tt="${d.topen}"]`); }
+      aptOpen = aptOpen === k ? null : k; refreshApt(); if (aptOpen) focusIn(`[data-tt="${d.topen}"]`); return;
+    }
+    if (d.tw) { const [id, when] = d.tw.split(':'); aptOpen = null; APP.taskSet(id, { when }); return; }
+    if (d.tdel) { aptOpen = null; APP.taskDel(d.tdel); return; }
+    if (d.nopen) { aptNote = aptNote === d.nopen ? null : d.nopen; refreshApt(); if (aptNote) focusIn(`[data-nt="${d.nopen}"]`); return; }
+    if (d.npin) { APP.notePin(d.npin); return; }
+    if (d.ndel) { aptNote = null; APP.noteDel(d.ndel); return; }
+    if (d.shday) { shopDay = d.shday; refreshWork(); return; }
+    const sd = b.closest('[data-sdate]'); if (!sd) return;
+    if (d.spre) { const [start, end, brk] = d.spre.split('|'); APP.shiftSet(sd.dataset.sdate, { start, end, brk }); return; }
+    if (d.sclr) APP.shiftClear(sd.dataset.sdate);
+  });
+  hudEl.addEventListener('change', e => {
+    const el = e.target, d = el.dataset || {};
+    if (d.tt !== undefined) return APP.taskSet(d.tt, { title: el.value });
+    if (d.trem !== undefined) return APP.taskSet(d.trem, { remind: el.value });
+    if (d.nt !== undefined) { clearTimeout(noteT); return APP.noteSet(d.nt, el.value, true); }
+    if (d.sx) { const sd = el.closest('[data-sdate]'); if (sd) APP.shiftSet(sd.dataset.sdate, { [d.sx]: el.value }); }
+  });
+  /* a note saves as he types, a beat behind */
+  let noteT = 0;
+  hudEl.addEventListener('input', e => { const el = e.target; if (!el.dataset || el.dataset.nt === undefined) return; clearTimeout(noteT); noteT = setTimeout(() => APP.noteSet(el.dataset.nt, el.value), 400); });
+  /* Enter in a one-line box is done with it */
+  hudEl.addEventListener('keydown', e => { const el = e.target; if (e.key === 'Enter' && el.dataset && (el.dataset.tt !== undefined || el.dataset.sx)) { e.preventDefault(); el.blur(); } });
+  /* leaving a box: the parts of the sheet held still while he typed catch up */
+  hudEl.addEventListener('focusout', e => { if (e.target.matches && e.target.matches('.hin')) setTimeout(() => { if (!typing('#sheet')) { refreshRoom(); refreshWork(); } }, 60); });
+  hudEl.addEventListener('submit', e => {
+    const f = e.target; if (!f.dataset || (f.dataset.hadd === undefined && !f.dataset.nadd)) return; e.preventDefault();
+    const inp = f.querySelector('.hin'), ok = f.dataset.nadd ? APP.noteAdd(inp.value) : APP.addTask(inp.value, f.dataset.hadd || null);
+    if (ok) inp.value = ''; inp.focus();
+  });
+  /* the top bar's own: quick add, progress, system */
+  hudEl.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-hud],[data-sact],[data-jst],[data-jdel]'); if (!b) return; const d = b.dataset;
+    if (d.hud) return openGlobal(d.hud);
+    /* a system switch runs the app's own action, then the card redraws to show it */
+    if (d.sact) { APP.act(d.sact, d.v !== undefined ? { v: d.v } : {}); setTimeout(() => refreshGlobal('sys'), 120); setTimeout(() => refreshGlobal('sys'), 1500); return; }
+    if (d.jst) { const [id, st] = d.jst.split('|'); APP.jobStatus(id, st); return; }
+    if (d.jdel) APP.jobDel(d.jdel);
+  });
+  hudEl.addEventListener('change', e => { const el = e.target; if (el.dataset && el.dataset.set) APP.setting(el.dataset.set, el.value); });
+  hudEl.addEventListener('input', e => { if (e.target.id === 'gAddI') quickPrev(); });
+  hudEl.addEventListener('submit', e => {
+    const f = e.target;
+    if (f.id === 'gAddF') { e.preventDefault(); const i = $('#gAddI'); if (APP.quick(i.value)) { i.value = ''; quickPrev(); } i.focus(); return; }
+    if (f.id === 'gSyncF') { e.preventDefault(); const i = $('#gSyncI'); if (APP.syncOn(i.value)) { i.value = ''; i.blur(); setTimeout(() => refreshGlobal('sys'), 300); } return; }
+    if (f.id === 'crAdd') { e.preventDefault(); if (APP.jobAdd(f.company.value, f.role.value, f.link.value)) { f.reset(); f.company.focus(); } else f.company.focus(); }
+  });
+  /* a benchmark logs from its own box */
+  hudEl.addEventListener('submit', e => {
+    const f = e.target.closest && e.target.closest('[data-gbench]'); if (!f) return; e.preventDefault();
+    const inp = f.querySelector('input'); if (APP.bench(f.dataset.gbench, inp.value)) { inp.value = ''; inp.blur(); } else inp.focus();
+  });
   barInto($('#bA'), 18, 0); barInto($('#bB'), 18, 0); barInto($('#bC'), 18, 0); barInto($('#bD'), 18, 0); barInto($('#bE'), 18, 0); barInto($('#bF'), 18, 0);
   sqInto($('#sqA'), 9, 6); sqInto($('#sqB'), 9, 3);
   /* ladder on the side, laptop only */
@@ -5083,7 +5540,6 @@ function hudInit() {
     const b = e.target.closest && e.target.closest('[data-tick],[data-task],[data-dec],[data-day]'); if (!b) return;
     const d = b.dataset;
     if (d.tick) { aptKeep.add(d.tick + '|' + d.date); APP.tick(d.tick, d.date); const r = b.closest('.trow'), on = r.classList.toggle('done'); b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^Mark (not )?done/, 'Mark ' + (on ? 'not done' : 'done'))); kick = 1; for (const id of ['#aptList', '#tdRows', '#wkDay']) $(id)._h = null; return; }
-    if (d.task) return APP.openTask(d.task, d.date);
     if (d.dec) return APP.decide(d.dec, d.id);
     aptDay = d.day; refreshApt();
   });
@@ -5199,7 +5655,7 @@ function flyOut() {
 function goBack() { if (S.close) return stepBack(); if (history.state && history.state.city) history.back(); else flyOut(); }
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
 function enterRoom() { const y = S.fly && S.fly.yaw || 0; S.fly = null; flightRes(false); setMode('room'); S.ringIn = S.t; S.yaw = y; S.yawGoal = RIG ? y : restYaw(); S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
-function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
+function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; gymDay = null; shopDay = null; aptOpen = null; aptNote = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
 const flyLabel = dir => setText('#flyT', (dir > 0 ? 'APPROACH: ' : 'DEPART: ') + room.def.name);
 function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideRoom() ? 0 : ''; flyLabel(dir); $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - room.box.x, CAM.position.z - room.box.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
 function tapHot(k) {
@@ -5211,8 +5667,16 @@ function tapHot(k) {
 }
 /* The same state change as the Work page. The app shows the toast with Undo, then calls City.update. */
 function tapClock() { if (APP.clock().on) APP.act('clock-out'); else APP.clockIn(); }
-function openSheet(id) { refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) $('#aptBox').inert = true; const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const c = ROOT.getElementById(id); const sc = $('#sheetScroll'); if (c && sc) sc.scrollTop = Math.max(0, c.offsetTop - sc.offsetTop - 4); scanNow(); $('#btnClose').focus({ preventScroll: true }); }
-function closeSheet(quiet) { S.sheet = false; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
+/* the sheet holds the room's cards, or one of the city's own (quick add, progress, system) on its own */
+const GCARD = { add: ['gAdd', 'Quick add', 'SYS.INPUT'], prog: ['gProg', 'Progress', 'SYS.RECORD'], sys: ['gSys', 'System', 'SYS.CONFIG'] };
+let gOpen = null;
+function openGlobal(k) { if (!GCARD[k]) return; gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
+function openSheet(id) {
+  const c0 = ROOT.getElementById(id), g = c0 && c0.dataset.g, sh0 = $('#sheet'); sh0.classList.toggle('g', !!g); if (!g) gOpen = null;
+  ROOT.querySelectorAll('#sheet .card[data-g]').forEach(c => c.classList.toggle('on', c.dataset.g === g));
+  setText('#shName', g ? GCARD[g][1] : room.def.sheet[0]); setText('#shPage', g ? GCARD[g][2] : room.def.sheet[1]); sh0.setAttribute('aria-label', g ? GCARD[g][1] : room.def.sheet[0]);
+  refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) { $('#aptBox').inert = true; $('#gymBox').inert = true; } const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const c = ROOT.getElementById(id); const sc = $('#sheetScroll'); if (c && sc) sc.scrollTop = Math.max(0, c.offsetTop - sc.offsetTop - 4); scanNow(); $('#btnClose').focus({ preventScroll: true }); }
+function closeSheet(quiet) { S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
 function updateSel() {
   if (!HOME) return;
   const o = ICONS[sel], a = HOME.attrs[o.attr], v = Math.round(pct01(a.bar) * 100);
@@ -5238,7 +5702,9 @@ function refreshWork() {
   const W = WORK, ratio = pct01(W.pct);
   setText('#shopPer', W.periodEnd); setText('#shPer', W.period); setText('#vE', W.hours); setText('#stH', W.hours); setText('#stN', String(W.worked)); setText('#stG', W.goal);
   setBar($('#bE'), ratio); setRing($('#ringB'), String(Math.round(ratio * 100)), ratio); setRing($('#ringC'), String(Math.round(ratio * 100)), ratio); $('#ringC').querySelector('small').textContent = W.ringSub;
-  setHTML('#shRows', W.rows.map(r => `<button class="sh ${r.h ? '' : 'off'} ${r.today ? 'today' : ''}" data-act="open-shift" data-date="${r.d}" aria-label="${r.aria}"><b>${r.dow}</b><span>${r.day}</span><div class="tr">${r.h ? `<i style="left:${r.left}%;width:${r.width}%"></i>` : ''}</div><em>${r.h ? r.hrs : '-'}</em></button>`).join(''));
+  const sd = W.rows.find(r => r.d === shopDay) || W.rows.find(r => r.today) || W.rows[W.rows.length - 1];
+  setHTML('#shRows', W.rows.map(r => `<button class="sh ${r.h ? '' : 'off'} ${r.today ? 'today' : ''}${r === sd ? ' sel' : ''}" data-shday="${r.d}" aria-pressed="${r === sd}" aria-label="${r.aria.replace(/ Edit\.$/, '')}"><b>${r.dow}</b><span>${r.day}</span><div class="tr">${r.h ? `<i style="left:${r.left}%;width:${r.width}%"></i>` : ''}</div><em>${r.h ? r.hrs : '-'}</em></button>`).join(''));
+  if (sd) shiftInto('#shEd', APP.shift(sd.d));
   setText('#payBig', W.pay); setText('#payEst', W.payEst); setBar($('#bF'), pct01(W.sixBar)); setText('#payAll', W.six); setText('#payWin', W.win ? 'SUBMIT.WIN OPEN' : 'SUBMIT.WIN SHUT');
   setHTML('#payChk', chkHTML(W.checks)); setHTML('#roomChk', chkHTML(W.checks.slice(0, 3)));
   $('#btnFill').hidden = !W.win;
@@ -5246,33 +5712,123 @@ function refreshWork() {
   paintClock();
 }
 /* a room's panels read through the app; a throw here must not stop the app's own render */
-function refreshRoom() { if (room.def && room.def.refresh && APP.tab() === 'today') try { room.def.refresh(); } catch (e) { APP.log(e); } }
-let aptDay = null;
+function refreshRoom() { if (gOpen && S.sheet) try { refreshGlobal(gOpen); } catch (e) { APP.log(e); } if (room.def && room.def.refresh && APP.tab() === 'today') try { room.def.refresh(); } catch (e) { APP.log(e); } }
+let aptDay = null, shopDay = null;
 /* rows ticked on this visit stay in the list, in the order he found them, so nothing moves under his thumb until he leaves */
 const aptKeep = new Set(), aptOrd = new Map();
 const rowKey = t => t.id + '|' + t.d;
 const aptSort = l => { for (const t of l) if (!aptOrd.has(rowKey(t))) aptOrd.set(rowKey(t), aptOrd.size); return [...l].sort((a, b) => aptOrd.get(rowKey(a)) - aptOrd.get(rowKey(b))); };
-const taskRow = t => `<div class="trow${t.done ? ' done' : ''}" style="--c:${t.c}"><button class="tick" data-tick="${t.id}" data-date="${t.d}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-task="${t.id}" data-date="${t.d}"><b>${t.title}</b>${t.meta ? `<small>${t.meta}</small>` : ''}</button></div>`;
+/* a task: its tick, its title. In the sheet a tap on the title opens its editor in the row: rename, move, a time, delete */
+let aptOpen = null, aptNote = null;
+const taskEd = t => { const x = APP.task(t.id); if (!x) return ''; return `<div class="ted"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" data-tt="${t.id}" value="${x.title}" aria-label="Rename the task"><div class="tacts"><button class="rbtn ol" data-tw="${t.id}:today">TODAY</button><button class="rbtn ol" data-tw="${t.id}:tomorrow">TOMORROW</button><button class="rbtn ol" data-tw="${t.id}:nextweek">NEXT WEEK</button><label class="tm">AT<input class="hin" type="time" data-trem="${t.id}" value="${x.remind}" aria-label="Remind me at"></label><button class="rbtn ol dng" data-tdel="${t.id}">DELETE</button></div></div>`; };
+const taskRow = (t, ed) => { const op = ed && aptOpen === rowKey(t); return `<div class="trow${t.done ? ' done' : ''}${op ? ' open' : ''}" style="--c:${t.c}"><button class="tick" data-tick="${t.id}" data-date="${t.d}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-topen="${t.id}" data-date="${t.d}" aria-expanded="${!!op}"><b>${t.title}</b>${t.meta ? `<small>${t.meta}</small>` : ''}</button>${op ? taskEd(t) : ''}</div>`; };
+/* a shift's editor, the same in the apartment's week and the shop */
+const shiftEd = x => `<div class="sed" data-sdate="${x.d}"><div class="sedh"><b>SHIFT / ${x.long.toUpperCase()}</b><em>${x.on ? x.h + 'H' : 'NONE'}</em></div><div class="sedg"><label>START<input class="hin" type="time" data-sx="start" value="${x.start}"></label><label>END<input class="hin" type="time" data-sx="end" value="${x.end}"></label><label>BREAK MIN<input class="hin" type="number" inputmode="numeric" min="0" step="5" placeholder="0" data-sx="brk" value="${x.brk}"></label></div>${x.presets.length || x.on ? `<div class="tacts">${x.presets.map(p => `<button class="rbtn ol" data-spre="${p.start}|${p.end}|${p.brk}">${p.label}</button>`).join('')}${x.on ? '<button class="rbtn ol dng" data-sclr="1">CLEAR</button>' : ''}</div>` : ''}</div>`;
+/* while he types in a box, leave that box's part of the sheet alone */
+const typing = sel => { const a = ROOT.activeElement; return !!(a && a.matches && a.matches('input,textarea') && a.closest(sel)); };
+/* a shift editor: redrawn, or while he's in one of its boxes only its hours */
+function shiftInto(sel, x) { if (!typing(sel)) return setHTML(sel, shiftEd(x)); const em = ROOT.querySelector(sel + ' .sedh em'); if (em) setText2(em, x.on ? x.h + 'H' : 'NONE'); }
 const noneRow = s => `<div class="none">${s}</div>`;
 function refreshApt() {
   /* rows are rewritten below: note what had focus, to hand it back */
-  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['day', 'tick', 'task', 'dec'].find(k => fo.dataset[k]) : null, fv = fk && fo.dataset[fk], fi = fk && fo.dataset.id, zone = fk && fo.closest('#sheet') ? $('#sheet') : hudEl;
+  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['day', 'tick', 'topen', 'dec', 'tw', 'nopen', 'npin', 'spre', 'sclr'].find(k => fo.dataset[k]) : null, fv = fk && fo.dataset[fk], fi = fk && fo.dataset.id, zone = fk && fo.closest('#sheet') ? $('#sheet') : hudEl;
   const P = APP.plan(), list = aptSort(P.today), open = list.filter(t => !t.done || aptKeep.has(rowKey(t))), n = `${P.done}/${P.today.length}` + (P.overdue ? ` / ${P.overdue} LATE` : '');
   setText('#aptDate', P.date); setText('#aptN', n); setText('#tdN', n);
-  setRows('#aptList', open.length ? open.map(taskRow).join('') : noneRow(P.today.length ? 'All done today.' : 'Nothing due today.'));
-  setRows('#tdRows', list.length ? list.map(taskRow).join('') : noneRow('Nothing due today.'));
+  setRows('#aptList', open.length ? open.map(t => taskRow(t)).join('') : noneRow(P.today.length ? 'All done today.' : 'Nothing due today.'));
+  if (!typing('#tdRows')) setRows('#tdRows', list.length ? list.map(t => taskRow(t, true)).join('') : noneRow('Nothing due today.'));
   const day = P.week.find(d => d.d === aptDay) || P.week.find(d => d.today) || P.week[0];
   setText('#wkL', P.weekLabel);
   setHTML('#wkRows', P.week.map(d => `<button class="wk${d.today ? ' today' : ''}${d === day ? ' sel' : ''}" data-day="${d.d}" aria-pressed="${d === day}" aria-label="${d.long}: ${d.left} open"><b>${d.dow}</b><span>${d.day}</span><div>${d.note}</div><em>${d.total ? `${d.total - d.left}/${d.total}` : '-'}</em></button>`).join(''));
-  setRows('#wkDay', day.tasks.length ? aptSort(day.tasks).map(taskRow).join('') : noneRow(`Nothing on ${day.long}.`));
-  setHTML('#wkActs', `<button class="rbtn ol" data-act="open-shift" data-date="${day.d}">SHIFT</button><button class="rbtn ol" data-act="open-session" data-date="${day.d}">SESSION</button><button class="rbtn ol" data-go="week:">OPEN WEEK</button>`);
+  if (!typing('#wkDay')) setRows('#wkDay', day.tasks.length ? aptSort(day.tasks).map(t => taskRow(t, true)).join('') : noneRow(`Nothing on ${day.long}.`));
+  setHTML('#wkAdd', `<form class="hadd" data-hadd="${day.d}"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD TO ${day.dow}" aria-label="Add a task for ${day.long}"><button class="rbtn" type="submit">ADD</button></form>`);
+  shiftInto('#wkShift', APP.shift(day.d));
   setText('#ntN', String(P.noteCount));
-  setHTML('#ntRows', P.notes.length ? P.notes.map(o => `<button class="nrow" data-act="open-note" data-id="${o.id}"><b>${o.title}</b>${o.body ? `<p>${o.body}</p>` : ''}<small>${o.pin ? 'PINNED / ' : ''}${o.when}</small></button>`).join('') : noneRow('Nothing written down yet.'));
+  if (aptNote && !P.notes.some(o => o.id === aptNote)) aptNote = null;
+  if (!typing('#ntRows')) setHTML('#ntRows', P.notes.length ? P.notes.map(o => { const op = aptNote === o.id, x = op && APP.note(o.id); return `<div class="nrow${op ? ' open' : ''}"><button class="nhit" data-nopen="${o.id}" aria-expanded="${op}"><b>${o.title}</b>${o.body && !op ? `<p>${o.body}</p>` : ''}<small>${o.pin ? 'PINNED / ' : ''}${o.when}</small></button>${x ? `<div class="ned"><textarea class="hin" rows="5" data-nt="${o.id}" aria-label="The note">${x.text}</textarea><div class="tacts"><button class="rbtn ol" data-npin="${o.id}">${x.pin ? 'UNPIN' : 'PIN'}</button><button class="rbtn ol dng" data-ndel="${o.id}">DELETE</button></div></div>` : ''}</div>`; }).join('') : noneRow('Nothing written down yet.'));
+  refreshCareer();
   setText('#dcN', String(P.decide.length));
   setHTML('#dcRows', P.decide.length ? P.decide.map(t => `<div class="dcd"><b>${t.title}</b><small>Was due ${t.was}</small><div class="acts"><button class="rbtn" data-dec="rm-done" data-id="${t.id}">DONE</button><button class="rbtn ol" data-dec="rm-later" data-id="${t.id}">+2H</button><button class="rbtn ol" data-dec="rm-tomorrow" data-id="${t.id}">TOMORROW</button></div></div>`).join('') : noneRow('Nothing waiting on you.'));
   const tag = k => tagEls.find(g => g.h.key === k), say = (g, s) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, s); m.hidden = !s; };
   say(tag('today'), P.today.length ? `${P.done}/${P.today.length}` : ''); say(tag('decide'), P.decide.length ? String(P.decide.length) : '');
   if (fk && !fo.isConnected) { const same = [...zone.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv && (!fi || b.dataset.id === fi && !b.dataset.dec || b.dataset.id === fi)); const to = same || (S.sheet ? $('#btnClose') : $(room.def.panel + ' button')); if (to) to.focus({ preventScroll: true }); }
+}
+/* the city's own cards: quick add's preview, progress, system */
+const KIND_C = { task: 'var(--hud-cyan)', shift: '#64d2ff', job: 'var(--hud-green)', wo: '#ff9f0a' };
+function quickPrev() { const i = $('#gAddI'), d = i && APP.quickSay(i.value); setHTML('#gAddP', d ? `<b>${d.title}</b><div class="pills" style="--k:${KIND_C[d.kind] || KIND_C.task}">${d.chips.map(c => `<span>${c}</span>`).join('')}</div>` : '<span>A task, a shift or an application. Dates like "tomorrow" or "fri", #work #gym #jobs #life, "every mon", "9-5 shift".</span>'); }
+function refreshGlobal(k) {
+  if (k === 'add') return quickPrev();
+  if (k === 'prog') {
+    const P = APP.progress(), v = P.need ? P.into / P.need : 0, got = P.trophies.filter(t => t.got).length;
+    setText('#gpN', `LV ${P.lvl}`);
+    setHTML('#gProgB', `<div class="hero"><div class="ring" id="ringP">${ringHTML(String(P.lvl), v, 'LEVEL')}</div><div><div class="big">${P.xp.toLocaleString('en')}<small> XP</small></div><div class="meta">${(P.need - P.into).toLocaleString('en')} to level ${P.lvl + 1}</div></div></div>
+      <div class="stats" style="margin-top:10px">${P.stats.map(([l, n]) => `<div class="stat"><label>${l}</label><b>${n}</b></div>`).join('')}</div>
+      <div class="kick" style="margin:12px 0 0">Trophies<span class="mi">${got} OF ${P.trophies.length}</span></div>
+      <div class="gtr">${P.trophies.map(t => `<div class="${t.got ? 'got' : ''}"><i></i><span><b>${t.name}</b>${t.hint}</span></div>`).join('')}</div>`);
+    return;
+  }
+  if (k === 'sys') {
+    if (typing('#gSys')) return;
+    const X = APP.sys(), on = (a, b) => a === b ? '' : ' ol';
+    setText('#gsB', 'BUILD ' + X.build);
+    const num = (k, l, v, o = '') => `<label>${l}<input class="hin" type="number" inputmode="decimal" data-set="${k}" value="${v}" ${o}></label>`;
+    setHTML('#gSysB', `<div class="sgp"><b>YOU</b><div class="sgg"><label class="w">YOUR NAME<input class="hin" type="text" data-set="name" value="${X.name}" autocomplete="off"></label></div></div>
+      <div class="sgp"><b>PAY</b><div class="sgg">${num('rate', 'HOURLY RATE (CAD)', X.rate, 'step="0.25" placeholder="HIDE PAY"')}<label>PAID EVERY<select class="hin" data-set="payCycle"><option value="7"${X.payCycle === 7 ? ' selected' : ''}>WEEK</option><option value="14"${X.payCycle === 14 ? ' selected' : ''}>2 WEEKS</option></select></label>
+        <label class="w">NEXT (OR LAST) PAYDAY<input class="hin" type="date" data-set="payAnchor" value="${X.payAnchor}"></label>${num('payCutoff', 'HOURS DUE, DAYS BEFORE', X.payCutoff, 'min="0" max="7"')}${num('paySubmitDays', 'SEND TO LEN, DAYS BEFORE', X.paySubmitDays, 'min="0" max="10"')}<label class="w">SUBSCRIPTION HOURS A PERIOD<input class="hin" type="number" inputmode="decimal" step="0.5" min="0" data-set="extraHours" value="${X.extraHours}" placeholder="0"></label></div></div>
+      <div class="sgp"><b>GOALS</b><div class="sgg">${num('hoursGoal', 'WEEKLY HOURS', X.hoursGoal, 'placeholder="NONE"')}${num('appGoal', 'WEEKLY APPLICATIONS', X.appGoal, 'placeholder="NONE"')}</div></div>
+      <div class="sgp"><b>REMINDERS</b><div class="seg2">${X.push ? '<button class="rbtn ol" data-sact="push-off">TURN OFF</button><button class="rbtn" data-sact="push-test">SEND A TEST</button>' : '<button class="rbtn" data-sact="push-on">TURN ON NOTIFICATIONS</button>'}</div><p>${X.pushSay}</p>
+        <div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn${X.brief ? '' : ' ol'}" data-sact="toggle-brief" aria-pressed="${X.brief}">MORNING RUNDOWN</button><input class="hin" type="time" data-set="remindAt" value="${X.remindAt}" style="width:130px" aria-label="Rundown time"></div>
+        <p>Keep reminding until it is done:</p><div class="seg2" style="margin-top:6px">${[[0, 'OFF'], [120, 'EVERY 2H'], [240, 'EVERY 4H']].map(([m, l]) => `<button class="rbtn${on(X.nag, m)}" data-sact="set-nag" data-v="${m}" aria-pressed="${X.nag === m}">${l}</button>`).join('')}</div></div>
+      <div class="sgp"><b>SOUND</b><div class="seg2">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.sound ? '1' : '0', v)}" data-sact="set-sound" data-v="${v}" aria-pressed="${(X.sound ? '1' : '0') === v}">${l}</button>`).join('')}</div><p>This device only. An iPhone's silent switch mutes it.</p></div>
+      <div class="sgp"><b>PERFORMANCE</b><div class="seg2">${[['auto', 'AUTO'], ['smooth', 'SMOOTH'], ['balanced', 'BALANCED'], ['saver', 'SAVER']].map(([v, l]) => `<button class="rbtn${on(X.perf, v)}" data-sact="set-perf" data-v="${v}" aria-pressed="${X.perf === v}">${l}</button>`).join('')}</div><p>${X.perfSay}</p><div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn ol" data-sact="copy-log">COPY PROBLEM LOG</button><span class="mi">${X.probs} LOGGED</span></div></div>
+      <div class="sgp"><b>SYNC</b>${X.sync ? '<div class="seg2"><button class="rbtn" data-sact="sync-now">SYNC NOW</button><button class="rbtn ol" data-sact="sync-off">TURN OFF</button></div>' : '<form class="hadd" id="gSyncF" style="margin-top:0"><input class="hin" id="gSyncI" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="SYNC CODE" aria-label="Sync code"><button class="rbtn" type="submit">CONNECT</button></form>'}<p>${X.syncSay}</p></div>
+      <div class="sgp"><b>BACKUP</b><div class="seg2"><button class="rbtn ol" data-sact="export">EXPORT BACKUP</button><button class="rbtn ol" data-sact="import">IMPORT BACKUP</button></div><p>Install: iPhone Share, then Add to Home Screen.</p></div>`);
+  }
+}
+/* the apartment's career drawer: applications, their status in one tap, a new one, a remove */
+function refreshCareer() {
+  const J = APP.jobs(), act = J.list.filter(j => j.status !== 'Rejected').length;
+  setText('#crN', `PAUSED / ${act} OPEN`);
+  if (typing('#crRows')) return;
+  setHTML('#crRows', J.list.length ? J.list.map(j => `<div class="jrow"><div class="jt"><b>${j.company}</b><small>${j.role ? j.role.toUpperCase() + ' / ' : ''}${j.date}</small>${j.link ? `<a href="${j.link}" target="_blank" rel="noopener noreferrer">POSTING</a>` : ''}</div><div class="jst" role="group" aria-label="Status of ${j.company}">${J.statuses.map(([st, c]) => `<button style="--k:${c}" class="${j.status === st ? 'on' : ''}" data-jst="${j.id}|${st}" aria-pressed="${j.status === st}">${st.toUpperCase()}</button>`).join('')}<button data-jdel="${j.id}" aria-label="Remove ${j.company}" style="margin-left:auto">REMOVE</button></div></div>`).join('') : noneRow('No applications. Career is paused.'));
+}
+/* the gym: today's session on the panel and the whiteboard, the week on the chart, the benchmarks, the rest timer */
+const spark = v => { if (v.length < 2) return '<svg viewBox="0 0 72 24" aria-hidden="true"></svg>'; const lo = Math.min(...v), hi = Math.max(...v), r = hi - lo || 1; return `<svg viewBox="0 0 72 24" aria-hidden="true"><polyline fill="none" stroke="#ff4646" stroke-width="1.6" points="${v.map((y, i) => `${(i / (v.length - 1) * 70 + 1).toFixed(1)},${(22 - (y - lo) / r * 20).toFixed(1)}`).join(' ')}"/></svg>`; };
+/* the day the gym's sheet shows: today unless he picked another on the split */
+let gymDay = null;
+function refreshGym() {
+  /* rows are rewritten below: note what had focus, to hand it back */
+  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['gset', 'gday', 'gdone'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
+  const T = APP.train(), V = gymDay ? APP.train(gymDay) : T;
+  const said = X => X.prog ? `${X.prog.done}/${X.prog.total} SETS` : X.s === 'REST' ? 'REST DAY' : X.done ? 'DONE' : 'NOT DONE YET';
+  const n = said(T), p = T.prog ? T.prog.p : T.done ? 1 : 0;
+  setText('#gymDate', T.date); setText('#gyN', n); setText('#gyS', T.s === 'REST' ? 'REST' : T.s); setHTML('#gyName', T.name.toUpperCase());
+  setBar($('#bY1'), p); setText('#vY1', String(Math.round(p * 100)));
+  setHTML('#gyWk', T.week.map(d => `<i class="${d.done ? 'on' : ''}${d.today ? ' td' : ''}" style="--c:${d.c}"><b>${d.dow.slice(0, 2)}</b><span>${d.s === 'REST' ? 'R' : d.s}</span></i>`).join(''));
+  $('#gyWk').setAttribute('aria-label', `This week: ${T.sDone} of ${T.plan} sessions done`);
+  /* the session: every set a button, ticked here exactly as on the Training page */
+  setText('#ssK', V.isToday ? "Today's session" : `${V.long}'s session`); setText('#ssN', said(V));
+  setHTML('#ssHead', `<b style="--c:${V.c}">${V.s}</b><div><strong>${V.name}</strong><small>${V.sub}</small></div>`);
+  setRows('#ssRows', V.ex.length ? V.ex.map(e => `<div class="exr${e.warm ? ' warm' : ''}${e.done >= e.sets ? ' done' : ''}"><div><b>${e.name}</b>${e.reps ? `<small>${e.warm ? 'WARM UP / ' : ''}${e.reps.toUpperCase()}</small>` : e.warm ? '<small>WARM UP</small>' : ''}</div><span>${e.on.map((on, j) => `<button class="st${on ? ' on' : ''}" data-gset="${e.i}:${j}" data-s="${V.s}" aria-pressed="${on}" aria-label="${e.name}, set ${j + 1} of ${e.sets}">${e.sets === 1 ? '✓' : j + 1}</button>`).join('')}</span></div>`).join('') : noneRow(V.s === 'REST' ? 'Rest day. Recover.' : V.s === 'HIIT' ? 'Conditioning: HIIT or a hill climb.' : 'Nothing listed for this day.'));
+  setHTML('#ssActs', V.s === 'REST' ? '' : `<button class="rbtn${V.done ? ' ol' : ''}" data-gdone="${V.d}">${V.done ? 'DONE ✓ / UNDO' : 'MARK DONE'}</button>${V.isToday ? '' : '<button class="rbtn ol" data-gday="">BACK TO TODAY</button>'}`);
+  /* the week: a day shows its session in the card above */
+  setText('#spN', `${T.sDone}/${T.plan} DONE`); setText('#spSt', T.streak ? `${T.streak} WK STREAK` : 'NO STREAK YET');
+  setHTML('#spRows', T.week.map(d => `<button class="wk${d.today ? ' today' : ''}${d.d === V.d ? ' sel' : ''}" data-gday="${d.d}" aria-pressed="${d.d === V.d}" aria-label="${d.long}: ${d.name}${d.done ? ', done' : ''}. Show it."><b>${d.dow}</b><span>${d.day}</span><div><i class="cd" style="--c:${d.c}">${d.s === 'REST' ? 'R' : d.s}</i>${d.name}</div><em>${d.done ? '✓' : ''}</em></button>`).join(''));
+  /* the benchmarks, each with its own log box */
+  setHTML('#bnRows', T.bench.map(b => `<div class="bn"><div><b>${b.label}</b><small>${b.n ? `PB ${b.pb} ${b.unit} / ${b.n} LOGGED` : 'NO LOGS YET'}</small></div>${spark(b.recent)}<em>${b.last ?? '-'}<small>${b.unit}</small></em><form class="bnf" data-gbench="${b.k}"><input type="number" inputmode="numeric" min="1" step="1" placeholder="NEW ${b.unit}" aria-label="Log ${b.label.toLowerCase()} in ${b.unit.toLowerCase()}"><button class="rbtn" type="submit">LOG</button></form></div>`).join(''));
+  const tag = k => tagEls.find(g => g.h.key === k), say = (g, s) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, s); m.hidden = !s; };
+  say(tag('board'), T.prog ? `${T.prog.done}/${T.prog.total}` : ''); say(tag('split'), `${T.sDone}/${T.plan}`);
+  /* the whiteboard and the chart in the room follow, repainted only when what they show has changed */
+  const sig = gymSig(T); if (room.id === 'gym' && room.paint && sig !== GYM_SIG) { GYM_SIG = sig; room.paint(T); }
+  restSeen = -1;
+  if (fk && !fo.isConnected) { const to = [...ROOT.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv) || $('#btnClose'); if (to) to.focus({ preventScroll: true }); }
+}
+/* the rest timer runs in the app; the room only shows it */
+let restSeen = -1;
+function paintRest() {
+  const ms = APP.restLeft(), s = Math.ceil(ms / 1000); if (s === restSeen) return; restSeen = s;
+  const f = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  setText('#rsC', f); $('#rsC').classList.toggle('on', ms > 0);
+  const t = tagEls.find(g => g.h.key === 'timer'); if (t) { const m = t.el.querySelector('small'); setText2(m, ms ? f : ''); m.hidden = !ms; t.el.classList.toggle('on', ms > 0); }
 }
 function paintClock() {
   const c = CLOCK = APP.clock(), f = c.on ? hms(c.ms) : '00:00:00';
@@ -5328,6 +5884,7 @@ function hudFrame(dt) {
       place(g.el, X, Y, off ? 0 : 1);
       const ln = g.el.querySelector('.ln'); if (ln) ln.style.left = clamp(p.x - X, 3, w - 3).toFixed(1) + 'px';
     }
+    if (room.id === 'gym' && (RIG || hudFrameN % 6 === 0)) paintRest();
     if (room.id === 'shop') {
     if (hudFrameN % 24 === 0 && innerWidth >= 900) { const cs = $('#cellsB').children; const on = 1 + Math.floor(Math.random() * 4); for (let i = 0; i < cs.length; i++) cs[i].classList.toggle('on', i < on); }
     const kIn = sstep(0, .9, t - (S.ringIn || 0)); if (kIn < 1 && !RIG && WORK) { const v = pct01(WORK.pct); setRing($('#ringB'), String(Math.round(v * 100 * kIn)), v * kIn); setBar($('#bE'), v * kIn); }

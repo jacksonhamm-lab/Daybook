@@ -278,14 +278,59 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 Technical state only. Updated 2026-11-04.
 
-- **Live:** `main` at `aa169a0` is build `p8`: p7 (the close up on her, the DECIDE monitor, the city opening) plus
-  her natural close-up motion and her card, behind
+- **Live:** `main` at `dffa385` is build `p9`: p7 (the close up on her, the DECIDE monitor, the city opening), p8
+  (her natural close-up motion and her card) and p9 (her forearms), behind
   `?city=1`, flag off by default. Live `city.js` checked byte-identical to the repo; `/api/sky` answers from `SKY_AT`
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
-  off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6, p7 and p8.
-- **Branch:** `city-close`, local: build `p9`. `BUILD` is `'p9'` in `city.js`, `index.html` and the `city.js?v=`
+  off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p9. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
+- **Branch:** `city-close`, local: build `p10`. `BUILD` is `'p10'` in `city.js`, `index.html` and the `city.js?v=`
   query.
+- **Built (p10, the gym, round 1 for his review):** Train now flies into the gym (`ICONS` train `room: 'gym'`).
+  - **Where:** `GR`, a 12 x 10 x 5 bay inside the northside gym, its +X wall the building's real east wall
+    (`GYM.x + 31`). The way in is a new side roll-up door on that wall (`GDOOR`: 3.8 m wide, 3.4 m high), seen
+    through a hole in the city's depth like the apartment's glass. In the city the doorway is one quad facing out, so
+    from inside (the street through the door, `RT.bg`) it's culled. The big front door and roof sign are unchanged.
+  - **Hotspots (his choice):** SESSION, the rolling whiteboard (today's session, a box per working set, ticked as
+    done); SPLIT, a lit chart high on the wall right of the door (this week, today marked, done days ticked); RACK,
+    the power rack (the three benchmarks: last, PB, a spark line); REST, the interval clock over the door (the app's
+    own rest timer, `startRest`, the one the island counts down; 60 s, 90 s, 2 min, +30 s, stop).
+  - **Data:** `CityApp.train()` (index.html): today's session and its sets from `wState()`, the week from `wo()`,
+    the benchmarks from `benchLogs()`, the streak; `rest(sec)` and `restLeft()`. The whiteboard and the chart are
+    painted from it into the gym's own atlas (`gymAtlas`) and repainted only when `gymSig` changes (`room.paint`).
+  - **Panel** `#gymBox`: today's code and name, a SETS bar, the week as seven cells (done underlined in the
+    session's colour, today outlined). Sheet cards `cSess`, `cSplit`, `cBench`, `cRest`.
+  - **Empty gym** (his choice): no figure. Clutter: dumbbell rack, kettlebells, heavy bag, plyo boxes, mat, ball,
+    fan, lockers, water cooler, bag, towel, shaker, leaning plates, chalk bowl, posters (made-up words), pull-up
+    bar, battle rope. The neon reads FUERZA like the roof sign.
+  - **Test:** `t42.mjs W H tag` (fake gym data seeded): rest, clutter off, both looks, the four sheets, a rest
+    started, the flight. `t2` now expects strength to fly to the gym.
+- **Built (p10, the rooms usable in place, his rule 2026-11-04):** "I don't want to have to open sessions or anything,
+  this goes for the plan etc. I want the UI that is cyberpunk themed to be usable." Nothing in a room's sheet opens
+  an app page or app sheet any more; every edit happens in the HUD, through `CityApp`, the pages' own way.
+  - **Gym:** each set is a button (`APP.set`, the Training page's `toggleSet`: sound, rest timer, auto-done); MARK
+    DONE (`sessDone`); a day on the split shows its session in the card above (`gymDay`); each benchmark logs from
+    its own box (`bench`).
+  - **Plan:** an ADD box under today and under the picked day (`addTask`, the quick-add parser, so "call Len 3pm"
+    works); a task's title opens its editor in the row (rename, TODAY / TOMORROW / NEXT WEEK, a time, DELETE with
+    Undo of just that task); from the panel it opens the sheet on that editor. Notes: WRITE ONE box (`noteAdd`), a
+    note opens to edit in place (saved as he types, a beat behind), PIN, DELETE. The picked day's shift edits in
+    place (start, end, break, his usual shifts as one-tap chips, CLEAR).
+  - **Work:** a row in the shifts list picks its day and the same shift editor sits under the list.
+  - While he types in a box, that part of the sheet isn't redrawn (`typing`); it catches up when he leaves it.
+  - **Fixed:** the app's keyboard shortcuts (1-9 switch tabs, N and / open quick add, T, arrows) fired while typing
+    in a city box, because the city's fields are in a shadow root and the app read `e.target` (the host). It now
+    reads `e.composedPath()[0]`.
+  - **The top bar and CAREER too (his yes, same day):** the brand (Progress), + (quick add) and the settings button
+    open the city's own cards (`gProg`, `gAdd`, `gSys`, `data-g`), shown alone in the sheet (`#sheet.g`,
+    `openGlobal`). Progress: level ring, XP, the six stats, trophies. Quick add: the app's parser with a live
+    preview; a plain task goes to today (no compose sheet). System: the app's settings (name, pay, goals,
+    reminders, sound, performance, sync, backup) through `APP.setting` and the app's own actions (`APP.act`);
+    `APP.sys()` never hands over the sync code, only whether there is one. CAREER opens `cCareer`: applications,
+    status in one tap, add, remove with Undo, the posting link.
+  - **Still leaves the HUD:** only the districts without a room yet (Cardio, Fuel, Jobs) open their pages.
+  - **Tests:** `t43.mjs` (gym in place), `t44.mjs` (Plan and Work in place, and the shortcut fix), `t46.mjs`
+    (progress, system, quick add, career).
 - **Built (p8, her motion close up, her card):**
   - **Moves between close-up poses** are staggered (`FIG.lag`: body first, upper arms .1 later, forearms .17,
     hands .24, over 2.6 s). `figSwing` then sets where each upper arm points, straight from the old pose's direction
@@ -421,5 +466,5 @@ Technical state only. Updated 2026-11-04.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. The iPhone check at `?city=1` (her live rig, and the sky: FPS, heat, memory).
-  2. Then the gym, ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.
+  1. His review of the gym (round 1 screenshots sent 2026-11-04); then a go to push p10.
+  2. Then the ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.

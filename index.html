@@ -31,9 +31,9 @@
     }
     on = localStorage.getItem('daybook_home') === 'city';
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p9';
+  window.DAYBOOK_BUILD = 'p10';
   window.DAYBOOK_CITY = on;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p9' : './rider.js'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p10' : './rider.js'; document.head.appendChild(l);
   if (on) {
     document.documentElement.dataset.city = '';
     var c = document.createElement('style');
@@ -43,7 +43,7 @@
 })();
 </script>
 <script type="module">
-if (window.DAYBOOK_CITY) import('./city.js?v=p9').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
+if (window.DAYBOOK_CITY) import('./city.js?v=p10').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
 else import('./rider.js').catch(e => window.logProblem('page', e));
 </script>
 <style>
@@ -3449,7 +3449,9 @@ document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && k.toLowerCase() === 'k') { e.preventDefault(); return $('#spot').classList.contains('on') ? closeSpot() : openSpot(); }
   if (k === 'Enter' && (e.metaKey || e.ctrlKey) && e.target.id === 'capText') { e.preventDefault(); return addNote(); }
   if (k === 'Escape') { if ($('#spot').classList.contains('on')) return closeSpot(); if (SHEET) return closeSheet(); if (S.ui.tab !== 'today') return goHome(); }
-  if (e.target.matches('input,select,textarea') || e.metaKey || e.ctrlKey || e.altKey || SHEET || $('#spot').classList.contains('on')) return;
+  // the city's fields live in a shadow root: what was typed into is the path's first element, not e.target
+  const tg = (e.composedPath && e.composedPath()[0]) || e.target;
+  if ((tg.matches && tg.matches('input,select,textarea')) || e.metaKey || e.ctrlKey || e.altKey || SHEET || $('#spot').classList.contains('on')) return;
   if (k === '/' || k.toLowerCase() === 'n') { e.preventDefault(); return openSpot(); }
   if (k === 'ArrowLeft') return shiftWeek(-1);
   if (k === 'ArrowRight') return shiftWeek(1);
@@ -3547,6 +3549,117 @@ if (window.DAYBOOK_CITY) window.CityApp = {
       decide: slipped().map(t => ({ id: esc(t.id), title: esc(t.title), was: t12(remAt(t, d)) })),
       noteCount: S.notes.length, notes: notes.slice(0, 6).map(n => ({ id: esc(n.id), title: esc(noteTitle(n)), body: esc(noteBody(n).slice(0, 90)), pin: !!n.pin, when: esc(rel(iso(new Date(n.edited || n.created))).toUpperCase()) })) };
   },
+  // the gym's panels: today's session and its sets, this week's split, the benchmarks, the rest timer. Names are escaped here too.
+  // sel: another day of this week, for the gym's sheet; the panel always asks for today
+  train(sel) {
+    const t = today(), mon = mondayOf(new Date()), week0 = datesOf(mon), d = sel && week0.includes(sel) ? sel : t, w = wo(d), lift = /^D\d$/.test(w.s);
+    const st = lift ? wState()[w.s.toLowerCase()] || {} : {};
+    const ex = lift ? flatEx(w.s.toLowerCase()).map((e, i) => { const a = st[i] || []; return { i, name: esc(e.name.split(' · ')[0]), reps: esc(e.name.split(' · ').slice(1).join(' · ')), sets: e.sets, on: [...Array(e.sets)].map((_, j) => !!a[j]), done: a.filter(Boolean).length, warm: e.accent === 'warmup' }; }) : [];
+    const week = week0.map((x, i) => { const o = wo(x); return { d: x, dow: DOW[i].toUpperCase(), long: DOW_LONG[i], day: parse(x).getDate(), s: o.s, name: esc(sessName(o.s)), done: o.done, today: x === t, sel: x === d, c: SESS[o.s].color }; });
+    const plan = week.filter(x => x.s !== 'REST');
+    const bench = [['pushups', 'PUSHUPS', 'REPS'], ['plank', 'PLANK', 'SEC'], ['row', '1-ARM ROW 10KG', 'REPS']].map(([k, label, unit]) => { const L = benchLogs(k).map(x => +x.reps || 0); return { k, label, unit, last: L.length ? L[L.length - 1] : null, pb: L.length ? Math.max(...L) : null, n: L.length, recent: L.slice(-12) }; });
+    return { d, isToday: d === t, long: DOW_LONG[dowIdx(d)], date: short(t).toUpperCase(), s: w.s, name: esc(sessName(w.s)), sub: esc(sessSub(w.s)), c: SESS[w.s].color, done: w.done, prog: w.prog ? { done: w.prog.done, total: w.prog.total, p: w.prog.p } : null, ex,
+      week, sDone: plan.filter(x => x.done).length, plan: plan.length, streak: weekStreak(), bench, rest: this.restLeft() };
+  },
+  // the gym does the Training page's own things in place: a set, a whole session, a benchmark
+  set(s, i, j) {
+    if (!/^D\d$/.test(s) || !flatEx(s.toLowerCase())[i]) return;
+    const wrap = document.createElement('div'), b = document.createElement('button'); wrap.className = 'ex'; wrap.hidden = true;
+    Object.assign(b.dataset, { s, ex: i, set: j }); wrap.append(b); document.body.append(wrap); toggleSet(b); wrap.remove(); render();
+  },
+  sessDone(d) {
+    const o = S.workouts[d] || {}, now = !wo(d).done; S.workouts[d] = { ...o, done: now, auto: false }; haptic(10); save(); render();
+    if (now) celebrate(`${wo(d).s} done`, SESS[wo(d).s].color); else island.toast('Marked not done', { icon: I.training, color: '#ff9f0a' });
+  },
+  bench(k, v) {
+    v = parseInt(v); if (!W_LOGS[k] || !(v > 0)) return false;
+    const L = benchLogs(k), prevBest = L.length ? Math.max(...L.map(x => x.reps)) : 0, n = new Date();
+    L.push({ reps: v, week: `Wk ${L.length + 1} · ${MON[n.getMonth()]} ${n.getDate()}` }); writeLS(W_LOGS[k], L); haptic(10); render();
+    if (v > prevBest && prevBest) celebrate(`New PR · ${v}`, '#ff9f0a'); else island.toast('Benchmark logged', { icon: I.check, color: '#ff9f0a' });
+    return true;
+  },
+  // the rooms edit in place, the pages' own way: tasks added, renamed, moved, deleted; notes written, edited, pinned,
+  // deleted; shifts set and cleared. A delete gives back only what it took (a sync may have landed since).
+  addTask(text, d) { const v = String(text || '').trim(); if (!v) return false; return !!applyQuick(parseQuick(v, d || today())); },
+  task(id) { const t = S.tasks.find(x => x.id === id); return t ? { id: esc(t.id), title: esc(t.title), remind: t.remind || '', repeat: !!t.repeat } : null; },
+  taskSet(id, f) {
+    const t = S.tasks.find(x => x.id === id); if (!t) return;
+    if (f.title !== undefined) { const v = String(f.title).replace(/\n/g, ' ').trim(); if (!v || v === t.title) return; t.title = v; }
+    if (f.when) { const td = parse(today()), to = { today: today(), tomorrow: iso(addDays(td, 1)), nextweek: iso(addDays(mondayOf(td), 7)) }[f.when]; if (!to) return; t.date = to; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); island.toast(`Moved to ${rel(to)}`, { icon: I.check, color: catOf(t.cat).color }); }
+    if (f.remind !== undefined) t.remind = f.remind || null;
+    haptic(6); commit();
+  },
+  taskDel(id) {
+    const i = S.tasks.findIndex(x => x.id === id); if (i < 0) return; const snap = JSON.stringify(S.tasks[i]);
+    S.tasks.splice(i, 1); haptic(10); commit();
+    island.toast('Task deleted', { action: { label: 'Undo', fn: () => { if (!S.tasks.some(x => x.id === id)) S.tasks.push(JSON.parse(snap)); commit(); island.toast('Restored'); } } });
+  },
+  noteAdd(text) { const v = String(text || '').trim(); if (!v) return false; const now = Date.now(); S.notes.unshift({ id: uid(), text: v, cat: null, pin: false, created: now, edited: now }); haptic(); commit(); island.toast('Note saved', { icon: I.notes, color: '#bf5af2' }); return true; },
+  note(id) { const n = S.notes.find(x => x.id === id); return n ? { id: esc(n.id), text: esc(n.text), pin: !!n.pin } : null; },
+  // while he types it only saves; when he leaves the box the pages catch up
+  noteSet(id, text, done) { const n = S.notes.find(x => x.id === id); if (!n) return; if (n.text !== text) { n.text = String(text); n.edited = Date.now(); } if (done) commit(); else save(); },
+  notePin(id) { const n = S.notes.find(x => x.id === id); if (!n) return; n.pin = !n.pin; haptic(); commit(); },
+  noteDel(id) {
+    const i = S.notes.findIndex(x => x.id === id); if (i < 0) return; const snap = JSON.stringify(S.notes[i]);
+    S.notes.splice(i, 1); haptic(10); commit();
+    island.toast('Note deleted', { action: { label: 'Undo', fn: () => { if (!S.notes.some(x => x.id === id)) S.notes.splice(Math.min(i, S.notes.length), 0, JSON.parse(snap)); commit(); island.toast('Restored'); } } });
+  },
+  shift(d) { const s = S.shifts[d] || {}, h = shiftHours(s); return { d, start: s.start || '', end: s.end || '', brk: s.brk ?? '', h: fh(h), on: h > 0, long: esc(longDate(d)), presets: presets().map(p => ({ ...p, label: `${t12(p.start)}–${t12(p.end)}` })) }; },
+  shiftSet(d, f) {
+    const s = S.shifts[d] || (S.shifts[d] = {});
+    for (const k of ['start', 'end']) if (f[k] !== undefined) s[k] = /^\d\d:\d\d$/.test(f[k]) ? f[k] : '';
+    if (f.brk !== undefined) s.brk = f.brk === '' ? '' : Math.max(0, +f.brk || 0);
+    if (!s.start && !s.end && !s.note && !s.brk) delete S.shifts[d];
+    haptic(6); commit();
+    if (f.start !== undefined && f.end !== undefined && shiftHours(S.shifts[d])) island.toast(`${rel(d)} · ${fh(shiftHours(S.shifts[d]))}h logged`, { icon: I.hours, color: '#64d2ff' });
+  },
+  shiftClear(d) {
+    if (!S.shifts[d]) return; const snap = JSON.stringify(S.shifts[d]); delete S.shifts[d]; haptic(10); commit();
+    island.toast(`${rel(d)} shift cleared`, { action: { label: 'Undo', fn: () => { S.shifts[d] = JSON.parse(snap); commit(); island.toast('Restored'); } } });
+  },
+  // the city's own Progress, System (settings) and quick add, and the apartment's career drawer
+  progress() {
+    const xp = xpTotal(), { lvl, into, need } = levelFor(xp), got = earnedTrophies().map(t => t.id);
+    return { lvl, xp, into, need, stats: [['TASKS FINISHED', doneTaskCount()], ['SESSIONS DONE', Object.values(S.workouts).filter(w => w.done).length], ['HOURS LOGGED', fh(totalHours())], ['APPLICATIONS', S.jobs.filter(j => j.status !== 'Wishlist').length], ['CLEAN WEEKS', weekStreak()], ['DAYS CLEARED', (S.clearDays || []).length]],
+      trophies: TROPHIES.map(t => ({ name: esc(t.name), hint: esc(t.hint), got: got.includes(t.id) })) };
+  },
+  // never the sync code itself: the city only knows whether there is one
+  sys() {
+    const st = S.settings;
+    return { name: esc(st.name || ''), rate: st.rate || '', payCycle: +st.payCycle === 7 ? 7 : 14, payAnchor: esc(st.payAnchor || '2026-09-25'), payCutoff: st.payCutoff ?? 1, paySubmitDays: st.paySubmitDays ?? 4, extraHours: st.extraHours || '', hoursGoal: st.hoursGoal || '', appGoal: st.appGoal || '',
+      push: PUSH.on, pushSay: esc(pushLabel()), brief: !!st.remindDaily, remindAt: esc(st.remindAt || '08:00'), nag: st.nag == null ? 240 : +st.nag, sound: SND.on, perf: perfNow().pick, perfSay: esc(perfLabel()), probs: probCount(), sync: !!SYNC.code, syncSay: esc(syncLabel()), build: BUILD };
+  },
+  setting(k, v) {
+    const num = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours', 'payCutoff', 'paySubmitDays'];
+    if (![...num, 'name', 'payAnchor', 'remindAt'].includes(k)) return;
+    if (k === 'rate') S.settings.rateSet = true;
+    S.settings[k] = num.includes(k) ? (+v || 0) : String(v); commit();
+  },
+  syncOn(code) { const v = String(code || '').trim(); if (v.length < 16) { island.toast('That code looks too short'); return false; } setSyncCode(v); return true; },
+  // quick add: what it would do, then do it. A plain task goes to today rather than opening the compose sheet
+  quickSay(v) { const r = String(v || '').trim() ? parseQuick(v) : null, d = describe(r); return d ? { kind: r.kind || 'task', title: esc(d.title), chips: d.chips.map(c => esc(c)) } : null; },
+  quick(v) { const r = String(v || '').trim() ? parseQuick(v) : null; return r ? !!applyQuick(r) : false; },
+  jobs() {
+    return { statuses: Object.entries(STATUSES), list: [...S.jobs].sort((a, b) => (b.created || 0) - (a.created || 0)).map(j => ({ id: esc(j.id), company: esc(j.company), role: esc(j.role || ''), link: /^https?:\/\//i.test(j.link || '') ? esc(j.link) : '', status: j.status, c: STATUSES[j.status] || '#8e8e93', date: j.date ? short(j.date).toUpperCase() : '' })) };
+  },
+  jobStatus(id, v) {
+    const j = S.jobs.find(x => x.id === id); if (!j || !STATUSES[v] || j.status === v) return;
+    if (v === 'Applied' && j.status === 'Wishlist') j.date = today(); j.status = v; (j.history = j.history || []).push({ s: v, d: today() }); haptic(6); commit();
+    if (v === 'Offer') celebrate(`Offer from ${j.company}`, '#30d158');
+  },
+  jobAdd(company, role, link) {
+    company = String(company || '').trim(); if (!company) return false;
+    S.jobs.push({ id: uid(), created: Date.now(), company, role: String(role || '').trim(), link: String(link || '').trim(), status: 'Wishlist', date: today(), notes: '' });
+    haptic(); commit(); island.toast(`${company} added`, { icon: I.jobs, color: '#30d158' }); return true;
+  },
+  jobDel(id) {
+    const i = S.jobs.findIndex(x => x.id === id); if (i < 0) return; const snap = JSON.stringify(S.jobs[i]);
+    S.jobs.splice(i, 1); haptic(10); commit();
+    island.toast('Removed', { action: { label: 'Undo', fn: () => { if (!S.jobs.some(x => x.id === id)) S.jobs.push(JSON.parse(snap)); commit(); island.toast('Restored'); } } });
+  },
+  // the app's own rest timer, the one the island shows between sets
+  rest(sec) { haptic(8); startRest(sec); },
+  restLeft: () => REST ? Math.max(0, REST.end - Date.now()) : 0,
   // the Plan page's tick, with the Undo the city promises: a page can tap again, a room shouldn't have to
   tick(id, date) {
     if (!S.tasks.some(x => x.id === id)) return;
