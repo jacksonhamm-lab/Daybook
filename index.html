@@ -31,9 +31,9 @@
     }
     on = localStorage.getItem('daybook_home') === 'city';
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p10';
+  window.DAYBOOK_BUILD = 'p11';
   window.DAYBOOK_CITY = on;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p10' : './rider.js'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p11' : './rider.js'; document.head.appendChild(l);
   if (on) {
     document.documentElement.dataset.city = '';
     var c = document.createElement('style');
@@ -43,7 +43,7 @@
 })();
 </script>
 <script type="module">
-if (window.DAYBOOK_CITY) import('./city.js?v=p10').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
+if (window.DAYBOOK_CITY) import('./city.js?v=p11').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
 else import('./rider.js').catch(e => window.logProblem('page', e));
 </script>
 <style>
@@ -3559,7 +3559,8 @@ if (window.DAYBOOK_CITY) window.CityApp = {
     const plan = week.filter(x => x.s !== 'REST');
     const bench = [['pushups', 'PUSHUPS', 'REPS'], ['plank', 'PLANK', 'SEC'], ['row', '1-ARM ROW 10KG', 'REPS']].map(([k, label, unit]) => { const L = benchLogs(k).map(x => +x.reps || 0); return { k, label, unit, last: L.length ? L[L.length - 1] : null, pb: L.length ? Math.max(...L) : null, n: L.length, recent: L.slice(-12) }; });
     return { d, isToday: d === t, long: DOW_LONG[dowIdx(d)], date: short(t).toUpperCase(), s: w.s, name: esc(sessName(w.s)), sub: esc(sessSub(w.s)), c: SESS[w.s].color, done: w.done, prog: w.prog ? { done: w.prog.done, total: w.prog.total, p: w.prog.p } : null, ex,
-      week, sDone: plan.filter(x => x.done).length, plan: plan.length, streak: weekStreak(), bench, rest: this.restLeft() };
+      week, sDone: plan.filter(x => x.done).length, plan: plan.length, streak: weekStreak(), bench, rest: this.restLeft(),
+      tpl: S.template.map((k, i) => ({ i, dow: DOW[i].toUpperCase(), k })), opts: SESS_KEYS.map(k => ({ k, name: esc(sessName(k)) })) };
   },
   // the gym does the Training page's own things in place: a set, a whole session, a benchmark
   set(s, i, j) {
@@ -3570,6 +3571,16 @@ if (window.DAYBOOK_CITY) window.CityApp = {
   sessDone(d) {
     const o = S.workouts[d] || {}, now = !wo(d).done; S.workouts[d] = { ...o, done: now, auto: false }; haptic(10); save(); render();
     if (now) celebrate(`${wo(d).s} done`, SESS[wo(d).s].color); else island.toast('Marked not done', { icon: I.training, color: '#ff9f0a' });
+  },
+  // the split, edited in the gym the Plan page's way: the weekly pattern (repeats), or one day's session (that day only)
+  tplSet(i, k) {
+    i = +i; if (!(i >= 0 && i < 7) || !SESS[k] || S.template[i] === k) return;
+    S.template[i] = k; haptic(6); commit(); island.toast(`${DOW[i]} → ${k === 'REST' ? 'Rest' : k}`, { icon: I.training, color: '#ff9f0a' });
+  },
+  sessPick(d, k) {
+    if (!SESS[k] || !curWeek().includes(d)) return; const o = S.workouts[d] || {}; if (wo(d).s === k) return;
+    S.workouts[d] = { ...o, s: k, done: k === 'REST' ? false : o.done, auto: false }; haptic(6); save(); render();
+    island.toast(`${rel(d)} → ${k === 'REST' ? 'Rest' : k}`, { icon: I.training, color: '#ff9f0a' });
   },
   bench(k, v) {
     v = parseInt(v); if (!W_LOGS[k] || !(v > 0)) return false;

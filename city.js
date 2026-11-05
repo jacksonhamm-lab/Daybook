@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import './perf.js';
 
-export const BUILD = 'p10';
+export const BUILD = 'p11';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -257,6 +257,10 @@ input.hin[type=time],input.hin[type=number]{font-variant-numeric:tabular-nums;co
 select.hin{color-scheme:dark}
 .seg2{display:flex;flex-wrap:wrap;gap:6px}
 .seg2 .rbtn{min-height:40px;padding:0 11px}
+.gswap{margin-top:10px}
+.gswap .rbtn{min-width:52px}
+.gtpl{display:grid;gap:6px}
+.gtpl label{display:grid;grid-template-columns:42px minmax(0,1fr);gap:8px;align-items:center;font:700 13px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-text)}
 .jrow{padding:8px 0;border-top:1px solid var(--hud-hair);display:grid;gap:6px}
 .jrow:first-child{border-top:0}
 .jrow .jt{display:flex;align-items:baseline;gap:8px;min-width:0}
@@ -324,6 +328,12 @@ select.hin{color-scheme:dark}
 .shead h2{margin:0;font:700 23px/1 var(--hud-font);letter-spacing:.06em;color:var(--hud-red);text-transform:uppercase}
 .scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 12px calc(var(--sb) + 20px);flex:1;min-height:0;touch-action:pan-y}
 .cards{display:grid;gap:10px}
+#sheet:not(.g) .card[data-r]:not(.cur){display:none}
+.stabs{display:flex;gap:2px;padding:0 8px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--hud-hair)}
+.stabs::-webkit-scrollbar{display:none}
+#sheet.g .stabs{display:none}
+.stabs button{flex:0 0 auto;min-height:40px;padding:0 12px;font:700 12px/1 var(--hud-font);letter-spacing:.1em;color:var(--hud-text3);box-shadow:inset 0 -2px 0 transparent}
+.stabs button[aria-selected=true]{color:var(--hud-text);box-shadow:inset 0 -2px 0 var(--hud-red)}
 .card{position:relative;background:var(--hud-s1);padding:10px 11px;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);box-shadow:inset 0 0 0 1px var(--hud-hair)}
 .card::before{content:'';position:absolute;left:0;top:0;width:28px;height:2px;background:var(--hud-red)}
 .kick{display:flex;align-items:center;gap:6px;font:700 13px/1 var(--hud-font);letter-spacing:.1em;color:var(--hud-red);text-transform:uppercase;margin-bottom:7px}
@@ -546,6 +556,7 @@ const MARKUP = `
   <aside id="sheet" class="frame" aria-label="Work" aria-hidden="true">
     <div class="in">
       <div class="shead"><h2 id="shName">Work</h2><span class="mi" id="shPage" style="margin-left:auto">PAGE.01/03</span><button class="back" id="btnClose" aria-label="Close sheet"><span><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span></button></div>
+      <div class="stabs" id="shTabs" role="tablist" aria-label="Cards"></div>
       <div class="scroll" id="sheetScroll">
         <div class="cards">
           <section class="card" id="gAdd" data-g="add">
@@ -592,11 +603,13 @@ const MARKUP = `
             <div class="ssh" id="ssHead"></div>
             <div id="ssRows"></div>
             <div class="acts" id="ssActs"></div>
+            <div class="sgp gswap" id="ssSwap"></div>
           </section>
           <section class="card" id="cSplit" data-r="gym">
             <div class="kick">The split: this week<span class="mi" id="spN"></span></div>
             <div id="spRows"></div>
             <div class="acts"><span class="mi" id="spSt" style="align-self:center"></span></div>
+            <div class="sed"><div class="sedh">EDIT THE SPLIT<em>REPEATS WEEKLY</em></div><div class="gtpl" id="spTpl"></div></div>
           </section>
           <section class="card" id="cBench" data-r="gym">
             <div class="kick">Benchmarks<span class="mi">THE RACK</span></div>
@@ -5456,12 +5469,13 @@ function hudInit() {
   $('#btnGymSheet').addEventListener('click', () => openSheet('cSess'));
   /* the gym's rest buttons start the app's own rest timer, the one the island counts down between sets */
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-rest],[data-gset],[data-gdone],[data-gday]'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-rest],[data-gset],[data-gdone],[data-gday],[data-gpick]'); if (!b) return; const d = b.dataset;
+    if (d.gpick) { APP.sessPick(d.d, d.gpick); return; }
     if (d.rest) { APP.rest(+d.rest); restSeen = -1; return; }
     /* a set flips at once; the app's own tick (sound, rest timer, sync) follows */
     if (d.gset) { const [i, j] = d.gset.split(':').map(Number), on = b.classList.toggle('on'); b.setAttribute('aria-pressed', String(on)); $('#ssRows')._h = null; APP.set(d.s, i, j); return; }
     if (d.gdone) { APP.sessDone(d.gdone); return; }
-    if (d.gday !== undefined) { gymDay = d.gday || null; refreshGym(); const c = $('#cSess'), sc = $('#sheetScroll'); if (c && sc) sc.scrollTo({ top: Math.max(0, c.offsetTop - sc.offsetTop - 4), behavior: REDUCED ? 'auto' : 'smooth' }); }
+    if (d.gday !== undefined) { gymDay = d.gday || null; refreshGym(); showCard('cSess'); }
   });
   /* the apartment's and the shop's editors: tasks, notes, shifts, all in place */
   const focusIn = sel => requestAnimationFrame(() => { const el = ROOT.querySelector(sel); if (el) { el.focus({ preventScroll: false }); if (el.setSelectionRange && el.type === 'text') el.setSelectionRange(el.value.length, el.value.length); } });
@@ -5485,6 +5499,7 @@ function hudInit() {
   });
   hudEl.addEventListener('change', e => {
     const el = e.target, d = el.dataset || {};
+    if (d.gtpl !== undefined) { el.blur(); return APP.tplSet(d.gtpl, el.value); }
     if (d.tt !== undefined) return APP.taskSet(d.tt, { title: el.value });
     if (d.trem !== undefined) return APP.taskSet(d.trem, { remind: el.value });
     if (d.nt !== undefined) { clearTimeout(noteT); return APP.noteSet(d.nt, el.value, true); }
@@ -5533,6 +5548,7 @@ function hudInit() {
   $('#btnBack').addEventListener('click', goBack);
   $('#btnSheet').addEventListener('click', () => openSheet('cClock'));
   $('#btnClose').addEventListener('click', () => closeSheet());
+  $('#shTabs').addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-tab]'); if (t) { showCard(t.dataset.tab); const n = $(`#shTabs [data-tab="${t.dataset.tab}"]`); if (n) n.focus({ preventScroll: true }); } });
   $('#btnClock').addEventListener('click', tapClock);
   $('#btnAptSheet').addEventListener('click', () => openSheet('cToday'));
   /* the apartment's rows: the tick flips at once, and refreshApt keeps every row where it was until he leaves */
@@ -5671,11 +5687,22 @@ function tapClock() { if (APP.clock().on) APP.act('clock-out'); else APP.clockIn
 const GCARD = { add: ['gAdd', 'Quick add', 'SYS.INPUT'], prog: ['gProg', 'Progress', 'SYS.RECORD'], sys: ['gSys', 'System', 'SYS.CONFIG'] };
 let gOpen = null;
 function openGlobal(k) { if (!GCARD[k]) return; gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
+/* a room's sheet shows one card at a time; tabs switch between them */
+const TABS = { apartment: [['cToday', 'TODAY'], ['cWeek', 'WEEK'], ['cNotes', 'NOTES'], ['cCareer', 'CAREER'], ['cDecide', 'DECIDE']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'RACK'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY']] };
+let curCard = null;
+function showCard(id) {
+  const T = TABS[room.id] || []; if (!T.some(t => t[0] === id)) id = T.length ? T[0][0] : null; curCard = id;
+  ROOT.querySelectorAll('#sheet .card[data-r]').forEach(c => c.classList.toggle('cur', c.id === id));
+  setHTML('#shTabs', T.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === id}" aria-controls="${k}">${l}</button>`).join(''));
+  const i = T.findIndex(t => t[0] === id); setText('#shPage', i < 0 ? '' : `${String(i + 1).padStart(2, '0')}/${String(T.length).padStart(2, '0')}`);
+  const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0;
+}
 function openSheet(id) {
   const c0 = ROOT.getElementById(id), g = c0 && c0.dataset.g, sh0 = $('#sheet'); sh0.classList.toggle('g', !!g); if (!g) gOpen = null;
   ROOT.querySelectorAll('#sheet .card[data-g]').forEach(c => c.classList.toggle('on', c.dataset.g === g));
   setText('#shName', g ? GCARD[g][1] : room.def.sheet[0]); setText('#shPage', g ? GCARD[g][2] : room.def.sheet[1]); sh0.setAttribute('aria-label', g ? GCARD[g][1] : room.def.sheet[0]);
-  refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) { $('#aptBox').inert = true; $('#gymBox').inert = true; } const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const c = ROOT.getElementById(id); const sc = $('#sheetScroll'); if (c && sc) sc.scrollTop = Math.max(0, c.offsetTop - sc.offsetTop - 4); scanNow(); $('#btnClose').focus({ preventScroll: true }); }
+  if (!g) showCard(id);
+  refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) { $('#aptBox').inert = true; $('#gymBox').inert = true; } const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0; scanNow(); $('#btnClose').focus({ preventScroll: true }); }
 function closeSheet(quiet) { S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
 function updateSel() {
   if (!HOME) return;
@@ -5810,6 +5837,10 @@ function refreshGym() {
   setHTML('#ssHead', `<b style="--c:${V.c}">${V.s}</b><div><strong>${V.name}</strong><small>${V.sub}</small></div>`);
   setRows('#ssRows', V.ex.length ? V.ex.map(e => `<div class="exr${e.warm ? ' warm' : ''}${e.done >= e.sets ? ' done' : ''}"><div><b>${e.name}</b>${e.reps ? `<small>${e.warm ? 'WARM UP / ' : ''}${e.reps.toUpperCase()}</small>` : e.warm ? '<small>WARM UP</small>' : ''}</div><span>${e.on.map((on, j) => `<button class="st${on ? ' on' : ''}" data-gset="${e.i}:${j}" data-s="${V.s}" aria-pressed="${on}" aria-label="${e.name}, set ${j + 1} of ${e.sets}">${e.sets === 1 ? '✓' : j + 1}</button>`).join('')}</span></div>`).join('') : noneRow(V.s === 'REST' ? 'Rest day. Recover.' : V.s === 'HIIT' ? 'Conditioning: HIIT or a hill climb.' : 'Nothing listed for this day.'));
   setHTML('#ssActs', V.s === 'REST' ? '' : `<button class="rbtn${V.done ? ' ol' : ''}" data-gdone="${V.d}">${V.done ? 'DONE ✓ / UNDO' : 'MARK DONE'}</button>${V.isToday ? '' : '<button class="rbtn ol" data-gday="">BACK TO TODAY</button>'}`);
+  /* that day's session can be swapped for another, that day only */
+  if (!typing('#ssSwap')) setHTML('#ssSwap', `<b>SWAP ${V.isToday ? 'TODAY' : V.long.toUpperCase()}</b><div class="seg2">${T.opts.map(o => `<button class="rbtn${o.k === V.s ? '' : ' ol'}" data-gpick="${o.k}" data-d="${V.d}" aria-pressed="${o.k === V.s}" aria-label="${o.k === 'REST' ? 'Rest' : o.k}: ${o.name}">${o.k === 'REST' ? 'REST' : o.k}</button>`).join('')}</div><p>This day only. The weekly pattern is on the split.</p>`);
+  /* the weekly pattern, the Plan page's split */
+  if (!typing('#spTpl')) setHTML('#spTpl', T.tpl.map(t => `<label>${t.dow}<select class="hin" data-gtpl="${t.i}" aria-label="${t.dow} every week">${T.opts.map(o => `<option value="${o.k}"${o.k === t.k ? ' selected' : ''}>${o.k === 'REST' ? 'REST' : `${o.k} / ${o.name.toUpperCase()}`}</option>`).join('')}</select></label>`).join(''));
   /* the week: a day shows its session in the card above */
   setText('#spN', `${T.sDone}/${T.plan} DONE`); setText('#spSt', T.streak ? `${T.streak} WK STREAK` : 'NO STREAK YET');
   setHTML('#spRows', T.week.map(d => `<button class="wk${d.today ? ' today' : ''}${d.d === V.d ? ' sel' : ''}" data-gday="${d.d}" aria-pressed="${d.d === V.d}" aria-label="${d.long}: ${d.name}${d.done ? ', done' : ''}. Show it."><b>${d.dow}</b><span>${d.day}</span><div><i class="cd" style="--c:${d.c}">${d.s === 'REST' ? 'R' : d.s}</i>${d.name}</div><em>${d.done ? '✓' : ''}</em></button>`).join(''));

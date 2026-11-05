@@ -284,8 +284,17 @@ Technical state only. Updated 2026-11-04.
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-close`, pushed as build `p10`. `BUILD` is `'p10'` in `city.js`, `index.html` and the `city.js?v=`
+- **Branch:** `city-close`, local: build `p11`. `BUILD` is `'p11'` in `city.js`, `index.html` and the `city.js?v=`
   query.
+- **Built (p11, his notes on p10, 2026-11-05):**
+  - **The split edits in the gym.** SPLIT card: EDIT THE SPLIT, a select per weekday (`data-gtpl`, `CityApp.tplSet(i, k)`,
+    the Plan page's `S.template`, repeats weekly). SESSION card: a SWAP row for the day shown (`data-gpick`,
+    `CityApp.sessPick(d, k)`, the day sheet's `sess-pick`, that day only, this week only).
+  - **One card at a time** (he found the long stack overwhelming). `TABS` lists each room's cards and tab names;
+    `showCard(id)` marks `.card.cur`, builds `#shTabs` and sets `#shPage` to `NN/NN`. A hotspot opens its own tab; a day
+    on the split shows the SESSION tab. Global cards (`#sheet.g`) have no tabs.
+  - Tests: t47 (split, 10 checks, plus `dc_*` shots). t43 now picks a lifting day if today has no sets; t2 steps frames
+    until the shop sheet is in (in the rig the slide only moves while frames draw).
 - **Built (p10, the gym, round 1 for his review):** Train now flies into the gym (`ICONS` train `room: 'gym'`).
   - **Where:** `GR`, a 12 x 10 x 5 bay inside the northside gym, its +X wall the building's real east wall
     (`GYM.x + 31`). The way in is a new side roll-up door on that wall (`GDOOR`: 3.8 m wide, 3.4 m high), seen
@@ -466,5 +475,5 @@ Technical state only. Updated 2026-11-04.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. His review of the gym live (p10 pushed 2026-11-04); the rainy-glass street through the door is open to tweak.
+  1. His go to push p11. Then his review of the gym live; the rainy-glass street through the door is open to tweak.
   2. Then the ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.
