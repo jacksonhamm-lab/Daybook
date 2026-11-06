@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p12';
+export const BUILD = 'p13';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -177,6 +177,46 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #gymBox .dhead{padding-right:6px}
 #gymBox .rbtn{margin-left:auto}
 #gymBox .dhead .mi{margin-left:10px}
+#chBox{left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px)}
+#chBox .dhead{padding-right:6px}
+#chBox .rbtn{margin-left:auto}
+#chBox .dhead .mi{margin-left:10px}
+#chBox .gyb{display:grid;gap:7px}
+.git{width:100%;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:44px;border-top:1px solid var(--hud-hair);text-align:left;color:var(--hud-text)}
+.git i,.rcr .pk i{width:22px;height:22px;display:grid;place-items:center;font:700 13px/1 var(--hud-font);font-style:normal;color:transparent;box-shadow:inset 0 0 0 1.5px var(--hud-cyan-line)}
+.git.on i,.rcr.on .pk i{background:var(--hud-cyan);color:var(--hud-ink);box-shadow:none}
+.git b{font:600 14px/1.2 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.git.on b{opacity:.5;text-decoration:line-through}
+.git em{font:600 10px/1 var(--micro);font-style:normal;letter-spacing:.04em;color:var(--hud-text3);white-space:nowrap}
+.gsec{margin:12px 0 2px;font:700 11px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-yellow)}
+.gsec:first-child{margin-top:2px}
+.rcr{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;border-top:1px solid var(--hud-hair)}
+.rcr .pk{width:44px;height:44px;display:grid;place-items:center}
+.rcr .op{min-height:48px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;color:var(--hud-text);padding-right:2px}
+.rcr .op b{display:block;font:600 14px/1.2 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcr .op small{display:block;margin-top:3px;font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcr .op em{font:700 13px/1 var(--hud-font);font-style:normal;color:var(--hud-yellow)}
+.fcats{margin-bottom:6px}
+.rch{margin:12px 0 4px;font:700 11px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-yellow)}
+.rct{font:600 18px/1.2 var(--body);color:var(--hud-text);margin:8px 0 2px}
+.rcm{font:12px/1.4 var(--body);color:var(--hud-text3);margin:4px 0 0}
+.mac{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:10px 0 2px}
+.mac div{box-shadow:inset 0 0 0 1px var(--hud-hair);padding:8px 0;text-align:center}
+.mac b{display:block;font:700 15px/1 var(--hud-font);color:var(--hud-text)}
+.mac span{display:block;margin-top:4px;font:9px/1 var(--micro);letter-spacing:.06em;color:var(--hud-text3)}
+.rci,.rcs{margin:2px 0 0;padding-left:18px;font:13px/1.45 var(--body);color:var(--hud-text2)}
+.rcs li{margin-top:5px}
+.rcs b{color:var(--hud-text);font-weight:600;margin-right:4px}
+.rcg{margin:8px 0 0;font:600 9px/1 var(--micro);letter-spacing:.06em;color:var(--hud-text3);text-transform:uppercase}
+.shk{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.shk button{min-height:68px;display:grid;place-content:center;gap:6px;text-align:center;font:700 15px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-cyan);box-shadow:inset 0 0 0 1.5px var(--hud-cyan-line)}
+.shk button.on{background:var(--hud-cyan);color:var(--hud-ink);box-shadow:none}
+.shk small{font:9px/1 var(--micro);letter-spacing:.06em;opacity:.85}
+.cdf{display:grid;gap:7px}
+.cdf .cdn{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px}
+.clg{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;min-height:40px;border-top:1px solid var(--hud-hair);font:13px/1.2 var(--body);color:var(--hud-text)}
+.clg b{font-weight:600}
+.clg em{font:600 10px/1 var(--micro);font-style:normal;letter-spacing:.05em;color:var(--hud-text3)}
 #hud[data-room=gym] .cards{grid-template-columns:minmax(0,1fr)}
 #hud.room[data-room=gym] .q,#hud.room[data-room=gym] .back{flex:none}
 #hud.room[data-room=gym] .brand{min-width:0}
@@ -365,7 +405,7 @@ select.hin{color-scheme:dark}
 
 #hint{position:absolute;left:50%;transform:translateX(-50%);font:600 12px/1 var(--hud-font);letter-spacing:.14em;color:var(--hud-text2);background:var(--hud-plate);padding:4px 9px;white-space:nowrap;transition:opacity .4s}
 /* close up on her: the tags and the room's panel step aside */
-#tags,#aptBox,#roomBox,#gymBox{transition:opacity .3s}
+#tags,#aptBox,#roomBox,#gymBox,#chBox{transition:opacity .3s}
 #hud.close #tags,#hud.close #aptBox,#hud.close #roomBox{opacity:0;pointer-events:none}
 /* and her card comes in: who she is, her pose, her mood (his day) and their link (his progress) */
 #herBox{left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px);opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .3s,transform .3s}
@@ -421,6 +461,7 @@ select.hin{color-scheme:dark}
   #roomBox{right:auto;width:470px;left:18px;bottom:18px}
   #aptBox{right:auto;width:470px;left:18px;bottom:18px}
   #gymBox{right:auto;width:400px;left:18px;bottom:18px}
+  #chBox{right:auto;width:400px;left:18px;bottom:18px}
   #herBox{left:auto;right:18px;bottom:18px;width:300px}
   .aptl{max-height:min(176px,24vh)}
   .top{padding-left:18px;padding-right:18px}
@@ -551,6 +592,17 @@ const MARKUP = `
       </div>
     </div>
   </section>
+  <section class="dbox frame" id="chBox" data-m="room" data-r="chalet" aria-label="Food and cardio today">
+    <div class="in">
+      <div class="dhead"><b>TODAY</b><span class="mi" id="chN"></span><button class="rbtn" id="btnChSheet">LIST</button></div>
+      <div class="tickr"></div>
+      <div class="gyb">
+        <div class="rw"><span>SHAKES</span><div class="bar y" id="bK1"></div><em id="vK1">0/2</em></div>
+        <div class="rw"><span>CART</span><div class="bar c" id="bK2"></div><em id="vK2">-</em></div>
+        <div class="rw"><span>CARDIO</span><div class="bar" id="bK3"></div><em id="vK3">0</em></div>
+      </div>
+    </div>
+  </section>
   <div id="hint" data-m="room" style="top:calc(var(--st) + 72px)">DRAG TO LOOK</div>
 
   <aside id="sheet" class="frame" aria-label="Work" aria-hidden="true">
@@ -619,6 +671,28 @@ const MARKUP = `
             <div class="kick">Rest timer<span class="mi">SYS.REST/01</span></div>
             <div class="rst" id="rsC" role="timer" aria-live="off">0:00</div>
             <div class="acts"><button class="rbtn" data-rest="60">60S</button><button class="rbtn" data-rest="90">90S</button><button class="rbtn" data-rest="120">2 MIN</button><button class="rbtn ol" data-act="rest-add">+30S</button><button class="rbtn ol" data-act="rest-skip">STOP</button></div>
+          </section>
+          <section class="card" id="cList" data-r="chalet">
+            <div class="kick">The list<span class="mi" id="flN"></span></div>
+            <div id="flRows"></div>
+            <div class="acts" id="flActs"></div>
+            <div class="sgp" id="flSnk"></div>
+          </section>
+          <section class="card" id="cMeals" data-r="chalet">
+            <div class="kick"><span id="fmK">This week's meals</span><span class="mi" id="fmN"></span></div>
+            <div id="fmBody"></div>
+          </section>
+          <section class="card" id="cShakes" data-r="chalet">
+            <div class="kick">Shakes<span class="mi" id="fsN"></span></div>
+            <div class="shk" id="fsBtns"></div>
+            <div class="sgp" style="margin-top:10px"><b>THIS WEEK</b><div class="gwk" id="fsWk" role="img"></div></div>
+          </section>
+          <section class="card" id="cCardio" data-r="chalet">
+            <div class="kick">Cardio<span class="mi" id="fcN"></span></div>
+            <div class="rw"><span>WEEK</span><div class="bar" id="bK4"></div><em id="vK4">0</em></div>
+            <div class="gwk" id="fcWk" role="img" style="margin-top:8px"></div>
+            <div class="sgp" id="fcForm" style="margin-top:10px"></div>
+            <div id="fcRows"></div>
           </section>
           <section class="card" id="cClock" data-r="shop">
             <div class="kick">The clock<span class="mi">SYS.CLOCK/01</span></div>
@@ -2151,9 +2225,11 @@ void main(){
 
 /* ---------- the island: everything is built here, no models or pictures ---------- */
 const SHOP = { x: -23, y: 0, z: 62, w: 11, d: 9, h: 4.1 };
+/* the chalet on the slope west of the lift station: its middle, and its floor (flush with the hill on the uphill, north side) */
+const CH = { x: 200, z: -850, y: 229.2 };
 const GYM = { x: 172, z: -150 }, BOWL = innerWidth / innerHeight < .8 ? { x: 34, z: 246 } : { x: 92, z: 244 };
 const SHAFTS = [{ o: [0, 620, -235], e: [-210, 980, -320], r: 7, c: [.82, .92, 1], a: .55 }, { o: [-225, 225, 42], e: [-150, 700, -160], r: 5, c: [.5, .95, 1], a: .34 }, { o: [118, 150, 40], e: [240, 620, -180], r: 5, c: [1, .36, .7], a: .3 }];
-const ANCHORS = { plan: [-72, 49, 229.2], work: [SHOP.x + SHOP.w / 2 + 1.4, 24, SHOP.z - SHOP.d / 2 - .4], train: [GYM.x, 66, GYM.z + 18], cardio: innerWidth / innerHeight < .8 ? [180, 590, -1120] : [300, 262, -860], fuel: [BOWL.x, 50, BOWL.z], school: [-212, 62, 296] };
+const ANCHORS = { plan: [-72, 49, 229.2], work: [SHOP.x + SHOP.w / 2 + 1.4, 24, SHOP.z - SHOP.d / 2 - .4], train: [GYM.x, 66, GYM.z + 18], fuel: [CH.x, CH.y + 9, CH.z], school: [-212, 62, 296] };
 const ROADS = { ew: [[250, 24], [150, 22], [-30, 22], [-170, 22], [-310, 22]], ns: [[0, 35], [-128, 20], [128, 20], [-262, 20], [262, 20]] };
 
 function curvePts(pts, n, closed = false) { const c = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p)), closed, 'centripetal'); return c.getSpacedPoints(n).map(v => [v.x, v.y, v.z]); }
@@ -2538,6 +2614,45 @@ function castle(M) {
   glow(cx + 2, 18, cz + 16, 0x5be38a, 28); pool(cx + 2, cz + 34, 38, 0x5be38a, .35);
 }
 
+/* the room's chalet (CH) as the city sees it: a stone base down the slope, timber walls, a steep snowy roof with its ridge along x,
+   and the +X gable end glazed and lit over a deck. The glass is one quad facing out; close to, the hole shows the room (CR) */
+function chalet(M) {
+  const id0 = M._id, cur0 = M.id;
+  const { x, z, y } = CH, top = y + 2.85, rh = 3.3, gx = x + 4.5, bx = x - 5.1, zN = z - 3.8, zS = z + 3.8;
+  /* a snowy shoulder dug out of the slope for it to stand on: a level pad, its sides falling away into the hill */
+  { const r0 = rectPoly(x + .6, z, 16, 13), r1 = rectPoly(x + .6, z, 44, 40), yt = y - .95;
+    M.set({ kind: K.SNOW, c: [.66, .7, .86], em: 0, layer: 0 }); M.id = M.nid(); M.loft([r1.map(p => [p[0], y - 16, p[1]]), r0.map(p => [p[0], yt, p[1]])], { grad: .9 });
+    M.id = M.nid(); M.quad([x - 7.4, yt, z + 6.5], [x + 8.6, yt, z + 6.5], [x + 8.6, yt, z - 6.5], [x - 7.4, yt, z - 6.5], [0, 0, 1, 1]); }
+  /* a stone plinth showing above the snow */
+  setPlain(M, 0x4f4d58); M.extrude(rectPoly(x - .3, z, 9.8, 7.8), y - 1.0, y - .05, { top: false });
+  /* timber walls, a dark sill band */
+  setPlain(M, 0x5a3a26); M.extrude(rectPoly(x - .3, z, 9.6, 7.6), y - .05, top, { top: false });
+  setPlain(M, 0x2e1e14); M.box(x - .3, y - .3, z, 9.7, .32, 7.7, { bot: false });
+  /* the gable triangles, timber, each end; a small lit window high in the glass end */
+  setPlain(M, 0x5a3a26); M.id = M.nid(); M.tri([gx, top, zS], [gx, top, zN], [gx, top + rh, z]); M.tri([bx, top, zN], [bx, top, zS], [bx, top + rh, z]);
+  M.set({ kind: K.PLAIN, c: hex(0xd8a868), em: 70 }); M.id = M.nid(); M.tri([gx + .03, top + .7, z + .6], [gx + .03, top + .7, z - .6], [gx + .03, top + 1.5, z]); M.set({ em: 0 });
+  /* the roof: two snowy slopes, timber under the eaves, past the glass over the deck */
+  { const xa = bx - .5, xb = gx + 1.4, s = rh / 3.8, yE = top - .8 * s, yR = top + rh, za = zN - .8, zb = zS + .8;
+    setPlain(M, 0xcdd6ea); M.id = M.nid(); M.quad([xa, yE, za], [xa, yR, z], [xb, yR, z], [xb, yE, za]); M.quad([xa, yE, zb], [xb, yE, zb], [xb, yR, z], [xa, yR, z]);
+    setPlain(M, 0x3a2618); M.id = M.nid(); M.quad([xa, yE - .02, za], [xb, yE - .02, za], [xb, yR - .02, z], [xa, yR - .02, z]); M.quad([xa, yE - .02, zb], [xa, yR - .02, z], [xb, yR - .02, z], [xb, yE - .02, zb]);
+    setPlain(M, 0xdfe6f4); for (const ze of [za, zb]) M.box((xa + xb) / 2, yE - .22, ze, xb - xa, .24, .22, {});
+    setPlain(M, 0x2e1e14); for (const ze of [za, zb]) M.beam([xb, yE - .1, ze], [xb, yR + .05, z], .2, {});
+    /* the stove's chimney, stone, through the left slope by the glass */
+    setPlain(M, 0x4f4d58); M.box(x + 2.9, top + .2, z - 2.3, .8, rh + .3, .8, {}); setPlain(M, 0x2a2830); M.box(x + 2.9, top + rh + .5, z - 2.3, 1, .14, 1, {}); }
+  /* the glass, lit from inside, one quad facing out */
+  M.set({ kind: K.PLAIN, c: hex(0xe0a868), em: 110, a: 0 }); M.id = M.nid(); M.quad([gx + .03, y + .02, z + 3], [gx + .03, y + .02, z - 3], [gx + .03, y + 2.6, z - 3], [gx + .03, y + 2.6, z + 3]); M.set({ em: 0 });
+  /* the deck in front of it, on posts down the slope, a railing */
+  setPlain(M, 0x6a4a30); M.box(gx + 1.2, y - .28, z, 2.4, .24, 7.6, {});
+  setPlain(M, 0x2e1e14); for (const zz of [z - 3.4, z + 3.4]) M.box(gx + 2.15, y - .95, zz, .26, .7, .26, {});
+  setPlain(M, 0x3a2618); M.box(gx + 2.3, y + .92, z, .1, .08, 7.7, {}); for (let k = -3; k <= 3; k++) M.box(gx + 2.3, y - .05, z + k * 1.25, .07, .98, .07, {});
+  for (const zz of [zN + .05, zS - .05]) M.box(gx + 1.15, y + .92, zz, 2.3, .08, .1, {});
+  /* the door on the uphill side, a lamp by it */
+  setPlain(M, 0x2e1e14); M.id = M.nid(); M.quad([x - 2.3, y, zN - .03], [x - 3.3, y, zN - .03], [x - 3.3, y + 2.1, zN - .03], [x - 2.3, y + 2.1, zN - .03]);
+  M.set({ kind: K.PLAIN, c: hex(0xffc37a), em: 200 }); M.box(x - 1.95, y + 2.1, zN - .1, .14, .2, .1, {}); M.set({ em: 0 });
+  glow(gx + .8, y + 1.5, z, 0xffb060, 13); glow(x - 1.95, y + 2.2, zN - .4, 0xffc37a, 4);
+  pool(gx + 4, z, 10, 0xffb060, .45);
+  M._id = id0; M.id = cur0;
+}
 function mountain(M) {
   const R = rng(99); const cx = 180, cz = -1120; const NX = 92, NZ = 46, W = 1700, D = 780;
   const ht = (x, z) => { const u = (x - cx) / W * 2, v = (z - cz) / D * 2; const r = Math.hypot(u * 1.0, v * .85); const b = Math.max(0, 1 - r); let h = Math.pow(b, 1.1) * 620; h += 60 * Math.sin(x * .011 + 1) * Math.sin(z * .013) * b; h += 26 * Math.sin(x * .031 + z * .02) * b; const rg = (f, a) => (1 - Math.abs(Math.sin(x * f + z * f * .6 + 1.3))) * a; h += (rg(.021, 62) + rg(.057, 22) + rg(.13, 8) - 42) * Math.min(1, b * 2.2); return Math.max(h, 0); };
@@ -2551,11 +2666,14 @@ function mountain(M) {
   /* ski village and resort on the near slope */
   const vx = 300, vz = -860; const vy = ht(vx, vz);
   const gy = (x, z) => ht(x, z) - 2;
-  for (let i = 0; i < 26; i++) { const x = vx + R.range(-110, 110), z = vz + R.range(-46, 40); const y = gy(x, z), w = R.range(9, 17), d = R.range(8, 13), h = R.range(5, 10);
-    M.set({ kind: K.FACADE, em: 130, seed: R() * 255, a: 3 }); M.extrude(rectPoly(x, z, w, d), y, y + h, { c: R.pick([0xc0568a, 0xc9a23a, 0x8a5a3a, 0x7a4a34, 0x4f9f92]), top: false });
-    setPlain(M, 0xcdd6ea); M.loft([rectPoly(x, z, w + 1.6, d + 1.6).map(p => [p[0], y + h, p[1]]), rectPoly(x, z, w + 1, .6).map(p => [p[0], y + h + d * .5, p[1]])], { c: 0xcdd6ea, grad: .7 });
-    if (R.chance(.5)) glow(x, y + h * .5, z + d / 2 + 1, R.pick([0xff6fae, 0xf7e84a, 0xff9a3c]), 12);
+  /* anything random that would stand in the room's chalet (CH) is drawn into a throwaway builder, so the random sequence, and the rest of the village and forest, is unchanged */
+  const TRASH = new MB(4000), via = (B, fn) => { if (B !== TRASH) return fn(); TRASH._id = M._id; fn(); M._id = TRASH._id; }, inCH = (x, z, hw = 0, hd = 0) => Math.abs(x - (CH.x + .6)) < 8.4 + hw && Math.abs(z - CH.z) < 6.9 + hd;
+  for (let i = 0; i < 26; i++) { const x = vx + R.range(-110, 110), z = vz + R.range(-46, 40); const y = gy(x, z), w = R.range(9, 17), d = R.range(8, 13), h = R.range(5, 10), B = inCH(x, z, w / 2 + .8, d / 2 + .8) ? TRASH : M;
+    via(B, () => { B.set({ kind: K.FACADE, em: 130, seed: R() * 255, a: 3 }); B.extrude(rectPoly(x, z, w, d), y, y + h, { c: R.pick([0xc0568a, 0xc9a23a, 0x8a5a3a, 0x7a4a34, 0x4f9f92]), top: false });
+    setPlain(B, 0xcdd6ea); B.loft([rectPoly(x, z, w + 1.6, d + 1.6).map(p => [p[0], y + h, p[1]]), rectPoly(x, z, w + 1, .6).map(p => [p[0], y + h + d * .5, p[1]])], { c: 0xcdd6ea, grad: .7 }); });
+    if (R.chance(.5)) { const c = R.pick([0xff6fae, 0xf7e84a, 0xff9a3c]); if (B === M) glow(x, y + h * .5, z + d / 2 + 1, c, 12); }
   }
+  chalet(M);
   /* rounded lift station and gondola line */
   M.set({ kind: K.FACADE, em: 160, seed: 77, a: 3 }); M.extrude(roundPoly(vx - 20, vz + 30, 44, 22, 10, 3), gy(vx - 20, vz + 30), gy(vx - 20, vz + 30) + 16, { c: 0xc0568a, topc: 0xc9a23a });
   neonStrip(M, vx - 20, gy(vx - 20, vz + 30) + 16.2, vz + 41, 26, .5, .3, 0xff6fae, 0);
@@ -2564,9 +2682,9 @@ function mountain(M) {
   M.beam(cable[0], cable[1], .35, { c: 0x201c2c });
   for (let i = 1; i < 8; i++) { const t = i / 8; const q = [lerp(cable[0][0], top[0], t), lerp(cable[0][1], top[1], t), lerp(cable[0][2], top[2], t)]; const y0 = gy(q[0], q[2]); M.box(q[0], y0, q[2], 1.2, Math.max(2, q[1] - y0 + 2), 1.2, { c: 0x2c2838 }); M.box(q[0], q[1] - .4, q[2], 7, .8, 1.2, { c: 0x2c2838 }); }
   for (let i = 0; i < 12; i++) { const t = (i + .5) / 12; const q = [lerp(cable[0][0], top[0], t), lerp(cable[0][1], top[1], t) - 5, lerp(cable[0][2], top[2], t)]; setPlain(M, i % 2 ? 0xc9a23a : 0xc0568a); M.box(q[0], q[1], q[2], 3.4, 3.4, 4.6, {}); M.set({ kind: K.PLAIN, em: 255, c: hex(0xffe0a0) }); M.box(q[0], q[1] + 1.4, q[2] + 2.31, 2.6, 1, .05, {}); M.set({ em: 0 }); glow(q[0], q[1] + 1.6, q[2], 0xffc080, 9); }
-  for (let i = 0; i < 70; i++) { const x = vx + R.range(-500, 480), z = vz + R.range(-180, 80); const y = gy(x, z); if (y > 220) continue; if (Math.hypot(x - vx, z - vz) < 60) continue; pine(M, x, y, z, R.range(10, 19), R); }
+  for (let i = 0; i < 70; i++) { const x = vx + R.range(-500, 480), z = vz + R.range(-180, 80); const y = gy(x, z); if (y > 220) continue; if (Math.hypot(x - vx, z - vz) < 60) continue; const B = inCH(x, z, 4, 4) ? TRASH : M; via(B, () => pine(B, x, y, z, R.range(10, 19), R)); }
   /* ski string lights */
-  for (let i = 0; i < 26; i++) { const x = vx + R.range(-110, 110), z = vz + R.range(-40, 44); glow(x, gy(x, z) + 7, z, R.pick([0xff6fae, 0xf7e84a, 0xffc080]), 7); }
+  for (let i = 0; i < 26; i++) { const x = vx + R.range(-110, 110), z = vz + R.range(-40, 44), c = R.pick([0xff6fae, 0xf7e84a, 0xffc080]); if (!inCH(x, z)) glow(x, gy(x, z) + 7, z, c, 7); }
   pool(vx, vz, 90, 0xff6fae, 0);
 }
 
@@ -4332,6 +4450,276 @@ function cushion(M, x, y, z, r, c) {
   M.set({ kind: K.BRASS, c: PAL.brass }); M.lathe(x, y + r * 1.7, z, [[.0, .002], [r * .2, 0], [.0, -.002]], 10, {});
 }
 
+/* ---------- the chalet: a timber kitchen high on the slope, Fuel and Cardio in one room ---------- */
+/* Its +X gable end is the city chalet's glass (x = CH.x + 4.5): the lift station, the gondola line and the village lights through it */
+const CR = { x: CH.x, y: CH.y, z: CH.z, w: 9, d: 6.4, h: 2.7 };
+/* what the fridge list, the cookbook and the ticket show, so they're only repainted when it changes */
+const chaletSig = F => JSON.stringify([F.book, F.list.map(s => s.items.map(i => i.n + (i.on ? 1 : 0))), F.picked.map(p => p.n), F.cardio.min, F.cardio.n, F.shakes.map(s => s.on)]);
+let CH_SIG = '';
+function chaletAtlas(F) {
+  const S = 1024, cv = document.createElement('canvas'); cv.width = cv.height = S; const x = cv.getContext('2d'), C = {}, cells = {};
+  let cx = 0, cy = 0, rowH = 0;
+  const cell = (name, w, h, fn) => { if (cx + w > S) { cx = 0; cy += rowH + 2; rowH = 0; } if (cy + h > S) console.error('chalet atlas overflow', name); cells[name] = { px: cx, py: cy, w, h, fn }; C[name] = [cx / S + .0008, 1 - (cy + h) / S + .0008, (cx + w) / S - .0008, 1 - cy / S - .0008]; cx += w + 2; rowH = Math.max(rowH, h); };
+  const draw = (name, t) => { const c = cells[name]; x.save(); x.beginPath(); x.rect(c.px, c.py, c.w, c.h); x.clip(); x.translate(c.px, c.py); x.clearRect(0, 0, c.w, c.h); c.fn(x, c.w, c.h, t); x.restore(); };
+  const fit = (x, s, max) => { if (x.measureText(s).width <= max) return s; while (s.length > 3 && x.measureText(s + '…').width > max) s = s.slice(0, -1); return s + '…'; };
+  const INK = '#23324a', PEN = '#b8322a';
+  /* the list on the fridge: a lined pad, what this week's meals need, ticked as it goes in the cart */
+  cell('list', 380, 540, (x, w, h, F) => {
+    x.fillStyle = '#f4efe2'; x.fillRect(0, 0, w, h); x.fillStyle = '#e6a33a'; x.fillRect(0, 0, w, 26);
+    x.strokeStyle = 'rgba(70,110,170,.25)'; x.lineWidth = 2; for (let y = 104; y < h; y += 38) { x.beginPath(); x.moveTo(0, y + 14); x.lineTo(w, y + 14); x.stroke(); }
+    x.strokeStyle = 'rgba(200,60,60,.35)'; x.beginPath(); x.moveTo(52, 26); x.lineTo(52, h); x.stroke();
+    x.textBaseline = 'middle'; x.fillStyle = INK; x.font = `800 46px ${FONT_DISP}`; x.fillText('LIST', 64, 64);
+    x.fillStyle = PEN; x.font = `700 30px ${FONT_EN}`; x.textAlign = 'right'; x.fillText(F.all ? `${F.done}/${F.all}` : '', w - 20, 66); x.textAlign = 'left';
+    const rows = []; F.list.forEach(s => { rows.push({ sec: unesc(s.sec) }); s.items.forEach(i => rows.push(i)); });
+    if (!rows.length) { x.fillStyle = INK; x.font = `600 30px ${FONT_EN}`; x.fillText(F.book ? 'PICK MEALS IN' : '', 64, 140); x.fillText(F.book ? 'THE COOKBOOK' : '', 64, 178); }
+    rows.slice(0, 11).forEach((r, k) => {
+      const y = 116 + k * 38;
+      if (r.sec) { x.fillStyle = PEN; x.font = `800 22px ${FONT_EN}`; x.fillText(r.sec.toUpperCase(), 64, y + 2); return; }
+      x.fillStyle = INK; x.font = `600 27px ${FONT_EN}`; const t = fit(x, unesc(r.n), w - 110); x.fillText(t, 64, y);
+      if (r.on) { const tw = x.measureText(t).width; x.strokeStyle = INK; x.lineWidth = 3; x.beginPath(); x.moveTo(60, y + 1); x.lineTo(68 + tw, y - 2); x.stroke(); x.strokeStyle = PEN; x.lineWidth = 4; x.lineCap = 'round'; x.beginPath(); x.moveTo(18, y); x.lineTo(27, y + 9); x.lineTo(42, y - 12); x.stroke(); }
+    });
+    if (rows.length > 11) { x.fillStyle = INK; x.font = `600 24px ${FONT_EN}`; x.fillText(`+ ${rows.length - 11} MORE`, 64, h - 22); }
+  });
+  /* the lift ticket on the jacket: a made-up resort, the week's minutes in pen, a barcode */
+  cell('ticket', 200, 290, (x, w, h, F) => {
+    x.fillStyle = '#f2f2ee'; x.fillRect(0, 0, w, h); x.fillStyle = '#ff2e88'; x.fillRect(0, 0, w, 64); x.fillStyle = '#16121c'; x.beginPath(); x.arc(w / 2, 14, 8, 0, TAU); x.fill();
+    x.textBaseline = 'middle'; x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = `900 30px ${FONT_DISP}`; x.fillText('VELKAR', w / 2, 44);
+    x.fillStyle = '#16121c'; x.font = `700 18px ${FONT_EN}`; x.fillText('ALL LIFTS · WEEK', w / 2, 86);
+    x.font = `800 64px ${FONT_DISP}`; x.fillText(String(F.cardio.min), w / 2, 140); x.font = `700 20px ${FONT_EN}`; x.fillText(`MIN OF ${F.cardio.goal}`, w / 2, 182);
+    for (let i = 0; i < 34; i++) { const bw = (i * 7) % 3 + 1; x.fillRect(20 + i * 4.8, 214, bw, 50); } x.textAlign = 'left';
+  });
+  /* a trail poster, made-up words */
+  cell('trail', 260, 360, (x, w, h) => {
+    x.fillStyle = '#20324a'; x.fillRect(0, 0, w, h); x.fillStyle = '#e9e4d8'; x.beginPath(); x.moveTo(0, 300); x.lineTo(90, 150); x.lineTo(140, 210); x.lineTo(205, 100); x.lineTo(w, 260); x.lineTo(w, h); x.lineTo(0, h); x.fill();
+    x.strokeStyle = '#ff2e88'; x.lineWidth = 4; x.setLineDash([8, 7]); x.beginPath(); x.moveTo(205, 104); x.quadraticCurveTo(170, 220, 120, 320); x.stroke(); x.strokeStyle = '#2a8a5a'; x.beginPath(); x.moveTo(205, 104); x.quadraticCurveTo(240, 230, 230, 360); x.stroke(); x.setLineDash([]);
+    x.textBaseline = 'middle'; x.fillStyle = '#f6ee1c'; x.font = `900 44px ${FONT_DISP}`; x.fillText('VELKAR', 22, 44); x.fillStyle = '#e9e4d8'; x.font = `700 22px ${FONT_EN}`; x.fillText('RIDGE · EST 1961', 24, 82);
+  });
+  /* a jar label for the shelf */
+  cell('jar', 96, 64, (x, w, h) => { x.fillStyle = '#efe6d0'; x.fillRect(0, 0, w, h); x.strokeStyle = '#3a2a1a'; x.lineWidth = 3; x.strokeRect(5, 5, w - 10, h - 10); x.fillStyle = '#3a2a1a'; x.font = `700 22px ${FONT_EN}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('OATS', w / 2, h / 2); x.textAlign = 'left'; });
+  /* the cookbook, open on its stand: this week's meals on the left page, a sketch and the protein on the right */
+  cell('book', 600, 380, (x, w, h, F) => {
+    x.fillStyle = '#efe6d0'; x.fillRect(0, 0, w, h);
+    const g = x.createLinearGradient(w / 2 - 40, 0, w / 2 + 40, 0); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.5, 'rgba(60,40,20,.28)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(w / 2 - 40, 0, 80, h);
+    x.textBaseline = 'middle'; x.fillStyle = '#3a2a1a'; x.font = `800 30px ${FONT_DISP}`; x.fillText('THIS WEEK', 28, 44);
+    x.strokeStyle = '#a8442a'; x.lineWidth = 3; x.beginPath(); x.moveTo(28, 68); x.lineTo(w / 2 - 34, 68); x.stroke();
+    const P = F.picked.slice(0, 6);
+    if (!P.length) { x.fillStyle = '#5a4630'; x.font = `600 24px ${FONT_EN}`; x.fillText(F.book ? 'Nothing picked yet.' : 'Opening the book…', 28, 110); }
+    P.forEach((p, i) => { const y = 104 + i * 50; x.fillStyle = '#3a2a1a'; x.font = `700 25px ${FONT_EN}`; x.fillText(fit(x, unesc(p.n), w / 2 - 120), 28, y); x.fillStyle = '#a8442a'; x.font = `700 21px ${FONT_EN}`; x.textAlign = 'right'; x.fillText(`${p.p}g`, w / 2 - 34, y + 1); x.textAlign = 'left'; });
+    /* the right page: a pot drawn in ink and the week's protein */
+    const rx = w / 2 + 30; x.fillStyle = '#3a2a1a'; x.font = `800 26px ${FONT_DISP}`; x.fillText('KITCHEN', rx, 44);
+    x.strokeStyle = '#3a2a1a'; x.lineWidth = 3; x.beginPath(); x.ellipse(rx + 130, 210, 92, 22, 0, 0, TAU); x.stroke(); x.beginPath(); x.moveTo(rx + 38, 210); x.lineTo(rx + 52, 300); x.quadraticCurveTo(rx + 130, 330, rx + 208, 300); x.lineTo(rx + 222, 210); x.stroke();
+    for (let i = 0; i < 3; i++) { x.beginPath(); x.moveTo(rx + 100 + i * 30, 170); x.bezierCurveTo(rx + 85 + i * 30, 140, rx + 115 + i * 30, 120, rx + 100 + i * 30, 92); x.stroke(); }
+    x.fillStyle = '#a8442a'; x.font = `700 24px ${FONT_EN}`; x.fillText(P.length ? `${P.length} MEAL${P.length === 1 ? '' : 'S'} · 3 PORTIONS EACH` : '', rx, 352);
+  });
+  /* the stove's glass: embers and flame */
+  cell('fire', 160, 120, (x, w, h) => {
+    const g = x.createRadialGradient(w / 2, h, 6, w / 2, h * .8, w * .7); g.addColorStop(0, '#fff2b0'); g.addColorStop(.35, '#ff9a2a'); g.addColorStop(.7, '#a8300c'); g.addColorStop(1, '#1a0804'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    x.fillStyle = 'rgba(255,220,140,.8)'; for (let i = 0; i < 5; i++) { x.beginPath(); x.moveTo(20 + i * 28, h - 10); x.quadraticCurveTo(30 + i * 28, h - 70 - (i % 2) * 20, 34 + i * 28, h - 98 + (i % 3) * 14); x.quadraticCurveTo(44 + i * 28, h - 50, 46 + i * 28, h - 10); x.fill(); }
+  });
+  /* book spines for the shelf over the door */
+  cell('spines', 256, 64, (x, w, h) => { const cs = ['#7a2a22', '#24405a', '#c9a23a', '#2f4a3c', '#e8e0d0', '#5a3a6a', '#a8442a', '#16121c']; for (let i = 0; i < 16; i++) { x.fillStyle = cs[(i * 5) % cs.length]; x.fillRect(i * 16, 0, 15, h); x.fillStyle = 'rgba(255,240,200,.5)'; x.fillRect(i * 16 + 3, 12, 9, 3); x.fillRect(i * 16 + 3, h - 16, 9, 2); } });
+  for (const n of Object.keys(cells)) draw(n, F);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.NoColorSpace; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter; tex.anisotropy = 8; tex.flipY = true; tex.premultiplyAlpha = false;
+  /* a tick in the app repaints just these three */
+  const paint = f => { draw('list', f); draw('book', f); draw('ticket', f); tex.needsUpdate = true; };
+  return { tex, C, paint };
+}
+
+function buildChalet() {
+  const A = CR, W = A.w / 2, D = A.d / 2, H = A.h, RH = H + 2.85, F = APP.fuel();
+  const { tex, C, paint } = chaletAtlas(F); CH_SIG = chaletSig(F);
+  const M = new MB(30000), Z = new MB(24000), FXM = new MB(1200), GL = new MB(64), R = rng(7120);
+  const glows = [], zGlows = [], w = (x, y, z) => [A.x + x, A.y + y, A.z + z];
+  const G = (x, y, z, c, s, a = 0, list = glows) => { const k = typeof c === 'number' ? hex(c) : c; list.push({ x: A.x + x, y: A.y + y, z: A.z + z, r: k[0], g: k[1], b: k[2], s, a }); };
+  const piece = () => PIECES++;
+  const plate = (B, x, y, z, pw, ph, ry, cell, rx = 0, o = {}) => B.at(x, y, z, ry, () => B.plate(0, 0, 0, pw, ph, 0, C[cell], { kind: K.PAPER, em: 0, c: [1, 1, 1], ...o }), rx);
+  const brass = (B, c = 0xc9a24e) => B.set({ kind: K.BRASS, em: 0, layer: 0, c });
+  const line = (B, x, y, z, lw, lh, ld, c, em = 200) => { setPlain(B, c, 0, em); B.box(x, y, z, lw, lh, ld, { c }); B.set({ em: 0 }); };
+  const cylZ = (B, x, y, z, r, len, seg, c, o = {}) => B.at(x, y, z - len / 2, 0, () => B.cyl(0, 0, 0, r, r, len, seg, { c, bot: true, ...o }), Math.PI / 2);
+  const cylX = (B, x, y, z, r, len, seg, c, o = {}) => B.at(x - len / 2, y, z, 0, () => B.cyl(0, 0, 0, r, r, len, seg, { c, bot: true, ...o }), 0, -Math.PI / 2);
+  const PINE = [0x76583f, 0x806246, 0x6e5139, 0x88694b], BEAM = 0x4a2e1c, FLOOR = [0x5e3c26, 0x684430, 0x56381f], CAB = 0x2f4a3c, TOP = 0xa8784a, CREAM = 0xe8e0c8, IRON = 0x1a1a1e, STONE = 0x4a4652;
+  /* a stool: round seat, four splayed legs, a footrest ring */
+  const stool = (B, x, z) => { setPlain(B, BEAM, L.WOOD); B.cyl(x, .66, z, .19, .19, .05, 16, { c: BEAM }); for (let k = 0; k < 4; k++) { const a = k / 4 * TAU + .78, r0 = .12, r1 = .2; B.beam([x + Math.cos(a) * r1, 0, z + Math.sin(a) * r1], [x + Math.cos(a) * r0, .66, z + Math.sin(a) * r0], .035, {}); } setPlain(B, 0x2a2a2e); B.at(x, .25, z, 0, () => B.lathe(0, 0, 0, [[.165, 0], [.17, .012], [.165, .024]], 16, {})); };
+
+  M.at(A.x, A.y, A.z, 0, () => {
+    /* floor: wide planks along the room, each its own number so the ink draws the seams */
+    for (let i = 0; i < 21; i++) { const z0 = -D + i * (A.d / 21), z1 = z0 + A.d / 21; let x0 = -W; let k = i; while (x0 < W) { const len = Math.min(W - x0, 1.6 + ((k * 37) % 7) * .35); setPlain(M, FLOOR[k % 3], L.WOOD); M.id = 20 + (i * 7 + k * 13) % 70; M.quad([x0, .02, z1], [x0 + len, .02, z1], [x0 + len, .02, z0], [x0, .02, z0], [0, 0, 1, 1]); x0 += len; k++; } }
+    /* walls: knotty pine boards, run level, a darker skirting */
+    const boards = (len, h0, h1, k0, skip) => { for (let j = 0, y = h0; y < h1 - .01; j++, y += .18) { const y1 = Math.min(h1, y + .18); let a = -len / 2, k = j + k0; while (a < len / 2 - .01) { const b = Math.min(len / 2, a + 1.4 + ((k * 29) % 5) * .4); if (!skip || !skip(a, b, y, y1)) { setPlain(M, PINE[k % 4], L.WOOD); M.id = M.nid(); M.quad([a, y, 0], [b, y, 0], [b, y1, 0], [a, y1, 0], [0, 0, 1, 1], .85, .85, 1, 1); } else if (skip) { const s = skip(a, b, y, y1); if (s && s.length) for (const [p, q] of s) { setPlain(M, PINE[k % 4], L.WOOD); M.id = M.nid(); M.quad([p, y, 0], [q, y, 0], [q, y1, 0], [p, y1, 0], [0, 0, 1, 1], .85, .85, 1, 1); } } a = b; k++; } } setPlain(M, BEAM); M.box(0, .02, .015, len, .12, .03, {}); };
+    /* the left wall (uphill, -Z) has the door at the back: boards either side of it */
+    const doorX = [-3.3, -2.3], doorH = 2.1;
+    const doorSkip = (a, b, y0, y1) => { if (y0 >= doorH || b <= doorX[0] || a >= doorX[1]) return null; const out = []; if (a < doorX[0]) out.push([a, doorX[0]]); if (b > doorX[1]) out.push([doorX[1], b]); return out; };
+    M.at(0, 0, -D, 0, () => boards(A.w, 0, H, 0, doorSkip));
+    M.at(0, 0, D, Math.PI, () => boards(A.w, 0, H, 2));
+    M.at(-W, 0, 0, Math.PI / 2, () => boards(A.d, 0, H, 1));
+    /* the back gable above the wall line, and the front one above the glass, boarded the same */
+    for (const [gx, s] of [[-W + .005, 1], [W - .005, -1]]) for (let j = 0, y = H; y < RH - .05; j++, y += .2) { const y1 = Math.min(RH, y + .2), h0 = D * (1 - (y - H) / (RH - H)), h1 = D * (1 - (y1 - H) / (RH - H)); setPlain(M, PINE[j % 4], L.WOOD); M.id = M.nid(); if (s > 0) M.quad([gx, y, h0], [gx, y, -h0], [gx, y1, -h1], [gx, y1, h1], [0, 0, 1, 1]); else M.quad([gx, y, -h0], [gx, y, h0], [gx, y1, h1], [gx, y1, -h1], [0, 0, 1, 1]); }
+    /* the vaulted ceiling: boards up each slope, a ridge beam, rafters, tie beams across at the wall line */
+    for (const s of [-1, 1]) for (let j = 0; j < 9; j++) { const t0 = j / 9, t1 = (j + 1) / 9, za = s * D * (1 - t0), zb = s * D * (1 - t1), ya = H + (RH - H) * t0, yb = H + (RH - H) * t1; setPlain(M, j % 2 ? 0x8e7052 : 0x86684a, L.WOOD); M.id = M.nid(); if (s < 0) M.quad([-W, ya, za], [W, ya, za], [W, yb, zb], [-W, yb, zb], [0, 0, 1, 1]); else M.quad([W, ya, za], [-W, ya, za], [-W, yb, zb], [W, yb, zb], [0, 0, 1, 1]); }
+    setPlain(M, BEAM, L.WOOD); M.box(0, RH - .34, 0, A.w, .3, .22, { id: M.nid() });
+    for (let i = 0; i < 7; i++) { const x = -W + .3 + i * (A.w - .6) / 6; for (const s of [-1, 1]) M.beam([x, H - .02, s * (D - .02)], [x, RH - .2, 0], .14, { id: M.nid() }); }
+    for (const x of [-2.25, 0, 2.25]) M.box(x, H - .1, 0, .2, .22, A.d, { id: M.nid() });
+    piece();
+
+    /* the glass end: frames in dark timber, posts at -1.5, 0, 1.5, a transom, a sill band, the jambs either side */
+    setPlain(M, BEAM, L.WOOD); for (const z of [-1.5, 0, 1.5]) M.box(W - .05, 0, z, .12, 2.6, .1, { id: M.nid() }); M.box(W - .05, 2.02, 0, .12, .07, 6, { id: M.nid() }); M.box(W - .05, 2.6, 0, .14, .12, A.d, { id: M.nid() });
+    for (const s of [-1, 1]) { M.box(W - .05, 0, s * 3.1, .14, 2.7, .2, { id: M.nid() }); } M.box(W - .05, 0, 0, .14, .04, 6, { id: M.nid() });
+    piece();
+
+    /* the door at the back of the left wall: a plank door, its frame, a little frosted window, an iron latch */
+    { const [a, b] = doorX, xm = (a + b) / 2; setPlain(M, BEAM, L.WOOD); M.box(a - .05, 0, -D + .04, .1, doorH + .08, .08, {}); M.box(b + .05, 0, -D + .04, .1, doorH + .08, .08, {}); M.box(xm, doorH, -D + .04, b - a + .2, .1, .08, {});
+      for (let k = 0; k < 5; k++) { setPlain(M, PINE[(k + 1) % 4], L.WOOD); M.box(a + .1 + k * .2, 0, -D + .02, .19, doorH, .04, { id: M.nid() }); }
+      setPlain(M, 0x8a9ab4, 0, 30); M.box(xm, 1.45, -D + .045, .36, .36, .01, {}); setPlain(M, BEAM); M.box(xm, 1.61, -D + .05, .4, .04, .02, {}); M.box(xm, 1.43, -D + .05, .02, .4, .02, {});
+      setPlain(M, IRON); M.box(b - .14, 1.0, -D + .07, .04, .16, .04, {}); M.box(b - .2, 1.06, -D + .07, .14, .025, .03, {}); piece(); }
+
+    /* the kitchen run along the right wall: green cabinets, a butcher-block top, tiles, the sink, the range and its copper hood */
+    { const z0 = D - .62, top = .9, xa = -2.7, xb = 2.5;
+      setPlain(M, CAB); M.box((xa + xb) / 2, .1, D - .31, xb - xa, top - .14, .6, { id: M.nid() }); setPlain(M, 0x1a1a1e); M.box((xa + xb) / 2, 0, D - .36, xb - xa, .1, .5, {});
+      /* doors and drawers on the fronts, brass knobs */
+      for (let i = 0; i < 9; i++) { const x0 = xa + .04 + i * (xb - xa) / 9, x1 = x0 + (xb - xa) / 9 - .06, xm = (x0 + x1) / 2; if (xm > .45 && xm < 1.25) continue; setPlain(M, 0x35523f); M.box(xm, .16, z0 - .012, x1 - x0, .52, .02, { id: M.nid() }); M.box(xm, .72, z0 - .012, x1 - x0, .12, .02, { id: M.nid() }); brass(M); M.cyl(xm, .62, z0 - .03, .014, .014, .02, 8, {}); M.box(xm, .775, z0 - .028, .12, .012, .012, {}); }
+      setPlain(M, TOP, L.WOOD); M.box((xa + xb) / 2, top - .04, D - .33, xb - xa + .04, .045, .68, { id: M.nid() });
+      /* tiles up to the cabinets, cream with a little shine */
+      setPlain(M, 0xe8e0d0, L.TILE); M.at(0, 0, D - .005, Math.PI, () => { M.id = M.nid(); M.quad([-xb, top, 0], [-xa, top, 0], [-xa, 1.48, 0], [-xb, 1.48, 0], [0, 0, (xb - xa) * 4, 2.3]); });
+      /* the sink: a deep white basin set in, a brass bridge tap */
+      setPlain(M, 0xf0ece4); M.box(-.6, top - .22, D - .32, .64, .245, .6, {}); setPlain(M, 0x8a9098); M.box(-.6, top + .026, D - .3, .54, .002, .46, {});
+      brass(M); M.tube([[-.6, top, D - .1], [-.6, top + .26, D - .1], [-.6, top + .32, D - .18], [-.6, top + .26, D - .3]], .014, 10, 6, {}); for (const e of [-1, 1]) M.cyl(-.6 + e * .1, top, D - .1, .018, .018, .08, 8, {});
+      /* the range: black enamel, an oven door with its glass, four burners, knobs */
+      setPlain(M, 0x17171b); M.box(.85, .02, D - .32, .8, top - .02, .62, { id: M.nid() }); setPlain(M, 0x2a2a30); M.box(.85, .18, z0 - .01, .66, .5, .02, {}); setPlain(M, 0x120c0a, 0, 40); M.box(.85, .36, z0 - .022, .42, .2, .01, {}); brass(M, 0xb8bec8); cylX(M, .85, .72, z0 - .06, .012, .6, 8, 0xb8bec8);
+      for (let k = 0; k < 5; k++) { setPlain(M, 0xd8d4cc); M.cyl(.6 + k * .125, .79, z0 - .03, .022, .022, .03, 10, {}); }
+      setPlain(M, 0x0e0e10); for (const [dx, dz] of [[-.2, -.15], [.2, -.15], [-.2, .15], [.2, .15]]) M.cyl(.85 + dx, top, D - .33 + dz, .1, .1, .015, 14, {});
+      /* the hood, copper, up to the ceiling */
+      brass(M, 0x7a4e2c); M.loft([rectPoly(.85, D - .33, .86, .62).map(p => [p[0], 1.72, p[1]]), rectPoly(.85, D - .2, .34, .3).map(p => [p[0], 2.3, p[1]])], { grad: .7 }); M.box(.85, 2.3, D - .2, .32, H + .4 - 2.3, .28, {});
+      /* the upper cabinets left of the range, an open shelf over the sink */
+      setPlain(M, CAB); M.box(-1.85, 1.55, D - .18, 1.7, .72, .34, { id: M.nid() }); for (let k = 0; k < 3; k++) { setPlain(M, 0x35523f); M.box(-2.5 + k * .57, 1.59, D - .355, .53, .64, .02, { id: M.nid() }); brass(M); M.cyl(-2.28 + k * .57, 1.66, D - .37, .012, .012, .02, 8, {}); }
+      setPlain(M, TOP, L.WOOD); M.box(-.6, 1.62, D - .14, .9, .04, .28, {}); setPlain(M, IRON); for (const e of [-1, 1]) M.box(-.6 + e * .38, 1.5, D - .2, .02, .12, .16, {});
+      setPlain(M, CAB); M.box(1.95, 1.55, D - .18, 1.0, .72, .34, { id: M.nid() }); setPlain(M, 0x35523f); M.box(1.95, 1.59, D - .355, .94, .64, .02, { id: M.nid() });
+      piece(); piece(); }
+
+    /* FRIDGE: a cream retro fridge at the end of the run, rounded, chrome handles. The list is pinned on its door */
+    { const x = 2.98, zf = D - .37, fw = .74, fd = .7, fh = 1.86;
+      setPlain(M, CREAM); M.extrude(roundPoly(x, zf, fw, fd, .08, 3), .04, fh - .12, { grad: .82 }); M.loft([roundPoly(x, zf, fw, fd, .08, 3).map(p => [p[0], fh - .12, p[1]]), roundPoly(x, zf, fw - .1, fd - .1, .06, 3).map(p => [p[0], fh, p[1]])], { grad: .9 });
+      setPlain(M, 0x1a1a1e); M.box(x, 0, zf, fw - .1, .06, fd - .1, {});
+      setPlain(M, 0xd4ccb4); M.box(x, 1.32, zf - fd / 2 - .002, fw - .04, .012, .006, {});
+      brass(M, 0xd0d4dc); for (const [y0, y1] of [[1.42, 1.66], [.62, 1.18]]) { M.box(x - fw / 2 + .08, y0, zf - fd / 2 - .04, .03, y1 - y0, .025, {}); M.box(x - fw / 2 + .08, y0, zf - fd / 2 - .02, .03, .025, .04, {}); M.box(x - fw / 2 + .08, y1 - .025, zf - fd / 2 - .02, .03, .025, .04, {}); }
+      plate(M, x + .06, 1.0, zf - fd / 2 - .006, .34, .48, Math.PI, 'list', 0, { kind: K.PAPER, em: 40, id: 240, seed: 0 });
+      for (const [dx, dy, c] of [[-.08, .23, 0xff2e88], [.18, .22, 0x2a8a5a]]) { setPlain(M, c); M.cyl(x + .06 + dx, 1.0 + dy, zf - fd / 2 - .012, .022, .022, .012, 10, {}); }
+      piece(); piece(); }
+
+    /* the island: green base, a thick butcher-block top overhanging toward the stools */
+    { const x0 = -.2, x1 = 2.2, za = -.6, zb = .45;
+      setPlain(M, CAB); M.box((x0 + x1) / 2, .1, (za + zb) / 2 + .1, x1 - x0, .78, zb - za - .2, { id: M.nid() }); setPlain(M, 0x1a1a1e); M.box((x0 + x1) / 2, 0, (za + zb) / 2 + .1, x1 - x0 - .1, .1, zb - za - .3, {});
+      for (let i = 0; i < 3; i++) { setPlain(M, 0x35523f); M.box(x0 + .4 + i * .8, .16, zb - .005, .72, .64, .02, { id: M.nid() }); brass(M); M.cyl(x0 + .4 + i * .8, .74, zb + .01, .014, .014, .02, 8, {}); }
+      setPlain(M, TOP, L.WOOD); M.box((x0 + x1) / 2, .88, (za + zb) / 2, x1 - x0 + .1, .07, zb - za + .1, { id: M.nid() }); piece(); }
+
+    /* COOKBOOK: open on a wooden stand at the island's near end, turned to him */
+    { const x = .45, z = -.12, y = .95, tilt = -.42;
+      setPlain(M, BEAM, L.WOOD); M.box(x + .1, y, z, .22, .02, .5, {}); M.beam([x, y, z - .2], [x + .18, y + .32, z - .2], .025, {}); M.beam([x, y, z + .2], [x + .18, y + .32, z + .2], .025, {}); M.box(x - .02, y, z, .05, .04, .5, {});
+      M.at(x + .07, y + .19, z, -Math.PI / 2, () => { setPlain(M, 0x7a2a22); M.box(0, -.14, -.03, .62, .3, .018, {}); setPlain(M, 0xf2ead6); M.box(-.152, -.135, -.002, .3, .285, .02, {}); M.box(.152, -.135, -.002, .3, .285, .02, {}); M.plate(0, .007, .0105, .6, .28, 0, C.book, { kind: K.PAPER, em: 30, id: 241, seed: 0 }); }, tilt); piece(); }
+
+    /* BLENDER: on the island, a steel base, a glass jar half full of something pink */
+    { const x = 1.6, z = .15, y = .915;
+      setPlain(M, 0x2a2a30); M.extrude(roundPoly(x, z, .2, .2, .04, 3), y, y + .14, { grad: .8 }); brass(M, 0xc8ccd4); M.box(x - .101, y + .04, z, .004, .06, .14, {}); setPlain(M, 0xff4a2a, 0, 200); M.cyl(x - .104, y + .085, z + .04, .008, .008, .004, 8, {});
+      M.set({ kind: K.PLAIN, c: hex(0xd8e4ec), em: 0, layer: 0 }); M.lathe(x, y + .14, z, [[.06, 0], [.075, .02], [.085, .22], [.08, .26], [0, .262]], 14, { c: 0xd8e4ec });
+      setPlain(M, 0xe86a9a); M.lathe(x, y + .16, z, [[.0, 0], [.068, .005], [.078, .12], [0, .12]], 14, { c: 0xe86a9a });
+      setPlain(M, 0x1a1a1e); M.cyl(x, y + .4, z, .086, .086, .03, 14, {}); M.cyl(x, y + .43, z, .03, .03, .03, 10, {}); M.box(x + .09, y + .2, z, .03, .16, .03, {});
+      piece(); }
+
+    /* the stools on the near side of the island */
+    for (const sx of [.4, 1.1, 1.8]) stool(M, sx, -1.0); piece();
+
+    /* TICKET: a ski jacket over the far stool, the lift ticket on its zip, turned to him */
+    { const x = 1.8, z = -1.0; setPlain(M, 0xc0302a); M.blob(x, .74, z, .24, { c: 0xc0302a, sy: .45, j: .1 }); M.blob(x + .02, .55, z - .2, .2, { c: 0xb02a24, sy: .9, j: .12 }); setPlain(M, 0x1a1a1e); M.box(x - .02, .4, z - .3, .02, .34, .02, {});
+      setPlain(M, 0x16121c); M.box(x - .1, .52, z - .3, .008, .14, .004, {});
+      plate(M, x - .11, .41, z - .29, .1, .145, -Math.PI / 2, 'ticket', 0, { kind: K.PAPER, em: 40, id: 242, seed: 0 }); piece(); }
+
+    /* the stove in the front-left corner on a stone hearth, its glass glowing, the flue up through the roof */
+    { const x = 2.9, z = -2.3;
+      setPlain(M, STONE, L.BRICK); M.box(x + .1, 0, z - .1, 1.3, .06, 1.2, { id: M.nid() }); M.at(0, 0, -D + .01, 0, () => { M.id = M.nid(); M.quad([x - .7, 0, 0], [x + .9, 0, 0], [x + .9, 1.9, 0], [x - .7, 1.9, 0], [0, 0, 3, 3.6]); });
+      setPlain(M, IRON); M.box(x, .2, z, .56, .56, .5, { id: M.nid() }); for (const [dx, dz] of [[-.24, -.2], [.24, -.2], [-.24, .2], [.24, .2]]) M.box(x + dx, .06, z + dz, .05, .14, .05, {}); M.box(x, .76, z, .6, .04, .54, {});
+      plate(M, x - .282, .48, z, .3, .22, -Math.PI / 2, 'fire', 0, { kind: K.SIGN, em: 150, id: 243, seed: 0 }); setPlain(M, 0x2a2a2e); M.box(x - .29, .36, z, .02, .02, .34, {}); M.box(x - .29, .6, z, .02, .02, .34, {});
+      M.cyl(x, .8, z, .075, .075, RH - .8, 12, { c: IRON }); G(x - .45, .5, z, [1, .5, .15], 1.2); piece(); piece(); }
+
+    /* pendant lamps over the island: copper domes on cords from the tie beam */
+    for (const x of [.5, 1.6]) { setPlain(M, 0x1a1a20); M.box(x, 1.95, -.1, .012, RH - .34 - 1.95, .012, {}); brass(M, 0xb87333); M.lathe(x, 1.78, -.1, [[.2, 0], [.18, .06], [.1, .14], [.03, .18], [0, .19]], 16, {}); setPlain(M, 0xffe2b0, 0, 255); M.cyl(x, 1.76, -.1, .06, .06, .04, 10, {}); G(x, 1.74, -.1, [1, .8, .5], .9); }
+    /* a warm strip under the upper cabinets */
+    line(M, -1.85, 1.53, D - .3, 1.6, .012, .03, 0xffc890, 200); line(M, 1.95, 1.53, D - .3, .9, .012, .03, 0xffc890, 200);
+    piece();
+  });
+
+  /* the glass: what it shows is the slope, the lift and the village, through the hole */
+  { const x = A.x + W, zs = 3, yh = 2.6, q = (z0, z1, y0, y1) => { GL.set({ kind: K.GLASS, c: [1, 1, 1], id: 0 }); const u0 = (z0 + zs) / (2 * zs), u1 = (z1 + zs) / (2 * zs), v0 = y0 / yh, v1 = y1 / yh; GL.quad([x, A.y + y0, A.z + z1], [x, A.y + y0, A.z + z0], [x, A.y + y1, A.z + z0], [x, A.y + y1, A.z + z1], [u1, v0, u0, v1]); };
+    for (const [z0, z1] of [[-3, -1.55], [-1.45, -.05], [.05, 1.45], [1.55, 3]]) { q(z0, z1, .04, 2.0); q(z0, z1, 2.06, 2.58); } }
+
+  /* light on the floor: the stove, the pendants, the window */
+  { const X = v => A.x + v, Z2 = v => A.z + v, Y = A.y;
+    const blob = (x, y, z, sx, sz, c, a) => { FXM.set({ kind: 7, a, c }); FXM.quad([X(x - sx / 2), Y + y, Z2(z + sz / 2)], [X(x + sx / 2), Y + y, Z2(z + sz / 2)], [X(x + sx / 2), Y + y, Z2(z - sz / 2)], [X(x - sx / 2), Y + y, Z2(z - sz / 2)], [0, 0, 1, 1]); };
+    blob(2.4, .03, -2.2, 2.2, 1.8, [1, .5, .15], 60); blob(1.05, .955, -.1, 2.2, 1.0, [1, .78, .5], 30); blob(1.0, .03, -.6, 2.8, 2.4, [1, .75, .45], 30); blob(W - 1.2, .03, 0, 2.4, 5.4, [.55, .65, 1], 26); }
+  const fxBase = FXM.n;
+
+  /* ---------- clutter: a lived-in kitchen, kept clear of the four that matter ---------- */
+  Z.at(A.x, A.y, A.z, 0, () => {
+    const pl = (c, l = 0) => setPlain(Z, c, l), top = .9;
+    /* a rug in front of the stove, a log basket, split logs stacked by the glass */
+    { pl(0x7a2a22, L.WEAVE); Z.extrude(roundPoly(2.3, -1.9, 1.6, 1.0, .1, 3), .022, .03, { grad: .9 }); pl(0xc9a23a, L.WEAVE); Z.extrude(roundPoly(2.3, -1.9, 1.3, .7, .08, 3), .03, .034, { grad: .9 }); piece(); }
+    { pl(0x6a4a2a, L.WEAVE); Z.lathe(1.95, .02, -2.75, [[.2, 0], [.24, .32], [.22, .33]], 14, {}); for (let k = 0; k < 5; k++) { pl(k % 2 ? 0x7a5634 : 0x8a6440, L.WOOD); Z.at(1.95 + (k - 2) * .07, .3 + (k % 2) * .05, -2.75, .3 * k, () => Z.cyl(0, -.18, 0, .045, .045, .36, 7, {}), Math.PI / 2); } piece(); }
+    { for (let r = 0; r < 4; r++) for (let k = 0; k < 4 - (r > 2 ? 1 : 0); k++) { const c = R.pick([0x7a5634, 0x8a6440, 0x6a4a2a]); pl(c, L.WOOD); cylZ(Z, 3.85 + (k - 1.5) * .13 + (r % 2) * .065, .07 + r * .115, -2.75, .06, .5, 7, c); } piece(); }
+    /* hooks by the door: jackets and hats, a bench, boots under it */
+    { pl(BEAM, L.WOOD); Z.box(-1.3, 1.62, -D + .03, 1.5, .1, .04, {}); pl(IRON); for (let k = 0; k < 5; k++) Z.box(-1.95 + k * .32, 1.62, -D + .09, .02, .02, .08, {});
+      for (const [x, c] of [[-1.95, 0x24405a], [-1.31, 0x2f4a3c], [-.67, 0x5a3a6a]]) { pl(c); Z.blob(x, 1.2, -D + .18, .2, { c, sy: 1.9, j: .14 }); }
+      pl(0xc9a23a, L.WEAVE); Z.blob(-1.63, 1.58, -D + .12, .1, { c: 0xc9a23a, sy: .8, j: .05 });
+      pl(BEAM, L.WOOD); Z.box(-1.3, .42, -D + .22, 1.5, .05, .36, {}); for (const e of [-1, 1]) Z.box(-1.3 + e * .65, .02, -D + .22, .06, .4, .32, {});
+      for (const [x, c] of [[-1.85, 0x1a1a20], [-1.6, 0x1a1a20], [-1.0, 0x8a2a22], [-.78, 0x8a2a22]]) { pl(c); Z.box(x, .02, -D + .3, .14, .22, .3, {}); Z.box(x, .02, -D + .38, .14, .08, .14, {}); }
+      pl(0xe8e6e0); Z.blob(-1.15, .58, -D + .22, .13, { c: 0xe8e6e0, sy: .8, j: .05 }); piece(); piece(); }
+    /* skis and poles leaning on the left wall */
+    { for (const [x, c] of [[-.15, 0xff2e88], [.0, 0xff2e88], [.3, 0x16e4f4], [.44, 0x16e4f4]]) { pl(c); Z.at(x, .02, -D + .12, 0, () => Z.box(0, 0, 0, .07, 1.7, .02, {}), -.12); }
+      pl(0x9aa0ac); for (const x of [.65, .72]) Z.beam([x, .02, -D + .32], [x - .03, 1.25, -D + .05], .015, {}); piece(); }
+    /* the trail poster between the skis and the stove */
+    plate(Z, 1.2, 1.6, -D + .02, .5, .7, 0, 'trail', 0, { kind: K.PAPER, em: 30, seed: 0 }); piece();
+    /* on the counter: a knife block, a cutting board with bread, jars, a kettle and a pot on the range */
+    { pl(BEAM, L.WOOD); Z.rbox(-2.3, top, D - .2, .14, .22, .1, .2, {}); pl(0x1a1a1e); for (let k = 0; k < 4; k++) Z.box(-2.33 + k * .03, top + .2, D - .2, .012, .07, .012, {});
+      pl(TOP, L.WOOD); Z.box(-1.6, top, D - .32, .45, .025, .3, {}); pl(0xc8925a); Z.blob(-1.62, top + .07, D - .32, .1, { c: 0xc8925a, sy: .55, j: .06 });
+      for (let k = 0; k < 4; k++) { Z.set({ kind: K.PLAIN, c: hex(0xdfe8ec), em: 0, layer: 0 }); Z.lathe(-1.1 + k * .14, top, D - .18, [[.05, 0], [.055, .02], [.055, .16 + (k % 2) * .04], [.04, .18 + (k % 2) * .04], [0, .19 + (k % 2) * .04]], 10, {}); pl([0xe8d8b0, 0x8a5a2a, 0xf2f0e8, 0x3a6a3a][k]); Z.cyl(-1.1 + k * .14, top + .01, D - .18, .047, .047, .11, 10, {}); }
+      plate(Z, -1.1, top + .08, D - .235, .08, .05, Math.PI, 'jar', 0, { seed: 0 });
+      pl(0xc0302a); Z.lathe(.65, top + .015, D - .48, [[.09, 0], [.1, .04], [.09, .16], [.04, .2], [0, .2]], 14, {}); pl(0x1a1a1e); Z.tube([[.56, top + .08, D - .48], [.5, top + .14, D - .48], [.52, top + .18, D - .48]], .012, 6, 5, {}); Z.box(.65, top + .2, D - .48, .03, .04, .03, {});
+      pl(0x2a2a30); Z.cyl(1.05, top + .015, D - .2, .13, .13, .14, 16, {}); pl(0x1a1a1e); Z.box(1.24, top + .11, D - .2, .14, .02, .03, {}); piece(); piece(); }
+    /* on the open shelf: plates and cups; on the tiles a towel on the oven rail */
+    { for (let k = 0; k < 4; k++) { pl(0xf2f0e8); Z.cyl(-.95 + k * .025, 1.665, D - .15, .1, .1, .01, 14, {}); } for (let k = 0; k < 3; k++) { pl([0x24405a, 0xc9a23a, 0x2f4a3c][k]); Z.lathe(-.5 + k * .13, 1.665, D - .14, [[.04, 0], [.045, .08], [0, .08]], 10, {}); }
+      pl(0xe8e0c8, L.WEAVE); Z.box(.85, .58, D - .67, .22, .2, .012, {}); pl(0xc0302a); Z.box(.85, .66, D - .676, .22, .02, .004, {}); piece(); }
+    /* on the island: a bowl of oranges, mugs, a candle; a radio on the counter */
+    { pl(0x24405a); Z.lathe(1.15, .925, .25, [[.0, 0], [.1, .005], [.16, .08], [.17, .09], [0, .02]], 16, {}); for (let k = 0; k < 6; k++) { pl(0xf08a1a); Z.blob(1.15 + Math.cos(k * 1.1) * .07, 1.0 + (k > 3 ? .05 : 0), .25 + Math.sin(k * 1.1) * .07, .045, { c: 0xf08a1a, sy: 1, j: .03 }); }
+      for (const [x, z, c] of [[.95, -.4, 0xe8e0c8], [1.25, -.45, 0x2f4a3c]]) { pl(c); Z.lathe(x, .925, z, [[.04, 0], [.042, .1], [0, .1]], 12, {}); Z.tube([[x + .04, .96, z], [x + .07, .985, z], [x + .04, 1.01, z]], .008, 6, 4, {}); }
+      pl(0xe8e0c8); Z.cyl(.15, .925, .25, .035, .035, .1, 10, {}); Z.set({ kind: K.PLAIN, c: hex(0xffd080), em: 255, layer: 0 }); Z.cyl(.15, 1.025, .25, .006, .004, .02, 6, {}); G(.15, 1.06, .25, [1, .75, .35], .25, 0, zGlows);
+      pl(0x5a3a26, L.WOOD); Z.box(2.2, top, D - .3, .3, .18, .14, {}); pl(0xd8d4cc); Z.cyl(2.13, top + .09, D - .372, .04, .04, .004, 12, {}); pl(0x1a1a1e); Z.box(2.27, top + .07, D - .372, .1, .08, .004, {}); piece(); piece(); }
+    /* a fern by the glass, a little tree in a pot by the fridge */
+    { pl(0x7a4a2a); Z.lathe(4.0, .02, 2.55, [[.16, 0], [.2, .3], [.21, .32], [0, .3]], 12, {}); pl(0x2a6a3a); for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; Z.at(4.0, .34, 2.55, a, () => Z.box(0, 0, .2, .07, .02, .4, {}), .5); } piece();
+      pl(0x3a3a40); Z.lathe(3.85, .02, -1.0, [[.14, 0], [.17, .3], [0, .3]], 12, {}); pl(0x1e4a30); Z.blob(3.85, .9, -1.0, .32, { c: 0x1e4a30, sy: 1.6, j: .22 }); pl(BEAM); Z.box(3.85, .3, -1.0, .03, .45, .03, {}); piece(); }
+    /* books on a shelf over the door, a string of lights along the ridge */
+    { pl(BEAM, L.WOOD); Z.box(-2.8, 2.28, -D + .14, 1.3, .04, .26, {}); plate(Z, -2.8, 2.42, -D + .2, 1.2, .24, 0, 'spines', 0, { kind: K.PAPER, em: 20, seed: 0 }); piece();
+      Z.set({ kind: K.PLAIN, c: hex(0xffd8a0), em: 255, layer: 0 }); for (let k = 0; k < 16; k++) { const x = -W + .4 + k * (A.w - .8) / 15, y = RH - .45 - Math.abs(Math.sin(k * .9)) * .08; Z.cyl(x, y, .14, .022, .022, .04, 6, {}); G(x, y, .14, [1, .8, .5], .22, 0, zGlows); } piece(); }
+  });
+
+  const lights = [
+    [...w(1.05, 1.6, -.1), 0xffd9b0, 7, .75],
+    [...w(2.4, .55, -2.3), 0xff7a2a, 6, .9],
+    [...w(W + 1.4, 1.9, 0), 0x9ab4ff, 9, .45],
+    [...w(-1.85, 1.45, D - .45), 0xffc890, 3.5, .5],
+    [...w(1.95, 1.45, D - .45), 0xffc890, 3, .45],
+    [...w(-2.8, 2.0, -D + .6), 0xffc890, 4, .35],
+    [...w(0, RH - .6, 0), 0xffd8a0, 7, .25],
+    [...w(-3.6, 1.4, 1.6), 0xffb88a, 5, .3],
+  ];
+  const hot = [
+    { key: 'fridge', label: 'LIST', hotkey: 'E', line: 18, sheet: 'cList', p: w(3.04, 1.3, D - .74) },
+    { key: 'book', label: 'MEALS', hotkey: 'R', line: 14, sheet: 'cMeals', p: w(.5, 1.22, -.12) },
+    { key: 'blender', label: 'SHAKES', hotkey: 'F', line: 26, sheet: 'cShakes', p: w(1.6, 1.38, .15) },
+    { key: 'ticket', label: 'CARDIO', hotkey: 'G', line: 12, sheet: 'cCardio', p: w(1.69, .5, -1.29) },
+  ];
+  return {
+    geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(),
+    paint, setDoor() {},
+  };
+}
+
 /* ---------- renderer, passes and the camera story ---------- */
 const canvas = $('#gl');
 const RIG = QS.has('cityrig');
@@ -4396,7 +4784,7 @@ function skyWeather(x) {
 const ROOM_DAY = [[.6, .6, .64], [.38, .36, .36], [.1, .1, .11], [.62, .64, .68]];
 function skyRoom() {
   if (!room.def || !room.u || !SKY.T) return;
-  const L = Math.max(SKY.L, 0), w = SKY.w, a = room.def.amb, d = room.def.ambDay || ROOM_DAY, dim = mixN(1, .78, w.cloud), warm = [1, mixN(1, .88, SKY.W), mixN(1, .76, SKY.W)];
+  const L = Math.max(SKY.L, 0), w = skyW(), a = room.def.amb, d = room.def.ambDay || ROOM_DAY, dim = mixN(1, .78, w.cloud), warm = [1, mixN(1, .88, SKY.W), mixN(1, .76, SKY.W)];
   const m = i => [0, 1, 2].map(j => mixN(a[i][j], d[i][j] * dim * warm[j], L));
   room.u.uAmbHi.value.setRGB(...m(0)); room.u.uAmbLo.value.setRGB(...m(1)); room.u.uAmbSide.value.setRGB(...m(2)); room.u.uRim.value.setRGB(...m(3));
   room.u.uSky.value.set(L, SKY.W, clamp(w.rain * 2), 0); room.u.uSkyH.value.setRGB(...SKY.T.sunC.map(v => v * 1.1));
@@ -4418,6 +4806,8 @@ function skyParse(s) {
   const o = {}; for (const w of String(s).split(/[ ,]+/)) { if (SKY_TIMES[w]) { o.el = SKY_TIMES[w][0]; o.az = SKY_TIMES[w][1]; } if (SKY_WX[w]) Object.assign(o, SKY_WX[w]); }
   return o;
 }
+/* the weather as shown: up at the chalet, what falls downtown as rain falls as snow, and nothing is wet */
+const skyW = () => { const w = SKY.w; if (room.id !== 'chalet' || S.mode === 'city') return w; return { ...w, snow: Math.max(w.snow, w.rain), rain: 0, wet: Math.min(w.wet, .2) }; };
 function skyTick(t, now = Date.now()) {
   if (!RIG && SKY.ask && performance.now() > SKY.ask) skyAsk();
   if (!RIG && t < SKY.next) return;
@@ -4429,7 +4819,7 @@ function skyTick(t, now = Date.now()) {
   /* weather eases over a minute or so; the rig takes it at once */
   const want = { ...SKY_RAIN, ...(SKY.at && SKY.wx ? SKY.wx : {}), ...(o || {}) };
   const k = RIG || SKY.snap || SKY.L < 0 ? 1 : .006; SKY.snap = false; for (const n in SKY.w) SKY.w[n] = n in want ? mixN(SKY.w[n], want[n], k) : SKY.w[n];
-  const el = SKY.el, w = SKY.w, L = sstep(-10, 7, el), W = (1 - sstep(4, 16, el)) * sstep(-14, -4, el), R = Math.PI / 180;
+  const el = SKY.el, w = skyW(), L = sstep(-10, 7, el), W = (1 - sstep(4, 16, el)) * sstep(-14, -4, el), R = Math.PI / 180;
   const T = mixO(mixO(SKY_D[0], SKY_D[1], w.cloud), mixO(SKY_W[0], SKY_W[1], w.cloud), W), U = mixO(SKY_N, T, L);
   /* light: the sun while it is up or nearly, kept a little above the roofs so streets aren't all in shade; the moon after */
   const up = el > -3, le = Math.max(el, 7) * R, az = SKY.az * R;
@@ -4785,7 +5175,7 @@ const FIG_PH = { value: new THREE.Vector4() }, FIG_CUT = { value: 1e4 }, FIG_DAY
 /* where she is by the clock: the window corner by day, the glass from six, in bed from eleven. Read on the way in, so she never changes spot while the room is on screen */
 const figSpot = () => { const h = HOUR != null ? HOUR : new Date().getHours(); return h >= 23 || h < 6 ? 'late' : h >= 18 ? 'eve' : 'day'; };
 /* on a phone the resting view may turn toward her spot (the bed sits at the edge of a narrow screen) */
-const restYaw = () => CAM.aspect < .8 && room.def && room.def.figure && room.def.figure.turn && room.def.figure.turn[room.spot] || 0;
+const restYaw = () => CAM.aspect < .8 && room.def && (room.def.figure && room.def.figure.turn && room.def.figure.turn[room.spot] || room.def.turn) || 0;
 function dropFigure() {
   figTok++; figP = null; if (!FIG) return; SC.room.remove(FIG.root);
   /* what she holds may never have been handed to her, so it's gathered on its own */
@@ -5227,6 +5617,26 @@ const ROOM_DEF = {
       };
     },
   },
+  chalet: {
+    box: CR, name: 'CHALET', build: buildChalet, panel: '#chBox', sheet: ['Fuel', 'PAGE.01/04'], shadow: [134, 10], refresh: refreshChalet,
+    /* inside the chalet: the flight sees it through its glass end, a hole in the city's depth */
+    hole: true,
+    amb: [[.34, .26, .2], [.17, .1, .08], [.06, .045, .04], [.7, .85, 1.4]],
+    window: { x: CR.x + CR.w / 2 + .05, zs: [CR.z - 3, CR.z + 3], ys: [CR.y + .02, CR.y + 2.6] },
+    /* on a phone the view leans a little right, so the fridge is in it with the island and the ticket */
+    turn: .1,
+    /* at the back by the door, facing the glass and the lift */
+    rest: a => a < .8 ? { p: local(-3.4, 1.6, -.1), l: local(4, 1.3, -.1) } : { p: local(-3.3, 1.62, 0), l: local(4, 1.25, 0) },
+    flight(c, r, a) {
+      const { x, y, z } = CH;
+      return {
+        /* up over the island toward the mountain, down past the lift station, onto the deck, in through the glass, then round by the stove to face it */
+        P: [c.p, a < .8 ? [60, 200, 200] : [90, 230, 260], [150, 300, -300], [x + 70, y + 40, z + 40], [x + 26, y + 9, z + 8], [x + 11, y + 2.4, z + 1.2], local(6.2, 1.75, .4), local(3.2, 1.72, .7), local(.8, 1.78, .95), local(-1.8, 1.66, .6), local(-2.9, 1.64, .2), r.p],
+        L: [c.l, [150, 260, -600], [x, y + 10, z], [x + 4, y + 3, z], [x + 4, y + 1.8, z], local(-2, 1.5, 0), local(-6, 1.45, .3), local(-6, 1.45, -2.6), local(-3, 1.4, -4.8), local(1.5, 1.35, -3.6), local(3, 1.3, -1.5), r.l],
+        W: [1.15, 1, .95, .7, .55, .45, .42, .4, .34, .32, .42],
+      };
+    },
+  },
 };
 /* the room view turned by y: the head moves when you look, so what is near the glass shifts against the street */
 function restView(y) {
@@ -5399,12 +5809,11 @@ function project(p) { _pv.set(p[0], p[1], p[2]).project(CAM); return { x: (_pv.x
 const hudEl = $('#hud');
 function setBoot(t, p) { const a = $('#bootT'), b = $('#bootB'); if (a) a.textContent = t.toUpperCase(); if (b) b.style.width = (p * 100) + '%'; }
 const ICONS = [
-  { k: 'plan', room: 'apartment', attr: 'focus', word: 'Plan', c: '#16e4f4', d: 'MEGABLOCK', r: 'TASKS ', svg: '<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>' },
-  { k: 'work', room: 'shop', attr: 'grind', word: 'Work', c: '#f6ee1c', d: 'DOWNTOWN', r: 'HOURS ', svg: '<path d="M12 8V6a2 2 0 1 1 2 2c-1 0-2 1-2 2M12 10 3 17v2h18v-2z"/>' },
-  { k: 'train', room: 'gym', attr: 'strength', word: 'Train', c: '#ff8a1e', d: 'NORTHSIDE', r: 'DONE ', svg: '<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>' },
-  { k: 'cardio', attr: 'stamina', word: 'Cardio', c: '#ff2e88', d: 'SKI VILLAGE', r: 'WEEK ', svg: '<path d="M3 20 10 8l4 6 2-3 5 9zM9 10l2 2 2-1"/>' },
-  { k: 'fuel', attr: 'fuel', word: 'Fuel', c: '#f6ee1c', d: 'NIGHT MARKET', r: 'SHAKES ', svg: '<path d="M3 11h18a9 9 0 0 1-18 0zM8 3c-1 2 1 3 0 5M13 3c-1 2 1 3 0 5M18 4 13 11"/>' },
-  { k: 'school', attr: 'hustle', word: 'Jobs', c: '#4cdc8e', d: 'CASTLE POINT', r: 'APPS ', svg: '<path d="M4 20V9h3V6h2v3h6V6h2v3h3v11zM10 20v-5h4v5"/>' },
+  { k: 'plan', room: 'apartment', attr: 'focus', word: 'Plan', c: '#16e4f4', d: 'HOME · TASKS', r: 'TASKS ', svg: '<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>' },
+  { k: 'work', room: 'shop', attr: 'grind', word: 'Work', c: '#f6ee1c', d: 'SHOP · SHIFTS', r: 'HOURS ', svg: '<path d="M12 8V6a2 2 0 1 1 2 2c-1 0-2 1-2 2M12 10 3 17v2h18v-2z"/>' },
+  { k: 'train', room: 'gym', attr: 'strength', word: 'Train', c: '#ff8a1e', d: 'GYM · LIFTS', r: 'DONE ', svg: '<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>' },
+  { k: 'fuel', room: 'chalet', attr: 'fuel', word: 'Fuel', c: '#f6ee1c', d: 'CHALET · FOOD', r: 'SHAKES ', svg: '<path d="M3 11h18a9 9 0 0 1-18 0zM8 3c-1 2 1 3 0 5M13 3c-1 2 1 3 0 5M18 4 13 11"/>' },
+  { k: 'school', attr: 'hustle', word: 'Jobs', c: '#4cdc8e', d: 'CASTLE · JOBS', r: 'APPS ', svg: '<path d="M4 20V9h3V6h2v3h6V6h2v3h3v11zM10 20v-5h4v5"/>' },
 ];
 
 function ringHTML(id, val, sub) {
@@ -5452,7 +5861,7 @@ function eqStep(dt, t) {
 }
 function glitchHud(force = 1) { kick = 1; if (REDUCED) return; hudEl.classList.remove('gl'); void hudEl.offsetWidth; hudEl.classList.add('gl'); clearTimeout(S.glOff); S.glOff = setTimeout(() => hudEl.classList.remove('gl'), 380); if (force >= 1) S.glitchT = S.t; }
 function scanNow() { S.scanT = S.t; const s = $('#scan'); s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); s.onanimationend = () => s.classList.remove('go'); }
-function setMode(m) { S.mode = m; S.lastInput = S.modeT = performance.now(); hudEl.classList.remove('city', 'fly', 'room'); hudEl.classList.add(m); }
+function setMode(m) { S.mode = m; SKY.next = 0; S.lastInput = S.modeT = performance.now(); hudEl.classList.remove('city', 'fly', 'room'); hudEl.classList.add(m); }
 /* Buttons appear under the finger on arrival, and a touch's click lands after the mode has changed. Nobody means to press what they cannot have seen yet. */
 const justArrived = () => S.mode !== 'fly' && performance.now() - (S.modeT || 0) < 350;
 
@@ -5481,8 +5890,22 @@ function hudInit() {
   /* readouts */
   $('#ringA').innerHTML = ringHTML('0', 0, 'PROGRESS'); $('#ringB').innerHTML = ringHTML('0', 0, 'PERIOD'); $('#ringC').innerHTML = ringHTML('0', 0, '% GOAL');
   barInto($('#bG'), 18, 0); S.ringIn = 0; for (const id of ['#cellsA', '#cellsB']) { const el = $(id); el.innerHTML = '<i class="on"></i>'.repeat(3) + '<i></i>'.repeat(1); }
-  barInto($('#bH1'), 18, 0); barInto($('#bH2'), 18, 0); barInto($('#bY1'), 18, 0);
+  barInto($('#bH1'), 18, 0); barInto($('#bH2'), 18, 0); barInto($('#bY1'), 18, 0); for (const k of ['#bK1', '#bK2', '#bK3', '#bK4']) barInto($(k), 18, 0);
   $('#btnGymSheet').addEventListener('click', () => openSheet('cSess'));
+  $('#btnChSheet').addEventListener('click', () => openSheet('cList'));
+  /* the chalet does the Fuel and Cardio pages' own things in place: a shake, a tick on the list, a snack, a meal picked, a recipe read, cardio logged */
+  hudEl.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-fshake],[data-fgroc],[data-fclear],[data-fsnack],[data-fpick],[data-fopen],[data-fcat],[data-fback],[data-ftype]'); if (!b) return; const d = b.dataset;
+    if (d.fshake) { APP.shake(d.fshake); return; }
+    if (d.fgroc) { const on = b.classList.toggle('on'); b.setAttribute('aria-pressed', String(on)); $('#flRows')._h = null; APP.groc(d.fgroc); return; }
+    if (d.fclear !== undefined) { APP.grocClear(); return; }
+    if (d.fsnack) { APP.snack(d.fsnack); return; }
+    if (d.fpick) { APP.pick(d.fpick); return; }
+    if (d.fopen) { chRecipe = d.fopen; refreshChalet(); const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0; requestAnimationFrame(() => { const t = $('#fmBack'); if (t) t.focus({ preventScroll: true }); }); return; }
+    if (d.fback !== undefined) { const was = chRecipe; chRecipe = null; refreshChalet(); requestAnimationFrame(() => { const t = [...ROOT.querySelectorAll('[data-fopen]')].find(x => x.dataset.fopen === was); if (t) t.focus({ preventScroll: false }); }); return; }
+    if (d.fcat) { chCat = d.fcat; refreshChalet(); return; }
+    if (d.ftype) { APP.cardioType(d.ftype); ROOT.querySelectorAll('[data-ftype]').forEach(x => { const on = x === b; x.classList.toggle('ol', !on); x.setAttribute('aria-pressed', String(on)); }); const t = $('#fcType'); if (t) t.value = ''; return; }
+  });
   /* the gym's rest buttons start the app's own rest timer, the one the island counts down between sets */
   hudEl.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-rest],[data-gset],[data-gdone],[data-gday],[data-gpick]'); if (!b) return; const d = b.dataset;
@@ -5552,6 +5975,8 @@ function hudInit() {
   });
   /* a benchmark logs from its own box */
   hudEl.addEventListener('submit', e => {
+    const fc = e.target.closest && e.target.closest('[data-fcardio]');
+    if (fc) { e.preventDefault(); const typed = fc.elements.type.value.trim(), on = ROOT.querySelector('[data-ftype][aria-pressed="true"]'); if (APP.cardio(typed || (on && on.dataset.ftype) || '', fc.elements.min.value, fc.elements.dist.value)) { fc.elements.min.value = ''; fc.elements.dist.value = ''; fc.elements.type.value = ''; fc.elements.min.blur(); } else fc.elements.min.focus(); return; }
     const f = e.target.closest && e.target.closest('[data-gbench]'); if (!f) return; e.preventDefault();
     const inp = f.querySelector('input'); if (APP.bench(f.dataset.gbench, inp.value)) { inp.value = ''; inp.blur(); } else inp.focus();
   });
@@ -5704,7 +6129,7 @@ const GCARD = { add: ['gAdd', 'Quick add', 'SYS.INPUT'], prog: ['gProg', 'Progre
 let gOpen = null;
 function openGlobal(k) { if (!GCARD[k]) return; gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
 /* a room's sheet shows one card at a time; tabs switch between them */
-const TABS = { apartment: [['cToday', 'TODAY'], ['cWeek', 'WEEK'], ['cNotes', 'NOTES'], ['cCareer', 'CAREER'], ['cDecide', 'DECIDE']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'RACK'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY']] };
+const TABS = { apartment: [['cToday', 'TODAY'], ['cWeek', 'WEEK'], ['cNotes', 'NOTES'], ['cCareer', 'CAREER'], ['cDecide', 'DECIDE']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'RACK'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY']], chalet: [['cList', 'LIST'], ['cMeals', 'MEALS'], ['cShakes', 'SHAKES'], ['cCardio', 'CARDIO']] };
 let curCard = null;
 function showCard(id) {
   const T = TABS[room.id] || []; if (!T.some(t => t[0] === id)) id = T.length ? T[0][0] : null; curCard = id;
@@ -5718,8 +6143,8 @@ function openSheet(id) {
   ROOT.querySelectorAll('#sheet .card[data-g]').forEach(c => c.classList.toggle('on', c.dataset.g === g));
   setText('#shName', g ? GCARD[g][1] : room.def.sheet[0]); setText('#shPage', g ? GCARD[g][2] : room.def.sheet[1]); sh0.setAttribute('aria-label', g ? GCARD[g][1] : room.def.sheet[0]);
   if (!g) showCard(id);
-  refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) { $('#aptBox').inert = true; $('#gymBox').inert = true; } const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0; scanNow(); $('#btnClose').focus({ preventScroll: true }); }
-function closeSheet(quiet) { S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
+  refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) { $('#aptBox').inert = true; $('#gymBox').inert = true; $('#chBox').inert = true; } const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0; scanNow(); $('#btnClose').focus({ preventScroll: true }); }
+function closeSheet(quiet) { S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; $('#chBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
 function updateSel() {
   if (!HOME) return;
   const o = ICONS[sel], a = HOME.attrs[o.attr], v = Math.round(pct01(a.bar) * 100);
@@ -5838,6 +6263,54 @@ function refreshCareer() {
 const spark = v => { if (v.length < 2) return '<svg viewBox="0 0 72 24" aria-hidden="true"></svg>'; const lo = Math.min(...v), hi = Math.max(...v), r = hi - lo || 1; return `<svg viewBox="0 0 72 24" aria-hidden="true"><polyline fill="none" stroke="#ff4646" stroke-width="1.6" points="${v.map((y, i) => `${(i / (v.length - 1) * 70 + 1).toFixed(1)},${(22 - (y - lo) / r * 20).toFixed(1)}`).join(' ')}"/></svg>`; };
 /* the day the gym's sheet shows: today unless he picked another on the split */
 let gymDay = null;
+/* the chalet: the meals card shows this week's picks, the book by category, or one recipe in full */
+let chCat = 'This week', chRecipe = null;
+function refreshChalet() {
+  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['fgroc', 'fpick', 'fopen', 'fshake', 'fcat', 'fsnack'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
+  const F = APP.fuel(), sk = F.shakes.filter(x => x.on).length;
+  /* the panel: three bars */
+  setText('#chN', F.date); setBar($('#bK1'), sk / F.shakes.length); setText('#vK1', `${sk}/${F.shakes.length}`);
+  setBar($('#bK2'), F.all ? F.done / F.all : 0); setText('#vK2', F.all ? `${F.done}/${F.all}` : '-');
+  setBar($('#bK3'), Math.min(1, F.cardio.min / F.cardio.goal)); setText('#vK3', String(F.cardio.min));
+  /* the list, by aisle, ticked here exactly as on the List tab */
+  setText('#flN', F.all ? `${F.done}/${F.all} IN THE CART` : F.book ? 'NOTHING PICKED' : 'OPENING THE BOOK');
+  setRows('#flRows', F.list.length ? F.list.map(sec => `<div class="gsec">${sec.sec.toUpperCase()}</div>` + sec.items.map(i => `<button class="git${i.on ? ' on' : ''}" data-fgroc="${i.id}" aria-pressed="${i.on}"><i>✓</i><b>${i.n}</b><em>${i.q}</em></button>`).join('')).join('') : noneRow(F.book ? 'Pick meals in MEALS and what they need shows up here.' : 'Opening the book.'));
+  setHTML('#flActs', F.done ? '<button class="rbtn ol" data-fclear="">CLEAR TICKS</button>' : '');
+  setHTML('#flSnk', F.snacks.length ? `<b>ADD A SNACK</b>${['Salty', 'Sweet'].map(t => `<div class="gsec">${t.toUpperCase()}</div>` + F.snacks.filter(x => x.t === t).map(x => `<button class="git${x.on ? ' on' : ''}" data-fsnack="${x.n}" aria-pressed="${x.on}"><i>✓</i><b>${x.n}</b><em>${x.p}G</em></button>`).join('')).join('')}` : '');
+  /* the meals */
+  const R = chRecipe ? APP.recipe(unesc(chRecipe)) : null; if (chRecipe && !R && F.book) chRecipe = null;
+  setText('#fmK', R ? 'Recipe' : "This week's meals"); setText('#fmN', `${F.picked.length} PICKED`);
+  const cats = ['This week', ...new Set(['All', ...F.cats])];
+  if (!cats.includes(chCat)) chCat = 'This week';
+  const list = chCat === 'This week' ? F.recipes.filter(r => r.on) : chCat === 'All' ? F.recipes : F.recipes.filter(r => r.c === chCat);
+  if (R) setHTML('#fmBody', `<button class="rbtn ol" id="fmBack" data-fback="">‹ ALL MEALS</button>
+    <div class="rct">${R.n}</div><div class="rcm">${R.t}</div>
+    <div class="acts"><button class="rbtn${R.on ? '' : ' ol'}" data-fpick="${R.n}" aria-pressed="${R.on}">${R.on ? 'ON THIS WEEK ✓' : 'PICK FOR THIS WEEK'}</button></div>
+    <div class="mac"><div><b>${R.cal}</b><span>KCAL</span></div><div><b>${R.p}G</b><span>PROTEIN</span></div><div><b>${R.c}G</b><span>CARBS</span></div><div><b>${R.f}G</b><span>FAT</span></div></div>
+    <p class="rcm">Makes ${R.sv} portions, macros per portion. ${R.time}. ${R.eq}</p>
+    <div class="rch">INGREDIENTS</div>${R.groups.map(g => `${g.g ? `<div class="rcg">${g.g}</div>` : ''}<ul class="rci">${g.i.map(x => `<li>${x}</li>`).join('')}</ul>`).join('')}
+    <div class="rch">METHOD</div><ol class="rcs">${R.steps.map(x => `<li><b>${x.h}</b>${x.b}</li>`).join('')}</ol>
+    <div class="rch">THE SPARE PORTION</div><p class="rcm">${R.rh}</p>${R.x ? `<p class="rcm">${R.x}</p>` : ''}`);
+  else setHTML('#fmBody', !F.book ? noneRow('Opening the book.') : `<div class="seg2 fcats">${cats.map(c => `<button class="rbtn${c === chCat ? '' : ' ol'}" data-fcat="${c}" aria-pressed="${c === chCat}">${c.toUpperCase()}</button>`).join('')}</div>`
+    + (list.length ? list.map(r => `<div class="rcr${r.on ? ' on' : ''}"><button class="pk" data-fpick="${r.n}" aria-pressed="${r.on}" aria-label="${r.on ? 'Picked' : 'Pick'} ${r.n} for this week"><i>✓</i></button><button class="op" data-fopen="${r.n}"><div><b>${r.n}</b><small>${r.t}</small></div><em>${r.p}G</em></button></div>`).join('') : noneRow(chCat === 'This week' ? 'Nothing picked yet. Tick meals under ALL.' : 'None here.')));
+  /* shakes: today's two, the week as cells */
+  setText('#fsN', `${sk}/${F.shakes.length} TODAY`);
+  setHTML('#fsBtns', F.shakes.map(x => `<button class="${x.on ? 'on' : ''}" data-fshake="${x.k}" aria-pressed="${x.on}">${x.label.toUpperCase()}<small>${x.on ? 'DONE ✓' : 'TAP WHEN DONE'}</small></button>`).join(''));
+  setHTML('#fsWk', F.shakeWeek.map(d => `<i class="${d.n ? 'on' : ''}${d.today ? ' td' : ''}" style="--c:var(--hud-yellow)"><b>${d.dow.slice(0, 2)}</b><span>${d.n || (d.past ? '0' : '-')}</span></i>`).join(''));
+  $('#fsWk').setAttribute('aria-label', `This week: ${F.shakeWeek.reduce((a, d) => a + d.n, 0)} shakes`);
+  /* cardio: the week against the goal, a log box, the last few */
+  setText('#fcN', `${F.cardio.n} THIS WEEK`); setBar($('#bK4'), Math.min(1, F.cardio.min / F.cardio.goal)); setText('#vK4', `${F.cardio.min}/${F.cardio.goal}`);
+  setHTML('#fcWk', F.cardio.week.map(d => `<i class="${d.min ? 'on' : ''}${d.today ? ' td' : ''}" style="--c:#ff2e88"><b>${d.dow.slice(0, 2)}</b><span>${d.min || '-'}</span></i>`).join(''));
+  $('#fcWk').setAttribute('aria-label', `This week: ${F.cardio.min} of ${F.cardio.goal} minutes`);
+  if (!typing('#fcForm')) setHTML('#fcForm', `<b>LOG CARDIO</b><form class="cdf" data-fcardio="1"><div class="seg2">${F.cardio.types.map(t => `<button type="button" class="rbtn${t === F.cardio.type ? '' : ' ol'}" data-ftype="${t}" aria-pressed="${t === F.cardio.type}">${t.toUpperCase()}</button>`).join('')}</div><input class="hin" id="fcType" name="type" maxlength="24" autocapitalize="words" placeholder="SOMETHING ELSE" aria-label="Another kind of cardio"><div class="cdn"><input class="hin" name="min" type="number" inputmode="numeric" min="1" max="600" step="1" placeholder="MINUTES" aria-label="Minutes"><input class="hin" name="dist" type="number" inputmode="decimal" min="0" step="0.1" placeholder="KM" aria-label="Distance in km, if any"><button class="rbtn" type="submit">LOG</button></div></form>`);
+  setRows('#fcRows', F.cardio.recent.map(l => `<div class="clg"><b>${l.type} · ${l.min} MIN${l.dist ? ` · ${l.dist} KM` : ''}</b><em>${l.when.toUpperCase()}</em></div>`).join(''));
+  /* the tags in the room */
+  const tag = k => tagEls.find(g => g.h.key === k), say = (g, t) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, t); m.hidden = !t; };
+  say(tag('fridge'), F.all ? `${F.done}/${F.all}` : ''); say(tag('blender'), `${sk}/${F.shakes.length}`); say(tag('ticket'), `${F.cardio.min} MIN`); say(tag('book'), F.picked.length ? String(F.picked.length) : '');
+  /* the fridge list, the cookbook and the ticket in the room follow, repainted only when what they show has changed */
+  const sig = chaletSig(F); if (room.id === 'chalet' && room.paint && sig !== CH_SIG) { CH_SIG = sig; room.paint(F); }
+  if (fk && !fo.isConnected) { const to = [...ROOT.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv) || $('#btnClose'); if (to) to.focus({ preventScroll: true }); }
+}
 function refreshGym() {
   /* rows are rewritten below: note what had focus, to hand it back */
   const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['gset', 'gday', 'gdone'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
@@ -6002,7 +6475,7 @@ function rig() {
     sky(s) { SKY.over = skyParse(s); SKY.next = 0; return frame().then(() => ({ el: SKY.el, L: SKY.L, w: { ...SKY.w } })); },
     sun: sunAt, wx: skyWeather,
     skyNow: () => { const c = v => v.toArray().map(x => +x.toFixed(4)); return { L: SKY.L, key: c(city.u.uMoon.value), keyC: c(city.u.uMoonC.value), hi: c(city.u.uAmbHi.value), fogD: city.u.uFogD.value, pool: city.u.uPoolK.value, sky: c(SKY_U.sky.value), look: c(SKY_U.look.value), lamp: c(SKY_U.lamp.value), rain: city.rain.geometry.instanceCount, rainN: city.rain.userData.n, rainK: c(SKY_U.rainK.value), drops: SKY_U.drops.value, glowK: city.glow.material.uniforms.uGlowK.value, roomHi: c(room.u.uAmbHi.value), roomSky: c(room.u.uSky.value), fig: FIG_DAY.value, light1: c(city.u.uLC.value[1]) }; },
-    rest: () => restYaw(),
+    rest: () => restYaw(), wxShown: () => ({ ...skyW() }), chSig: () => CH_SIG,
     view: () => ({ p: CAM.position.toArray(), d: CAM.getWorldDirection(new THREE.Vector3()).toArray() }),
     figBox() { return FIG ? FIG.keys[FIG.i].box : null; },
     pose(i, go) { if (!FIG) return 0; const n = FIG.nS; if (go) figGo(i % n, S.t); else { FIG.i = i % n; FIG.go = null; FIG_CUT.value = 1e4; } FIG.next = Infinity; return n; },

@@ -40,13 +40,18 @@ behind a per-device flag, and the Dex home stays the default until the switch-ov
 | Plan | `focus` `#64d2ff` | A stacked megablock: balconies, one warm top-floor window, a rooftop | `week:` | `apartment` | Today pane, Week grid, Notebook, Decide screen, Career drawers |
 | Work | `grind` `#0a84ff` | Downtown black-glass towers around the megatower, with a wood-and-brass clothing shop at street level | `hours:shifts` | `shop` | Register, Ledger, Notepad |
 | Train | `strength` `#ff9f0a` | A pale-concrete warehouse gym: roll-up door, orange neon | `training:` | `gym` | Rack, Stopwatch, Whiteboard, Split chart |
-| Cardio | `stamina` `#ff375f` | A ski village on the mountain: chalets, a rounded lift station, gondola line, pines, snow | `training:cardio` | `ski` | Lift board, Ticket window |
-| Fuel | `fuel` `#ffd60a` | A night-market food-stall alley: lanterns, steam, stacked sign blades | `training:fuel` | `stall` | Blender, Gainer tub, Menu board, Paper bag, Counter |
+| Fuel (Cardio merged in, p13) | `fuel` `#ffd60a` | A ski village on the mountain: chalets, a rounded lift station, gondola line, pines, snow | `training:fuel` | `chalet` | Fridge (shopping list), Cookbook (this week's meals), Blender (shakes), Lift ticket (log cardio) |
+| (none from p13) | | A night-market food-stall alley: lanterns, steam, stacked sign blades | | | Scenery; free for a later room. |
 | Jobs (School from Phase 2) | `hustle` `#30d158` | A stone castle on a forested point over the water | `jobs:` | `castle` | Desk (applications). School hotspots are declared for Phase 2. |
 
 **Composition:** the mountain runs across the back, the water along the front and right, and the skyline stands in
 rows across the water. The rail loops the island and the megatower is the tallest point. **Text in 3D:** signs and
-ads carry made-up words only. Never logos, crests, real brands, game names or the real shop's name. The 3D neon may run warmer than the icon colour so the city stays cozy;
+ads carry made-up words only.
+
+**His calls, 2026-11-06:** Cardio alone was too thin for a room (logging takes two seconds), so the ski village holds
+Cardio and all of Fuel in one chalet: you stand in its kitchen, nobody there. Cardio and Fuel become one icon (five icons,
+one per room); the Stamina and Fuel stats both still count. Place names say what's inside, as place · job: HOME · TASKS,
+SHOP · SHIFTS, GYM · LIFTS, CHALET · FOOD, CASTLE · JOBS (the big words Plan, Work, Train, Fuel, Jobs stay). Never logos, crests, real brands, game names or the real shop's name. The 3D neon may run warmer than the icon colour so the city stays cozy;
 the icons keep their exact colours.
 
 **Ground rules that shape every phase:**
@@ -284,8 +289,38 @@ Technical state only. Updated 2026-11-06.
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-close`, pushed as build `p12`. `BUILD` is `'p12'` in `city.js`, `index.html` and the
+- **Branch:** `city-close`, build `p13` (not pushed yet). `BUILD` is `'p13'` in `city.js`, `index.html` and the
   `city.js?v=` query.
+- **Built (p13, the chalet, round 1 for his review, 2026-11-06):** Fuel and Cardio in one room (his call: cardio alone was
+  too thin). Fuel now flies into the chalet; Cardio's icon is gone (five icons, the six stats unchanged).
+  - **App side:** `CityApp.fuel()` (shakes today and this week, picked meals, recipes, the list by aisle, snacks, cardio
+    this week and recent), `recipe(n)`, and actions `shake`, `groc`, `grocClear` (Undo), `snack`, `pick`, `cardio` (Undo
+    on its toast; 1 to 600 min), `cardioType`. The book loads in the background on the first read, then re-renders.
+  - **Names:** `ICONS[].d` is place · job: HOME · TASKS, SHOP · SHIFTS, GYM · LIFTS, CHALET · FOOD, CASTLE · JOBS.
+    `ANCHORS.fuel` is over the chalet's ridge.
+  - **Where:** `CH` (200, -850), floor y 229.2, west of the lift station. The slope rises about 1 m per metre to the
+    north, so the chalet stands on a level snow pad dug into the hill (`chalet()` in `mountain()`: a lofted shoulder, a
+    short stone plinth, timber walls, a steep snowy roof with its ridge along x, a chimney, a deck with a railing over
+    the pad, the door on the uphill side). Its +X gable end is glass: one lit quad facing out, the hole behind it.
+    Random village chalets, pines and string lights that would overlap it (`inCH`) are drawn into a throwaway builder
+    or skipped after their random numbers are taken, so the rest of the village and forest is unchanged.
+  - **Room (`CR`, `buildChalet`, `chaletAtlas`, empty):** 9 deep x 6.4 wide, walls 2.7, vaulted to 5.55 with a ridge
+    beam, rafters and tie beams. You stand at the back looking at the glass (lift station right, gondola line left,
+    the city's skyline far right). Right wall: green cabinets, butcher-block top, tiles, sink, black range, copper hood,
+    and the cream fridge at the front end with the list on its door. Middle: the island with the cookbook on a stand
+    and the blender; three stools, a red ski jacket on the far one with the lift ticket. Left: the door at the back,
+    hooks, a bench, boots, skis, a trail poster, the stove on a stone hearth in the front corner. Clutter: rug, logs,
+    jars, kettle, pot, bread, oranges, mugs, candle, radio, plants, books, string lights on the ridge.
+  - **Painted from his data, repainted only on change (`chaletSig`):** the fridge list (by aisle, ticked items struck
+    through), the cookbook (this week's picks with protein), the lift ticket (the week's cardio minutes of 90).
+  - **Hotspots and cards (`TABS.chalet`):** LIST (fridge) -> `cList`, MEALS (cookbook) -> `cMeals` (THIS WEEK, ALL and
+    the book's categories; pick; open a recipe in place: macros, ingredients, method, the spare portion; back),
+    SHAKES (blender) -> `cShakes` (today's two, the week as cells), CARDIO (ticket) -> `cCardio` (the week against 90,
+    a log box with type chips and SOMETHING ELSE, recent logs). The panel `#chBox`: shakes, cart, cardio bars.
+  - **Phone:** `ROOM_DEF.chalet.turn` (0.1) leans the resting view right so all four tags fit (`restYaw` now reads a
+    room's own `turn` as well as a figure's).
+  - **Weather:** `skyW()` is the weather as shown: in the chalet (any mode but city) rain falls as snow, nothing wet.
+  - Tests: t50 (31 checks at both sizes), t2 (Fuel flies to the chalet, five icons), rv13 (the review shots).
 - **Built (p12, the small fixes, 2026-11-06):**
   - **Umbrellas only in rain.** Walkers 4 and 6 carry an umbrella mesh; `skyTick` shows it when `SKY.w.rain > .05`,
     so dry and snowy days have none.
@@ -482,4 +517,4 @@ Technical state only. Updated 2026-11-06.
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
   1. His review of p11 and p12 live; the rainy-glass street through the door is open to tweak.
-  2. Then the ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.
+  2. His review of the chalet (p13). Then the castle. School (Phase 2) and sound (Phase S) in the agreed order.

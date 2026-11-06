@@ -31,9 +31,9 @@
     }
     on = localStorage.getItem('daybook_home') === 'city';
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p12';
+  window.DAYBOOK_BUILD = 'p13';
   window.DAYBOOK_CITY = on;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p12' : './rider.js'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p13' : './rider.js'; document.head.appendChild(l);
   if (on) {
     document.documentElement.dataset.city = '';
     var c = document.createElement('style');
@@ -43,7 +43,7 @@
 })();
 </script>
 <script type="module">
-if (window.DAYBOOK_CITY) import('./city.js?v=p12').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
+if (window.DAYBOOK_CITY) import('./city.js?v=p13').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
 else import('./rider.js').catch(e => window.logProblem('page', e));
 </script>
 <style>
@@ -3593,6 +3593,51 @@ if (window.DAYBOOK_CITY) window.CityApp = {
     if (v > prevBest && prevBest) celebrate(`New PR · ${v}`, '#ff9f0a'); else island.toast('Benchmark logged', { icon: I.check, color: '#ff9f0a' });
     return true;
   },
+  // the chalet: Fuel and Cardio in one kitchen. Today's shakes, this week's meals and the list they make, the recipe book, cardio
+  fuel() {
+    if (!BOOK_FRESH && !this._bookAsk) { this._bookAsk = 1; loadBook().then(() => render()).catch(() => { this._bookAsk = 0; }); }
+    const t = today(), week0 = datesOf(mondayOf(new Date())), wkStart = mondayOf(new Date()).getTime(), sk = shakesToday(), pkm = picks().m;
+    const cl = cardioLogs(), wkC = cl.filter(l => l.ts >= wkStart), cMin = wkC.reduce((a, l) => a + l.min, 0);
+    const counts = groceryCount();
+    return {
+      book: !!BOOK, title: BOOK ? esc(BOOK.title) : '', date: short(t).toUpperCase(),
+      shakes: SHAKES.map(([k, label]) => ({ k, label, on: !!sk[k] })),
+      shakeWeek: week0.map((d, i) => { const x = (S.shakes || {})[d] || {}; return { d, dow: DOW[i].toUpperCase(), n: SHAKES.filter(([k]) => x[k]).length, today: d === t, past: d < t }; }),
+      cats: BOOK ? BOOK.cats.map(esc) : [],
+      picked: pkm.filter(n => recipeFor(n)).map(n => { const r = recipeFor(n); return { n: esc(n), t: esc(r.t), p: r.m[1] }; }),
+      recipes: BOOK ? BOOK.recipes.map(r => ({ n: esc(r.n), t: esc(r.t), c: esc(r.c), p: r.m[1], on: pkm.includes(r.n) })) : [],
+      list: grocerySections().map(([sec, items]) => ({ sec: esc(sec), items: items.map(([n, q]) => ({ id: esc(sec + '|' + n), n: esc(n), q: esc(q), on: groceryOn(sec + '|' + n) })) })),
+      done: counts.done, all: counts.all,
+      snacks: BOOK ? BOOK.snacks.map(x => ({ n: esc(x.n), t: x.t, note: esc(x.note), p: x.p, on: snackOn(x.n) })) : [],
+      cardio: { min: cMin, goal: 90, n: wkC.length, type: esc(cardioType), types: [...new Set([...CARDIO_TYPES, ...cl.map(l => l.type)])].map(esc),
+        week: week0.map((d, i) => ({ d, dow: DOW[i].toUpperCase(), min: cardioOn(d).reduce((a, l) => a + l.min, 0), today: d === t })),
+        recent: cl.slice(-4).reverse().map(l => ({ ts: l.ts, type: esc(l.type), min: l.min, dist: l.dist, when: esc(rel(iso(new Date(l.ts)))) })) },
+    };
+  },
+  recipe(n) {
+    const r = recipeFor(n); if (!r) return null;
+    const grp = []; let cur = { g: '', i: [] }; grp.push(cur);
+    r.i.forEach(x => { if (x[0] === '#') { cur = { g: esc(x.slice(1)), i: [] }; grp.push(cur); } else cur.i.push(esc(x)); });
+    return { n: esc(r.n), t: esc(r.t), cal: r.m[0], p: r.m[1], c: r.m[2], f: r.m[3], sv: r.sv, time: esc(r.time), eq: esc(r.eq), groups: grp.filter(g => g.i.length),
+      steps: r.s.map(x => { const p = x.split('|'); return { h: esc(p[0]), b: esc(p[1] || '') }; }), rh: esc(r.rh), x: r.x ? esc(r.x) : '', on: picks().m.includes(r.n) };
+  },
+  shake(k) { if (!SHAKES.some(([x]) => x === k)) return; toggleShake(k); },
+  groc(id) { if (typeof id !== 'string' || !id.includes('|')) return; toggleGrocery(id); haptic(6); if (groceryOn(id)) sfx('tick'); render(); },
+  grocClear() { if (!Object.keys(S.grocery || {}).length) return; withUndo('Ticks cleared', () => { S.grocery = {}; }); },
+  snack(n) { if (!BOOK || !BOOK.snacks.some(x => x.n === n)) return; toggleSnack(n); haptic(6); render(); },
+  pick(n) {
+    if (!recipeFor(n)) return; togglePick(n); haptic(6); const on = picks().m.includes(n); if (on) sfx('tick');
+    island.toast(on ? `${n} is on this week` : `${n} taken off`, { icon: I.check, color: '#30d158' });
+  },
+  cardio(type, min, dist) {
+    min = parseInt(min); if (!(min >= 1 && min <= 600)) return false;
+    const typed = String(type || '').trim().slice(0, 24); if (typed) cardioType = typed;
+    dist = parseFloat(dist); dist = dist > 0 && dist < 1000 ? dist : null;
+    const ts = Date.now(), logs = cardioLogs(); logs.push({ type: cardioType, min, dist, ts }); writeLS(W_CARDIO, logs); haptic(10);
+    island.toast(`${cardioType} · ${min} min logged`, { icon: I.training, color: '#ff375f', action: { label: 'Undo', fn: () => { writeLS(W_CARDIO, cardioLogs().filter(l => l.ts !== ts)); syncAuto(); save(); render(); island.toast('Removed'); } } });
+    syncAuto(); save(); render(); return true;
+  },
+  cardioType(t) { t = String(t || '').trim().slice(0, 24); if (t) cardioType = t; },
   // the rooms edit in place, the pages' own way: tasks added, renamed, moved, deleted; notes written, edited, pinned,
   // deleted; shifts set and cleared. A delete gives back only what it took (a sync may have landed since).
   addTask(text, d) { const v = String(text || '').trim(); if (!v) return false; return !!applyQuick(parseQuick(v, d || today())); },
