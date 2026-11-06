@@ -151,9 +151,9 @@ the icons keep their exact colours.
   Absent means the Dex home runs exactly as before.
 - **URL:** `?city=1` turns it on, `?city=0` off. The parameter is stripped with `history.replaceState`, keeping
   `history.state`.
-- **Not built:** the `city on` / `city off` / `city perf` quick-add words and `?perf=1`. The Home Screen app has its own
-  storage and no URL bar, so it can't be flipped until the quick-add words exist. The HUD's GFX button is the perf
-  readout for now.
+- **Quick add (p12):** `city on` and `city off` set or clear the flag on this device and reload. This is the way to flip
+  it in the Home Screen app, which has its own storage and no URL bar. Not built: `city perf` and `?perf=1`; the HUD's
+  GFX button is the perf readout.
 - **Loader:** a tiny classic script in `<head>` reads the flag, handles the URL, sets `window.DAYBOOK_CITY` and
   `window.DAYBOOK_BUILD` (the main script's `BUILD` reads it), and injects one `<link rel="modulepreload">` for the
   chosen entry only. An inline module then imports `./city.js?v=<build>` or `./rider.js`, **never both**. Only with the
@@ -276,7 +276,7 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 ## Handoff
 
-Technical state only. Updated 2026-11-04.
+Technical state only. Updated 2026-11-06.
 
 - **Live:** `main` at `cf88005` is build `p11`: p7 (the close up on her, the DECIDE monitor, the city opening), p8
   (her natural close-up motion and her card), p9 (her forearms), p10 (the gym, every room usable in place) and p11 (split edits, one card at a time), behind
@@ -284,8 +284,18 @@ Technical state only. Updated 2026-11-04.
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-close`, pushed as build `p11`. `BUILD` is `'p11'` in `city.js`, `index.html` and the `city.js?v=`
-  query.
+- **Branch:** `city-close`, build `p12` (not pushed yet). `BUILD` is `'p12'` in `city.js`, `index.html` and the
+  `city.js?v=` query.
+- **Built (p12, the small fixes, 2026-11-06):**
+  - **Umbrellas only in rain.** Walkers 4 and 6 carry an umbrella mesh; `skyTick` shows it when `SKY.w.rain > .05`,
+    so dry and snowy days have none.
+  - **Weather dims the room's own lamps.** `roomLights()` scales each room lamp by `room.lampK`
+    (`1 - L * mix(.55, .2, cloud)`): full at night, low on a clear day, between when overcast. The clutter toggle keeps it.
+  - **Settings › Performance drives the city.** `perfPick` maps the tier (`PQ`/`PM`): auto as tuned (60 fps); balanced
+    30 fps and sharpness capped at 1.5; saver 20 fps (10 idle), sharpness 1, no bloom or reflections. `adapt()` judges
+    against the tier's own fps. Changes apply live through `onPerf`.
+  - **`city on` / `city off`** in quick add (see The flag).
+  - Tests: t49 (17 checks).
 - **Built (p11, his notes on p10, 2026-11-05):**
   - **The split edits in the gym.** SPLIT card: EDIT THE SPLIT, a select per weekday (`data-gtpl`, `CityApp.tplSet(i, k)`,
     the Plan page's `S.template`, repeats weekly). SESSION card: a SWAP row for the day shown (`data-gpick`,
@@ -464,16 +474,12 @@ Technical state only. Updated 2026-11-04.
   - The secret `SKY_AT` (the place the sky follows) lives only in Cloudflare (`wrangler secret put SKY_AT`), never in
     the repo; without it the sky follows wherever the visitor is.
   - The ski village (when built) only switches between snow and sun, and has night too.
-  - People on the street still carry umbrellas when it's dry.
-  - The weather reaches the room's window light and her, but not yet the room's own lamps.
-  - The flag can't be flipped in the Home Screen app, because the quick-add words aren't built.
   - The Inter and Unbounded stylesheet still comes from Google Fonts for the existing pages, with or without the flag.
-  - Settings › Performance doesn't drive the city's quality yet.
   - After a context restore, three logs harmless "object does not belong to this context" warnings.
   - Key 1 and the island tap go home through `switchTab`, which doesn't clear `GROW.chip` (same as `main`).
   - `noteCard` still reads `CATS[n.cat]` directly; Phase 2 filters the badge counts.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. His review of p11 live (pushed 2026-11-05); the rainy-glass street through the door is open to tweak.
+  1. His review of p11 and p12 live; the rainy-glass street through the door is open to tweak.
   2. Then the ski village, stall and castle. School (Phase 2) and sound (Phase S) in the agreed order.

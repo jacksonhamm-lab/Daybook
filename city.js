@@ -3,9 +3,9 @@
    styles and the app's never touch. Everything it says about his data comes from window.CityApp,
    defined in index.html from the app's own functions. Nothing here is saved or synced. */
 import * as THREE from 'three';
-import './perf.js';
+import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p11';
+export const BUILD = 'p12';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -3173,7 +3173,8 @@ function personBuilder() {
   const flat = (a, b, c, co, tag, pid) => { const n = [0, .2, .98], w = []; for (const p of [a, b, c]) put(p, n, co, tag, pid, 0, w); };
   return { loft, flat, geom };
 }
-function pedModel(v) {
+/* dry: the two umbrella cuts with the umbrella put away and the arm down, shown while it isn't raining */
+function pedModel(v, dry) {
   const { loft, flat, geom } = personBuilder();
   const P = [.5, .5, .5], CY = [.15, .9, 1], MG = [1, .22, .55], AM = [1, .66, .16], LM = [.55, 1, .3];
   /* ink ids: 1 torso, 2 legs, 3 shoes, 4 arms, 5 skin, 6 hair, 7 kit, 8 skirt */
@@ -3243,8 +3244,8 @@ function pedModel(v) {
     leg(1, [.06, .06, .08], 0, .02, .68); leg(-1, [.06, .06, .08], 0, .02, .68); shoe(1, [.03, .03, .03]); shoe(-1, [.03, .03, .03]);
     skirt(P, 1, .36, .2, (i, j) => (j === 1 || j === 2) ? [[.05, .05, .07], 0, 2] : null);
     torso(P, 1, 1.02, (i, j) => (j === 1 || j === 2) && i < 3 ? [[.05, .05, .07], 0, 2] : null);
-    arm(-1, P, 1, 1.02, .01); holdArm(1, P, 1, .13, 1.28, .22); neck(); head(); hair.crop([.05, .05, .06]); collar(P, 1, .07);
-    umbrella(.1, .12, CY);
+    arm(-1, P, 1, 1.02, .01); if (dry) arm(1, P, 1, 1.02, .01); else holdArm(1, P, 1, .13, 1.28, .22); neck(); head(); hair.crop([.05, .05, .06]); collar(P, 1, .07);
+    if (!dry) umbrella(.1, .12, CY);
   } else if (v === 5) { /* bulky short jacket, cargo trousers, bun, cross-body bag */
     leg(1, [.2, .2, .17], 0, .012); leg(-1, [.2, .2, .17], 0, .012); shoe(1, [.1, .1, .12]); shoe(-1, [.1, .1, .12]);
     jacket(P, 1, 1.1, 1.0, (i, j) => i === 0 && (j === 0 || j === 3 || j === 4 || j === 7) ? [[.9, .7, .15], 0, 7] : null); arm(1, P, 1, 1.08, .018); arm(-1, P, 1, 1.08, .018); neck(); head(); hair.bun([.03, .03, .05]);
@@ -3253,8 +3254,8 @@ function pedModel(v) {
     flat([.12, .93, .104], [.26, .93, .104], [.26, .948, .105], LM, 3, 7); flat([.12, .93, .104], [.26, .948, .105], [.12, .948, .105], LM, 3, 7);
   } else if (v === 6) { /* long flowing dress, long hair, lit-rim umbrella */
     leg(1, skin, 0, -.01, .3); leg(-1, skin, 0, -.01, .3); shoe(1, [.5, .1, .16]); shoe(-1, [.5, .1, .16]);
-    skirt(P, 1, .22, .22); torso(P, 1, .88); arm(-1, skin, 0, .88, -.006); holdArm(1, skin, 0, .13, 1.26, .2); neck(); head(); hair.long([.08, .05, .16]);
-    umbrella(.08, .1, MG);
+    skirt(P, 1, .22, .22); torso(P, 1, .88); arm(-1, skin, 0, .88, -.006); if (dry) arm(1, skin, 0, .88, -.006); else holdArm(1, skin, 0, .13, 1.26, .2); neck(); head(); hair.long([.08, .05, .16]);
+    if (!dry) umbrella(.08, .1, MG);
   } else { /* a suit, a white shirt front, a briefcase */
     leg(1, [.05, .05, .07], 0, .006); leg(-1, [.05, .05, .07], 0, .006); shoe(1, [.03, .025, .025]); shoe(-1, [.03, .025, .025]);
     jacket(P, 1, 1.02, .86); flat([-.06, 1.42, .096], [.06, 1.42, .096], [0, 1.2, .132], [.8, .8, .82], 0, 7); flat([-.014, 1.41, .1], [.014, 1.41, .1], [0, 1.24, .135], [.5, .08, .1], 0, 3); arm(1, P, 1, 1.02); arm(-1, P, 1, 1.02); neck(); head(); hair.crop([.05, .04, .04]);
@@ -4343,6 +4344,11 @@ const isPhone = Math.min(innerWidth, innerHeight) < 600 || /iPhone|Android/.test
 
 const REDUCED = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 const Q = { tier: isPhone ? 1 : 2, scale: 1, base: 1, ink: true, bloom: true, refl: true, shadow: true, grain: .024 };
+/* Settings > Performance, his pick on this device: frames a second (moving, idle), the sharpness cap, and whether bloom and
+   reflections may run. Auto and Smooth are the city as tuned; Balanced halves the frames and softens; Saver is plain and slow */
+const PQ = { auto: { fps: 60, idle: 30, dpr: 3, fx: true }, smooth: { fps: 60, idle: 30, dpr: 3, fx: true }, balanced: { fps: 30, idle: 20, dpr: 1.5, fx: true }, saver: { fps: 20, idle: 10, dpr: 1, fx: false } };
+let PM = PQ.auto;
+function perfPick(pick) { PM = PQ[pick] || PQ.auto; if (!PM.fx) { Q.bloom = false; Q.refl = false; } else { Q.bloom = true; Q.refl = true; } Q.scale = 1; S.upHold = 0; adaptCool = 3; S.fps = PM.fps; if (typeof renderer !== 'undefined' && renderer) resize(); }
 const TIME = { value: 0 };
 const moonDir = new THREE.Vector3(.13, .262, -.956).normalize();
 const moonSkyDir = new THREE.Vector3(.15, .31, -.94).normalize();
@@ -4394,6 +4400,8 @@ function skyRoom() {
   const m = i => [0, 1, 2].map(j => mixN(a[i][j], d[i][j] * dim * warm[j], L));
   room.u.uAmbHi.value.setRGB(...m(0)); room.u.uAmbLo.value.setRGB(...m(1)); room.u.uAmbSide.value.setRGB(...m(2)); room.u.uRim.value.setRGB(...m(3));
   room.u.uSky.value.set(L, SKY.W, clamp(w.rain * 2), 0); room.u.uSkyH.value.setRGB(...SKY.T.sunC.map(v => v * 1.1));
+  /* the room's own lamps: full at night and on a dark wet day, turned down when a clear day lights the room */
+  const lk = 1 - L * mixN(.55, .2, w.cloud); if (room.lights && Math.abs(lk - (room.lampK ?? 1)) > .004) { room.lampK = lk; roomLights(); }
   FIG_DAY.value = L;
 }
 function skyAsk() {
@@ -4443,6 +4451,7 @@ function skyTick(t, now = Date.now()) {
   SKY_U.lamp.value.set(1 - L * .65, (1 - L * .7) * mixN(.15, 1, w.wet)); SKY_U.dayFx.value = L;
   const fall = Math.max(w.rain, w.snow), sn = w.snow > w.rain ? 1 : 0;
   SKY_U.rainK.value.set(fall, sn, 0, 0);
+  if (city.umb) { const up = w.rain > .05; for (const p of city.umb) { p.wet.visible = up; p.dry.visible = !up; } }
   if (city.rain) { city.rain.geometry.instanceCount = fall > .02 ? Math.ceil(city.rain.userData.n * Math.min(1, fall * 1.15)) : 0; city.rain.material.uniforms.uRainC.value.setRGB(...(sn ? [.82, .85, .92] : [mixN(.55, .2, L), mixN(.55, .21, L), mixN(.75, .24, L)])); }
   SKY.L = L; SKY.W = W; SKY.T = T;
   SKY_U.drops.value = clamp(w.rain * 1.6);
@@ -4473,6 +4482,8 @@ function worldUniforms(isRoom) {
     uSky: isRoom ? { value: new THREE.Vector4(0, 0, 1, 0) } : SKY_U.sky, uSkyH: isRoom ? { value: new THREE.Color() } : SKY_U.skyH, uSkyZ: isRoom ? { value: new THREE.Color() } : SKY_U.skyZ,
   };
 }
+/* the room's lights as listed, the lamps scaled by the daylight (skyRoom), the clutter's light off with the clutter */
+function roomLights() { const k = room.lampK ?? 1, off = room.clutter && !room.clutter.visible; setLights(room.u, room.lights.map((l, i) => off && i === room.clutterLight ? [0, 0, 0, 0, -1, 0] : [l[0], l[1], l[2], l[3], l[4], l[5] * k])); }
 function setLights(u, list) { for (let i = 0; i < NL; i++) { const l = list[i]; if (l) { u.uLP.value[i].set(l[0], l[1], l[2]); const c = hex(l[3]); u.uLC.value[i].set(c[0] * l[5], c[1] * l[5], c[2] * l[5], l[4]); } else u.uLC.value[i].w = 0; } }
 const worldMat = (uni, defs = {}, side = THREE.FrontSide) => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: WORLD_VS, fragmentShader: WORLD_FS, uniforms: uni, defines: defs, side, blending: THREE.NoBlending });
 const addBlend = { blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor, transparent: true, depthWrite: false };
@@ -4580,8 +4591,12 @@ function buildTraffic({ inst, peds, streams }) {
     /* waiting people face the road, those further along stand about at any angle */
     c.yaw = v > 0 ? 0 : Math.abs(pts[0][0]) < 11 ? -Math.sign(pts[0][0]) * Math.PI / 2 + GR.range(-.35, .35) : GR() * TAU;
   });
-  const pedM = [0, 1, 2, 3, 4, 5, 6, 7].map(pedModel);
-  const people = pedM.map((g, k) => { const list = peds.filter(c => c.mdl === k), m = meshFor(g, list, { WALK: 1 }), ig = m.geometry, a = new Float32Array(list.length * 4); list.forEach((c, i) => a.set([c.gw, c.A, c.yaw, c.ph0], i * 4)); ig.setAttribute('aRig', g.getAttribute('aRig')); ig.setAttribute('iGait', new THREE.InstancedBufferAttribute(a, 4)); return m; });
+  const pedM = [0, 1, 2, 3, 4, 5, 6, 7].map(v => pedModel(v));
+  const pedMesh = (g, k) => { const list = peds.filter(c => c.mdl === k), m = meshFor(g, list, { WALK: 1 }), ig = m.geometry, a = new Float32Array(list.length * 4); list.forEach((c, i) => a.set([c.gw, c.A, c.yaw, c.ph0], i * 4)); ig.setAttribute('aRig', g.getAttribute('aRig')); ig.setAttribute('iGait', new THREE.InstancedBufferAttribute(a, 4)); return m; };
+  const people = pedM.map(pedMesh);
+  /* the same walkers without umbrellas, swapped in when it's dry (skyTick) */
+  const umb = [4, 6].map(k => { const dry = pedMesh(pedModel(k, true), k); dry.visible = false; return { wet: people[k], dry }; });
+  people.push(...umb.map(u => u.dry));
   /* lamps, tail lights and their streaks on the road */
   const parts = []; for (let k = 0; k < 4; k++) parts.push(-.5, -.5, k, .5, -.5, k, .5, .5, k, -.5, -.5, k, .5, .5, k, -.5, .5, k);
   const qg = new THREE.InstancedBufferGeometry(); qg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(parts), 3)); wire(qg, inst);
@@ -4591,7 +4606,7 @@ function buildTraffic({ inst, peds, streams }) {
   /* streams */
   const sg = new THREE.InstancedBufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-.5, -.5, 0, .5, -.5, 0, .5, .5, 0, -.5, -.5, 0, .5, .5, 0, -.5, .5, 0]), 3)); wire(sg, streams);
   const flow = new THREE.Mesh(sg, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: STREAM_VS, fragmentShader: STREAM_FS, uniforms: { uLanes: { value: lanes }, uTime: TIME, uLamp: SKY_U.lamp }, ...addBlend, side: THREE.DoubleSide })); flow.frustumCulled = false;
-  return { cars: [...bodies, ...people], lights, mirLights, flow };
+  return { cars: [...bodies, ...people], lights, mirLights, flow, umb };
 }
 function buildRain() {
   const n = isPhone ? 900 : 1600; const R = rng(5);
@@ -4647,7 +4662,7 @@ async function initGraphics() {
   const glows = city.glow = buildGlowMesh(GLOW); city.glowList = GLOW.length;
   const fx = new THREE.Mesh(gFx, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FX_VS, fragmentShader: FX_FS, uniforms: { uTime: TIME, uAds: { value: TEX.ads }, uDayFx: SKY_U.dayFx }, ...addBlend, side: THREE.DoubleSide })); fx.frustumCulled = false;
   setBoot('Starting traffic', .6); await yieldFrame();
-  const tr = buildTraffic(trafficSetup());
+  const tr = buildTraffic(trafficSetup()); city.umb = tr.umb;
   const rain = city.rain = buildRain();
   const tGeo = trainCar(); city.train = []; for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(tGeo, city.mat); m.frustumCulled = false; city.train.push(m); }
   /* the giant koi: one clean silhouette swimming up past the tower */
@@ -5080,7 +5095,7 @@ function loadRoom(id, keep) {
   put(room.mesh, room.geom); put(room.clutter, room.clutterGeom); put(room.door, room.doorGeom); put(room.glass, room.glassGeom); put(room.doorGlass, room.doorGlassGeom); put(room.fx, room.fxGeom); room.fx.renderOrder = def.fxOverGlass ? 6 : 0;
   put(room.mirMesh, def.mirror && room.geom); put(room.mirBack, def.mirror && room.backGeom);
   const gm = buildGlowMesh(room.glows); room.glowMesh.geometry.dispose(); room.glowMesh.geometry = gm.geometry; gm.material.dispose();
-  setLights(room.u, room.lights);
+  room.lampK = 1; roomLights();
   room.u.uAmbHi.value.setRGB(...def.amb[0]); room.u.uAmbLo.value.setRGB(...def.amb[1]); room.u.uAmbSide.value.setRGB(...def.amb[2]); room.u.uRim.value.setRGB(...def.amb[3]);
   if (room.gobo) { Object.assign(room.u.uGobo.value, room.gobo.rect); room.u.uGoboX.value = room.gobo.x; room.u.uGoboD.value.copy(room.gobo.dir); room.u.uGoboC.value.setRGB(...room.gobo.color); } else room.u.uGoboC.value.setRGB(0, 0, 0);
   room.u.uSigns.value = room.atlas || TEX.signs;
@@ -5096,7 +5111,7 @@ function loadRoom(id, keep) {
 function resize() {
   const w = Math.max(1, innerWidth), h = Math.max(1, innerHeight);
   /* laptops with a plain display render above their pixels, phones are capped at 2 */
-  const pr = (isPhone ? Math.min(DPR, 2) : Math.max(Math.min(DPR, 2), 1.5)) * Q.scale;
+  const pr = Math.min(isPhone ? Math.min(DPR, 2) : Math.max(Math.min(DPR, 2), 1.5), PM.dpr) * Q.scale;
   const W = Math.round(w * pr), H = Math.round(h * pr);
   renderer.setSize(W, H, false); canvas.style.width = '100%'; canvas.style.height = '100%';
   CAM.aspect = w / h; applyFov(); if (CAM.aspect < .8) moonSkyDir.set(-.2, .44, -.875).normalize(); else moonSkyDir.set(.15, .31, -.94).normalize();
@@ -5346,14 +5361,14 @@ function windowRect(rt) {
 }
 const isInsideRoom = () => { const p = CAM.position, b = room.box; return p.x < (room.def.hole ? room.def.window.x - .02 : b.x + b.w / 2 - .08) && p.x > b.x - b.w / 2 && p.z > b.z - b.d / 2 && p.z < b.z + b.d / 2 && p.y > b.y && p.y < b.y + b.h; };
 
-/* 60 fps at most; after a few seconds untouched, 30 */
+/* 60 fps at most; after a few seconds untouched, 30 (Settings > Performance can lower both) */
 function wake() { S.lastInput = performance.now(); if (S.idle) { S.idle = false; S.frames = 0; S.acc = 0; } }
 function tick(now) {
   if (host.hidden) { looping = false; return; }
   if (APP.covered() || S.lost) { S.last = now; requestAnimationFrame(tick); return; }
   if (!RIG) {
     S.idle = (S.mode === 'city' || S.mode === 'room') && now - S.lastInput > 6000;
-    const iv = S.idle ? 1000 / 30 : 1000 / 60, el = now - (S.drawn || 0);
+    const iv = 1000 / (S.idle ? PM.idle : PM.fps), el = now - (S.drawn || 0);
     if (el < iv - 1.5) { requestAnimationFrame(tick); return; }
     S.drawn = el < iv * 2 ? S.drawn + iv : now;
   }
@@ -5365,12 +5380,13 @@ function tick(now) {
 }
 /* adaptive quality: step resolution first, then features */
 let adaptCool = 2; const SCALES = [1, .86, .74, .64, .55];
+perfPick(perf().pick); onPerf(o => perfPick(o.pick));
 function adapt() {
   if (adaptCool > 0) { adaptCool--; return; }
   if (document.hidden) return;
   if (S.mode === 'fly') return;
-  if (S.fps < 26) { if (S.restored) { S.restored = false; S.upNeed = Math.min(S.upNeed * 2, 120); } const i = SCALES.indexOf(Q.scale); const floor = S.mode === 'city' ? 1 : SCALES.length - 1; if (i < floor) { Q.scale = SCALES[i + 1]; resize(); adaptCool = 3; } else if (Q.bloom) { Q.bloom = false; adaptCool = 3; } else if (Q.refl) { Q.refl = false; adaptCool = 3; } }
-  else if (S.fps > 52) { const i = SCALES.indexOf(Q.scale); if ((i > 0 || !Q.bloom || !Q.refl) && S.upHold++ > S.upNeed) { if (!Q.refl) Q.refl = true; else if (!Q.bloom) Q.bloom = true; else { Q.scale = SCALES[i - 1]; resize(); } adaptCool = 4; S.upHold = 0; S.restored = true; } }
+  if (S.fps < PM.fps * .43) { if (S.restored) { S.restored = false; S.upNeed = Math.min(S.upNeed * 2, 120); } const i = SCALES.indexOf(Q.scale); const floor = S.mode === 'city' ? 1 : SCALES.length - 1; if (i < floor) { Q.scale = SCALES[i + 1]; resize(); adaptCool = 3; } else if (Q.bloom) { Q.bloom = false; adaptCool = 3; } else if (Q.refl) { Q.refl = false; adaptCool = 3; } }
+  else if (S.fps > PM.fps * .87) { const i = SCALES.indexOf(Q.scale); if ((i > 0 || (PM.fx && (!Q.bloom || !Q.refl))) && S.upHold++ > S.upNeed) { if (!PM.fx && i > 0) { Q.scale = SCALES[i - 1]; resize(); } else if (!Q.refl) Q.refl = true; else if (!Q.bloom) Q.bloom = true; else { Q.scale = SCALES[i - 1]; resize(); } adaptCool = 4; S.upHold = 0; S.restored = true; } }
   else S.upHold = 0;
 }
 S.upHold = 0; S.upNeed = 4; S.lastInput = 0;
@@ -5780,7 +5796,7 @@ function refreshApt() {
   if (fk && !fo.isConnected) { const same = [...zone.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv && (!fi || b.dataset.id === fi && !b.dataset.dec || b.dataset.id === fi)); const to = same || (S.sheet ? $('#btnClose') : $(room.def.panel + ' button')); if (to) to.focus({ preventScroll: true }); }
 }
 /* the city's own cards: quick add's preview, progress, system */
-const KIND_C = { task: 'var(--hud-cyan)', shift: '#64d2ff', job: 'var(--hud-green)', wo: '#ff9f0a' };
+const KIND_C = { task: 'var(--hud-cyan)', shift: '#64d2ff', job: 'var(--hud-green)', wo: '#ff9f0a', city: 'var(--hud-red)' };
 function quickPrev() { const i = $('#gAddI'), d = i && APP.quickSay(i.value); setHTML('#gAddP', d ? `<b>${d.title}</b><div class="pills" style="--k:${KIND_C[d.kind] || KIND_C.task}">${d.chips.map(c => `<span>${c}</span>`).join('')}</div>` : '<span>A task, a shift or an application. Dates like "tomorrow" or "fri", #work #gym #jobs #life, "every mon", "9-5 shift".</span>'); }
 function refreshGlobal(k) {
   if (k === 'add') return quickPrev();
@@ -5974,7 +5990,7 @@ function rig() {
     load(id) { loadRoom(id); return frame(); },
     reload(id) { room.id = null; loadRoom(id); return frame(); },
     mem: () => ({ ...renderer.info.memory, programs: renderer.info.programs.length }),
-    clutter(on) { room.clutter.visible = on; if (FIG) FIG.root.visible = on; const gm = buildGlowMesh(on ? room.glows : room.glowsPlain); room.glowMesh.geometry.dispose(); room.glowMesh.geometry = gm.geometry; gm.material.dispose(); room.fx.geometry.setDrawRange(0, on ? Infinity : room.fxPlain); setLights(room.u, room.lights.map((l, i) => !on && i === room.clutterLight ? [0, 0, 0, 0, -1, 0] : l)); bakeRoom(); return frame(); },
+    clutter(on) { room.clutter.visible = on; if (FIG) FIG.root.visible = on; const gm = buildGlowMesh(on ? room.glows : room.glowsPlain); room.glowMesh.geometry.dispose(); room.glowMesh.geometry = gm.geometry; gm.material.dispose(); room.fx.geometry.setDrawRange(0, on ? Infinity : room.fxPlain); roomLights(); bakeRoom(); return frame(); },
     room(yaw = 0) { setMode('room'); S.fly = null; S.yaw = S.yawGoal = yaw; S.flyK = 1; applyFov(); room.setDoor(0); return frame(); },
     sheet(id) { openSheet(id); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     close() { closeSheet(); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
@@ -5982,6 +5998,7 @@ function rig() {
     figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
     hour(h) { HOUR = h; return figSpot(); },
     /* the sky by name ('dusk,snow') or as numbers; null goes back to the real one (in the rig: the painted night) */
+    umb: () => city.umb ? city.umb.map(p => p.wet.visible && !p.dry.visible) : null, lampK: () => room.lampK, pq: () => ({ ...PM, bloom: Q.bloom, refl: Q.refl, scale: Q.scale, w: renderer.domElement.width }),
     sky(s) { SKY.over = skyParse(s); SKY.next = 0; return frame().then(() => ({ el: SKY.el, L: SKY.L, w: { ...SKY.w } })); },
     sun: sunAt, wx: skyWeather,
     skyNow: () => { const c = v => v.toArray().map(x => +x.toFixed(4)); return { L: SKY.L, key: c(city.u.uMoon.value), keyC: c(city.u.uMoonC.value), hi: c(city.u.uAmbHi.value), fogD: city.u.uFogD.value, pool: city.u.uPoolK.value, sky: c(SKY_U.sky.value), look: c(SKY_U.look.value), lamp: c(SKY_U.lamp.value), rain: city.rain.geometry.instanceCount, rainN: city.rain.userData.n, rainK: c(SKY_U.rainK.value), drops: SKY_U.drops.value, glowK: city.glow.material.uniforms.uGlowK.value, roomHi: c(room.u.uAmbHi.value), roomSky: c(room.u.uSky.value), fig: FIG_DAY.value, light1: c(city.u.uLC.value[1]) }; },

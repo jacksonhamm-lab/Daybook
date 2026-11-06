@@ -31,9 +31,9 @@
     }
     on = localStorage.getItem('daybook_home') === 'city';
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p11';
+  window.DAYBOOK_BUILD = 'p12';
   window.DAYBOOK_CITY = on;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p11' : './rider.js'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p12' : './rider.js'; document.head.appendChild(l);
   if (on) {
     document.documentElement.dataset.city = '';
     var c = document.createElement('style');
@@ -43,7 +43,7 @@
 })();
 </script>
 <script type="module">
-if (window.DAYBOOK_CITY) import('./city.js?v=p11').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
+if (window.DAYBOOK_CITY) import('./city.js?v=p12').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
 else import('./rider.js').catch(e => window.logProblem('page', e));
 </script>
 <style>
@@ -1796,6 +1796,8 @@ function guessCat(t) {
   return 'life';
 }
 function parseQuick(raw, base) {
+  /* "city on" / "city off": the city home on this device (the Home Screen app has no address bar for ?city=1) */
+  const cw = String(raw).trim().toLowerCase().match(/^city (on|off)$/); if (cw) return { kind: 'city', on: cw[1] === 'on' };
   let s = ' ' + raw.replace(/\s+/g, ' ').trim() + ' ';
   const r = { kind: 'task', cat: null, date: base === undefined ? today() : base, dateSet: false, repeat: null };
   const cut = re => { const m = s.match(re); if (m) s = s.replace(m[0], ' '); return m; };
@@ -1863,6 +1865,7 @@ function parseQuick(raw, base) {
 }
 function describe(r) {
   if (!r) return null;
+  if (r.kind === 'city') return { c: 'var(--red)', icon: I.check, title: r.on ? 'City home on' : 'City home off', chips: ['This device', 'Reloads'] };
   const d = rel(r.date || today());
   if (r.kind === 'shift') { const h = shiftHours(r); return { c: 'var(--blue)', icon: I.hours, title: `Shift · ${t12(r.start)}–${t12(r.end)}`, chips: [d, r.brk ? `${r.brk}m break` : 'No break', `${fh(h)} hours`] }; }
   if (r.kind === 'job') return { c: 'var(--green)', icon: I.jobs, title: r.company, chips: [r.status, r.role || 'No role', r.link ? 'Link saved' : null, rel(r.date)].filter(Boolean) };
@@ -1871,6 +1874,7 @@ function describe(r) {
 }
 function applyQuick(r) {
   if (!r) return false;
+  if (r.kind === 'city') { try { if (r.on) localStorage.setItem('daybook_home', 'city'); else localStorage.removeItem('daybook_home'); } catch (e) { return false; } island.toast(r.on ? 'City home on. Reloading' : 'City home off. Reloading'); setTimeout(() => location.reload(), 700); return true; }
   if (r.kind === 'shift') { S.shifts[r.date] = { ...(S.shifts[r.date] || {}), start: r.start, end: r.end, brk: r.brk }; commit(); island.toast(`Shift logged · ${rel(r.date)} · ${fh(shiftHours(r))}h`, { icon: I.hours, color: '#64d2ff' }); return true; }
   if (r.kind === 'job') { S.jobs.push({ id: uid(), created: Date.now(), company: r.company, role: r.role || '', link: r.link || '', status: r.status, date: r.date, notes: '' }); commit(); island.toast(`${r.company} added to Jobs`, { icon: I.jobs, color: '#30d158' }); return true; }
   if (r.kind === 'wo') { const o = S.workouts[r.date] || {}; S.workouts[r.date] = { ...o, done: true, auto: false }; commit(); celebrate(`${wo(r.date).s} done`, '#ff9f0a'); return true; }
