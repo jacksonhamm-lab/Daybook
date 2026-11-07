@@ -283,13 +283,14 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 Technical state only. Updated 2026-11-06.
 
-- **Live:** `main` at `5bbd8b2` is build `p12`: p7 (the close up on her, the DECIDE monitor, the city opening), p8
-  (her natural close-up motion and her card), p9 (her forearms), p10 (the gym, every room usable in place) p11 (split edits, one card at a time) and p12 (the small fixes), behind
-  `?city=1`, flag off by default. Live `city.js` and `index.html` checked byte-identical to the repo (2026-11-06); `/api/sky` answers from `SKY_AT`
+- **Live:** `main` at `45ba491` is build `p13`: p7 (the close up on her, the DECIDE monitor, the city opening), p8
+  (her natural close-up motion and her card), p9 (her forearms), p10 (the gym, every room usable in place) p11 (split edits, one card at a time), p12 (the small fixes) and p13 (the chalet), behind
+  `?city=1`, flag off by default. Live `city.js` byte-identical to the repo (2026-11-07); live `index.html` identical
+  apart from the Cloudflare Web Analytics beacon Cloudflare adds at the edge; `/api/sky` answers from `SKY_AT`
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-close`, build `p13` (not pushed yet). `BUILD` is `'p13'` in `city.js`, `index.html` and the
+- **Branch:** `city-close`, pushed as build `p13`. `BUILD` is `'p13'` in `city.js`, `index.html` and the
   `city.js?v=` query.
 - **Built (p13, the chalet, round 1 for his review, 2026-11-06):** Fuel and Cardio in one room (his call: cardio alone was
   too thin). Fuel now flies into the chalet; Cardio's icon is gone (five icons, the six stats unchanged).
