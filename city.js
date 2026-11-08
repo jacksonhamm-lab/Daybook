@@ -1268,10 +1268,13 @@ float shadowAt(vec3 P, vec3 N){
   return step(rf,texture(uShadow,s.xy).r);
 #endif
 }
+/* the shadow and the light at this pixel, worked out once in main for the kinds that are lit: written inline at every use, the
+   Direct3D shader compiler on an Intel laptop chip overflowed its stack on this shader and took the browser's GPU process down */
+float gSh=1.; vec3 gL=vec3(0.);
 vec3 lightAll(vec3 P, vec3 N, vec3 V, float gl, out float keyL){
   vec3 amb = mix(uAmbLo,uAmbHi,N.y*.5+.5);
   amb += uAmbSide*max(0.,dot(N,vec3(.33,.24,.91)));
-  float sh=shadowAt(P,N);
+  float sh=gSh;
   float m=dot(N,uMoon);
   vec3 c=amb + uMoonC*band(max(m,0.)*.85)*sh;
   keyL=0.;
@@ -1390,7 +1393,7 @@ vec3 facade(vec3 P, vec3 N, vec3 V, vec3 base, float lit, float seed, int style,
   vec2 q=vU/st.xy; vec2 c=floor(q); vec2 f=fract(q)-.5;
   float fw=max(length(dFdx(q)),length(dFdy(q)));
   float gr=texture(uTiles,vec3(vU*.021+seed,8.)).r;
-  float kL; vec3 L=lightAll(P,N,V,0.,kL);
+  vec3 L=gL;
   vec3 w0=base*(style==6?1.:mix(1.,gr,.75));
   /* weather on the wall, painted as flat shapes: rain streaks, repainted patches, panel seams, drips under sills */
   float gk=1.-smoothstep(.1,.36,fw);
@@ -1539,6 +1542,7 @@ void main(){
 #ifdef ROOMMIR
   if(P.z>uClipZ) discard;
 #endif
+  if(!(kind==4||kind==5||kind==6||kind==1||kind==7||kind==10||kind==11||kind==8||kind==12)){ float kL; gSh=shadowAt(P,N); gL=lightAll(P,N,V,0.,kL); }
   vec3 alb=vC.rgb; vec3 col; float e=0.;
   if(uRoomMode<.5&&kind==0&&em0<.01) alb=mix(vec3(dot(alb,vec3(.33))),alb,.62);
   if(kind==2){ /* building fronts */
@@ -1605,7 +1609,7 @@ void main(){
   } else if(kind==7){ /* street glass seen from outside */
     col=mix(vec3(.04,.05,.08),vec3(.2,.23,.27)*(uAmbHi+.2),uSky.x); e=0.;
   } else if(kind==9){ /* brass, painted highlight bands */
-    float kL; vec3 L=lightAll(P,N,V,0.,kL);
+    vec3 L=gL;
     vec3 R=reflect(V,N);
     float b=step(.52,fract(R.y*1.7+R.x*.8+seed));
     col=alb*(L*.9+.08)*(.72+.5*b)+vec3(1.,.86,.55)*smoothstep(.93,.97,sin(R.y*5.+R.z*2.)*.5+.5)*.5;
@@ -1646,7 +1650,7 @@ void main(){
       vec3 dc=mix(dr,ds,snow); dc=mix(dc,uFogLo,.28+.6*exp(-max(P.y,0.)*.0045)); col=mix(col,dc,uSky.x); }
   } else if(kind==3){ /* wet road and paving */
     float tile=texture(uTiles,vec3(vU*.09,float(layer))).r;
-    float kL; vec3 L=lightAll(P,N,V,0.,kL);
+    vec3 L=gL;
     vec3 pl=poolAt(P.xz)*uPoolK;
     /* asphalt painted for the night reads near black in daylight: lighter by day */
     alb=mix(alb,alb*1.7+vec3(.035,.035,.04),uSky.x);
@@ -1694,7 +1698,7 @@ void main(){
     if(layer>0){ tile=mix(1.,texture(uTiles,vec3(vU,float(layer))).r,.8); }
     if(uRoomMode>.5&&(layer==1||layer==4)){ alb=mix(vec3(dot(alb,vec3(.33))),alb,.8); }
     if(uRoomMode>.5&&layer==4){ float pv=texture(uTiles,vec3(vU*.19,9.)).r; tile*=.76+.5*pv; tile*=1.-.26*smoothstep(.6,.625,texture(uTiles,vec3(vU.x*.8,vU.y*.11,9.)).r); }
-    float kL; vec3 L=lightAll(P,N,V,0.,kL);
+    vec3 L=gL;
     if(uRoomMode<.5){ L+=poolAt(P.xz)*uPoolK*exp(-max(P.y,0.)*.05)*2.; }
     float g=kind==14?1.:1.;
     col=alb*tile*L;
@@ -1705,7 +1709,7 @@ void main(){
   if(uSky.w>0.&&uRoomMode<.5&&(kind==0||kind==2||kind==3||kind==9)&&N.y>.5){
     float sn=texture(uTiles,vec3(P.xz*.043,9.)).r;
     float cov=smoothstep(.5,.85,N.y)*clamp(uSky.w*1.6-(1.-sn)*.9,0.,1.);
-    vec3 sc=vec3(.93,.95,1.)*(uAmbHi*1.05+uMoonC*max(dot(N,uMoon),0.)*.9*shadowAt(P,N))+poolAt(P.xz)*uPoolK*1.5;
+    vec3 sc=vec3(.93,.95,1.)*(uAmbHi*1.05+uMoonC*max(dot(N,uMoon),0.)*.9*gSh)+poolAt(P.xz)*uPoolK*1.5;
     col=mix(col,sc,cov);
   }
   if(kind!=8) col=fogIt(col,P,e);
@@ -5012,7 +5016,8 @@ async function initGraphics() {
   if (!renderer.capabilities.isWebGL2) { FAIL('The city needs WebGL 2.'); throw new Error('webgl2'); }
   /* a phone can drop the context in the background: wait, then rebuild what only lived on the GPU */
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lost = true; APP.log('webgl context lost'); });
-  canvas.addEventListener('webglcontextrestored', () => { S.lost = false; try { bakeShadows(); } catch (e) { APP.log(e); } try { resize(); } catch (e) { APP.log(e); } });
+  /* back again: the programs are rebuilt off the GPU's main thread before anything draws, or the rebuild itself can stall it into another loss */
+  canvas.addEventListener('webglcontextrestored', async () => { try { bakeShadows(); } catch (e) { APP.log(e); } try { resize(); } catch (e) { APP.log(e); } try { await warmShaders(); } catch (e) { APP.log(e); } S.lost = false; });
   renderer.debug.checkShaderErrors = RIG;   /* only the test rig: checking costs compile time and the look is settled */
   renderer.autoClear = false; renderer.info.autoReset = false; renderer.setPixelRatio(1);
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace; renderer.toneMapping = THREE.NoToneMapping;
@@ -5095,7 +5100,14 @@ async function initGraphics() {
   /* shadows: one sharp bake per scene */
   bakeShadows();
   setBoot('Warming shaders', .92); await yieldFrame();
-  renderer.compile(SC.city, CAM); renderer.compile(SC.mirror, CAM); renderer.compile(SC.room, CAM); renderer.compile(SC.hole, CAM);
+  await warmShaders();
+}
+/* every program at once, compiled in the background where the browser can (parallel compile): on a laptop's Intel chip the world
+   shader takes seconds per variant, and compiling them back to back on the GPU's main thread trips the browser's watchdog,
+   which drops the context (a white screen). Nothing asks a program for its status until it says it's done. */
+function warmShaders() {
+  const passes = Object.values(MAT).filter(p => p && p.s && p.s.isScene).map(p => p.s);
+  return Promise.all([SC.city, SC.mirror, SC.room, SC.hole, ...passes].map(sc => renderer.compileAsync(sc, CAM)));
 }
 
 let depthMat = null;
