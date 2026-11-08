@@ -1234,6 +1234,46 @@ float h21(vec2 p){ vec3 q=fract(vec3(p.xyx)*.1031); q+=dot(q,q.yzx+33.33); retur
 float h11(float p){ p=fract(p*.1031); p*=p+33.33; p*=p+p; return fract(p); }
 `;
 
+/* ---------- the mountain and its ski valley ---------- */
+/* The massif north across the water, and a valley carved into its front: a flat floor rising gently from the shore to a
+   head wall under the peak, the village and the chalet on the floor, a gondola up the west shoulder to a top station, a
+   chairlift up the east side, pistes down to the village. MTN shapes the massif; mtnH is the ground (the mesh sits 2 below) */
+const MTN = { cx: 180, cz: -1120, W: 1700, D: 780 };
+function mtnRaw(x, z) {
+  const { cx, cz, W, D } = MTN, u = (x - cx) / W * 2, v = (z - cz) / D * 2, r = Math.hypot(u, v * .85), b = Math.max(0, 1 - r);
+  let h = Math.pow(b, 1.1) * 620; h += 60 * Math.sin(x * .011 + 1) * Math.sin(z * .013) * b; h += 26 * Math.sin(x * .031 + z * .02) * b;
+  const rg = (f, a) => (1 - Math.abs(Math.sin(x * f + z * f * .6 + 1.3))) * a; h += (rg(.021, 62) + rg(.057, 22) + rg(.13, 8) - 42) * Math.min(1, b * 2.2);
+  return Math.max(h, 0);
+}
+const valleyX = z => 300 + Math.sin((z + 700) * .006) * 14;
+function mtnH(x, z) {
+  const h = mtnRaw(x, z), d = Math.max(0, -690 - z), fl = 5 + d * .13, hw = 74 - d * .05;
+  const w = (1 - sstep(hw, hw + 150, Math.abs(x - valleyX(z)))) * sstep(-1090, -1000, z);
+  return h > fl ? h + (fl - h) * w : h;
+}
+const SKI = (() => {
+  const g = (x, z) => mtnH(x, z) - 2;
+  /* the chalet on the valley floor, its glass end (+X) looking across at the chairlift and the east runs; its floor just above the highest ground under it */
+  const ch = { x: 250, z: -955 }; ch.y = +(Math.max(...[[-8, -7], [9, -7], [-8, 7], [9, 7]].map(([a, b]) => g(ch.x + a, ch.z + b))) + .95).toFixed(2);
+  return {
+    ch, vil: { x: 305, z: -850 },
+    gBase: [318, -905], gTop: [190, -1060],
+    chair: [[352, -900], [470, -990]],
+    /* the runs, as center lines: off the top station down the west wall and the head wall, off the chair down the east side */
+    pistes: [
+      [[190, -1050], [180, -1000], [195, -950], [225, -905], [265, -878]],
+      [[205, -1055], [250, -1040], [285, -1010], [300, -975], [310, -935]],
+      [[470, -990], [440, -976], [405, -963], [372, -952]],
+      [[470, -990], [495, -945], [480, -905], [440, -880], [395, -868], [352, -862]],
+    ],
+  };
+})();
+const PISTE_SEGS = SKI.pistes.flatMap(l => l.slice(1).map((b, i) => [l[i], b]));
+function skiPiste(x, z) { let d = 1e4; for (const [a, b] of PISTE_SEGS) { const bx = b[0] - a[0], bz = b[1] - a[1], t = clamp(((x - a[0]) * bx + (z - a[1]) * bz) / (bx * bx + bz * bz)); d = Math.min(d, Math.hypot(x - a[0] - bx * t, z - a[1] - bz * t)); } return 1 - sstep(9, 14, d); }
+const glv = (v) => `vec2(${(+v[0]).toFixed(1)},${(+v[1]).toFixed(1)})`;
+const PISTE_GLSL = `float segD(vec2 p, vec2 a, vec2 b){ vec2 pa=p-a, ba=b-a; float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.); return length(pa-ba*h); }
+float pisteD(vec2 p){ float d=1e4; ${PISTE_SEGS.map(([a, b]) => `d=min(d,segD(p,${glv(a)},${glv(b)}));`).join(' ')} return d; }`;
+
 const WORLD_FS = /* glsl */`
 precision highp float; precision highp int; precision highp sampler2DArray;
 in vec3 vW; in vec3 vN; in vec4 vC; in vec2 vU; flat in vec4 vM;
@@ -1253,6 +1293,7 @@ uniform vec4 uTill;
 uniform vec4 uGobo;   /* window light in the shop: x0, x1 (z range), y0, y1 */
 uniform vec3 uGoboD, uGoboC; uniform float uGoboX;
 ${NOISE_GLSL}
+${PISTE_GLSL}
 float band(float v){ /* three flat tones with a thin soft edge */
   return .34*smoothstep(.035,.055,v)+.34*smoothstep(.26,.285,v)+.32*smoothstep(.56,.59,v);
 }
@@ -1651,18 +1692,15 @@ void main(){
     float hold=N.y+(nr-.5)*.3+(n2-.5)*.2+uSky.w*.08-high*smoothstep(.56,.42,gully+(n2-.5)*.4)*.22;
     float tl=290.+(n-.5)*80.;
     float rock=(1.-smoothstep(.5,.58,hold-high*.08))*mix(.15,1.,smoothstep(tl-10.,tl+50.,P.y));
-    /* the shoulder dug out for the chalet (its own faces, not the mountain's id 7) shows rock down its cut sides */
-    float cut=step(.5,abs(id-7.))*(1.-smoothstep(24.,34.,length(P.xz-vec2(200.6,-850.))));
-    rock=max(rock,cut*(1.-smoothstep(.8,.9,N.y+(nr-.5)*.25)));
     /* blue ice in the high gullies: a glacier tongue with crevasses across it */
     float ice=smoothstep(.4,.33,gully+(n-.5)*.18)*smoothstep(330.,380.,P.y)*(1.-high*.5)*(1.-rock);
     float crev=smoothstep(.07,.0,abs(fract(texture(uTiles,vec3(P.xz*vec2(.006,.018)+.2,9.)).r*11.)-.5)-.38);
     /* spruce below the tree line, in stands with clearings; none on the village, the lift or the chalet's pad */
     float stand=smoothstep(.54,.64,texture(uTiles,vec3(P.xz*.0074+.5,9.)).r+(n2-.5)*.3)*(1.-smoothstep(tl-18.,tl,P.y))*smoothstep(.3,.45,N.y);
     /* the pistes: groomed runs down to the village, cut through the forest (the same lanes as skiPiste in mountain()) */
-    float pz=P.z+860.;
-    float pis=(1.-smoothstep(.1,.16,abs(sin(P.x*.011+sin(P.z*.009)*1.6))))*smoothstep(-440.,-400.,pz)*smoothstep(60.,30.,pz)*smoothstep(400.,360.,abs(P.x-300.))*(1.-high);
-    stand*=(1.-pis)*smoothstep(62.,92.,length((P.xz-vec2(300.,-860.))*vec2(1.,1.6)))*smoothstep(14.,24.,length(P.xz-vec2(200.,-850.)));
+    float pis=0.;
+    if(P.z<-700.&&P.z>-1080.&&P.x>140.&&P.x<590.) pis=(1.-smoothstep(9.,14.,pisteD(P.xz)))*(1.-high);
+    stand*=(1.-pis)*smoothstep(50.,72.,length((P.xz-${glv([SKI.vil.x, SKI.vil.z])})*vec2(1.,.75)))*smoothstep(14.,24.,length(P.xz-${glv([SKI.ch.x, SKI.ch.z])}));
     vec2 tg=P.xz*.3; vec2 tc=floor(tg); vec2 tf=fract(tg)-.5-(vec2(h21(tc),h21(tc+7.1))-.5)*.5;
     float tw=fwidth(tg.x)+fwidth(tg.y);
     float tree=smoothstep(.36,.26,length(tf))*step(h21(tc+3.3),stand);
@@ -1694,19 +1732,19 @@ void main(){
     float fb=max(dot(Nf,vec3(.28,.5,.82)),0.);
     vec3 shade=vec3(.86,.91,1.03);
     /* by night: moonlit, the snow pale blue, the forest and the rock near black */
-    vec3 nl=uAmbHi*sk*1.45+uMoonC*kd*1.5;
-    col=alb8*nl*vec3(.8,.82,.9);
+    vec3 nl=uAmbHi*sk*1.3+uMoonC*kd*1.4; nl=mix(nl,vec3(dot(nl,vec3(.333))),.5);
+    col=alb8*nl*vec3(.86,.86,.9);
     /* its feet sink into the warm air over the water */
-    col=mix(col,vec3(.42,.14,.2),exp(-max(P.y,0.)*.0062)*.92); e=1.;
+    col=mix(col,vec3(.42,.14,.2),exp(-max(P.y,0.)*.0062)*.92*smoothstep(250.,700.,dist)); e=1.;
     if(uSky.x>0.){
       vec3 dl=uAmbHi*(sk*.9+fb*.32)*shade+uMoonC*kd*.72;
       vec3 dc=alb8*dl;
       /* a glitter in the sunlit snow close by */
       float gl=step(.997,h21(floor(P.xz*7.)+floor(P.y*7.)*.37))*kd*(1.-rock)*(1.-tree)*smoothstep(90.,20.,dist);
       dc+=gl*uMoonC*1.6;
-      /* haze grows with distance, and the mountain's feet sit in the plain's haze */
+      /* haze grows with distance, and seen from afar the mountain's feet sit in the haze over the water (not the valley floor close to) */
       float hz=1.-exp(-dist*.00055);
-      dc=mix(dc,uFogLo,clamp(hz*.85+.45*exp(-max(P.y,0.)*.012),0.,.9));
+      dc=mix(dc,uFogLo,clamp(hz*.85+.45*exp(-max(P.y,0.)*.03)*smoothstep(300.,800.,dist),0.,.9));
       col=mix(col,dc,uSky.x); }
   } else if(kind==3){ /* wet road and paving */
     float tile=texture(uTiles,vec3(vU*.09,float(layer))).r;
@@ -2289,8 +2327,8 @@ void main(){
 
 /* ---------- the island: everything is built here, no models or pictures ---------- */
 const SHOP = { x: -23, y: 0, z: 62, w: 11, d: 9, h: 4.1 };
-/* the chalet on the slope west of the lift station: its middle, and its floor (flush with the hill on the uphill, north side) */
-const CH = { x: 200, z: -850, y: 229.2 };
+/* the chalet on the ski valley's floor (SKI.ch): its middle, and its floor */
+const CH = SKI.ch;
 const GYM = { x: 172, z: -150 }, BOWL = innerWidth / innerHeight < .8 ? { x: 34, z: 246 } : { x: 92, z: 244 };
 const SHAFTS = [{ o: [0, 620, -235], e: [-210, 980, -320], r: 7, c: [.82, .92, 1], a: .55 }, { o: [-225, 225, 42], e: [-150, 700, -160], r: 5, c: [.5, .95, 1], a: .34 }, { o: [118, 150, 40], e: [240, 620, -180], r: 5, c: [1, .36, .7], a: .3 }];
 const ANCHORS = { plan: [-72, 49, 229.2], work: [SHOP.x + SHOP.w / 2 + 1.4, 24, SHOP.z - SHOP.d / 2 - .4], train: [GYM.x, 66, GYM.z + 18], fuel: [CH.x, CH.y + 9, CH.z], school: [-212, 62, 296] };
@@ -2683,10 +2721,10 @@ function castle(M) {
 function chalet(M) {
   const id0 = M._id, cur0 = M.id;
   const { x, z, y } = CH, top = y + 2.85, rh = 3.3, gx = x + 4.5, bx = x - 5.1, zN = z - 3.8, zS = z + 3.8;
-  /* a snowy shoulder dug out of the slope for it to stand on: a level pad, its sides falling away into the hill */
+  /* a level snowy pad for it to stand on, its sides falling away under the valley floor; the mountain's id (7), so no ink line round it */
   { const r0 = rectPoly(x + .6, z, 16, 13), r1 = rectPoly(x + .6, z, 44, 40), yt = y - .95;
-    M.set({ kind: K.SNOW, c: [.66, .7, .86], em: 0, layer: 0 }); M.id = M.nid(); M.loft([r1.map(p => [p[0], y - 16, p[1]]), r0.map(p => [p[0], yt, p[1]])], { grad: .9 });
-    M.id = M.nid(); M.quad([x - 7.4, yt, z + 6.5], [x + 8.6, yt, z + 6.5], [x + 8.6, yt, z - 6.5], [x - 7.4, yt, z - 6.5], [0, 0, 1, 1]); }
+    M.set({ kind: K.SNOW, c: [.66, .7, .86], em: 0, layer: 0 }); M.id = 7; M.loft([r1.map(p => [p[0], y - 16, p[1]]), r0.map(p => [p[0], yt, p[1]])], { grad: .9 });
+    M.quad([x - 7.4, yt, z + 6.5], [x + 8.6, yt, z + 6.5], [x + 8.6, yt, z - 6.5], [x - 7.4, yt, z - 6.5], [0, 0, 1, 1]); }
   /* a stone plinth showing above the snow */
   setPlain(M, 0x4f4d58); M.extrude(rectPoly(x - .3, z, 9.8, 7.8), y - 1.0, y - .05, { top: false });
   /* timber walls, a dark sill band */
@@ -2717,51 +2755,63 @@ function chalet(M) {
   pool(gx + 4, z, 10, 0xffb060, .45);
   M._id = id0; M.id = cur0;
 }
-/* the ski runs: lanes down the near slope to the village (the shader draws the same ones, groomed, as pis) */
-function skiPiste(x, z) { const pz = z + 860, ss = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
-  return (1 - ss(.1, .16, Math.abs(Math.sin(x * .011 + Math.sin(z * .009) * 1.6)))) * ss(-440, -400, pz) * ss(60, 30, pz) * ss(400, 360, Math.abs(x - 300)); }
 function mountain(M) {
-  const R = rng(99); const cx = 180, cz = -1120; const NX = 92, NZ = 46, W = 1700, D = 780;
-  const ht = (x, z) => { const u = (x - cx) / W * 2, v = (z - cz) / D * 2; const r = Math.hypot(u * 1.0, v * .85); const b = Math.max(0, 1 - r); let h = Math.pow(b, 1.1) * 620; h += 60 * Math.sin(x * .011 + 1) * Math.sin(z * .013) * b; h += 26 * Math.sin(x * .031 + z * .02) * b; const rg = (f, a) => (1 - Math.abs(Math.sin(x * f + z * f * .6 + 1.3))) * a; h += (rg(.021, 62) + rg(.057, 22) + rg(.13, 8) - 42) * Math.min(1, b * 2.2); return Math.max(h, 0); };
-  const P = (i, j) => { const x = cx - W / 2 + W * i / NX + ((j % 2) ? W / NX / 2 : 0), z = cz - D / 2 + D * j / NZ; return [x, ht(x, z) - 2, z]; };
+  const R = rng(99); const { cx, W } = MTN; const NX = 122, NZ = 64, Z0 = -1510, Z1 = -620;
+  const ht = mtnH, gy = (x, z) => ht(x, z) - 2;
+  const P = (i, j) => { const x = cx - W / 2 + W * i / NX + ((j % 2) ? W / NX / 2 : 0), z = Z0 + (Z1 - Z0) * j / NZ; return [x, ht(x, z) - 2, z]; };
   M.set({ kind: K.SNOW, layer: 0, em: 0, id: 7 });
   /* smooth normals, from the height around each corner, so the snow, the rock and the light follow the ground, not the triangles */
   const nrm = p => { const e = 9, dx = (ht(p[0] + e, p[2]) - ht(p[0] - e, p[2])) / (2 * e), dz = (ht(p[0], p[2] + e) - ht(p[0], p[2] - e)) / (2 * e), l = Math.hypot(dx, 1, dz); return [-dx / l, 1 / l, -dz / l]; };
   const st = (a, b, c) => { M.vx(a, nrm(a), 0, 0); M.vx(b, nrm(b), 0, 0); M.vx(c, nrm(c), 0, 0); };
-  for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
-    const a = P(i, j + 1), b = P(i + 1, j + 1), c = P(i + 1, j), d = P(i, j);
-    const col = p => { const s = p[1] > 215 + 40 * Math.sin(p[0] * .02) ? [.66, .7, .86] : p[1] > 130 ? [.15, .17, .22] : [.075, .1, .12]; return s; };
-    M.c = col(a); st(a, b, c); M.c = col(d); st(a, c, d);
-  }
-  /* ski village and resort on the near slope */
-  const vx = 300, vz = -860; const vy = ht(vx, vz);
-  const gy = (x, z) => ht(x, z) - 2;
-  /* anything random that would stand in the room's chalet (CH) is drawn into a throwaway builder, so the random sequence, and the rest of the village and forest, is unchanged */
+  for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) { const a = P(i, j + 1), b = P(i + 1, j + 1), c = P(i + 1, j), d = P(i, j); st(a, b, c); st(a, c, d); }
+  /* the village on the valley floor */
+  const vx = SKI.vil.x, vz = SKI.vil.z, [gbx, gbz] = SKI.gBase, [gtx, gtz] = SKI.gTop, [c0, c1] = SKI.chair;
+  /* anything random that would stand in the chalet, or on a lift station, is drawn into a throwaway builder, so the random sequence, and the rest of the village and forest, is unchanged */
   const TRASH = new MB(4000), via = (B, fn) => { if (B !== TRASH) return fn(); TRASH._id = M._id; fn(); M._id = TRASH._id; }, inCH = (x, z, hw = 0, hd = 0) => Math.abs(x - (CH.x + .6)) < 8.4 + hw && Math.abs(z - CH.z) < 6.9 + hd;
-  for (let i = 0; i < 26; i++) { const x = vx + R.range(-110, 110), z = vz + R.range(-46, 40); const y = gy(x, z), w = R.range(9, 17), d = R.range(8, 13), h = R.range(5, 10), B = inCH(x, z, w / 2 + .8, d / 2 + .8) ? TRASH : M;
-    via(B, () => { B.set({ kind: K.FACADE, em: 130, seed: R() * 255, a: 3 }); B.extrude(rectPoly(x, z, w, d), y, y + h, { c: R.pick([0xc0568a, 0xc9a23a, 0x8a5a3a, 0x7a4a34, 0x4f9f92]), top: false });
+  /* the chalet's front yard, east of its glass, kept clear of trees and houses so the view opens onto the far slope and its forest */
+  const inView = (x, z) => x > CH.x && x < CH.x + 55 && Math.abs(z - CH.z) < 20 + (x - CH.x) * .35;
+  const onLift = (x, z, r) => Math.hypot(x - gbx, z - gbz) < 22 + r || Math.hypot(x - c0[0], z - c0[1]) < 10 + r;
+  for (let i = 0; i < 26; i++) { const x = vx + R.range(-40, 40), z = vz + R.range(-52, 56); const y = gy(x, z), w = R.range(9, 17), d = R.range(8, 13), h = R.range(5, 10), B = inCH(x, z, w / 2 + .8, d / 2 + .8) || onLift(x, z, w / 2) || inView(x, z) ? TRASH : M;
+    via(B, () => { B.set({ kind: K.FACADE, em: 130, seed: R() * 255, a: 3 }); B.extrude(rectPoly(x, z, w, d), y - 1.5, y + h, { c: R.pick([0xc0568a, 0xc9a23a, 0x8a5a3a, 0x7a4a34, 0x4f9f92]), top: false });
     setPlain(B, 0xcdd6ea); B.loft([rectPoly(x, z, w + 1.6, d + 1.6).map(p => [p[0], y + h, p[1]]), rectPoly(x, z, w + 1, .6).map(p => [p[0], y + h + d * .5, p[1]])], { c: 0xcdd6ea, grad: .7 }); });
     if (R.chance(.5)) { const c = R.pick([0xff6fae, 0xf7e84a, 0xff9a3c]); if (B === M) glow(x, y + h * .5, z + d / 2 + 1, c, 12); }
   }
   chalet(M);
-  /* rounded lift station and gondola line */
-  M.set({ kind: K.FACADE, em: 160, seed: 77, a: 3 }); M.extrude(roundPoly(vx - 20, vz + 30, 44, 22, 10, 3), gy(vx - 20, vz + 30), gy(vx - 20, vz + 30) + 16, { c: 0xc0568a, topc: 0xc9a23a });
-  neonStrip(M, vx - 20, gy(vx - 20, vz + 30) + 16.2, vz + 41, 26, .5, .3, 0xff6fae, 0);
-  const top = [vx - 60, 520, vz - 330];
-  const cable = [[vx - 20, gy(vx - 20, vz + 30) + 24, vz + 30], top];
-  M.beam(cable[0], cable[1], .35, { c: 0x201c2c });
-  for (let i = 1; i < 8; i++) { const t = i / 8; const q = [lerp(cable[0][0], top[0], t), lerp(cable[0][1], top[1], t), lerp(cable[0][2], top[2], t)]; const y0 = gy(q[0], q[2]); M.box(q[0], y0, q[2], 1.2, Math.max(2, q[1] - y0 + 2), 1.2, { c: 0x2c2838 }); M.box(q[0], q[1] - .4, q[2], 7, .8, 1.2, { c: 0x2c2838 }); }
-  for (let i = 0; i < 12; i++) { const t = (i + .5) / 12; const q = [lerp(cable[0][0], top[0], t), lerp(cable[0][1], top[1], t) - 5, lerp(cable[0][2], top[2], t)]; setPlain(M, i % 2 ? 0xc9a23a : 0xc0568a); M.box(q[0], q[1], q[2], 3.4, 3.4, 4.6, {}); M.set({ kind: K.PLAIN, em: 255, c: hex(0xffe0a0) }); M.box(q[0], q[1] + 1.4, q[2] + 2.31, 2.6, 1, .05, {}); M.set({ em: 0 }); glow(q[0], q[1] + 1.6, q[2], 0xffc080, 9); }
-  for (let i = 0; i < 70; i++) { const x = vx + R.range(-500, 480), z = vz + R.range(-180, 80); const y = gy(x, z); if (y > 220) continue; if (Math.hypot(x - vx, z - vz) < 60) continue; const B = inCH(x, z, 4, 4) ? TRASH : M; via(B, () => pine(B, x, y, z, R.range(10, 19), R)); }
-  /* spruce close round the chalet and the village, in stands, clear of the pistes, the lift and the buildings: their own random
+  /* the gondola: a rounded hall at the top of the village, the cable up the west shoulder to the top station */
+  const gby = gy(gbx, gbz), gty = gy(gtx, gtz);
+  M.set({ kind: K.FACADE, em: 160, seed: 77, a: 3 }); M.extrude(roundPoly(gbx, gbz, 34, 20, 9, 3), gby - 2, gby + 14, { c: 0xc0568a, topc: 0xc9a23a });
+  neonStrip(M, gbx, gby + 14.2, gbz + 10.2, 22, .5, .3, 0xff6fae, 0);
+  const cA = [gbx - 6, gby + 20, gbz - 8], cB = [gtx + 6, gty + 16, gtz + 6];
+  M.beam(cA, cB, .35, { c: 0x201c2c });
+  /* towers only where the ground comes up to the line: over the valley it is one long span, as the big cars run */
+  for (let i = 1; i < 12; i++) { const t = i / 12, q = [lerp(cA[0], cB[0], t), lerp(cA[1], cB[1], t), lerp(cA[2], cB[2], t)], y0 = gy(q[0], q[2]); if (q[1] - y0 < 4 || q[1] - y0 > 40) continue; M.box(q[0], y0 - 2, q[2], 1.4, q[1] - y0 + 4, 1.4, { c: 0x2c2838 }); M.box(q[0], q[1] + 1, q[2], 7, .8, 1.4, { c: 0x2c2838 }); }
+  for (let i = 0; i < 10; i++) { const t = (i + .5) / 10, q = [lerp(cA[0], cB[0], t), lerp(cA[1], cB[1], t) - 5, lerp(cA[2], cB[2], t)]; setPlain(M, i % 2 ? 0xc9a23a : 0xc0568a); M.box(q[0], q[1], q[2], 3.4, 3.4, 4.6, {}); M.set({ kind: K.PLAIN, em: 255, c: hex(0xffe0a0) }); M.box(q[0], q[1] + 1.4, q[2] + 2.31, 2.6, 1, .05, {}); M.set({ em: 0 }); glow(q[0], q[1] + 1.6, q[2], 0xffc080, 9); }
+  /* the top station: a hall dug into the shoulder, a restaurant with lit glass and a terrace over the valley */
+  M.set({ kind: K.FACADE, em: 160, seed: 91, a: 3 }); M.extrude(roundPoly(gtx, gtz, 28, 18, 6, 3), gty - 14, gty + 12, { c: 0x4f4d58, topc: 0x2e3040 });
+  M.set({ kind: K.FACADE, em: 200, seed: 141, a: 3 }); M.extrude(rectPoly(gtx + 16, gtz + 8, 18, 12), gty - 10, gty + 7, { c: 0x5a3a26, topc: 0xcdd6ea });
+  setPlain(M, 0x6a4a30); M.box(gtx + 16, gty - .2, gtz + 17, 20, .5, 7, {});
+  setPlain(M, 0x3a2618); for (let k = 0; k < 9; k++) M.box(gtx + 7 + k * 2.3, gty - .2, gtz + 20.4, .14, 1.2, .14, {});
+  neonStrip(M, gtx + 16, gty + 7.2, gtz + 14.1, 14, .45, .3, 0xffc37a, 3);
+  glow(gtx + 16, gty + 3, gtz + 16, 0xffc37a, 18); glow(gtx, gty + 13, gtz, 0xff6fae, 10); pool(gtx + 10, gtz + 14, 30, 0xffb060, .35);
+  /* the chairlift up the east side: huts at each end, towers, two lines of chairs */
+  { const dx = c1[0] - c0[0], dz = c1[1] - c0[1], L = Math.hypot(dx, dz), ux = dx / L, uz = dz / L, px = -uz, pz = ux, n = Math.ceil(L / 34), tops = [];
+    for (const [x, z] of [c0, c1]) { const y = gy(x, z); setPlain(M, 0x3a2618); M.box(x, y - 1, z, 9, 6, 7, {}); setPlain(M, 0xcdd6ea); M.box(x, y + 5, z, 10, .5, 8, {}); M.set({ kind: K.PLAIN, em: 200, c: hex(0xffc37a) }); M.box(x + px * 3.6, y + 1.5, z + pz * 3.6, 3, 1.2, .1, {}); M.set({ em: 0 }); glow(x, y + 4, z, 0xffc37a, 8); }
+    for (let k = 0; k <= n; k++) { const t = k / n, x = c0[0] + dx * t, z = c0[1] + dz * t, y0 = gy(x, z), y = y0 + 9; tops.push([x, y, z]);
+      if (k > 0 && k < n) { setPlain(M, 0x2c2838); M.box(x, y0 - 1, z, .7, 10, .7, {}); } setPlain(M, 0x2c2838); M.box(x, y - .2, z, Math.abs(px) * 5 + .4, .4, Math.abs(pz) * 5 + .4, {}); }
+    for (const s of [-2.3, 2.3]) for (let k = 0; k < n; k++) { const a = tops[k], b = tops[k + 1], o = [px * s, 0, pz * s]; M.beam([a[0] + o[0], a[1], a[2] + o[2]], [b[0] + o[0], b[1], b[2] + o[2]], .08, { c: 0x201c2c });
+      for (let q = .15; q < 1; q += .3) { const x = lerp(a[0], b[0], q) + o[0], y = lerp(a[1], b[1], q), z = lerp(a[2], b[2], q) + o[2]; setPlain(M, 0x2c2838); M.box(x, y - 2.2, z, .08, 2.2, .08, {}); setPlain(M, s < 0 ? 0xc0568a : 0x4f9f92); M.box(x, y - 2.6, z, 1.7, .45, .8, {}); M.box(x - ux * .35, y - 2.2, z - uz * .35, 1.7, .7, .12, {}); } } }
+  /* far spruce over the lower slopes */
+  for (let i = 0; i < 70; i++) { const x = vx + R.range(-500, 480), z = vz + R.range(-180, 120); const y = gy(x, z); if (y > 220) continue; if (Math.hypot(x - vx, z - vz) < 70 || skiPiste(x, z) > .2 || inView(x, z)) continue; const B = inCH(x, z, 4, 4) ? TRASH : M; via(B, () => pine(B, x, y, z, R.range(10, 19), R)); }
+  /* spruce close round the chalet and the village, in stands, clear of the pistes, the lifts and the buildings: their own random
      sequence, so nothing else moves */
-  { const T = rng(4242), cab = (x, z) => { const ax = vx - 20, az = vz + 30, bx = top[0] - ax, bz = top[2] - az, t = clamp(((x - ax) * bx + (z - az) * bz) / (bx * bx + bz * bz)); return Math.hypot(x - ax - bx * t, z - az - bz * t); };
-    for (let i = 0; i < 1300; i++) { const x = T.range(CH.x - 170, vx + 260), z = T.range(vz - 300, vz + 70), y = gy(x, z);
-      if (y > 285 || inCH(x, z, 8, 8) || Math.abs(x - vx) < 122 && z > vz - 54 && z < vz + 48 || Math.hypot(x - (vx - 20), z - (vz + 30)) < 34 || cab(x, z) < 9 || skiPiste(x, z) > .2) continue;
+  { const T = rng(4242), seg = (x, z, a, b) => { const bx = b[0] - a[0], bz = b[2] - a[2], t = clamp(((x - a[0]) * bx + (z - a[2]) * bz) / (bx * bx + bz * bz)); return Math.hypot(x - a[0] - bx * t, z - a[2] - bz * t); };
+    const ch0 = [c0[0], 0, c0[1]], ch1 = [c1[0], 0, c1[1]];
+    for (let i = 0; i < 1300; i++) { const x = T.range(CH.x - 130, vx + 240), z = T.range(vz - 200, CH.z + 90), y = gy(x, z);
+      if (y > 285 || y < 4 || inCH(x, z, 8, 8) || inView(x, z) || Math.abs(x - vx) < 52 && Math.abs(z - vz) < 66 || onLift(x, z, 6) || Math.hypot(x - gtx, z - gtz) < 30 || seg(x, z, cA, cB) < 9 || seg(x, z, ch0, ch1) < 7 || skiPiste(x, z) > .2) continue;
       if (Math.sin(x * .031 + 1.2) * Math.sin(z * .027) + T() * .8 < -.1) continue;
       pine(M, x, y - .5, z, T.range(9, 17), T); } }
-  /* ski string lights */
-  for (let i = 0; i < 26; i++) { const x = vx + R.range(-110, 110), z = vz + R.range(-40, 44), c = R.pick([0xff6fae, 0xf7e84a, 0xffc080]); if (!inCH(x, z)) glow(x, gy(x, z) + 7, z, c, 7); }
+  /* village string lights */
+  for (let i = 0; i < 26; i++) { const x = vx + R.range(-44, 44), z = vz + R.range(-56, 60), c = R.pick([0xff6fae, 0xf7e84a, 0xffc080]); if (!inCH(x, z) && !onLift(x, z, 0)) glow(x, gy(x, z) + 7, z, c, 7); }
   pool(vx, vz, 90, 0xff6fae, 0);
 }
 

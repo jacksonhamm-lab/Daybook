@@ -312,6 +312,17 @@ Technical state only. Updated 2026-11-06.
   About 160 more 3D spruce round the chalet and the village from their own rng(4242), so nothing else moves. His Intel UHD:
   no context loss, city 28 to 29 fps, chalet 46-51 to 48-60, flight 32 to 27 (that run had reflections back on).
   Full battery passed. Before/after in Documents/Daybook City/ski_before_after.png.
+- **Built (p16, round 2, the chalet in a ski valley, 2026-11-08, his call: "being on the mountain doesn't make sense, there
+  should be a ski resort on the mountain"):** a valley carved into the massif's front (mtnH: mtnRaw plus a flat floor from
+  the shore up to a head wall, valleyX its line), the mesh now reaching the shore at finer cells. SKI (before WORLD_FS) holds
+  the plan: the chalet on the floor up-valley (SKI.ch, CH = SKI.ch, its glass east onto the far slope's forest, the chairlift
+  and the end of a run, its yard kept clear by inView), the village down-valley, a gondola up the west shoulder to a top
+  station with a restaurant and terrace (towers only where the ground meets the line, one long span over the valley), a
+  chairlift up the east side with two lines of chairs, four pistes (SKI.pistes; PISTE_GLSL draws them, skiPiste keeps the 3D
+  trees off them). The pad is the mountain's id now (no ink line round it). The far haze and the city's warm glow at the
+  mountain's feet only show from afar, not on the valley floor; the night snow is moonlit grey-blue. His Intel UHD, fair
+  before/after: city 26 to 29 fps, chalet 43-49 to 45, flight 30 to 29, no context loss. Full battery passed (t22 at 1366
+  takes about 11 minutes now under SwiftShader). Before/after: Documents/Daybook City/ski_valley_before_after.png.
 - **Built (p14, the white screen on his laptop, 2026-11-08):** on his Intel UHD laptop (driver 27.20.100.9749) every
   city build since at least p6 crashed the browser's GPU process (`chrome://gpu`: STATUS_STACK_OVERFLOW) while
   compiling `WORLD_FS`: the Direct3D compiler choked on `shadowAt` inlined through `lightAll` at four uses. The context
