@@ -290,8 +290,18 @@ Technical state only. Updated 2026-11-06.
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-close`, pushed as build `p13`. `BUILD` is `'p13'` in `city.js`, `index.html` and the
+- **Branch:** `city-close`, build `p14` (not pushed yet). `BUILD` is `'p14'` in `city.js`, `index.html` and the
   `city.js?v=` query.
+- **Built (p14, the white screen on his laptop, 2026-11-08):** on his Intel UHD laptop (driver 27.20.100.9749) every
+  city build since at least p6 crashed the browser's GPU process (`chrome://gpu`: STATUS_STACK_OVERFLOW) while
+  compiling `WORLD_FS`: the Direct3D compiler choked on `shadowAt` inlined through `lightAll` at four uses. The context
+  was lost, restored, lost again on the recompile: a white screen. The test rig never saw it (SwiftShader).
+  - `main` now works out the shadow (`gSh`) and the light (`gL`) once per pixel for the lit kinds; `facade` and the
+    other branches read them. Same maths, pixels identical (t13 at both sizes).
+  - `warmShaders()` compiles every scene and pass with `compileAsync` (parallel compile), at boot and after a restored
+    context; the city stays paused (`S.lost`) until they're ready.
+  - Real-GPU checks live in the scratch rig (`gpu*.mjs`, Edge with `--use-angle=d3d11`): no loss in the city, the way
+    in, or any room. Speed on that chip in a 1536x864 window: city about 11 fps (Saver 16), rooms 20 to 28.
 - **Built (p13, the chalet, round 1 for his review, 2026-11-06):** Fuel and Cardio in one room (his call: cardio alone was
   too thin). Fuel now flies into the chalet; Cardio's icon is gone (five icons, the six stats unchanged).
   - **App side:** `CityApp.fuel()` (shakes today and this week, picked meals, recipes, the list by aisle, snacks, cardio
