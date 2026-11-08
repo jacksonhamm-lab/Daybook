@@ -283,15 +283,25 @@ courses. It may run before Phase 1 is finished if he asks, but never before step
 
 Technical state only. Updated 2026-11-06.
 
-- **Live:** `main` at `45ba491` is build `p13`: p7 (the close up on her, the DECIDE monitor, the city opening), p8
+- **Live:** `main` at `b64563c` is build `p14` (p13 plus the white-screen fix, verified live 2026-11-08): p7 (the close up on her, the DECIDE monitor, the city opening), p8
   (her natural close-up motion and her card), p9 (her forearms), p10 (the gym, every room usable in place) p11 (split edits, one card at a time), p12 (the small fixes) and p13 (the chalet), behind
   `?city=1`, flag off by default. Live `city.js` byte-identical to the repo (2026-11-07); live `index.html` identical
   apart from the Cloudflare Web Analytics beacon Cloudflare adds at the edge; `/api/sky` answers from `SKY_AT`
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-close`, build `p14` (not pushed yet). `BUILD` is `'p14'` in `city.js`, `index.html` and the
+- **Branch:** `city-close`, build `p15` (not pushed yet). `BUILD` is `'p15'` in `city.js`, `index.html` and the
   `city.js?v=` query.
+- **Built (p15, light Auto on a plain laptop chip, 2026-11-08, his call):** measured on his Intel UHD (visible window,
+  vsync off, a GPU sync per frame): the city is bound by pixels. 119 ms a frame at the usual 1.5x, 68 at 1x, 58 at 1x
+  without reflections, 40 at .75x, 27 at .5x, a 20 ms floor even at a tenth (so fewer far buildings would gain little;
+  bloom and ink cost under 2 ms).
+  - `weakGpu()` reads the renderer name once the renderer exists: Intel UHD or HD Graphics (not Iris or Arc), the
+    Microsoft Basic Render Driver or llvmpipe; never a phone or the test rig; `?cityweak` forces it.
+  - Auto there picks `PQ.lite`: no 1.5x (dpr cap 1), a start at scale .74 with reflections off, and in the city the
+    adaptive step may go down to .55 like the rooms. Reflections come back on their own if the frame rate allows.
+    Smooth, Balanced and Saver are unchanged and override it. `City._.pq().weakGpu` says what was detected.
+  - On his laptop (1536x864): the city 11 fps to 29, rooms 20-28 to 44-46, the way in 18 to 29.
 - **Built (p14, the white screen on his laptop, 2026-11-08):** on his Intel UHD laptop (driver 27.20.100.9749) every
   city build since at least p6 crashed the browser's GPU process (`chrome://gpu`: STATUS_STACK_OVERFLOW) while
   compiling `WORLD_FS`: the Direct3D compiler choked on `shadowAt` inlined through `lightAll` at four uses. The context

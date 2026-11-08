@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p14';
+export const BUILD = 'p15';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -4738,9 +4738,20 @@ const REDUCED = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: red
 const Q = { tier: isPhone ? 1 : 2, scale: 1, base: 1, ink: true, bloom: true, refl: true, shadow: true, grain: .024 };
 /* Settings > Performance, his pick on this device: frames a second (moving, idle), the sharpness cap, and whether bloom and
    reflections may run. Auto and Smooth are the city as tuned; Balanced halves the frames and softens; Saver is plain and slow */
-const PQ = { auto: { fps: 60, idle: 30, dpr: 3, fx: true }, smooth: { fps: 60, idle: 30, dpr: 3, fx: true }, balanced: { fps: 30, idle: 20, dpr: 1.5, fx: true }, saver: { fps: 20, idle: 10, dpr: 1, fx: false } };
+const PQ = { auto: { fps: 60, idle: 30, dpr: 3, fx: true }, lite: { fps: 60, idle: 30, dpr: 1, fx: true, weak: true }, smooth: { fps: 60, idle: 30, dpr: 3, fx: true }, balanced: { fps: 30, idle: 20, dpr: 1.5, fx: true }, saver: { fps: 20, idle: 10, dpr: 1, fx: false } };
 let PM = PQ.auto;
-function perfPick(pick) { PM = PQ[pick] || PQ.auto; if (!PM.fx) { Q.bloom = false; Q.refl = false; } else { Q.bloom = true; Q.refl = true; } Q.scale = 1; S.upHold = 0; adaptCool = 3; S.fps = PM.fps; if (typeof renderer !== 'undefined' && renderer) resize(); }
+/* Auto on a plain laptop chip (Intel's UHD or HD graphics, a basic or software driver; never a phone): there the city is
+   bound by pixels, measured on his Intel UHD at 1536x864: 119 ms a frame at the usual 1.5x, 68 at 1x, 40 at .75x, 27 at .5x,
+   and about 10 of it reflections. So Auto goes light: no 1.5x, a start at .74 of the screen's pixels with reflections off,
+   and the city may step down as far as the rooms (bloom and ink cost next to nothing and stay). ?cityweak forces it */
+let WEAK = false;
+function weakGpu() {
+  if (QS.has('cityweak')) return true;
+  if (isPhone || RIG) return false;
+  try { const g = renderer.getContext(), d = g.getExtension('WEBGL_debug_renderer_info'); const n = String(d ? g.getParameter(d.UNMASKED_RENDERER_WEBGL) : g.getParameter(g.RENDERER));
+    return /Intel.*\b(UHD|HD) Graphics|Basic Render|llvmpipe/i.test(n) && !/Iris|Arc/i.test(n); } catch (e) { return false; }
+}
+function perfPick(pick) { PM = pick === 'auto' && WEAK ? PQ.lite : PQ[pick] || PQ.auto; if (!PM.fx) { Q.bloom = false; Q.refl = false; } else { Q.bloom = true; Q.refl = !PM.weak; } Q.scale = PM.weak ? .74 : 1; S.upHold = 0; adaptCool = 3; S.fps = PM.fps; if (typeof renderer !== 'undefined' && renderer) resize(); }
 const TIME = { value: 0 };
 const moonDir = new THREE.Vector3(.13, .262, -.956).normalize();
 const moonSkyDir = new THREE.Vector3(.15, .31, -.94).normalize();
@@ -5096,6 +5107,7 @@ async function initGraphics() {
   MAT.blur = fsPass(BLUR_FS, { t: { value: null }, dir: { value: new THREE.Vector2() } });
   MAT.post = fsPass(POST_FS, { tC: { value: null }, tD: { value: null }, tB: { value: null }, tB2: { value: null }, px: { value: new THREE.Vector2() }, nearZ: { value: 1 }, farZ: { value: 1 }, uTime: TIME, uGlitch: { value: 0 }, uScan: { value: 0 }, uInkW: { value: 1 }, uInkOn: { value: 1 }, uBloom: { value: .9 }, uFade: { value: 1 }, uGrain: { value: 0 } });
   MAT.aa = fsPass(AA_FS, { t: { value: null }, px: { value: new THREE.Vector2() }, uTime: TIME, uFade: { value: 1 }, uGrain: { value: Q.grain } });
+  WEAK = weakGpu(); perfPick(perf().pick);
   resize();
   /* shadows: one sharp bake per scene */
   bakeShadows();
@@ -5807,7 +5819,7 @@ function adapt() {
   if (adaptCool > 0) { adaptCool--; return; }
   if (document.hidden) return;
   if (S.mode === 'fly') return;
-  if (S.fps < PM.fps * .43) { if (S.restored) { S.restored = false; S.upNeed = Math.min(S.upNeed * 2, 120); } const i = SCALES.indexOf(Q.scale); const floor = S.mode === 'city' ? 1 : SCALES.length - 1; if (i < floor) { Q.scale = SCALES[i + 1]; resize(); adaptCool = 3; } else if (Q.bloom) { Q.bloom = false; adaptCool = 3; } else if (Q.refl) { Q.refl = false; adaptCool = 3; } }
+  if (S.fps < PM.fps * .43) { if (S.restored) { S.restored = false; S.upNeed = Math.min(S.upNeed * 2, 120); } const i = SCALES.indexOf(Q.scale); const floor = S.mode === 'city' && !PM.weak ? 1 : SCALES.length - 1; if (i < floor) { Q.scale = SCALES[i + 1]; resize(); adaptCool = 3; } else if (Q.bloom) { Q.bloom = false; adaptCool = 3; } else if (Q.refl) { Q.refl = false; adaptCool = 3; } }
   else if (S.fps > PM.fps * .87) { const i = SCALES.indexOf(Q.scale); if ((i > 0 || (PM.fx && (!Q.bloom || !Q.refl))) && S.upHold++ > S.upNeed) { if (!PM.fx && i > 0) { Q.scale = SCALES[i - 1]; resize(); } else if (!Q.refl) Q.refl = true; else if (!Q.bloom) Q.bloom = true; else { Q.scale = SCALES[i - 1]; resize(); } adaptCool = 4; S.upHold = 0; S.restored = true; } }
   else S.upHold = 0;
 }
@@ -6483,7 +6495,7 @@ function rig() {
     figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
     hour(h) { HOUR = h; return figSpot(); },
     /* the sky by name ('dusk,snow') or as numbers; null goes back to the real one (in the rig: the painted night) */
-    umb: () => city.umb ? city.umb.map(p => p.wet.visible && !p.dry.visible) : null, lampK: () => room.lampK, pq: () => ({ ...PM, bloom: Q.bloom, refl: Q.refl, scale: Q.scale, w: renderer.domElement.width }),
+    umb: () => city.umb ? city.umb.map(p => p.wet.visible && !p.dry.visible) : null, lampK: () => room.lampK, pq: () => ({ ...PM, weakGpu: WEAK, bloom: Q.bloom, refl: Q.refl, scale: Q.scale, w: renderer.domElement.width }),
     sky(s) { SKY.over = skyParse(s); SKY.next = 0; return frame().then(() => ({ el: SKY.el, L: SKY.L, w: { ...SKY.w } })); },
     sun: sunAt, wx: skyWeather,
     skyNow: () => { const c = v => v.toArray().map(x => +x.toFixed(4)); return { L: SKY.L, key: c(city.u.uMoon.value), keyC: c(city.u.uMoonC.value), hi: c(city.u.uAmbHi.value), fogD: city.u.uFogD.value, pool: city.u.uPoolK.value, sky: c(SKY_U.sky.value), look: c(SKY_U.look.value), lamp: c(SKY_U.lamp.value), rain: city.rain.geometry.instanceCount, rainN: city.rain.userData.n, rainK: c(SKY_U.rainK.value), drops: SKY_U.drops.value, glowK: city.glow.material.uniforms.uGlowK.value, roomHi: c(room.u.uAmbHi.value), roomSky: c(room.u.uSky.value), fig: FIG_DAY.value, light1: c(city.u.uLC.value[1]) }; },
