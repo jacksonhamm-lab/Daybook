@@ -290,7 +290,7 @@ Technical state only. Updated 2026-11-06.
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-close`, build `p15` (same as live). `BUILD` is `'p15'` in `city.js`, `index.html` and the
+- **Branch:** `city-ski`, build `p16` (not pushed yet). `BUILD` is `'p15'` in `city.js`, `index.html` and the
   `city.js?v=` query.
 - **Built (p15, light Auto on a plain laptop chip, 2026-11-08, his call):** measured on his Intel UHD (visible window,
   vsync off, a GPU sync per frame): the city is bound by pixels. 119 ms a frame at the usual 1.5x, 68 at 1x, 58 at 1x
@@ -302,6 +302,16 @@ Technical state only. Updated 2026-11-06.
     adaptive step may go down to .55 like the rooms. Reflections come back on their own if the frame rate allows.
     Smooth, Balanced and Saver are unchanged and override it. `City._.pq().weakGpu` says what was detected.
   - On his laptop (1536x864): the city 11 fps to 29, rooms 20-28 to 44-46, the way in 18 to 29.
+- **Built (p16, the ski area as a real alpine valley, 2026-11-08, his call: "pretty flat and white"):** the mountain's shader
+  (kind 8) no longer paints one flat haze. Smooth normals from the height field (mountain(): nrm/st), then: snow that holds to
+  the gentle ground, warm granite with vertical cracks on the steep faces above the tree line, blue glacier ice with crevasses in
+  the high gullies, spruce stands painted below the tree line (faded out close to, where 3D spruce stand), groomed pistes with
+  corduroy down the fall line (skiPiste() in JS draws the same lanes, and the 3D trees keep off them), wind ripples, drifts, a
+  fine grain and a glitter close to. Lit by the key with a south fill so the shaded faces keep their shape; haze by distance,
+  not height, so the near slopes stay crisp. The chalet's dug shoulder shows rock down its cut sides (its own id, not 7).
+  About 160 more 3D spruce round the chalet and the village from their own rng(4242), so nothing else moves. His Intel UHD:
+  no context loss, city 28 to 29 fps, chalet 46-51 to 48-60, flight 32 to 27 (that run had reflections back on).
+  Full battery passed. Before/after in Documents/Daybook City/ski_before_after.png.
 - **Built (p14, the white screen on his laptop, 2026-11-08):** on his Intel UHD laptop (driver 27.20.100.9749) every
   city build since at least p6 crashed the browser's GPU process (`chrome://gpu`: STATUS_STACK_OVERFLOW) while
   compiling `WORLD_FS`: the Direct3D compiler choked on `shadowAt` inlined through `lightAll` at four uses. The context

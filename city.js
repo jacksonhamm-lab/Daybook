@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p15';
+export const BUILD = 'p16';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -1636,18 +1636,78 @@ void main(){
     /* scanline and a slow roll */
     a*=.9+.1*step(.5,fract(u.y*70.+uTime*1.5)); a+=vec3(.02,.05,.06)*smoothstep(.05,.0,abs(fract(uTime*.11)-u.y));
     col=a*1.2; e=.7; id=0.;
-  } else if(kind==8){ /* the mountain: a hazy near-silhouette with real snow lines */
+  } else if(kind==8){ /* the mountain and its ski slopes, alpine: snow that holds to the gentle ground, dark granite on the
+       steep faces and the high needles, blue ice down the high gullies, spruce forest below the tree line, wind ripples and
+       a glitter in the snow, the sun and the shade on every face. Lit here with the key alone (no shadow map, no lamps) */
     float n=texture(uTiles,vec3(P.xz*.0017,9.)).r, n2=texture(uTiles,vec3(P.xz*.0068+.3,9.)).r;
+    float nr=texture(uTiles,vec3(P.xz*.031+.7,9.)).r, nf=texture(uTiles,vec3(P.xz*.13,9.)).r;
+    float dist=length(Vd);
+    /* the face this pixel is on, with a little ground roughness in it */
+    vec3 Nf=normalize(N+vec3(nr-.5,0.,nf-.5)*.22);
+    /* granite where it is too steep to hold snow, and on the high ridges above the snow line; fresh snow buries more */
     float line=340.+(n-.5)*190.+(n2-.5)*120.-uSky.w*90.;
-    float snow=smoothstep(line-5.,line+7.,P.y);
-    float gully=texture(uTiles,vec3(P.xz*vec2(.021,.0052)+.1,9.)).r; snow*=smoothstep(.42,.56,gully+(n2-.5)*.4);
-    vec3 rock=vec3(.05,.042,.075)+vec3(.012,.012,.016)*n2;
-    col=mix(rock,vec3(.14,.14,.17)*(.6+.7*n2),snow*.8);
+    float high=smoothstep(line-5.,line+7.,P.y);
+    float gully=texture(uTiles,vec3(P.xz*vec2(.021,.0052)+.1,9.)).r;
+    float hold=N.y+(nr-.5)*.3+(n2-.5)*.2+uSky.w*.08-high*smoothstep(.56,.42,gully+(n2-.5)*.4)*.22;
+    float tl=290.+(n-.5)*80.;
+    float rock=(1.-smoothstep(.5,.58,hold-high*.08))*mix(.15,1.,smoothstep(tl-10.,tl+50.,P.y));
+    /* the shoulder dug out for the chalet (its own faces, not the mountain's id 7) shows rock down its cut sides */
+    float cut=step(.5,abs(id-7.))*(1.-smoothstep(24.,34.,length(P.xz-vec2(200.6,-850.))));
+    rock=max(rock,cut*(1.-smoothstep(.8,.9,N.y+(nr-.5)*.25)));
+    /* blue ice in the high gullies: a glacier tongue with crevasses across it */
+    float ice=smoothstep(.4,.33,gully+(n-.5)*.18)*smoothstep(330.,380.,P.y)*(1.-high*.5)*(1.-rock);
+    float crev=smoothstep(.07,.0,abs(fract(texture(uTiles,vec3(P.xz*vec2(.006,.018)+.2,9.)).r*11.)-.5)-.38);
+    /* spruce below the tree line, in stands with clearings; none on the village, the lift or the chalet's pad */
+    float stand=smoothstep(.54,.64,texture(uTiles,vec3(P.xz*.0074+.5,9.)).r+(n2-.5)*.3)*(1.-smoothstep(tl-18.,tl,P.y))*smoothstep(.3,.45,N.y);
+    /* the pistes: groomed runs down to the village, cut through the forest (the same lanes as skiPiste in mountain()) */
+    float pz=P.z+860.;
+    float pis=(1.-smoothstep(.1,.16,abs(sin(P.x*.011+sin(P.z*.009)*1.6))))*smoothstep(-440.,-400.,pz)*smoothstep(60.,30.,pz)*smoothstep(400.,360.,abs(P.x-300.))*(1.-high);
+    stand*=(1.-pis)*smoothstep(62.,92.,length((P.xz-vec2(300.,-860.))*vec2(1.,1.6)))*smoothstep(14.,24.,length(P.xz-vec2(200.,-850.)));
+    vec2 tg=P.xz*.3; vec2 tc=floor(tg); vec2 tf=fract(tg)-.5-(vec2(h21(tc),h21(tc+7.1))-.5)*.5;
+    float tw=fwidth(tg.x)+fwidth(tg.y);
+    float tree=smoothstep(.36,.26,length(tf))*step(h21(tc+3.3),stand);
+    tree=mix(tree,stand*.34,smoothstep(.25,.9,tw));
+    /* close to, the painted forest gives way to the real trees */
+    tree*=smoothstep(120.,230.,dist);
+    /* snow: soft drifts, wind ripples across the slope, near-white in the sun, blue in the shade */
+    float drift=texture(uTiles,vec3(P.xz*.021+.4,9.)).r, rip=texture(uTiles,vec3(P.xz*vec2(.11,.34),9.)).r;
+    float near=smoothstep(220.,50.,dist);
+    float grain=texture(uTiles,vec3(P.xz*.83+.1,9.)).r;
+    vec3 snowA=vec3(.95,.97,1.)*(.9+.16*drift+.12*(rip-.5)*near+.06*(grain-.5)*smoothstep(60.,10.,dist));
+    /* corduroy down the fall line on the pistes */
+    vec2 fd=normalize(N.xz+vec2(1e-4)); float ac=dot(P.xz,vec2(-fd.y,fd.x));
+    snowA*=1.+pis*(.03+.06*(smoothstep(.35,.5,fract(ac*.8))-.5)*near);
+    /* granite: warm grey in strata and cracks, dusted with snow on its ledges */
+    float strata=texture(uTiles,vec3((P.x+P.z*.7)*.05,P.y*.011+nr*.15,9.)).r;
+    vec3 rockA=mix(vec3(.25,.23,.22),vec3(.42,.39,.36),strata)*(.75+.45*nf);
+    rockA=mix(rockA,vec3(.85,.88,.94),smoothstep(.58,.72,N.y+(nf-.5)*.4)*.75);
+    rockA*=1.-.5*smoothstep(.035,.0,abs(strata-.5))*smoothstep(150.,40.,dist);
+    vec3 iceA=mix(vec3(.6,.76,.88),vec3(.86,.92,.97),drift)*(1.-crev*.3*smoothstep(30.,90.,dist));
+    vec3 alb8=mix(snowA,iceA,ice);
+    alb8=mix(alb8,rockA,rock);
+    /* a spruce from above: dark needles, snow on the sun side */
+    vec3 treeA=mix(vec3(.07,.12,.09),vec3(.6,.66,.72),smoothstep(-.1,.25,dot(tf,normalize(uMoon.xz+vec2(1e-4))))*.5);
+    alb8=mix(alb8,treeA,tree*(1.-rock*.6));
+    /* light: the key on each face, the sky's blue fill in the shade */
+    float kd=max(dot(Nf,uMoon),0.), sk=.62+.38*Nf.y;
+    /* the bright sky and the snow below fill the shaded faces from the south, so the slopes keep their shape out of the sun */
+    float fb=max(dot(Nf,vec3(.28,.5,.82)),0.);
+    vec3 shade=vec3(.86,.91,1.03);
+    /* by night: moonlit, the snow pale blue, the forest and the rock near black */
+    vec3 nl=uAmbHi*sk*1.45+uMoonC*kd*1.5;
+    col=alb8*nl*vec3(.8,.82,.9);
     /* its feet sink into the warm air over the water */
     col=mix(col,vec3(.42,.14,.2),exp(-max(P.y,0.)*.0062)*.92); e=1.;
-    /* by day: blue rock, white snow lit by the sun, its feet in the plain haze */
-    if(uSky.x>0.){ vec3 dr=mix(vec3(.36,.37,.44),vec3(.46,.46,.52),n2)*(uAmbHi*.95+uMoonC*.4); vec3 ds=vec3(.9,.92,.97)*(uAmbHi*.75+uMoonC*.55);
-      vec3 dc=mix(dr,ds,snow); dc=mix(dc,uFogLo,.28+.6*exp(-max(P.y,0.)*.0045)); col=mix(col,dc,uSky.x); }
+    if(uSky.x>0.){
+      vec3 dl=uAmbHi*(sk*.9+fb*.32)*shade+uMoonC*kd*.72;
+      vec3 dc=alb8*dl;
+      /* a glitter in the sunlit snow close by */
+      float gl=step(.997,h21(floor(P.xz*7.)+floor(P.y*7.)*.37))*kd*(1.-rock)*(1.-tree)*smoothstep(90.,20.,dist);
+      dc+=gl*uMoonC*1.6;
+      /* haze grows with distance, and the mountain's feet sit in the plain's haze */
+      float hz=1.-exp(-dist*.00055);
+      dc=mix(dc,uFogLo,clamp(hz*.85+.45*exp(-max(P.y,0.)*.012),0.,.9));
+      col=mix(col,dc,uSky.x); }
   } else if(kind==3){ /* wet road and paving */
     float tile=texture(uTiles,vec3(vU*.09,float(layer))).r;
     vec3 L=gL;
@@ -2657,15 +2717,21 @@ function chalet(M) {
   pool(gx + 4, z, 10, 0xffb060, .45);
   M._id = id0; M.id = cur0;
 }
+/* the ski runs: lanes down the near slope to the village (the shader draws the same ones, groomed, as pis) */
+function skiPiste(x, z) { const pz = z + 860, ss = (a, b, v) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+  return (1 - ss(.1, .16, Math.abs(Math.sin(x * .011 + Math.sin(z * .009) * 1.6)))) * ss(-440, -400, pz) * ss(60, 30, pz) * ss(400, 360, Math.abs(x - 300)); }
 function mountain(M) {
   const R = rng(99); const cx = 180, cz = -1120; const NX = 92, NZ = 46, W = 1700, D = 780;
   const ht = (x, z) => { const u = (x - cx) / W * 2, v = (z - cz) / D * 2; const r = Math.hypot(u * 1.0, v * .85); const b = Math.max(0, 1 - r); let h = Math.pow(b, 1.1) * 620; h += 60 * Math.sin(x * .011 + 1) * Math.sin(z * .013) * b; h += 26 * Math.sin(x * .031 + z * .02) * b; const rg = (f, a) => (1 - Math.abs(Math.sin(x * f + z * f * .6 + 1.3))) * a; h += (rg(.021, 62) + rg(.057, 22) + rg(.13, 8) - 42) * Math.min(1, b * 2.2); return Math.max(h, 0); };
   const P = (i, j) => { const x = cx - W / 2 + W * i / NX + ((j % 2) ? W / NX / 2 : 0), z = cz - D / 2 + D * j / NZ; return [x, ht(x, z) - 2, z]; };
   M.set({ kind: K.SNOW, layer: 0, em: 0, id: 7 });
+  /* smooth normals, from the height around each corner, so the snow, the rock and the light follow the ground, not the triangles */
+  const nrm = p => { const e = 9, dx = (ht(p[0] + e, p[2]) - ht(p[0] - e, p[2])) / (2 * e), dz = (ht(p[0], p[2] + e) - ht(p[0], p[2] - e)) / (2 * e), l = Math.hypot(dx, 1, dz); return [-dx / l, 1 / l, -dz / l]; };
+  const st = (a, b, c) => { M.vx(a, nrm(a), 0, 0); M.vx(b, nrm(b), 0, 0); M.vx(c, nrm(c), 0, 0); };
   for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
     const a = P(i, j + 1), b = P(i + 1, j + 1), c = P(i + 1, j), d = P(i, j);
     const col = p => { const s = p[1] > 215 + 40 * Math.sin(p[0] * .02) ? [.66, .7, .86] : p[1] > 130 ? [.15, .17, .22] : [.075, .1, .12]; return s; };
-    M.c = col(a); M.tri(a, b, c); M.c = col(d); M.tri(a, c, d);
+    M.c = col(a); st(a, b, c); M.c = col(d); st(a, c, d);
   }
   /* ski village and resort on the near slope */
   const vx = 300, vz = -860; const vy = ht(vx, vz);
@@ -2687,6 +2753,13 @@ function mountain(M) {
   for (let i = 1; i < 8; i++) { const t = i / 8; const q = [lerp(cable[0][0], top[0], t), lerp(cable[0][1], top[1], t), lerp(cable[0][2], top[2], t)]; const y0 = gy(q[0], q[2]); M.box(q[0], y0, q[2], 1.2, Math.max(2, q[1] - y0 + 2), 1.2, { c: 0x2c2838 }); M.box(q[0], q[1] - .4, q[2], 7, .8, 1.2, { c: 0x2c2838 }); }
   for (let i = 0; i < 12; i++) { const t = (i + .5) / 12; const q = [lerp(cable[0][0], top[0], t), lerp(cable[0][1], top[1], t) - 5, lerp(cable[0][2], top[2], t)]; setPlain(M, i % 2 ? 0xc9a23a : 0xc0568a); M.box(q[0], q[1], q[2], 3.4, 3.4, 4.6, {}); M.set({ kind: K.PLAIN, em: 255, c: hex(0xffe0a0) }); M.box(q[0], q[1] + 1.4, q[2] + 2.31, 2.6, 1, .05, {}); M.set({ em: 0 }); glow(q[0], q[1] + 1.6, q[2], 0xffc080, 9); }
   for (let i = 0; i < 70; i++) { const x = vx + R.range(-500, 480), z = vz + R.range(-180, 80); const y = gy(x, z); if (y > 220) continue; if (Math.hypot(x - vx, z - vz) < 60) continue; const B = inCH(x, z, 4, 4) ? TRASH : M; via(B, () => pine(B, x, y, z, R.range(10, 19), R)); }
+  /* spruce close round the chalet and the village, in stands, clear of the pistes, the lift and the buildings: their own random
+     sequence, so nothing else moves */
+  { const T = rng(4242), cab = (x, z) => { const ax = vx - 20, az = vz + 30, bx = top[0] - ax, bz = top[2] - az, t = clamp(((x - ax) * bx + (z - az) * bz) / (bx * bx + bz * bz)); return Math.hypot(x - ax - bx * t, z - az - bz * t); };
+    for (let i = 0; i < 1300; i++) { const x = T.range(CH.x - 170, vx + 260), z = T.range(vz - 300, vz + 70), y = gy(x, z);
+      if (y > 285 || inCH(x, z, 8, 8) || Math.abs(x - vx) < 122 && z > vz - 54 && z < vz + 48 || Math.hypot(x - (vx - 20), z - (vz + 30)) < 34 || cab(x, z) < 9 || skiPiste(x, z) > .2) continue;
+      if (Math.sin(x * .031 + 1.2) * Math.sin(z * .027) + T() * .8 < -.1) continue;
+      pine(M, x, y - .5, z, T.range(9, 17), T); } }
   /* ski string lights */
   for (let i = 0; i < 26; i++) { const x = vx + R.range(-110, 110), z = vz + R.range(-40, 44), c = R.pick([0xff6fae, 0xf7e84a, 0xffc080]); if (!inCH(x, z)) glow(x, gy(x, z) + 7, z, c, 7); }
   pool(vx, vz, 90, 0xff6fae, 0);
