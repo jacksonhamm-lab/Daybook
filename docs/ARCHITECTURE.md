@@ -5,10 +5,12 @@ Start here before touching code.
 
 ## Files
 
+Daybook is the city (`city.js`). The old home, Dex (`rider.js` and friends) and the pages were retired in
+November 2026 (p17); index.html still holds the data, sync and app logic the city reads through `window.CityApp`.
+
 | Path | What it is |
 |---|---|
 | `index.html` | The whole app: CSS, markup and the main script (~3,500 lines). No build step. |
-| `rider.js` | Dex, the 3D character: four Tripo models (ski, gym, work, camp) on the Today stage, their scenes, props and camera. |
 | `city.js` | The city home and shop room, loaded only with the flag on (`?city=1`). All 3D is built in code; the red HUD lives in a shadow root. Reads and acts on the app through `window.CityApp`. See docs/CITY.md. |
 | `perf.js` | The performance tiers and Auto's step-down, shared by Dex and the city (see Performance). Sets `html[data-perf]` and `window.Perf` when imported. |
 | `motion.js` | His routines from motion-captured clips: walking between spots, picking things up, closing his fingers on props. |
@@ -96,7 +98,7 @@ They only exist on the device that ran it, so `syncAuto()` only un-ticks an auto
   Personal, and `tasksOn`, `slipped` and `overdue` skip tasks whose `cat` isn't in `CATS` (`knownCat`), so Today,
   Plan, Tomorrow, Needs a decision, the overdue roll-over and the app badge leave them alone. XP, trophies and the
   clear-day check still count every task.
-- **`BUILD`** (set as `window.DAYBOOK_BUILD` in `<head>`, now `'p16'`, live; `city.js` and the `city.js?v=` query must match) is shown as "Build p0" at the bottom of Settings › Sync, so each
+- **`BUILD`** (set as `window.DAYBOOK_BUILD` in `<head>`, now `'p17'` on `city-school`; `city.js` and the `city.js?v=` query must match) is shown as "Build p0" at the bottom of Settings › Sync, so each
   device can show which copy it runs. Bump it when a release changes the data's shape.
 
 ## Code map (index.html)

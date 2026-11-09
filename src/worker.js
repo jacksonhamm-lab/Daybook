@@ -5,6 +5,7 @@ const WORKOUT_SRC = 'https://raw.githubusercontent.com/jacksonhamm-lab/Jackson-W
 const TYPES = { html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', json: 'application/json', webmanifest: 'application/manifest+json', png: 'image/png', svg: 'image/svg+xml', ico: 'image/x-icon' };
 
 import { sendPush } from './push.js';
+import { schoolReminders } from './school-reminders.js';
 import { DurableObject } from 'cloudflare:workers';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
@@ -202,13 +203,16 @@ async function runReminders(hash, env) {
 
   // Morning brief
   if (st.remindDaily && dueNow(now.hm, st.remindAt || '08:00') && !already('brief')) {
-    const tasks = (S.tasks || []).filter(t => occursOn(t, now.date) && !isDone(t, now.date));
+    // School work isn't a task of the day: it's counted on its own
+    const tasks = (S.tasks || []).filter(t => t.cat !== 'school' && occursOn(t, now.date) && !isDone(t, now.date));
+    const school = (S.tasks || []).filter(t => t.cat === 'school' && !t.done && t.date === now.date).length;
     const shift = (S.shifts || {})[now.date];
     const wo = (S.workouts || {})[now.date] || {};
     const session = wo.s || (S.template || [])[dowOf(now.date)] || 'REST';
     const bits = [`${tasks.length} task${tasks.length === 1 ? '' : 's'}`];
     if (shift && shift.start && shift.end) bits.push(`shift ${shift.start}–${shift.end}`);
     if (session !== 'REST') bits.push(session + (wo.done ? ' done' : ''));
+    if (school) bits.push(`${school} school due`);
     outgoing.push({ key: 'brief', payload: { title: 'Today', body: bits.join(' · '), tag: 'brief', url: '/' } });
   }
 
@@ -230,11 +234,11 @@ async function runReminders(hash, env) {
   // Done or Tomorrow is tapped. It stops at 10:30pm. The app icon badge shows how many are open.
   const mins = s => (+s.slice(0, 2)) * 60 + (+s.slice(3, 5));
   const at = t => t.snooze && t.snooze.d === now.date ? t.snooze.at : t.remind;   // +2h on a repeating task moves only today's
-  const open = (S.tasks || []).filter(t => t.remind && occursOn(t, now.date) && !isDone(t, now.date) && mins(at(t)) <= mins(now.hm));
+  const open = (S.tasks || []).filter(t => t.cat !== 'school' && t.remind && occursOn(t, now.date) && !isDone(t, now.date) && mins(at(t)) <= mins(now.hm));
   const nag = Math.max(0, st.nag == null ? 240 : +st.nag || 0);   // minutes; default every 4 hours
   sent.last = sent.last || {};
   (S.tasks || []).forEach(t => {
-    if (!t.remind || !occursOn(t, now.date) || isDone(t, now.date)) return;
+    if (t.cat === 'school' || !t.remind || !occursOn(t, now.date) || isDone(t, now.date)) return;
     const payload = { title: t.title, body: 'Due now · swipe for Done or Tomorrow', tag: 't:' + t.id, url: '/', id: t.id, date: now.date, badge: open.length };
     const k = 't:' + t.id + '@' + at(t);
     if (dueNow(now.hm, at(t)) && !already(k)) { outgoing.push({ key: k, payload, stamp: t.id }); return; }
@@ -244,6 +248,9 @@ async function runReminders(hash, env) {
     payload.body = `Still open · ${late < 60 ? late + ' min' : Math.floor(late / 60) + 'h ' + (late % 60) + 'm'} overdue · Done or Tomorrow`;
     outgoing.push({ key: null, payload, stamp: t.id });
   });
+
+  // School: a paper or a post coming due, the residency, a new course, the Sunday look ahead
+  for (const r of schoolReminders(S, now, st.remindAt || '08:00')) if (!already(r.key)) outgoing.push(r);
 
   // forget nag timestamps for reminders that are no longer open
   const openIds = new Set(open.map(t => t.id)); Object.keys(sent.last).forEach(id => { if (!openIds.has(id)) delete sent.last[id]; });

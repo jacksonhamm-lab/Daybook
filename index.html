@@ -17,36 +17,36 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
-// The city home is a per-device flag: ?city=1 turns it on, ?city=0 off (docs/CITY.md). Off means Dex, as ever.
+// Daybook is the city (the old home, Dex and its pages were retired in November 2026). The old ?city= switch and the
+// per-device flag it kept are cleared, so a link with them still opens cleanly.
 (function () {
-  var on = false;
   try {
+    localStorage.removeItem('daybook_home');
     var q = new URLSearchParams(location.search);
-    if (q.has('city')) {
-      if (q.get('city') === '1') localStorage.setItem('daybook_home', 'city');
-      else if (q.get('city') === '0') localStorage.removeItem('daybook_home');
-      q.delete('city');
-      var rest = q.toString();
-      history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
-    }
-    on = localStorage.getItem('daybook_home') === 'city';
+    if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p16';
-  window.DAYBOOK_CITY = on;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = on ? './city.js?v=p16' : './rider.js'; document.head.appendChild(l);
-  if (on) {
-    document.documentElement.dataset.city = '';
-    var c = document.createElement('style');
-    c.textContent = 'html[data-city]{background:#05040a}html[data-city] body.home{overflow:hidden;overscroll-behavior:none}html[data-city] body.home .top,html[data-city] body.home .fab,html[data-city] body.home .ambient,html[data-city] body.home .main{display:none}';
-    document.head.appendChild(c);
-  }
+  window.DAYBOOK_BUILD = 'p17';
+  window.DAYBOOK_CITY = true;
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p17'; document.head.appendChild(l);
+  document.documentElement.dataset.city = '';
+  var c = document.createElement('style');
+  c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}html[data-city] .top,html[data-city] .fab,html[data-city] .ambient,html[data-city] .main,html[data-city] #spot,html[data-city] #sheet,html[data-city] #ov{display:none}';
+  document.head.appendChild(c);
 })();
 </script>
 <script type="module">
-if (window.DAYBOOK_CITY) import('./city.js?v=p16').catch(e => window.CityApp.fallback('The city could not load. Showing the normal home.', e));
-else import('./rider.js').catch(e => window.logProblem('page', e));
+import('./city.js?v=p17').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
+#noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
+#noCity .nc{position:relative;max-width:440px;padding:22px 20px;border:1px solid rgba(255,70,70,.55);background:linear-gradient(180deg,rgba(255,70,70,.06),rgba(0,0,0,0))}
+#noCity .nc-c{position:absolute;width:12px;height:12px;border:2px solid #ff4646}#noCity .tl{left:-2px;top:-2px;border-right:0;border-bottom:0}#noCity .br{right:-2px;bottom:-2px;border-left:0;border-top:0}
+#noCity b{display:block;font:800 26px/1 Unbounded,Inter,sans-serif;letter-spacing:.06em;color:#ff4646}
+#noCity .nc-t{display:block;margin:8px 0 14px;font:700 11px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;color:#f2dd3d}
+#noCity p{margin:0 0 10px;color:rgba(232,230,240,.75)}
+#noCity .nc-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+#noCity button{min-height:44px;padding:0 14px;border:1px solid #16e4f4;background:transparent;color:#16e4f4;font:700 12px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em}
+#noCity button:first-child{background:#16e4f4;color:#05040a}
 @property --glow{syntax:'<color>';inherits:true;initial-value:#0a84ff}
 @property --p{syntax:'<number>';inherits:false;initial-value:0}
 :root{
@@ -1165,11 +1165,14 @@ const CATS = {
   gym:  { label: 'Training', color: '#ff9f0a' },
   jobs: { label: 'Jobs',     color: '#30d158' },
   life: { label: 'Personal', color: '#bf5af2' },
+  school: { label: 'School',  color: '#30d158' },
 };
 const CAT_ORDER = ['work', 'gym', 'jobs', 'life'];
-// A category this version doesn't know (a newer version's, e.g. 'school') never crashes: it borrows
+// A category this version doesn't know (a newer version's) never crashes: it borrows
 // Personal's colour, and the task lists skip those tasks (knownCat). XP still counts them.
+// School work lives on the School page only: never in Today, Plan, overdue, reminders or the badge (planTask).
 const knownCat = t => Object.prototype.hasOwnProperty.call(CATS, t.cat);
+const planTask = t => knownCat(t) && t.cat !== 'school';
 const catOf = k => Object.prototype.hasOwnProperty.call(CATS, k) ? CATS[k] : CATS.life;
 const SESS = {
   D1:   { color: '#64d2ff', art: 'linear-gradient(140deg,#062a4a 0%,#0a6fd6 55%,#64d2ff 100%)' },
@@ -1216,6 +1219,7 @@ const I = {
   arrow: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
   notes: '<svg class="ico" viewBox="0 0 24 24"><path d="M6.5 3.5h8l4 4v13h-12z"/><path d="M14.5 3.5v4h4M9.5 12h6M9.5 15.5h4"/></svg>',
   task: '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.8-5"/></svg>',
+  school: '<svg class="ico" viewBox="0 0 24 24"><path d="M4 20V9h3V6h2v3h6V6h2v3h3v11zM10 20v-5h4v5"/></svg>',
 };
 // Home is Dex's stage; the other four are pages opened from his stat chips (docs/NAV.md).
 // Keys are the old tab names so existing links keep working; notes render under Plan.
@@ -1226,12 +1230,12 @@ const TABS = [
   { k: 'week',     label: 'Plan',  color: '#5e5ce6', attr: 'focus' },
   { k: 'hours',    label: 'Work',  color: '#64d2ff', attr: 'grind' },
   { k: 'training', label: 'Train', color: '#ff9f0a', attr: 'strength' },
-  { k: 'jobs',     label: 'Jobs',  color: '#30d158', attr: 'hustle' },
+  { k: 'jobs',     label: 'Jobs',  color: '#30d158', attr: 'focus' },   // paused: the city keeps it in the apartment's Career card
 ];
 
 /* ---------- state ---------- */
 const defaults = () => ({
-  tasks: [], shifts: {}, workouts: {}, jobs: [], clock: null,
+  tasks: [], shifts: {}, workouts: {}, jobs: [], clock: null, study: {}, courses: [], studyClock: null, school: null,
   template: SPLIT.slice(),
   extra: {},
   settings: { name: 'Jackson', rate: 20, extraHours: 0, payCutoff: 1, paySubmitDays: 4, remindSubmit: true, nag: 240, dex: {}, hoursGoal: 0, appGoal: 5, workoutUrl: '/workout/', payAnchor: '2026-09-25', payCycle: 14 },
@@ -1246,6 +1250,7 @@ function load() {
       const s = { ...d, ...raw, settings: { ...d.settings, ...raw.settings }, ui: { ...d.ui, ...raw.ui } };
       if (s.ui.tab === 'notes') s.ui.tab = 'week';   // Notes now lives under Plan
       ['tomb', 'extra', 'shakes', 'meals', 'grocery', 'snacks'].forEach(k => { s[k] = s[k] || {}; });   // older backups lack newer keys
+      s.study = s.study || {}; s.courses = s.courses || [];
       s.notes = s.notes || []; s.tasks = s.tasks || []; s.jobs = s.jobs || []; s.shifts = s.shifts || {}; s.workouts = s.workouts || {};
       if (!TABS.some(t => t.k === s.ui.tab)) s.ui.tab = 'today';
       return s;
@@ -1291,12 +1296,12 @@ const stripU = o => { const c = { ...o }; delete c.u; return c; };
 const same = (a, b) => JSON.stringify(stripU(a || {})) === JSON.stringify(stripU(b || {}));
 function stampChanges() {
   const now = Date.now(), prev = LAST || {};
-  ['tasks', 'jobs', 'notes'].forEach(k => {
+  ['tasks', 'jobs', 'notes', 'courses'].forEach(k => {
     const was = new Map((prev[k] || []).map(x => [x.id, x]));
     (S[k] || []).forEach(x => { const p = was.get(x.id); if (!p || !same(p, x)) x.u = now; was.delete(x.id); });
     was.forEach((v, id) => { S.tomb[id] = now; });
   });
-  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks'].forEach(k => {
+  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks', 'study'].forEach(k => {
     const p = prev[k] || {};
     Object.keys(S[k] || {}).forEach(d => { if (!p[d] || !same(p[d], S[k][d])) S[k][d].u = now; });
     Object.keys(p).forEach(d => { if (!S[k][d]) S.tomb[k + ':' + d] = now; });
@@ -1304,17 +1309,20 @@ function stampChanges() {
   if (!same(prev.settings, S.settings)) S.settingsU = now;
   if (JSON.stringify(prev.template) !== JSON.stringify(S.template)) S.templateU = now;
   if (JSON.stringify(prev.clock || null) !== JSON.stringify(S.clock || null)) S.clockU = now;
+  if (JSON.stringify(prev.studyClock || null) !== JSON.stringify(S.studyClock || null)) S.studyClockU = now;
+  if (JSON.stringify(prev.school || null) !== JSON.stringify(S.school || null)) S.schoolU = now;
   LAST = JSON.parse(JSON.stringify(S));
 }
 // Every top-level key this version reads or writes (defaults(), load() and every S.<key>).
 // A newer version can add keys; mergeState passes them through untouched. Add new keys here.
 const KNOWN = new Set(['tasks', 'shifts', 'workouts', 'jobs', 'notes', 'clock', 'template', 'extra', 'settings', 'ui', 'tomb',
-  'shakes', 'meals', 'grocery', 'snacks', 'since', 'seen', 'clearDays', 'submitted', 'settingsU', 'templateU', 'clockU']);
+  'shakes', 'meals', 'grocery', 'snacks', 'since', 'seen', 'clearDays', 'submitted', 'settingsU', 'templateU', 'clockU',
+  'study', 'courses', 'studyClock', 'studyClockU', 'school', 'schoolU']);
 function mergeState(local, remote) {
   if (!remote) return local;
   const out = JSON.parse(JSON.stringify(local));
   out.tomb = { ...(remote.tomb || {}), ...(out.tomb || {}) };
-  ['tasks', 'jobs', 'notes'].forEach(k => {
+  ['tasks', 'jobs', 'notes', 'courses'].forEach(k => {
     const m = new Map((out[k] || []).map(x => [x.id, x]));
     (remote[k] || []).forEach(r => {
       const l = m.get(r.id);
@@ -1323,7 +1331,7 @@ function mergeState(local, remote) {
     });
     out[k] = [...m.values()].filter(x => !(out.tomb[x.id] > (x.u || 0)));
   });
-  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks'].forEach(k => {
+  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks', 'study'].forEach(k => {
     out[k] = out[k] || {};
     Object.entries(remote[k] || {}).forEach(([d, r]) => {
       const l = out[k][d];
@@ -1335,6 +1343,8 @@ function mergeState(local, remote) {
   if ((remote.settingsU || 0) > (out.settingsU || 0)) { out.settings = { ...out.settings, ...remote.settings }; out.settingsU = remote.settingsU; }
   if ((remote.templateU || 0) > (out.templateU || 0)) { out.template = remote.template; out.templateU = remote.templateU; }
   if ((remote.clockU || 0) > (out.clockU || 0)) { out.clock = remote.clock || null; out.clockU = remote.clockU; }   // clocked in on the other device
+  if ((remote.studyClockU || 0) > (out.studyClockU || 0)) { out.studyClock = remote.studyClock || null; out.studyClockU = remote.studyClockU; }
+  if ((remote.schoolU || 0) > (out.schoolU || 0)) { out.school = remote.school || null; out.schoolU = remote.schoolU; }
   if (remote.since && (!out.since || remote.since < out.since)) out.since = remote.since;
   const cutoff = Date.now() - 30 * 864e5;
   Object.keys(out.tomb).forEach(k => { if (out.tomb[k] < cutoff) delete out.tomb[k]; });
@@ -1678,14 +1688,156 @@ function occurs(t, d) {
   return r === 'daily' || (r === 'weekdays' && w < 5) || (r === 'weekly' && w === t.repeat.dow);
 }
 const isDone = (t, d) => t.repeat ? !!(t.doneOn && t.doneOn[d]) : !!t.done;
-const tasksOn = d => sortTasks(S.tasks.filter(t => knownCat(t) && occurs(t, d)), d);
+const tasksOn = d => sortTasks(S.tasks.filter(t => planTask(t) && occurs(t, d)), d);
 const sortTasks = (arr, d) => arr.slice().sort((a, b) => (isDone(a, d) - isDone(b, d)) || CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat) || (a.created || 0) - (b.created || 0));
 const nowHM = () => { const n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); };
 // a snooze (+2h) on a repeating task only moves that day's reminder
 const remAt = (t, d) => t.snooze && t.snooze.d === d ? t.snooze.at : t.remind;
-const slipped = () => S.tasks.filter(t => knownCat(t) && t.remind && occurs(t, today()) && !isDone(t, today()) && remAt(t, today()) <= nowHM());
-const overdue = () => S.tasks.filter(t => knownCat(t) && !t.repeat && t.date && t.date < today() && !t.done);
+const slipped = () => S.tasks.filter(t => planTask(t) && t.remind && occurs(t, today()) && !isDone(t, today()) && remAt(t, today()) <= nowHM());
+const overdue = () => S.tasks.filter(t => planTask(t) && !t.repeat && t.date && t.date < today() && !t.done);
 const repeatLabel = r => !r ? '' : r.t === 'daily' ? 'Daily' : r.t === 'weekdays' ? 'Weekdays' : `Every ${DOW[r.dow]}`;
+
+/* ---------- school ----------
+   School tracks the week, study hours and what's due, the way Work tracks the pay period, hours and pay.
+   Courses, dates and residencies come from him: nothing is pre-filled. School work is S.tasks with
+   cat 'school', a course, a type and always a date (the due date); it never shows in Today or Plan (planTask).
+   Study sessions are S.study[date].s, the study clock is its own (S.studyClock), so it never clashes with a shift. */
+const SCH_TYPES = ['Reading', 'Discussion post', 'Discussion reply', 'Paper', 'Team task', 'Presentation', 'Residency prep', 'Admin'];
+const SCH_TYPE_RE = [[/\b(?:readings?|read)\b/i, 'Reading'], [/\b(?:reply|replies|respond)\b/i, 'Discussion reply'], [/\b(?:post|forum|discussion)\b/i, 'Discussion post'],
+  [/\b(?:paper|essay|assignment|report)\b/i, 'Paper'], [/\b(?:team|group)\b/i, 'Team task'], [/\b(?:presentation|present|slides|deck)\b/i, 'Presentation'],
+  [/\b(?:residency|packing|travel)\b/i, 'Residency prep'], [/\b(?:admin|registration|register|tuition)\b/i, 'Admin']];
+const SCH_STREAMS = [['blended', 'Blended'], ['campus', 'On campus']];
+const SCH_TRACKS = [['', 'Not sure yet'], ['mrp', 'Major research project'], ['thesis', 'Thesis'], ['course', 'Course-based']];
+const SCH_C = '#30d158';
+const school = () => ({ goal: 15, stream: 'blended', track: '', link: '', ...(S.school || {}) });
+const schoolTasks = () => S.tasks.filter(t => t.cat === 'school');
+const sessHours = s => { if (!s || !/^\d\d:\d\d$/.test(s.start || '') || !/^\d\d:\d\d$/.test(s.end || '')) return 0; let d = mins(s.end) - mins(s.start); if (d < 0) d += 1440; return d / 60; };
+const studyOn = d => ((S.study || {})[d] || {}).s || [];
+const studyHours = d => studyOn(d).reduce((a, s) => a + sessHours(s), 0);
+const weekStudy = mon => datesOf(mon).reduce((a, d) => a + studyHours(d), 0);
+const totalStudy = () => Object.keys(S.study || {}).reduce((a, d) => a + studyHours(d), 0);
+const courseById = id => (S.courses || []).find(c => c.id === id);
+const courseLabel = id => { const c = id && courseById(id); return c ? (c.code || c.name || 'Course') : ''; };
+const coursesSorted = () => [...(S.courses || [])].sort((a, b) => (a.start || '9999').localeCompare(b.start || '9999') || (a.code || '').localeCompare(b.code || ''));
+const curCourse = (d = today()) => coursesSorted().find(c => c.start && c.end && c.start <= d && d <= c.end) || null;
+const nextCourse = (d = today()) => coursesSorted().find(c => c.start && c.start > d) || null;
+const courseWeek = (c, d = today()) => { const of = Math.max(1, Math.ceil((daysBetween(c.start, c.end) + 1) / 7)); return { n: Math.max(1, Math.min(of, Math.floor(daysBetween(c.start, d) / 7) + 1)), of }; };
+const courseHours = c => Object.keys(S.study || {}).reduce((a, d) => a + studyOn(d).filter(s => s.course === c.id).reduce((x, s) => x + sessHours(s), 0), 0);
+// what's due, in the order he'll meet it: overdue, this week (to Sunday), later; done last, newest first
+function schoolGroups() {
+  const td = today(), end = iso(addDays(mondayOf(new Date()), 6));
+  const L = schoolTasks().slice().sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.created || 0) - (b.created || 0));
+  return { over: L.filter(t => !t.done && t.date < td), week: L.filter(t => !t.done && t.date >= td && t.date <= end), later: L.filter(t => !t.done && t.date > end), done: L.filter(t => t.done).reverse() };
+}
+const nextDue = () => schoolTasks().filter(t => !t.done && t.date >= today()).sort((a, b) => a.date.localeCompare(b.date) || (a.created || 0) - (b.created || 0))[0] || null;
+const dueSay = d => { const n = daysBetween(today(), d); return n === 0 ? 'due today' : n === 1 ? 'due tomorrow' : n < 0 ? `${-n} day${n === -1 ? '' : 's'} late` : `due in ${n} days`; };
+const studyElapsed = () => S.studyClock ? Math.max(0, Date.now() - S.studyClock.startTs) : 0;
+const res = () => { const r = school().res || {}; return { start: r.start || '', end: r.end || '', list: Array.isArray(r.list) ? r.list : [] }; };
+const resSay = () => { const r = res(); if (!r.start) return ''; const n = daysBetween(today(), r.start); return n > 1 ? `in ${n} days` : n === 1 ? 'tomorrow' : n === 0 ? 'starts today' : r.end && today() <= r.end ? 'on now' : 'done'; };
+const isDate = v => /^\d{4}-\d\d-\d\d$/.test(String(v || ''));
+const isHM = v => /^\d\d:\d\d$/.test(String(v || ''));
+// The page and the castle both act through these, so the two homes can't drift apart.
+const SCHOOL = {
+  setup(f) {
+    const cur = school(), n = { ...cur };
+    if (f.goal !== undefined) n.goal = Math.max(1, Math.min(80, Math.round(+f.goal || 15)));
+    if (f.stream !== undefined && SCH_STREAMS.some(([k]) => k === f.stream)) n.stream = f.stream;
+    if (f.track !== undefined && SCH_TRACKS.some(([k]) => k === f.track)) n.track = f.track;
+    if (f.link !== undefined) n.link = String(f.link).trim().slice(0, 300);
+    if (f.start) n.on = true;   // setup stays in front until he says start
+    S.school = n; haptic(6); commit();
+  },
+  start(course) {
+    if (S.studyClock) return false;
+    S.studyClock = { startTs: Date.now(), course: courseById(course) ? course : '' }; haptic(15); sfx('in'); commit();
+    island.toast(`Studying${courseLabel(course) ? ' · ' + courseLabel(course) : ''}`, { icon: I.school, color: SCH_C, action: { label: 'Undo', fn: () => { S.studyClock = null; commit(); island.toast('Restored'); } } });
+    return true;
+  },
+  // a session goes on the day it started; under a minute isn't a session
+  stop() {
+    const c = S.studyClock; if (!c) return null;
+    const st = new Date(c.startTs), en = new Date(); S.studyClock = null;
+    if (en - st < 60e3) { commit(); island.toast('Under a minute, not logged'); return null; }
+    const d = iso(st), sess = { start: hm(st), end: hm(en), course: c.course || '' }, was = S.study[d] ? JSON.stringify(S.study[d].s) : null;
+    S.study[d] = { s: [...studyOn(d), sess] }; haptic(15); sfx('out'); commit();
+    // Undo puts the clock back running, and the day back as it was
+    island.toast(`${fh(Math.round(sessHours(sess) * 100) / 100)}h studied`, { icon: I.school, color: SCH_C, action: { label: 'Undo', fn: () => { if (was) S.study[d] = { s: JSON.parse(was) }; else delete S.study[d]; S.studyClock = c; commit(); island.toast('Restored'); } } });
+    return { d, sess };
+  },
+  sessAdd(d, f) {
+    if (!isDate(d) || !isHM(f.start) || !isHM(f.end) || f.start === f.end) return false;
+    S.study[d] = { s: [...studyOn(d), { start: f.start, end: f.end, course: courseById(f.course) ? f.course : '' }] }; haptic(6); commit();
+    island.toast(`${rel(d)} · ${fh(Math.round(studyHours(d) * 100) / 100)}h studied`, { icon: I.school, color: SCH_C }); return true;
+  },
+  sessSet(d, i, f) {
+    const L = studyOn(d).map(x => ({ ...x })), s = L[i]; if (!s) return;
+    if (f.start !== undefined && isHM(f.start)) s.start = f.start;
+    if (f.end !== undefined && isHM(f.end)) s.end = f.end;
+    if (f.course !== undefined) s.course = courseById(f.course) ? f.course : '';
+    S.study[d] = { s: L }; haptic(6); commit();
+  },
+  sessDel(d, i) {
+    const L = studyOn(d), snap = JSON.stringify(L); if (!L[i]) return;
+    const n = L.filter((_, j) => j !== i); if (n.length) S.study[d] = { s: n }; else delete S.study[d]; haptic(10); commit();
+    island.toast('Session removed', { action: { label: 'Undo', fn: () => { S.study[d] = { s: JSON.parse(snap) }; commit(); island.toast('Restored'); } } });
+  },
+  taskAdd(f) {
+    const title = String(f.title || '').replace(/\s+/g, ' ').trim(), type = SCH_TYPES.includes(f.type) ? f.type : '';
+    if (!(title || type) || !isDate(f.date)) return false;
+    const t = { id: uid(), created: Date.now(), cat: 'school', title: title || type, course: courseById(f.course) ? f.course : '', type: type || 'Admin', date: f.date, note: String(f.note || '').trim().slice(0, 500), done: false, repeat: null, doneOn: {} };
+    S.tasks.push(t); FX.added = t.id; haptic(); commit();
+    island.toast(`Added to School · ${dueSay(t.date)}`, { icon: I.school, color: SCH_C }); return t.id;
+  },
+  taskSet(id, f) {
+    const t = S.tasks.find(x => x.id === id && x.cat === 'school'); if (!t) return;
+    if (f.title !== undefined) { const v = String(f.title).replace(/\s+/g, ' ').trim(); if (v) t.title = v; }
+    if (f.type !== undefined && SCH_TYPES.includes(f.type)) t.type = f.type;
+    if (f.course !== undefined) t.course = courseById(f.course) ? f.course : '';
+    if (f.date !== undefined && isDate(f.date)) t.date = f.date;
+    if (f.note !== undefined) t.note = String(f.note).trim().slice(0, 500);
+    haptic(6); commit();
+  },
+  taskTick(id) {
+    const t = S.tasks.find(x => x.id === id && x.cat === 'school'); if (!t) return;
+    t.done = !t.done; haptic(t.done ? 12 : 6); sfx(t.done ? 'check' : 'uncheck'); commit();
+    island.toast(t.done ? 'Done' : 'Not done', { icon: I.check, color: SCH_C, action: { label: 'Undo', fn: () => { const x = S.tasks.find(y => y.id === id); if (x) { x.done = !x.done; commit(); island.toast('Restored'); } } } });
+  },
+  taskDel(id) {
+    const i = S.tasks.findIndex(x => x.id === id && x.cat === 'school'); if (i < 0) return; const snap = JSON.stringify(S.tasks[i]);
+    S.tasks.splice(i, 1); haptic(10); commit();
+    island.toast('Removed', { action: { label: 'Undo', fn: () => { if (!S.tasks.some(x => x.id === id)) S.tasks.push(JSON.parse(snap)); commit(); island.toast('Restored'); } } });
+  },
+  courseAdd(f) {
+    const code = String(f.code || '').replace(/\s+/g, ' ').trim().toUpperCase().slice(0, 16), name = String(f.name || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (!code && !name) return false;
+    const c = { id: uid(), code, name, start: isDate(f.start) ? f.start : '', end: isDate(f.end) ? f.end : '', link: String(f.link || '').trim().slice(0, 300) };
+    if (c.start && c.end && c.end < c.start) [c.start, c.end] = [c.end, c.start];
+    S.courses.push(c); haptic(); commit(); island.toast(`${code || name} added`, { icon: I.school, color: SCH_C }); return c.id;
+  },
+  courseSet(id, f) {
+    const c = (S.courses || []).find(x => x.id === id); if (!c) return;
+    if (f.code !== undefined) c.code = String(f.code).replace(/\s+/g, ' ').trim().toUpperCase().slice(0, 16);
+    if (f.name !== undefined) c.name = String(f.name).replace(/\s+/g, ' ').trim().slice(0, 80);
+    for (const k of ['start', 'end']) if (f[k] !== undefined) c[k] = isDate(f[k]) ? f[k] : '';
+    if (f.link !== undefined) c.link = String(f.link).trim().slice(0, 300);
+    if (!c.code && !c.name) c.name = 'Course';
+    haptic(6); commit();
+  },
+  courseDel(id) {
+    const i = (S.courses || []).findIndex(x => x.id === id); if (i < 0) return; const snap = JSON.stringify(S.courses[i]);
+    S.courses.splice(i, 1); haptic(10); commit();
+    island.toast('Course removed', { action: { label: 'Undo', fn: () => { if (!S.courses.some(x => x.id === id)) S.courses.push(JSON.parse(snap)); commit(); island.toast('Restored'); } } });
+  },
+  resSet(f) {
+    const r = res();
+    for (const k of ['start', 'end']) if (f[k] !== undefined) r[k] = isDate(f[k]) ? f[k] : '';
+    if (r.start && r.end && r.end < r.start) [r.start, r.end] = [r.end, r.start];
+    S.school = { ...school(), res: r }; haptic(6); commit();
+  },
+  resAdd(text) { const v = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 80); if (!v) return false; const r = res(); r.list = [...r.list, { id: uid(), t: v, done: false }]; S.school = { ...school(), res: r }; haptic(); commit(); return true; },
+  resTick(id) { const r = res(), x = r.list.find(y => y.id === id); if (!x) return; r.list = r.list.map(y => y.id === id ? { ...y, done: !y.done } : y); S.school = { ...school(), res: r }; haptic(8); sfx(x.done ? 'uncheck' : 'check'); commit(); },
+  resDel(id) { const r = res(); if (!r.list.some(y => y.id === id)) return; r.list = r.list.filter(y => y.id !== id); S.school = { ...school(), res: r }; haptic(10); commit(); },
+};
 
 /* ---------- jobs ---------- */
 const appsIn = dates => S.jobs.filter(j => j.status !== 'Wishlist' && dates.includes(j.date)).length;
@@ -1796,16 +1948,17 @@ function guessCat(t) {
   return 'life';
 }
 function parseQuick(raw, base) {
-  /* "city on" / "city off": the city home on this device (the Home Screen app has no address bar for ?city=1) */
-  const cw = String(raw).trim().toLowerCase().match(/^city (on|off)$/); if (cw) return { kind: 'city', on: cw[1] === 'on' };
   let s = ' ' + raw.replace(/\s+/g, ' ').trim() + ' ';
   const r = { kind: 'task', cat: null, date: base === undefined ? today() : base, dateSet: false, repeat: null };
   const cut = re => { const m = s.match(re); if (m) s = s.replace(m[0], ' '); return m; };
   const td = parse(today()), tw = dowIdx(today());
   const setD = d => { r.date = iso(d); r.dateSet = true; };
   let m;
-  if ((m = cut(/\s#(w|work|g|gym|train|training|j|job|jobs|p|life|personal)(?=\s)/i)))
-    r.tagged = true, r.cat = { w:'work', work:'work', g:'gym', gym:'gym', train:'gym', training:'gym', j:'jobs', job:'jobs', jobs:'jobs', p:'life', life:'life', personal:'life' }[m[1].toLowerCase()];
+  if ((m = cut(/\s#(w|work|g|gym|train|training|j|job|jobs|p|life|personal|s|school)(?=\s)/i)))
+    r.tagged = true, r.cat = { w:'work', work:'work', g:'gym', gym:'gym', train:'gym', training:'gym', j:'jobs', job:'jobs', jobs:'jobs', p:'life', life:'life', personal:'life', s:'school', school:'school' }[m[1].toLowerCase()];
+  /* school: one of his own course codes (from his course list, spaces or not) makes it school work */
+  { const known = (S.courses || []).filter(c => c.code).map(c => [c.code.replace(/\s+/g, '').toLowerCase(), c.id]);
+    if (known.length && (m = s.match(/\s([a-z]{2,6}) ?(\d{2,4}[a-z]?)(?=\s)/i))) { const k = (m[1] + m[2]).toLowerCase(), hit = known.find(([c]) => c === k); if (hit) { s = s.replace(m[0], ' '); r.cat = 'school'; r.tagged = true; r.course = hit[1]; r.code = (m[1] + ' ' + m[2]).toUpperCase(); } } }
   if (cut(/\s(?:every ?day|daily)(?=\s)/i)) r.repeat = { t: 'daily' };
   else if (cut(/\s(?:every ?weekday|weekdays)(?=\s)/i)) r.repeat = { t: 'weekdays' };
   else if ((m = cut(/\severy (mon|tue|wed|thu|fri|sat|sun)[a-z]*(?=\s)/i))) { const w = DOW3.indexOf(m[1].toLowerCase()); r.repeat = { t: 'weekly', dow: w }; setD(addDays(td, (w - tw + 7) % 7)); }
@@ -1824,6 +1977,14 @@ function parseQuick(raw, base) {
   }
   else if ((m = cut(/\s(\d{1,2})\/(\d{1,2})(?=\s)/))) { let d = new Date(td.getFullYear(), +m[1] - 1, +m[2]); if (d < addDays(td, -60)) d.setFullYear(d.getFullYear() + 1); setD(d); }
   const rest = s.replace(/\s+/g, ' ').trim();
+  if (r.cat === 'school') {
+    const ty = SCH_TYPE_RE.find(([re]) => re.test(rest)), only = ty && !rest.replace(ty[0], ' ').replace(/\s+/g, '').length;
+    r.kind = 'school'; r.type = ty ? ty[1] : 'Reading'; r.repeat = null;
+    r.title = !rest || only ? (ty ? ty[1] : '') : rest[0].toUpperCase() + rest.slice(1);
+    if (!r.title) return null;
+    if (!r.dateSet) r.date = today();
+    return r;
+  }
   if (!rest) return null;
 
   if (/^(?:gym|workout|lift|lifted|trained|session|training|cardio)(?: done)?$|^done (?:gym|workout|lifting|training)$/i.test(rest) && /done|lifted|trained/i.test(rest)) {
@@ -1865,19 +2026,19 @@ function parseQuick(raw, base) {
 }
 function describe(r) {
   if (!r) return null;
-  if (r.kind === 'city') return { c: 'var(--red)', icon: I.check, title: r.on ? 'City home on' : 'City home off', chips: ['This device', 'Reloads'] };
   const d = rel(r.date || today());
   if (r.kind === 'shift') { const h = shiftHours(r); return { c: 'var(--blue)', icon: I.hours, title: `Shift · ${t12(r.start)}–${t12(r.end)}`, chips: [d, r.brk ? `${r.brk}m break` : 'No break', `${fh(h)} hours`] }; }
   if (r.kind === 'job') return { c: 'var(--green)', icon: I.jobs, title: r.company, chips: [r.status, r.role || 'No role', r.link ? 'Link saved' : null, rel(r.date)].filter(Boolean) };
   if (r.kind === 'wo') { const w = wo(r.date); return { c: 'var(--orange)', icon: I.training, title: `Mark ${w.s} · ${sessName(w.s)} done`, chips: [d] }; }
+  if (r.kind === 'school') return { c: SCH_C, icon: I.school, title: r.title, chips: [courseLabel(r.course) || r.code || 'School', r.type, 'Due ' + rel(r.date).replace(/^(Today|Tomorrow|Yesterday)$/, x => x.toLowerCase())] };
   return { c: catOf(r.cat).color, icon: I.task, title: r.title, chips: [catOf(r.cat).label, d, repeatLabel(r.repeat)].filter(Boolean) };
 }
 function applyQuick(r) {
   if (!r) return false;
-  if (r.kind === 'city') { try { if (r.on) localStorage.setItem('daybook_home', 'city'); else localStorage.removeItem('daybook_home'); } catch (e) { return false; } island.toast(r.on ? 'City home on. Reloading' : 'City home off. Reloading'); setTimeout(() => location.reload(), 700); return true; }
   if (r.kind === 'shift') { S.shifts[r.date] = { ...(S.shifts[r.date] || {}), start: r.start, end: r.end, brk: r.brk }; commit(); island.toast(`Shift logged · ${rel(r.date)} · ${fh(shiftHours(r))}h`, { icon: I.hours, color: '#64d2ff' }); return true; }
   if (r.kind === 'job') { S.jobs.push({ id: uid(), created: Date.now(), company: r.company, role: r.role || '', link: r.link || '', status: r.status, date: r.date, notes: '' }); commit(); island.toast(`${r.company} added to Jobs`, { icon: I.jobs, color: '#30d158' }); return true; }
   if (r.kind === 'wo') { const o = S.workouts[r.date] || {}; S.workouts[r.date] = { ...o, done: true, auto: false }; commit(); celebrate(`${wo(r.date).s} done`, '#ff9f0a'); return true; }
+  if (r.kind === 'school') return !!SCHOOL.taskAdd({ title: r.title, course: r.course, type: r.type, date: r.date });
   const t = { id: uid(), created: Date.now(), title: r.title, cat: r.cat, date: r.date || today(), done: false, repeat: r.repeat, doneOn: {} };
   S.tasks.push(t); FX.added = t.id; commit();
   island.toast(r.repeat ? `Repeats ${repeatLabel(r.repeat).toLowerCase()}` : `Added to ${rel(t.date)}`, { icon: I.check, color: catOf(r.cat).color });
@@ -2110,7 +2271,7 @@ function checkTrophies() {
 }
 // A clear day is recorded once, so the reward can't be farmed by re-ticking.
 function noteClearDay() {
-  const d = today(), list = S.tasks.filter(t => occurs(t, d));   // every task, not just the listed ones (XP)
+  const d = today(), list = S.tasks.filter(t => t.cat !== 'school' && occurs(t, d));   // every Plan task, not just the listed ones (XP); school work isn't part of a day
   if (!list.length || !list.every(t => isDone(t, d))) return false;
   S.clearDays = S.clearDays || [];
   if (S.clearDays.includes(d)) return false;
@@ -2350,14 +2511,14 @@ function attributes() {
   const plan = wk.filter(x => wo(x).s !== 'REST'), sDone = plan.filter(x => wo(x).done).length;
   const pk = periodFor(d), pH = periodHours(pk) + extraHours(pk), pTarget = (+S.settings.hoursGoal || 20) * (pk.cyc || 14) / 7;
   const wkStart = mondayOf(new Date()).getTime(), cl = cardioLogs(), cMin = cl.filter(l => l.ts >= wkStart).reduce((a, l) => a + l.min, 0);
-  const ag = +S.settings.appGoal || 5, apps = appsIn(wk), sk = shakesToday(), skN = SHAKES.filter(([k]) => sk[k]).length;
+  const sk = shakesToday(), skN = SHAKES.filter(([k]) => sk[k]).length, stH = weekStudy(mondayOf(new Date())), stG = +school().goal || 15;
   const shakeTicks = Object.values(S.shakes || {}).reduce((a, x) => a + SHAKES.filter(([k]) => x[k]).length, 0);
   return [
     { k: 'focus', name: 'Focus', c: '#64d2ff', icon: IC.tasks, lvl: attrLvl(doneTaskCount(), 3), val: `${done}<small>/${list.length}</small>`, bar: list.length ? done / list.length : 0, go: 'week:' },
     { k: 'grind', name: 'Grind', c: '#0a84ff', icon: IC.work, lvl: attrLvl(totalHours(), 12), val: `${fh(pH)}<small>h</small>`, bar: pH / pTarget, go: 'hours:shifts' },
     { k: 'strength', name: 'Strength', c: '#ff9f0a', icon: IC.train, lvl: attrLvl(Object.values(S.workouts).filter(w => w.done).length, 1), val: `${sDone}<small>/${plan.length}</small>`, bar: plan.length ? sDone / plan.length : 0, go: 'training:' },
     { k: 'stamina', name: 'Stamina', c: '#ff375f', icon: IC.heart, lvl: attrLvl(cl.reduce((a, l) => a + l.min, 0), 30), val: `${cMin}<small>min</small>`, bar: cMin / 90, go: 'training:cardio' },
-    { k: 'hustle', name: 'Hustle', c: '#30d158', icon: IC.jobs, lvl: attrLvl(S.jobs.filter(j => j.status !== 'Wishlist').length, .5), val: `${apps}<small>/${ag}</small>`, bar: apps / ag, go: 'jobs:' },
+    { k: 'hustle', name: 'School', c: '#30d158', icon: I.school, lvl: attrLvl(totalStudy(), 5), val: `${fh(Math.round(stH * 10) / 10)}<small>/${stG}h</small>`, bar: stH / stG, go: 'week:' },   // School lives in the city's castle
     { k: 'fuel', name: 'Fuel', c: '#ffd60a', icon: IC.fuel, lvl: attrLvl(shakeTicks, 2), val: `${skN}<small>/${SHAKES.length}</small>`, bar: skN / SHAKES.length, go: 'training:fuel' },
   ];
 }
@@ -2833,7 +2994,7 @@ const SHEETS = {
       ['Tasks finished', doneTaskCount()],
       ['Sessions done', Object.values(S.workouts).filter(w => w.done).length],
       ['Hours logged', fh(totalHours())],
-      ['Applications', S.jobs.filter(j => j.status !== 'Wishlist').length],
+      ['Study hours', fh(Math.round(totalStudy() * 10) / 10)],
       ['Clean weeks in a row', weekStreak()],
       ['Days cleared', (S.clearDays || []).length],
     ];
@@ -2919,7 +3080,7 @@ function closeSpot() { $('#spot').classList.remove('on'); if (!SHEET) $('#ov').c
 function spotPreview() {
   const v = $('#spotInput').value, r = v.trim() ? parseQuick(v) : null, dsc = describe(r);
   $('#spotPrev').innerHTML = dsc ? `<div class="pi" style="--c:${dsc.c}">${dsc.icon}</div><div><b>${esc(dsc.title)}</b><div class="chips">${dsc.chips.map(c => `<span class="pill" style="--c:${dsc.c}">${esc(c)}</span>`).join('')}</div></div><span class="ret">↵ Add</span>`
-    : `<div class="pi" style="--c:var(--gray)">${I.task}</div><div><b style="color:var(--text2)">Type a task, a shift, or an application</b><div class="sub">Dates like “tomorrow” or “fri”, #work #gym #jobs #life, “every mon”</div></div>`;
+    : `<div class="pi" style="--c:var(--gray)">${I.task}</div><div><b style="color:var(--text2)">Type a task, a shift, or an application</b><div class="sub">Dates like “tomorrow” or “fri”, #work #gym #school #life, “every mon”</div></div>`;
 }
 
 /* ---------- render ---------- */
@@ -3450,17 +3611,11 @@ document.addEventListener('focusout', () => setTimeout(() => { if (!isTextField(
 /* keyboard */
 document.addEventListener('keydown', e => {
   const k = e.key;
-  if ((e.metaKey || e.ctrlKey) && k.toLowerCase() === 'k') { e.preventDefault(); return $('#spot').classList.contains('on') ? closeSpot() : openSpot(); }
-  if (k === 'Enter' && (e.metaKey || e.ctrlKey) && e.target.id === 'capText') { e.preventDefault(); return addNote(); }
-  if (k === 'Escape') { if ($('#spot').classList.contains('on')) return closeSpot(); if (SHEET) return closeSheet(); if (S.ui.tab !== 'today') return goHome(); }
-  // the city's fields live in a shadow root: what was typed into is the path's first element, not e.target
+  // the city does its own keys (a room's hotspot letters, Escape); quick add opens in its HUD
+  if ((e.metaKey || e.ctrlKey) && k.toLowerCase() === 'k') { e.preventDefault(); return window.City && City.quickAdd && City.quickAdd(); }
   const tg = (e.composedPath && e.composedPath()[0]) || e.target;
-  if ((tg.matches && tg.matches('input,select,textarea')) || e.metaKey || e.ctrlKey || e.altKey || SHEET || $('#spot').classList.contains('on')) return;
-  if (k === '/' || k.toLowerCase() === 'n') { e.preventDefault(); return openSpot(); }
-  if (k === 'ArrowLeft') return shiftWeek(-1);
-  if (k === 'ArrowRight') return shiftWeek(1);
-  if (k.toLowerCase() === 't') return shiftWeek(0);
-  if (/^[1-9]$/.test(k) && +k <= TABS.length) return switchTab(TABS[+k - 1].k);
+  if ((tg.matches && tg.matches('input,select,textarea')) || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (k === '/') { e.preventDefault(); return window.City && City.quickAdd && City.quickAdd(); }
 });
 
 /* ---------- live ticking ---------- */
@@ -3513,7 +3668,8 @@ if (window.DAYBOOK_CITY) window.CityApp = {
   sfx,
   // run an existing data-act, exactly as if its button had been tapped on a page
   act(a, data) { const b = document.createElement('button'); b.hidden = true; Object.assign(b.dataset, data, { act: a }); document.body.append(b); b.click(); b.remove(); },
-  open(go, el) { haptic(6); openPage(go, el); },
+  open() { island.toast('That part of the city could not open'); },
+  toast: (msg, o) => island.toast(msg, o),
   clockIn() { haptic(15); sfx('in'); withUndo('Clocked in', clockInNow); },
   clock() {
     const c = S.clock; if (!c) { const sh = S.shifts[today()], h = shiftHours(sh); return { on: false, brk: false, ms: 0, status: h ? `Not clocked in. Logged today ${t12(sh.start)} to ${t12(sh.end)}.` : 'Not clocked in.' }; }
@@ -3527,8 +3683,9 @@ if (window.DAYBOOK_CITY) window.CityApp = {
     return { attrs, lvl, into, need, sync, initial: (S.settings.name || 'J')[0].toUpperCase(), overall: A.reduce((s, a) => s + clamp01(a.bar), 0) / A.length,
       checks: [[!list.length || done === list.length, 'Tasks today', `${done}/${list.length}`], [!slip, 'Needs a decision', String(slip)], [true, 'Shift today', S.clock ? 'LIVE' : shiftHours(sh) ? fh(shiftHours(sh)) + 'H' : 'NONE'], [!SYNC.code || SYNC.state === 'ok', 'Sync', sync.slice(5)]] };
   },
-  work() {
-    const p = periodFor(today()), td = today(), rate = +S.settings.rate, goal = +S.settings.hoursGoal;
+  // d: a date in the pay period to show (the shop can step back through old ones); none is the current period
+  work(d0) {
+    const p = periodFor(d0 && /^\d{4}-\d\d-\d\d$/.test(d0) ? d0 : today()), td = today(), rate = +S.settings.rate, goal = +S.settings.hoursGoal;
     const dates = periodDates(p), hrs = periodHours(p), ex = extraHours(p), total = hrs + ex;
     const target = goal ? goal * p.cyc / 7 : 80, pend = inSubmitWindow(p) ? pendingDays(p) : [];
     const past = [...Array(6)].map((_, i) => periodFor(iso(addDays(parse(p.start), -p.cyc * (5 - i))))), vals = past.map(x => periodHours(x) + extraHours(x)), sum = vals.reduce((a, v) => a + v, 0);
@@ -3541,15 +3698,27 @@ if (window.DAYBOOK_CITY) window.CityApp = {
     if (ex) checks.push([true, `Subscriptions ${fh(ex)}h`, 'SUB/03']);
     if (pend.length) checks.push([false, `About ${fh(total + estimateHours(p))}h with ${pend.map(x => DOW[dowIdx(x.date)]).join(', ')} estimated`, 'EST/04']);
     return { period: `${tip(short(p.start))} / ${tip(short(p.end))}`, periodEnd: `TO ${tip(short(p.end))}`, hours: fh(total), worked: dates.filter(d => shiftHours(S.shifts[d]) > 0).length, goal: goal ? fh(target) : '-', pct: total / target, ringSub: goal ? '% GOAL' : 'OF 80H',
-      rows, pay: cash(total), payEst: rate ? ' est.' : '', six: cash(sum), sixBar: sum ? total / Math.max(...vals, 1) : 0, win: pend.length > 0, checks, cyc: p.cyc, dayOf: dates.filter(d => d <= td).length };
+      rows, pay: cash(total), payEst: rate ? ' est.' : '', six: cash(sum), sixBar: sum ? total / Math.max(...vals, 1) : 0, win: pend.length > 0, checks, cyc: p.cyc, dayOf: dates.filter(d => d <= td).length,
+      isNow: p.start <= td && td <= p.end, past: p.end < td, start: p.start, end: p.end, prev: iso(addDays(parse(p.start), -1)), next: iso(addDays(parse(p.end), 1)), mon: iso(mondayOf(parse(td < p.start ? p.start : td > p.end ? p.start : td))),
+      trend: past.map((x, i) => ({ label: short(x.start).toUpperCase(), h: vals[i], hrs: fh(vals[i]), cur: i === 5 })), top: Math.max(goal ? goal * p.cyc / 7 : 0, ...vals, 1) };
   },
+  // the shop's own copies: a whole pay period's hours, and last week's shifts into this week (with Undo)
+  copyPeriod(d0) { copy(periodSummary(periodFor(d0 && /^\d{4}-\d\d-\d\d$/.test(d0) ? d0 : today()))); },
+  copyLastWeek(mon) {
+    const m = mon && /^\d{4}-\d\d-\d\d$/.test(mon) ? mondayOf(parse(mon)) : mondayOf(new Date()), cur = datesOf(m), prev = datesOf(addDays(m, -7));
+    if (!prev.some(d => shiftHours(S.shifts[d]))) { island.toast('Last week has no shifts'); return false; }
+    withUndo('Copied last week’s shifts', () => prev.forEach((d, i) => { if (shiftHours(S.shifts[d])) S.shifts[cur[i]] = { ...S.shifts[d], note: '' }; })); return true;
+  },
+  // everything late, onto today, with Undo (the old Today banner's Move to today)
+  rollover() { const n = overdue().length; if (!n) return; this.act('rollover'); },
   // the apartment's panels. Typed text is escaped here because the HUD writes these strings straight into its markup.
-  plan() {
+  // wk: a date in the week the apartment's week card shows (it can step to other weeks); today's list is always today
+  plan(wk) {
     const d = today(), row = (t, x) => ({ id: esc(t.id), d: x, title: esc(t.title), done: isDone(t, x), c: catOf(t.cat).color, meta: esc([catOf(t.cat).label, t.remind ? t12(t.remind) : '', t.repeat ? repeatLabel(t.repeat) : ''].filter(Boolean).join(' · ').toUpperCase()) });
-    const list = tasksOn(d).map(t => row(t, d)), mon = mondayOf(new Date());
+    const list = tasksOn(d).map(t => row(t, d)), mon = mondayOf(wk && /^\d{4}-\d\d-\d\d$/.test(wk) ? parse(wk) : new Date());
     const week = datesOf(mon).map((x, i) => { const w = wo(x), h = shiftHours(S.shifts[x]), l = tasksOn(x).map(t => row(t, x)); return { d: x, dow: DOW[i].toUpperCase(), day: parse(x).getDate(), long: longDate(x), today: x === d, total: l.length, left: l.filter(t => !t.done).length, tasks: l, note: esc([h ? fh(h) + 'h shift' : '', w.s !== 'REST' ? w.s : ''].filter(Boolean).join(' · ')) }; });
     const notes = [...S.notes].sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || (b.edited || b.created) - (a.edited || a.created));
-    return { date: short(d).toUpperCase(), today: list, done: list.filter(t => t.done).length, overdue: overdue().length, week, weekLabel: esc(weekLabel(mon)).toUpperCase(),
+    return { date: short(d).toUpperCase(), today: list, done: list.filter(t => t.done).length, overdue: overdue().length, late: overdue().sort((a, b) => a.date.localeCompare(b.date)).map(t => ({ ...row(t, t.date), meta: esc([catOf(t.cat).label, 'WAS ' + short(t.date)].join(' · ').toUpperCase()) })), week, weekLabel: esc(weekLabel(mon)).toUpperCase(), isNow: iso(mon) === iso(mondayOf(new Date())), mon: iso(mon),
       decide: slipped().map(t => ({ id: esc(t.id), title: esc(t.title), was: t12(remAt(t, d)) })),
       noteCount: S.notes.length, notes: notes.slice(0, 6).map(n => ({ id: esc(n.id), title: esc(noteTitle(n)), body: esc(noteBody(n).slice(0, 90)), pin: !!n.pin, when: esc(rel(iso(new Date(n.edited || n.created))).toUpperCase()) })) };
   },
@@ -3641,12 +3810,16 @@ if (window.DAYBOOK_CITY) window.CityApp = {
   // the rooms edit in place, the pages' own way: tasks added, renamed, moved, deleted; notes written, edited, pinned,
   // deleted; shifts set and cleared. A delete gives back only what it took (a sync may have landed since).
   addTask(text, d) { const v = String(text || '').trim(); if (!v) return false; return !!applyQuick(parseQuick(v, d || today())); },
-  task(id) { const t = S.tasks.find(x => x.id === id); return t ? { id: esc(t.id), title: esc(t.title), remind: t.remind || '', repeat: !!t.repeat } : null; },
+  task(id) { const t = S.tasks.find(x => x.id === id); return t ? { id: esc(t.id), title: esc(t.title), remind: t.remind || '', repeat: !!t.repeat, rep: t.repeat ? t.repeat.t : 'none', date: t.date || '', cat: t.cat, cats: CAT_ORDER.map(k => [k, CATS[k].label, CATS[k].color]) } : null; },
   taskSet(id, f) {
     const t = S.tasks.find(x => x.id === id); if (!t) return;
     if (f.title !== undefined) { const v = String(f.title).replace(/\n/g, ' ').trim(); if (!v || v === t.title) return; t.title = v; }
     if (f.when) { const td = parse(today()), to = { today: today(), tomorrow: iso(addDays(td, 1)), nextweek: iso(addDays(mondayOf(td), 7)) }[f.when]; if (!to) return; t.date = to; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); island.toast(`Moved to ${rel(to)}`, { icon: I.check, color: catOf(t.cat).color }); }
     if (f.remind !== undefined) t.remind = f.remind || null;
+    // any date, a category, a repeat: the old task sheet's own rules (tm-when, tm-cat, tm-rep)
+    if (f.date !== undefined) { if (!/^\d{4}-\d\d-\d\d$/.test(f.date)) return; t.date = f.date; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); island.toast(`Moved to ${rel(t.date)}`, { icon: I.check, color: catOf(t.cat).color }); }
+    if (f.cat !== undefined) { if (!CAT_ORDER.includes(f.cat)) return; t.cat = f.cat; }
+    if (f.repeat !== undefined) { const v = f.repeat; if (!['none', 'daily', 'weekdays', 'weekly'].includes(v)) return; t.repeat = v === 'none' ? null : { t: v, dow: dowIdx(t.date || today()) }; if (t.repeat && !t.date) t.date = today(); t.doneOn = t.doneOn || {}; }
     haptic(6); commit();
   },
   taskDel(id) {
@@ -3680,7 +3853,7 @@ if (window.DAYBOOK_CITY) window.CityApp = {
   // the city's own Progress, System (settings) and quick add, and the apartment's career drawer
   progress() {
     const xp = xpTotal(), { lvl, into, need } = levelFor(xp), got = earnedTrophies().map(t => t.id);
-    return { lvl, xp, into, need, stats: [['TASKS FINISHED', doneTaskCount()], ['SESSIONS DONE', Object.values(S.workouts).filter(w => w.done).length], ['HOURS LOGGED', fh(totalHours())], ['APPLICATIONS', S.jobs.filter(j => j.status !== 'Wishlist').length], ['CLEAN WEEKS', weekStreak()], ['DAYS CLEARED', (S.clearDays || []).length]],
+    return { lvl, xp, into, need, stats: [['TASKS FINISHED', doneTaskCount()], ['SESSIONS DONE', Object.values(S.workouts).filter(w => w.done).length], ['HOURS LOGGED', fh(totalHours())], ['STUDY HOURS', fh(Math.round(totalStudy() * 10) / 10)], ['CLEAN WEEKS', weekStreak()], ['DAYS CLEARED', (S.clearDays || []).length]],
       trophies: TROPHIES.map(t => ({ name: esc(t.name), hint: esc(t.hint), got: got.includes(t.id) })) };
   },
   // never the sync code itself: the city only knows whether there is one
@@ -3717,6 +3890,24 @@ if (window.DAYBOOK_CITY) window.CityApp = {
     S.jobs.splice(i, 1); haptic(10); commit();
     island.toast('Removed', { action: { label: 'Undo', fn: () => { if (!S.jobs.some(x => x.id === id)) S.jobs.push(JSON.parse(snap)); commit(); island.toast('Restored'); } } });
   },
+  // the castle: School in place. Typed text is escaped here, like everything else the HUD writes into its markup.
+  school(wk) {
+    const sc = school(), td = today(), mon = wk && isDate(wk) ? mondayOf(parse(wk)) : mondayOf(new Date()), g = schoolGroups(), nd = nextDue(), c = curCourse(), nc = nextCourse(), r = res(), clk = S.studyClock;
+    const url = u => !u ? '' : esc(/^https?:\/\//i.test(u) ? u : 'https://' + u);
+    const row = t => ({ id: esc(t.id), title: esc(t.title), course: esc(courseLabel(t.course)), courseId: esc(t.course || ''), type: esc(t.type || ''), date: t.date, due: esc(dueSay(t.date)).toUpperCase(), day: short(t.date).toUpperCase(), done: !!t.done, late: !t.done && t.date < td, note: esc(t.note || ''), link: /^https?:\/\//i.test(t.note || '') ? esc(t.note) : '' });
+    const cw = c ? courseWeek(c) : null;
+    return { set: !!(S.school && S.school.on), goal: +sc.goal || 15, stream: sc.stream, track: sc.track, link: url(sc.link), linkRaw: esc(sc.link), streams: SCH_STREAMS, tracks: SCH_TRACKS, types: SCH_TYPES,
+      mon: iso(mon), isNow: iso(mon) === iso(mondayOf(new Date())), weekLabel: esc(weekLabel(mon)).toUpperCase(), hours: weekStudy(mon), total: totalStudy(),
+      days: datesOf(mon).map((d, i) => ({ d, dow: DOW[i].toUpperCase(), day: parse(d).getDate(), long: esc(longDate(d)), today: d === td, h: studyHours(d), s: studyOn(d).map((x, j) => ({ i: j, start: x.start, end: x.end, course: esc(x.course || ''), label: esc(courseLabel(x.course)), h: sessHours(x) })) })),
+      clock: clk ? { on: true, ms: studyElapsed(), course: esc(clk.course || ''), label: esc(courseLabel(clk.course)), since: t12(hm(new Date(clk.startTs))) } : { on: false, ms: 0 },
+      over: g.over.map(row), week: g.week.map(row), later: g.later.map(row), done: g.done.slice(0, 20).map(row), doneN: g.done.length, next: nd ? row(nd) : null,
+      course: c ? { id: esc(c.id), code: esc(c.code), name: esc(c.name), n: cw.n, of: cw.of, hours: courseHours(c), end: short(c.end).toUpperCase(), link: url(c.link || sc.link) } : null,
+      upNext: nc ? { code: esc(nc.code), name: esc(nc.name), start: short(nc.start).toUpperCase(), days: daysBetween(td, nc.start) } : null,
+      courses: coursesSorted().map(x => ({ id: esc(x.id), code: esc(x.code), name: esc(x.name), start: x.start, end: x.end, link: esc(x.link), when: x.start ? (short(x.start) + (x.end ? ' / ' + short(x.end) : '')).toUpperCase() : 'NO DATES', now: !!(c && c.id === x.id), past: !!(x.end && x.end < td) })),
+      res: sc.stream === 'blended' ? { start: r.start, end: r.end, say: esc(resSay()).toUpperCase(), days: r.start ? daysBetween(td, r.start) : null, list: r.list.map(x => ({ id: esc(x.id), t: esc(x.t), done: !!x.done })) } : null };
+  },
+  // every School edit goes through the same SCHOOL the page uses
+  schoolDo(name, ...a) { if (Object.prototype.hasOwnProperty.call(SCHOOL, name)) return SCHOOL[name](...a); },
   // the app's own rest timer, the one the island shows between sets
   rest(sec) { haptic(8); startRest(sec); },
   restLeft: () => REST ? Math.max(0, REST.end - Date.now()) : 0,
@@ -3738,20 +3929,21 @@ if (window.DAYBOOK_CITY) window.CityApp = {
   },
   // only this task goes back: a sync can land while the toast is up, and restoring everything would delete what it brought
   undoTask(id) { const snap = JSON.stringify(S.tasks.find(x => x.id === id)), u = { label: 'Undo', used: false, fn: () => { u.used = true; const i = S.tasks.findIndex(x => x.id === id); if (i >= 0) S.tasks[i] = JSON.parse(snap); commit(); island.toast('Restored'); } }; return u; },
-  // no WebGL, or city.js wouldn't load: tell him why, then fall back to Dex for this session
+  // no WebGL, or city.js wouldn't load. Daybook is the city, so this says why and keeps what works without 3D:
+  // sync carries on underneath, and a backup and the problem log are a tap away
   fallback(msg, e) {
     window.logProblem('city', e || msg);
-    window.DAYBOOK_CITY = false; window.City = undefined; delete document.documentElement.dataset.city;
+    window.City = undefined;
     const h = $('#cityHost'); if (h) h.remove();
-    render();
-    import('./rider.js').catch(x => window.logProblem('page', x));
-    island.toast(msg, { ms: 6000 });
+    let el = $('#noCity'); if (!el) { el = document.createElement('div'); el.id = 'noCity'; el.setAttribute('role', 'alert'); document.body.append(el); }
+    el.innerHTML = `<div class="nc"><i class="nc-c tl"></i><i class="nc-c br"></i><b>DAYBOOK</b><span class="nc-t">CITY OFFLINE</span><p>${esc(msg)}</p><p>Daybook runs in 3D. Reload, or open it in Safari or Chrome with hardware acceleration on. Your data is safe and still syncs.</p>
+      <div class="nc-a"><button type="button" data-nc="reload">RELOAD</button><button type="button" data-nc="export">EXPORT BACKUP</button><button type="button" data-nc="copy-log">COPY PROBLEM LOG</button></div></div>`;
+    el.onclick = ev => { const b = ev.target.closest('[data-nc]'); if (!b) return; if (b.dataset.nc === 'reload') location.reload(); else this.act(b.dataset.nc); };
   },
 };
 
 /* ---------- boot ---------- */
-if (S.ui.tab === 'notes') S.ui.tab = 'week';
-if (!TABS.some(t => t.k === S.ui.tab)) S.ui.tab = 'today';
+S.ui.tab = 'today';   // the city is home; there are no other pages
 $('#kbdHint').textContent = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 island.el = $('#island');
 // A short boot sequence on a cold open; tapping skips it.

@@ -290,7 +290,7 @@ Technical state only. Updated 2026-11-06.
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-ski` (pushed as main). `BUILD` is `'p16'` in `city.js`, `index.html` and the
+- **Branch:** `city-school`, build `p17` (not pushed yet). `BUILD` is `'p17'` in `city.js`, `index.html` and the
   `city.js?v=` query.
 - **Built (p15, light Auto on a plain laptop chip, 2026-11-08, his call):** measured on his Intel UHD (visible window,
   vsync off, a GPU sync per frame): the city is bound by pixels. 119 ms a frame at the usual 1.5x, 68 at 1x, 58 at 1x
@@ -312,6 +312,37 @@ Technical state only. Updated 2026-11-06.
   About 160 more 3D spruce round the chalet and the village from their own rng(4242), so nothing else moves. His Intel UHD:
   no context loss, city 28 to 29 fps, chalet 46-51 to 48-60, flight 32 to 27 (that run had reflections back on).
   Full battery passed. Before/after in Documents/Daybook City/ski_before_after.png.
+- **Built (p17, School and the castle; the old app retired, 2026-11-09, his calls: "the castle is the school", "the city
+  is going to be the app now", "retire all of the old stuff"):**
+  - **School's data** (index.html): `study{date}: { s: [{ start, end, course }], u }`, `courses[]` with ids,
+    `studyClock` + `studyClockU`, `school` + `schoolU` (`{ goal, stream, track, link, res, on }`), all in `KNOWN`,
+    `stampChanges` and `mergeState` as planned; two devices converge on a cleared and re-added study day. School work
+    is `S.tasks` with `cat: 'school'`, a course, a type and always a date; `planTask` keeps it out of Today, Plan,
+    overdue, decisions, the badge and the day-cleared reward (XP still counts it). Quick add reads a course code, a
+    type and a day (`<code> post thu` with one of his own codes, `#school read ch 3 fri`). Every edit goes through `SCHOOL`; the city reaches it
+    with `CityApp.school(wk)` and `CityApp.schoolDo(name, ...)`. Nothing is pre-filled but a 15 h goal; setup stays in
+    front until he taps START SCHOOL (`school.on`). No School page on the old home (his call: one app).
+  - **The castle study hall** (city.js `CS`, `buildCastle`, `castleAtlas`): upper floor of the castle's east end,
+    its +X wall the block's facade. A pointed window on the skyline (the hole and the glass), a stained-glass lancet
+    with a window seat, a built-in bookcase, the library wall, a desk on a red rug, an iron chandelier. Hotspots:
+    DESK (what's due, a folder painted from the data), HOURGLASS (the study clock; the sand runs while it does),
+    NOTICEBOARD (this course, up next, the residency), BOOKSHELF (his course codes on spines; the course list and
+    setup). Clutter from the plan: books with tabs and highlighters on the seat, a duffel, a globe, a map tube and
+    postcards by the door, a peacock feather in a jar, a made-up banner (ARDEN VALE), a candelabra with a neon tube,
+    a space heater, a reading chair. The waterfront palms and the point's trees are kept off the flight line, drawn
+    into throwaway builders so nothing else moves. The HUD: `#scBox`, cards DUE / STUDY / COURSE / COURSES.
+  - **Reminders** (`src/school-reminders.js`, pure, tested on its own): a paper 3 days before and that morning, a
+    discussion post that morning, the residency 30 and 7 days out (blended), a new course the day before, a
+    Sunday 19:00 look at the week. The morning rundown counts school work apart ("2 school due").
+  - **What the old pages did, now in the city:** the task editor sets any date, what it's for and repeats; late tasks
+    are listed on TODAY with MOVE TO TODAY; the apartment's week steps to other weeks; the shop steps back through
+    pay periods, copies a period or last week's shifts, and shows the last six periods.
+  - **The old app retired:** every device opens the city; `?city=` and the per-device flag are cleared; Dex
+    (`rider.js`, `buddy.js`, `motion.js`, `gear.js`, `dress.js`, `scenes/`) is deleted; old pages can't open, their
+    keys are off, Ctrl K and / open the city's quick add. When 3D can't start, `#noCity` says why with Reload, Export
+    backup and Copy problem log, and sync carries on. Dex's models are still in KV (deleting them needs his go).
+    The old pages' code in index.html is unreachable and is the next cleanup.
+  - **Tests:** t60 (School's data), t61 (the castle), t62 (the gaps), t63 (reminders), t64 (retirement, no 3D).
 - **Built (p16, round 2, the chalet in a ski valley, 2026-11-08, his call: "being on the mountain doesn't make sense, there
   should be a ski resort on the mountain"):** a valley carved into the massif's front (mtnH: mtnRaw plus a flat floor from
   the shore up to a head wall, valleyX its line), the mesh now reaching the shore at finer cells. SKI (before WORLD_FS) holds
