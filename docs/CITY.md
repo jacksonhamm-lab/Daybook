@@ -290,7 +290,7 @@ Technical state only. Updated 2026-11-06.
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-clean`, build `p18` (not pushed yet). `BUILD` is `'p18'` in `city.js`, `index.html` and the
+- **Branch:** `city-clean` (pushed as main, live 2026-11-10). Build `p18`. `BUILD` is `'p18'` in `city.js`, `index.html` and the
   `city.js?v=` query.
 - **Built (p15, light Auto on a plain laptop chip, 2026-11-08, his call):** measured on his Intel UHD (visible window,
   vsync off, a GPU sync per frame): the city is bound by pixels. 119 ms a frame at the usual 1.5x, 68 at 1x, 58 at 1x
