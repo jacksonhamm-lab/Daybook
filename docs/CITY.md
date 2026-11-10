@@ -325,6 +325,9 @@ Technical state only. Updated 2026-11-06.
   - **Boot:** the city's opening (`#boot.cb`) is the page's own markup now, so the old boot screen never paints.
   - **Also deleted:** `vendor/three-vrm.module.min.js`, `RoomEnvironment.js`, `RoundedBoxGeometry.js` (only Dex used
     them) and `docs/NAV.md`. `docs/CHARACTER.md` is marked retired, kept for the model pipeline.
+  - **The old workout app is retired** (his call, 2026-11-10: "the first iteration of all of this"): the Worker's `/workout/`
+    proxy and the `workoutUrl` default are gone. Dex's ten model files were deleted from KV the same day (his go); only
+    `model:her.glb` is left.
   - **Tests:** t65 (the code is gone, and what the city runs through index.html still works).
 - **Built (p17, School and the castle; the old app retired, 2026-11-09, his calls: "the castle is the school", "the city
   is going to be the app now", "retire all of the old stuff"):**

@@ -15,11 +15,11 @@ p17 and their code was deleted in p18. index.html keeps the data, sync and app l
 | `city.js` | Daybook itself: the island, its rooms and the red HUD (in a shadow root). All 3D is built in code. Reads and acts on the app through `window.CityApp`. See docs/CITY.md. |
 | `perf.js` | The performance tiers and Auto's step-down (see Performance). Sets `html[data-perf]` and `window.Perf` when imported. |
 | `tools/blender/` | Headless Blender scripts that turn a Tripo export into an app-ready GLB (see docs/CHARACTER.md, Models v5). |
-| `models/` (not in git) | `her.glb`, the apartment's figure, served from KV (see Hosting). Dex's old looks and `anims.json` are still in KV, unused (deleting them needs his go). **Never commit models** (public repo). |
+| `models/` (not in git) | `her.glb`, the apartment's figure, served from KV (see Hosting). Dex's old looks were deleted from KV on 2026-11-10. **Never commit models** (public repo). |
 | `vendor/` | three.js r169 (`three.module.min.js`, loaded through an import map in `<head>`) and `jsm/` (GLTFLoader and the BufferGeometryUtils it imports). |
 | `meals.json` | The Recipe Book (`v: 2`): 16 recipes at three portions each (two tonight, one spare), amounts written into every step. Each recipe carries `g`, its shopping items as aisle-and-item id plus amount (`["Produce\|Garlic", "2 cloves"]`); `aisles` is the shelf order; plus `snacks`. Bump `v` and `bookOk()` together when the shape changes. |
 | `sw.js` | Service worker. Network-first cache, push notifications, notification buttons. |
-| `src/worker.js` | Cloudflare Worker: sync API, push API, reminder cron, `/workout/` proxy. |
+| `src/worker.js` | Cloudflare Worker: sync, push, sky and model APIs, reminder cron. |
 | `src/push.js` | Web Push encryption (RFC 8291) and VAPID signing (RFC 8292), no libraries. |
 | `wrangler.jsonc` | Worker config: custom domain, KV binding, Durable Object `Store` (synced state), cron, VAPID public key. |
 | `icons/`, `manifest.webmanifest` | Home-screen app icons and manifest. |
@@ -33,7 +33,7 @@ p17 and their code was deleted in p18. index.html keeps the data, sync and app l
 - Secrets live in the Cloudflare dashboard, not the repo: `SYNC_KEYS` (allowed sync-code hashes) and `VAPID_PRIVATE_JWK`.
 - There's no Cloudflare Access in front of the site (turned off on 2026-09-19). The sync and push APIs check the sync code.
 - The assets directory is the repo root. `.assetsignore` keeps `.dev.vars`, `.wrangler`, `.claude`, `.git`, `models`, `node_modules`, `tools` and `docs` off the site; check it still lists them before any direct `npx wrangler deploy`.
-- `/workout/*` is proxied from the Jackson-Workout-Plan repo so both apps share one origin and one localStorage.
+- The old workout app (Jackson-Workout-Plan) and its `/workout/` proxy were retired in November 2026 (p18); the program lives in `program.json`.
 - `/models/<name>` is served by the Worker from KV key `model:<name>` (stored gzipped, sent with `content-encoding: gzip`). To update `her.glb`: build it with the `tools/blender/` pipeline (docs/CHARACTER.md, Models v5), gzip it (`gzip -9 -k models/her.glb`), run `npx wrangler kv key put --binding SYNC --remote "model:her.glb" --path models/her.glb.gz` (a remote write: his go first), then bump `?v=` on its `url` in city.js. The service worker caches models cache-first.
 
 ## Data
@@ -45,7 +45,7 @@ Everything is one object, `S`, saved to `localStorage.daybook_v1` and synced.
 | `tasks[]`, `jobs[]`, `notes[]` | Lists of items with `id` and `u` (last changed). |
 | `shifts{date}`, `workouts{date}`, `extra{periodEnd}`, `shakes{date}`, `meals{week}`, `grocery{id}`, `snacks{name}` | Keyed maps, each value stamped with `u`. |
 | `tomb{}` | Deletions, kept 30 days so other devices learn about them. |
-| `settings` | Name, pay rate, payday anchor and cycle, cut-off, goals, reminders, workout link. |
+| `settings` | Name, pay rate, payday anchor and cycle, cut-off, goals, reminders. |
 | `template[7]` | The weekly training split (D1–D4, HIIT, REST). |
 | `clock` | The running shift timer. Synced (stamped `clockU`), so clocking in on the phone shows on the laptop. |
 | `ui` | Was the old pages' view state; empty now, still stripped before a sync. **Never synced.** |

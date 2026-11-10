@@ -1,5 +1,5 @@
 {
-  // Daybook + the workout app on one hostname (same origin, so they share localStorage).
+  // Daybook on its own hostname.
   // No Cloudflare Access since 2026-09-19: the sync and push APIs check the sync code.
   "name": "daybook",
   "main": "src/worker.js",
