@@ -312,6 +312,32 @@ Technical state only. Updated 2026-11-06.
   About 160 more 3D spruce round the chalet and the village from their own rng(4242), so nothing else moves. His Intel UHD:
   no context loss, city 28 to 29 fps, chalet 46-51 to 48-60, flight 32 to 27 (that run had reflections back on).
   Full battery passed. Before/after in Documents/Daybook City/ski_before_after.png.
+- **Built (p19, sound: Phase S and the ambience, 2026-11-10, his calls: "I might not mind ambience since it fits the app so
+  well... very much background noise", then "Good to go" on the Sound Lab):**
+  - **sound.js** is the Sound Lab's engine without its lab-only parts (Classic, grit, the signature auditions, the food
+    stall). t66 bakes every cue in both and compares the samples bit for bit, and measures the ambience in both.
+  - **Where each cue plays:** tap (district icon, with its room's first note; the chalet uses the ski village's),
+    fly (100 ms later), land (thump and second note), exit (back out to the city), hover and spot (laptop: pointer or
+    keyboard on an icon or an object), press (an object opens its section), open and back (Quick add, Progress and System
+    sheets open; any sheet closes), pickup and hangup (the apartment phone; it stops any ring), check and uncheck, tick,
+    undo (Undo on a toast), error (a bad backup, a failed manual sync or push test, a copy that can't), in and out (the
+    shop clock), study-in, study-out and school-check (the castle), chime (rest is up), win (session done, day cleared,
+    a PR, an offer), trophy (a trophy unlocks), level (a new level, the first time this device sees it, with a toast;
+    it swallows other cues for 3.5 s, bakes when earned and is freed when sound sleeps; the toast waits for the bake, at
+    most 10 s, so both land together), message (a reminder coming due
+    while the app is open; the engine is held awake from a minute before).
+  - **The ring:** landing in the apartment with a decision that arrived since the last ring rings a second after the
+    land, at most once per 30 minutes (`daybook_rung`, this device). His own sound when this device has one, the
+    built-in Glide otherwise. A plain revisit only lights the phone.
+  - **His own ring:** System, Sound: USE MY OWN takes any audio or video file. Kept in IndexedDB `arcadia_own` on the
+    device, never synced, exported or uploaded; level matched to -26 with a -14 dBFS cap and played once through.
+    PLAY, STOP, REMOVE. Tested only with a generated tone. **Never commit, upload or bundle such a file.**
+  - **Ambience:** System, Sound, Ambience OFF (default), LOW (-42 LUFS) or MEDIUM (-36). Plays only with Sound on, not on
+    Saver, and stops when the app is hidden. The place: the city while flying over it and on the way out, the room once
+    the flight heads in. The weather: what the city shows (`skyW()`: snow above .3, downpour from rain .75, rain above
+    .2), so at the chalet rain is snow. Wind: `/api/sky` now passes `wind_speed_10m`, 45 km/h and up counts as full.
+    The level table `CAL` is measured ahead by tools/amb-cal.html, so a phone never renders one.
+  - **Tests:** t66 (the engine matches the lab; every moment above in the app, muted; a generated tone for the picker).
 - **Built (p18, the old app's code deleted, 2026-11-09, his go on the cleanup):**
   - **Renamed Arcadia** (2026-11-10, his call, the name his website first had): every name he sees. Storage keys,
     caches, the Worker, the repo, the domain and the backup's `daybook` key stay, so nothing moves. A Home Screen icon
@@ -609,5 +635,6 @@ Technical state only. Updated 2026-11-06.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. His review of p11 and p12 live; the rainy-glass street through the door is open to tweak.
-  2. His review of the chalet (p13). Then the castle. School (Phase 2) and sound (Phase S) in the agreed order.
+  1. p19 (sound and ambience) on branch city-sound, not pushed: his go, then his ears on the iPhone (Sound on, then
+     Ambience LOW, his own ring added once on that device).
+  2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

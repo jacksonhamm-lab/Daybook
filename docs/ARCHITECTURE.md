@@ -15,6 +15,8 @@ p17 and their code was deleted in p18. index.html keeps the data, sync and app l
 |---|---|
 | `index.html` | The data and logic: state, sync, pay periods, quick add, School, the island toasts, and `window.CityApp` (~1,700 lines). A small `<style>` for the boot screen, the toasts and CITY OFFLINE. No build step. |
 | `city.js` | Daybook itself: the island, its rooms and the red HUD (in a shadow root). All 3D is built in code. Reads and acts on the app through `window.CityApp`. See docs/CITY.md. |
+| `sound.js` | Sound (p19): the Neon cues (`NeonSound`), the ambience (`AmbSound`) and the player for his own ring (`OwnRing`). A classic script loaded before the app. Copied from the Sound Lab (`Documents/Daybook City/sound-lab.html`), which stays normative for how a cue sounds; t66 checks the two render every cue sample for sample. |
+| `tools/amb-cal.html` | Measures the ambience's level for every place, weather and wind step and prints the `CAL` table that sound.js ships. Re-run it after changing the ambience's layers. |
 | `perf.js` | The performance tiers and Auto's step-down (see Performance). Sets `html[data-perf]` and `window.Perf` when imported. |
 | `tools/blender/` | Headless Blender scripts that turn a Tripo export into an app-ready GLB (see docs/CHARACTER.md, Models v5). |
 | `models/` (not in git) | `her.glb`, the apartment's figure, served from KV (see Hosting). Dex's old looks were deleted from KV on 2026-11-10. **Never commit models** (public repo). |
@@ -111,7 +113,7 @@ Line numbers drift, so search for the section comment instead.
 | `/* ---------- state` | Defaults, `load()`, `save()`, `commit()` (save, then `render()`). |
 | `/* ---------- cross-device sync` | `stampChanges`, `KNOWN`, `mergeState`, `syncNow`. |
 | `/* ---------- notifications` | Push subscribe/unsubscribe, sync code mirrored to IndexedDB for the service worker. |
-| `/* ---------- sound` | `sfx(name)`: quiet cues synthesised with Web Audio (no audio files). Off by default; the switch is in the system card and is stored per device in `localStorage.daybook_sound`, never synced. Add a cue to `SFX`, then call `sfx()` next to the matching `haptic()`. |
+| `/* ---------- sound` | `sfx(name, o)` plays a Neon cue from sound.js (no audio files). Off by default; Sound, Ambience (`daybook_amb`: off, low, medium) and his own ring are per device, never synced or exported. Also here: `ambWant()` (the city asks for its place and weather about once a second), `ringDecide()` (the apartment phone), the reminder `message` timer and `levelCheck()`. To add a cue: make it in the Sound Lab, copy it into sound.js, re-run t66. See docs/CITY.md, Built (p19). |
 | `/* ---------- training program and logs` | `program.json`, the split, set ticks and benchmark logs (per device). |
 | `/* ---------- school` | School's data and every edit to it (`SCHOOL`). |
 | `/* ---------- pay periods` | `periodFor`, `periodHours`, `extraHours`, submit-to-Len window. |
