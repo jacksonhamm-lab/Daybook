@@ -287,12 +287,12 @@ async function skyApi(request, env, ctx) {
   const key = new Request(`https://sky.daybook/${at[0]},${at[1]}`), cache = caches.default;
   const priv = body => new Response(body, { headers: { 'content-type': 'application/json', 'cache-control': 'private, max-age=600' } });
   const hit = await cache.match(key); if (hit) return priv(hit.body);
-  const q = `https://api.open-meteo.com/v1/forecast?latitude=${at[0]}&longitude=${at[1]}&current=weather_code,cloud_cover,precipitation,snowfall,temperature_2m,visibility&hourly=precipitation,snow_depth&past_hours=3&forecast_hours=1&timezone=GMT`;
+  const q = `https://api.open-meteo.com/v1/forecast?latitude=${at[0]}&longitude=${at[1]}&current=weather_code,cloud_cover,precipitation,snowfall,temperature_2m,visibility,wind_speed_10m&hourly=precipitation,snow_depth&past_hours=3&forecast_hours=1&timezone=GMT`;
   let w; try { const r = await fetch(q); if (!r.ok) throw new Error(r.status); w = await r.json(); } catch (e) { return json({ at, error: 'weather' }, 502); }
   const c = w.current || {}, h = w.hourly || {};
   const recent = (h.precipitation || []).reduce((s, x) => s + (x || 0), 0);
   const depth = (h.snow_depth || []).filter(x => x != null).pop() || 0;
-  const body = JSON.stringify({ at, t: Date.now(), code: c.weather_code, cloud: c.cloud_cover, precip: c.precipitation, snowfall: c.snowfall, temp: c.temperature_2m, vis: c.visibility, recent, depth });
+  const body = JSON.stringify({ at, t: Date.now(), code: c.weather_code, cloud: c.cloud_cover, precip: c.precipitation, snowfall: c.snowfall, temp: c.temperature_2m, vis: c.visibility, wind: c.wind_speed_10m, recent, depth });
   // the Cache API won't keep a private response, so the kept copy says public; browsers get private
   ctx.waitUntil(cache.put(key, new Response(body, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=600' } })));
   return priv(body);

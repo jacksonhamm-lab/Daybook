@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p18';
+export const BUILD = 'p19';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -330,6 +330,9 @@ input.hin[type=time],input.hin[type=number]{font-variant-numeric:tabular-nums;co
 select.hin{color-scheme:dark}
 .seg2{display:flex;flex-wrap:wrap;gap:6px}
 .seg2 .rbtn{min-height:40px;padding:0 11px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+label.rbtn{cursor:pointer}
+.vh:focus-visible+label.rbtn{outline:2px solid var(--hud-cyan);outline-offset:2px}
 .gswap{margin-top:10px}
 .gswap .rbtn{min-width:52px}
 .gtpl{display:grid;gap:6px}
@@ -5239,7 +5242,7 @@ const shU = { uTime: TIME };
 const SKY_U = { sky: { value: new THREE.Vector4(0, 0, 1, 0) }, skyH: { value: new THREE.Color() }, skyZ: { value: new THREE.Color() }, lamp: { value: new THREE.Vector2(1, 1) }, dayFx: { value: 0 }, rainK: { value: new THREE.Vector4(1, 0, 0, 0) }, drops: { value: 1 },
   look: { value: new THREE.Vector4(0, 0, 1, 0) }, sun: { value: new THREE.Vector3(0, -1, 0) }, sunC: { value: new THREE.Color() }, haze: { value: new THREE.Color() }, cloudB: { value: new THREE.Color() }, cloudR: { value: new THREE.Color() } };
 const SKY_RAIN = { cloud: 1, rain: 1, snow: 0, wet: 1, cover: 0, fog: 0 };
-const SKY = { at: null, wx: null, over: null, el: -90, az: 0, L: -1, w: { ...SKY_RAIN }, key: moonDir.clone(), baked: moonDir.clone(), next: 0, ask: 0 };
+const SKY = { at: null, wx: null, wind: null, over: null, el: -90, az: 0, L: -1, w: { ...SKY_RAIN }, key: moonDir.clone(), baked: moonDir.clone(), next: 0, ask: 0 };
 const mixN = (a, b, t) => a * (1 - t) + b * t;   /* exact at both ends, so daylight 0 leaves the night as it was */
 const mixO = (a, b, t) => { const o = {}; for (const k in a) o[k] = Array.isArray(a[k]) ? a[k].map((v, i) => mixN(v, b[k][i], t)) : mixN(a[k], b[k], t); return o; };
 const SKY_N = { key: [.22, .28, .42], hi: [.14, .18, .28], lo: [.085, .06, .07], side: [.44, .35, .34], fogHi: [.05, .068, .09], fogLo: [.27, .15, .105], rim: [.16, .38, .55], fogD: .002, pool: .62 };
@@ -5284,10 +5287,10 @@ function skyRoom() {
 function skyAsk() {
   /* every 15 minutes while the city is on; what came back last is kept for the next start */
   SKY.ask = performance.now() + 9e5;
-  fetch('./api/sky', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(x => { if (!x || !x.at) return; if (!SKY.wx) SKY.snap = true; SKY.at = x.at; SKY.wx = skyWeather(x); try { localStorage.setItem('city.sky', JSON.stringify({ at: x.at, wx: SKY.wx, t: Date.now() })); } catch (e) { } SKY.next = 0; }).catch(() => { });
+  fetch('./api/sky', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(x => { if (!x || !x.at) return; if (!SKY.wx) SKY.snap = true; SKY.at = x.at; SKY.wx = skyWeather(x); SKY.wind = x.wind == null ? null : clamp(x.wind / 45); try { localStorage.setItem('city.sky', JSON.stringify({ at: x.at, wx: SKY.wx, wind: SKY.wind, t: Date.now() })); } catch (e) { } SKY.next = 0; }).catch(() => { });
 }
 function skyKept() {
-  try { const k = JSON.parse(localStorage.getItem('city.sky') || 'null'); if (k && k.at) { SKY.at = k.at; if (Date.now() - k.t < 3 * 36e5) SKY.wx = k.wx; } } catch (e) { }
+  try { const k = JSON.parse(localStorage.getItem('city.sky') || 'null'); if (k && k.at) { SKY.at = k.at; if (Date.now() - k.t < 3 * 36e5) { SKY.wx = k.wx; SKY.wind = k.wind ?? null; } } } catch (e) { }
 }
 /* a sky by name ('day,snow'), or { el, az, cloud, rain, snow, wet, cover, fog }; null goes back to the real one */
 function skyParse(s) {
@@ -6388,6 +6391,7 @@ function buildTags() {
     const b = document.createElement('button'); b.className = 'tag'; b.type = 'button'; b.dataset.k = h.key; b.setAttribute('aria-label', h.label);
     b.innerHTML = `<span class="lbl"><span><b>${h.label}</b><small hidden></small><span class="key" aria-hidden="true">${h.hotkey}</span></span></span><i class="ln" style="--h:${h.line}px"></i><i class="tk"></i>`;
     b.addEventListener('click', () => { if (S.drag && S.drag.moved) return; tapHot(h.key); });
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && !S.drag) APP.sfx('spot'); }); b.addEventListener('focus', () => { if (b.matches(':focus-visible')) APP.sfx('spot'); });
     tw.appendChild(b); tagEls.push({ el: b, h, line: h.line });
   });
 }
@@ -6400,6 +6404,7 @@ function hudInit() {
     b.innerHTML = `<span class="plate"><svg viewBox="0 0 24 24">${o.svg}</svg></span><span class="lab">${o.word}<small>${o.r}</small></span><i class="edgea"></i><i class="tk"></i>`;
     if (o.k === 'work') b.insertAdjacentHTML('afterbegin', '<i class="live" aria-hidden="true" hidden></i>');
     b.addEventListener('click', () => { if (S.drag && S.drag.moved) return; tapIcon(o.k); });
+    b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && !S.drag && S.mode === 'city') APP.sfx('hover'); }); b.addEventListener('focus', () => { if (b.matches(':focus-visible')) APP.sfx('hover'); });
     wrap.appendChild(b); const ns = 'http://www.w3.org/2000/svg', ld = document.createElementNS(ns, 'path'), dt = document.createElementNS(ns, 'rect'); dt.setAttribute('width', 5); dt.setAttribute('height', 5); ld.style.setProperty('--acc', o.c); dt.style.setProperty('--acc', o.c); $('#leaders').append(ld, dt); iconEls.push({ el: b, a: ANCHORS[o.k], k: o.k, ld, dt, sm: b.querySelector('small'), o });
   });
   buildTags();
@@ -6491,7 +6496,7 @@ function hudInit() {
     if (d.jst) { const [id, st] = d.jst.split('|'); APP.jobStatus(id, st); return; }
     if (d.jdel) APP.jobDel(d.jdel);
   });
-  hudEl.addEventListener('change', e => { const el = e.target; if (el.dataset && el.dataset.set) APP.setting(el.dataset.set, el.value); });
+  hudEl.addEventListener('change', e => { const el = e.target; if (el.id === 'gRingF') { const f = el.files && el.files[0]; el.value = ''; if (f) Promise.resolve(APP.ownPick(f)).then(() => refreshGlobal('sys')); return; } if (el.dataset && el.dataset.set) APP.setting(el.dataset.set, el.value); });
   hudEl.addEventListener('input', e => { if (e.target.id === 'gAddI') quickPrev(); });
   hudEl.addEventListener('submit', e => {
     const f = e.target;
@@ -6615,7 +6620,8 @@ function tapIcon(k) {
   const e = iconEls.find(i => i.k === k);
   if (!e.o.room) return;
   /* a build that fails must not leave him stuck: he stays in the city, and it's logged */
-  try { loadRoom(e.o.room); } catch (x) { APP.log(x); APP.toast('That room could not load'); return; }
+  try { loadRoom(e.o.room); } catch (x) { APP.log(x); APP.toast('That room could not load'); APP.sfx('error'); return; }
+  APP.sfx('tap', { room: e.o.room });
   flyIn(e.o.room);
 }
 /* A room gets a history entry, so browser back flies out the same way as ‹ and Escape. */
@@ -6623,7 +6629,7 @@ function flyIn(id, push = true) {
   if (S.mode === 'fly' && S.fly) S.fly.dir = 1;
   else { closeSheet(true); aptOrd.clear(); loadRoom(id); refreshRoom(); flightRes(true); makeFlight(1, restYaw()); setMode('fly'); glitchHud(1); S.scanT = -9; }
   if (push) history.pushState({ city: id }, '');
-  APP.sfx('open');
+  setTimeout(() => { if (S.mode === 'fly' && S.fly && S.fly.dir > 0) APP.sfx('fly'); }, 100);
 }
 function flyOut() {
   closeReset();
@@ -6631,17 +6637,18 @@ function flyOut() {
   closeSheet(true); S.yaw = S.yawGoal = 0;
   if (S.mode === 'fly' && S.fly) S.fly.dir = -1;
   else { flightRes(true); makeFlight(-1, y); setMode('fly'); glitchHud(1); }
-  APP.sfx('back');
+  APP.sfx('exit');
 }
 function goBack() { if (S.close) return stepBack(); if (history.state && history.state.city) history.back(); else flyOut(); }
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
-function enterRoom() { const y = S.fly && S.fly.yaw || 0; S.fly = null; flightRes(false); setMode('room'); S.ringIn = S.t; S.yaw = y; S.yawGoal = RIG ? y : restYaw(); S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
+function enterRoom() { const y = S.fly && S.fly.yaw || 0; S.fly = null; flightRes(false); setMode('room'); APP.sfx('land', { room: room.id }); if (room.id === 'apartment') { const at = S.modeT; setTimeout(() => { if (S.mode === 'room' && room.id === 'apartment' && S.modeT === at && APP.ring) APP.ring(); }, 1000); } S.ringIn = S.t; S.yaw = y; S.yawGoal = RIG ? y : restYaw(); S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
 function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; gymDay = null; shopDay = null; aptWeek = null; shopP = null; aptOpen = null; aptNote = null; csWeek = null; csDay = null; csOpen = null; csCedit = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
 const flyLabel = dir => setText('#flyT', (dir > 0 ? 'APPROACH: ' : 'DEPART: ') + room.def.name);
 function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideRoom() ? 0 : ''; flyLabel(dir); $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - room.box.x, CAM.position.z - room.box.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
 function tapHot(k) {
   const h = room.hot.find(x => x.key === k); if (!h) return;
   if (h.run) { h.run(); return; }
+  if (h.key === 'decide') { if (APP.ringStop) APP.ringStop(); APP.sfx('pickup'); } else APP.sfx('press');
   openSheet(h.sheet);
   tagEls.forEach(t => { if (t.h.key === k) { t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 600); } });
 }
@@ -6650,7 +6657,7 @@ function tapClock() { if (APP.clock().on) APP.act('clock-out'); else APP.clockIn
 /* the sheet holds the room's cards, or one of the city's own (quick add, progress, system) on its own */
 const GCARD = { add: ['gAdd', 'Quick add', 'SYS.INPUT'], prog: ['gProg', 'Progress', 'SYS.RECORD'], sys: ['gSys', 'System', 'SYS.CONFIG'] };
 let gOpen = null;
-function openGlobal(k) { if (!GCARD[k]) return; gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
+function openGlobal(k) { if (!GCARD[k]) return; if (!S.sheet || gOpen !== k) APP.sfx('open'); gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
 /* a room's sheet shows one card at a time; tabs switch between them */
 const TABS = { apartment: [['cToday', 'TODAY'], ['cWeek', 'WEEK'], ['cNotes', 'NOTES'], ['cCareer', 'CAREER'], ['cDecide', 'DECIDE']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'RACK'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY']], chalet: [['cList', 'LIST'], ['cMeals', 'MEALS'], ['cShakes', 'SHAKES'], ['cCardio', 'CARDIO']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'COURSE'], ['cShelf', 'COURSES']] };
 let curCard = null;
@@ -6667,7 +6674,7 @@ function openSheet(id) {
   setText('#shName', g ? GCARD[g][1] : room.def.sheet[0]); setText('#shPage', g ? GCARD[g][2] : room.def.sheet[1]); sh0.setAttribute('aria-label', g ? GCARD[g][1] : room.def.sheet[0]);
   if (!g) showCard(id);
   refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) { $('#aptBox').inert = true; $('#gymBox').inert = true; $('#chBox').inert = true; $('#scBox').inert = true; } const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0; scanNow(); $('#btnClose').focus({ preventScroll: true }); }
-function closeSheet(quiet) { S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; $('#chBox').inert = false; $('#scBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
+function closeSheet(quiet) { if (S.sheet && !quiet) APP.sfx(!gOpen && curCard === 'cDecide' ? 'hangup' : 'back'); S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; $('#chBox').inert = false; $('#scBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
 function updateSel() {
   if (!HOME) return;
   const o = ICONS[sel], a = HOME.attrs[o.attr], v = Math.round(pct01(a.bar) * 100);
@@ -6783,7 +6790,9 @@ function refreshGlobal(k) {
       <div class="sgp"><b>REMINDERS</b><div class="seg2">${X.push ? '<button class="rbtn ol" data-sact="push-off">TURN OFF</button><button class="rbtn" data-sact="push-test">SEND A TEST</button>' : '<button class="rbtn" data-sact="push-on">TURN ON NOTIFICATIONS</button>'}</div><p>${X.pushSay}</p>
         <div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn${X.brief ? '' : ' ol'}" data-sact="toggle-brief" aria-pressed="${X.brief}">MORNING RUNDOWN</button><input class="hin" type="time" data-set="remindAt" value="${X.remindAt}" style="width:130px" aria-label="Rundown time"></div>
         <p>Keep reminding until it is done:</p><div class="seg2" style="margin-top:6px">${[[0, 'OFF'], [120, 'EVERY 2H'], [240, 'EVERY 4H']].map(([m, l]) => `<button class="rbtn${on(X.nag, m)}" data-sact="set-nag" data-v="${m}" aria-pressed="${X.nag === m}">${l}</button>`).join('')}</div></div>
-      <div class="sgp"><b>SOUND</b><div class="seg2">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.sound ? '1' : '0', v)}" data-sact="set-sound" data-v="${v}" aria-pressed="${(X.sound ? '1' : '0') === v}">${l}</button>`).join('')}</div><p>This device only. An iPhone's silent switch mutes it.</p></div>
+      <div class="sgp"><b>SOUND</b><div class="seg2">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.sound ? '1' : '0', v)}" data-sact="set-sound" data-v="${v}" aria-pressed="${(X.sound ? '1' : '0') === v}">${l}</button>`).join('')}</div><p>This device only. An iPhone's silent switch mutes it.</p>
+        <p style="margin-top:12px">Ambience: quiet background for each place, shaped by the weather where you are.</p><div class="seg2" style="margin-top:6px">${[['off', 'OFF'], ['low', 'LOW'], ['medium', 'MEDIUM']].map(([v, l]) => `<button class="rbtn${on(X.amb, v)}" data-sact="set-amb" data-v="${v}" aria-pressed="${X.amb === v}">${l}</button>`).join('')}</div><p>${!X.sound ? 'Plays once Sound is on.' : X.amb !== 'off' && X.perf === 'saver' ? 'Paused while Performance is on Saver.' : 'Dips under every sound and stops when you leave the app.'}</p>
+        ${X.own ? `<p style="margin-top:12px">Ring: ${X.own.has ? `your sound, ${X.own.name} (${X.own.secs} s)${X.own.kept ? '' : ', until you reload'}.` : 'the built-in ring. You can use a sound of your own: it stays on this device and is never uploaded.'} It rings when a decision is waiting.</p><div class="seg2" style="margin-top:6px"><input class="vh" id="gRingF" type="file" accept="audio/*,video/*,.mov,.m4a,.mp3,.wav"><label class="rbtn ol" for="gRingF">${X.own.has ? 'CHANGE' : 'USE MY OWN'}</label><button class="rbtn ol" data-sact="ring-test">PLAY</button><button class="rbtn ol" data-sact="ring-stop">STOP</button>${X.own.has ? '<button class="rbtn ol" data-sact="ring-clear">REMOVE</button>' : ''}</div>` : ''}</div>
       <div class="sgp"><b>PERFORMANCE</b><div class="seg2">${[['auto', 'AUTO'], ['smooth', 'SMOOTH'], ['balanced', 'BALANCED'], ['saver', 'SAVER']].map(([v, l]) => `<button class="rbtn${on(X.perf, v)}" data-sact="set-perf" data-v="${v}" aria-pressed="${X.perf === v}">${l}</button>`).join('')}</div><p>${X.perfSay}</p><div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn ol" data-sact="copy-log">COPY PROBLEM LOG</button><span class="mi">${X.probs} LOGGED</span></div></div>
       <div class="sgp"><b>SYNC</b>${X.sync ? '<div class="seg2"><button class="rbtn" data-sact="sync-now">SYNC NOW</button><button class="rbtn ol" data-sact="sync-off">TURN OFF</button></div>' : '<form class="hadd" id="gSyncF" style="margin-top:0"><input class="hin" id="gSyncI" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="SYNC CODE" aria-label="Sync code"><button class="rbtn" type="submit">CONNECT</button></form>'}<p>${X.syncSay}</p></div>
       <div class="sgp"><b>BACKUP</b><div class="seg2"><button class="rbtn ol" data-sact="export">EXPORT BACKUP</button><button class="rbtn ol" data-sact="import">IMPORT BACKUP</button></div><p>Install: iPhone Share, then Add to Home Screen.</p></div>`);
@@ -6907,6 +6916,12 @@ function refreshCastle() {
   if (fk && !fo.isConnected) { const to = [...ROOT.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv) || $('#btnClose'); if (to) to.focus({ preventScroll: true }); }
 }
 /* the study clock counts on the panel and the card, and the sand runs, while he's in the castle */
+function ambTick() {
+  if (!APP.ambWant) return;
+  const inRoom = S.mode === 'room' || (S.mode === 'fly' && S.fly && S.fly.dir > 0), place = inRoom && room.id ? room.id : 'city', w = inRoom ? skyW() : SKY.w;
+  APP.ambWant(place, w.snow > .3 ? 'snow' : w.rain >= .75 ? 'downpour' : w.rain > .2 ? 'rain' : 'clear', SKY.wind);
+}
+setInterval(() => { try { ambTick(); } catch (e) { APP.log(e); } }, 1000);
 setInterval(() => { if (room.id !== 'castle' || S.mode === 'city') return; const T = APP.school(); if (!T.clock.on) return; setText('#csClk', hms(T.clock.ms)); setText('#vS3', hms(T.clock.ms)); if (room.sand && (S.sandT = (S.sandT || 0) + 1) % 3 === 0) room.sand(T); }, 1000);
 function castleInit() {
   $('#btnScSheet').addEventListener('click', () => openSheet('cDue'));

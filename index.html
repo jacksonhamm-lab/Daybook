@@ -15,6 +15,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="sound.js?v=p19"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -25,9 +26,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p18';
+  window.DAYBOOK_BUILD = 'p19';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p18'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p19'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -35,7 +36,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p18').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p19').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -515,38 +516,71 @@ const clamp01 = x => Math.max(0, Math.min(1, x || 0));
 const haptic = p => { try { navigator.vibrate && navigator.vibrate(p || 8); } catch (e) {} };
 
 /* ---------- sound ----------
-   Quiet cues made in code (no audio files). Off until it's turned on in Settings, and the
-   choice stays on this device: a phone and a laptop rarely want the same answer.
-   The context is only created on a tap, which is also what iOS needs to let it play. */
-const SND = { on: false, ctx: null, out: null };
-try { SND.on = localStorage.getItem('daybook_sound') === '1'; } catch (e) {}
-function sndCtx() {
-  if (!SND.ctx) {
-    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
-    SND.ctx = new AC(); SND.out = SND.ctx.createGain(); SND.out.gain.value = .7; SND.out.connect(SND.ctx.destination);
-  }
-  if (SND.ctx.state !== 'running' && SND.ctx.resume) SND.ctx.resume().catch(() => {});
-  return SND.ctx;
+   The Neon cues, the ambience and his own ring live in sound.js (made in the Sound Lab). Off until Sound is turned on
+   in System, and every choice stays on this device: a phone and a laptop rarely want the same answer. The audio
+   context is only made on a tap, which is also what iOS needs to let it play. */
+const NS = window.NeonSound, SND = { on: false, amb: 'off', msgAt: 0 };
+try { SND.on = localStorage.getItem('daybook_sound') === '1'; SND.amb = localStorage.getItem('daybook_amb') || 'off'; } catch (e) {}
+// baked first: what a tap needs at once. The level-up (about 1.2 MB) bakes when it is earned and is freed when sound sleeps.
+const SND_FIRST = ['tick', 'open', 'back', 'check', 'uncheck', 'undo', 'error', 'hover', 'spot', 'press', 'fly', 'exit'];
+function sndBoot() {
+  if (!SND.on || !NS) return null; const fresh = !NS.S.ctx, c = NS.boot();
+  if (c && fresh) { const rest = Object.keys(NS.NEON).filter(k => k !== 'level' && !SND_FIRST.includes(k)); NS.prepare([['neon', SND_FIRST], ['neon', rest]]); }
+  return c;
 }
-// One soft note: quick attack, long tail, optional glide to a second pitch.
-function sndNote(f, at, len, vol, type, to) {
-  const c = SND.ctx, o = c.createOscillator(), g = c.createGain(), t = c.currentTime + at;
-  o.type = type || 'sine'; o.frequency.setValueAtTime(f, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + len);
-  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + len);
-  o.connect(g); g.connect(SND.out); o.start(t); o.stop(t + len + .02);
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => { if (SND.on) sndBoot(); }, true));
+function sfx(name, o) { if (!SND.on || document.hidden || !NS) return 0; try { sndBoot(); return NS.play(name, o) || 0; } catch (e) { return 0; } }
+function soundOn(on) {
+  SND.on = on; try { localStorage.setItem('daybook_sound', on ? '1' : '0'); } catch (x) {}
+  if (!NS) return; if (on) { sndBoot(); sfx('check', { wait: 1500 }); } else { window.AmbSound && AmbSound.stop(0); window.OwnRing && OwnRing.stop(); NS.off(); }
 }
-const SFX = {
-  tick: () => sndNote(1320, 0, .05, .12),                                              // a set, a shake, a grocery tick
-  open: () => sndNote(520, 0, .09, .11, 'sine', 780),                                  // a chip opens its page
-  back: () => sndNote(700, 0, .09, .1, 'sine', 470),                                 // back to Dex
-  check: () => { sndNote(784, 0, .12, .14); sndNote(1175, .07, .2, .12); },            // task done
-  uncheck: () => sndNote(587, 0, .1, .1),
-  in: () => { sndNote(294, 0, .22, .15, 'triangle'); sndNote(440, .12, .32, .13, 'triangle'); },    // clock in: rises
-  out: () => { sndNote(440, 0, .22, .13, 'triangle'); sndNote(294, .12, .36, .15, 'triangle'); },   // clock out: falls
-  chime: () => { sndNote(880, 0, .5, .13); sndNote(1319, .14, .7, .11); },             // rest is up
-  win: () => { [659, 784, 988, 1319].forEach((f, i) => sndNote(f, i * .09, .5, .1)); },            // session or day complete
-};
-function sfx(name) { if (!SND.on || document.hidden || !SFX[name]) return; try { if (sndCtx()) SFX[name](); } catch (e) {} }
+// the ambience: the city asks for its place and weather about once a second; it plays only with Sound on, its own
+// switch on (Low or Medium), the Performance setting not on Saver, and an audio context a tap has woken
+const AMB_AT = new Set(['city', 'apartment', 'shop', 'gym', 'chalet', 'castle']);
+function ambWant(place, wx, wind) {
+  const A = window.AmbSound; if (!A || !NS) return;
+  const want = SND.on && SND.amb !== 'off' && perfNow().pick !== 'saver' && !document.hidden && AMB_AT.has(place) ? place : null;
+  if (!want) { if (A.A.place) A.stop(); return; }
+  const c = NS.S.ctx; if (!c || c.state !== 'running') return;
+  if (A.A.level !== SND.amb) A.setLevel(SND.amb);
+  wx = A.WX[wx] ? wx : 'clear'; const w = wind == null ? A.WX[wx].wind : Math.max(0, Math.min(1, wind));
+  if (wx !== A.A.wx || Math.round(w * 10) !== Math.round(A.A.wind * 10)) { A.A.wx = wx; A.A.wind = w; if (A.A.place) { A.start(want, 2); return; } }
+  if (A.A.place !== want) A.start(want, A.A.place ? 2.5 : 3);
+}
+// the apartment phone rings for a decision that arrived since the last ring, at most once per 30 minutes: his own
+// sound when this device has one, the built-in ring otherwise. A plain revisit only lights the phone.
+function ringDecide() {
+  if (!SND.on || !NS || !NS.S.ctx) return false;
+  let r = {}; try { r = JSON.parse(localStorage.getItem('daybook_rung') || '{}') || {}; } catch (e) {}
+  const ids = slipped().map(t => t.id), seen = r.ids || [], fresh = ids.filter(i => !seen.includes(i));
+  if (!fresh.length || Date.now() - (r.at || 0) < 18e5) return false;
+  try { localStorage.setItem('daybook_rung', JSON.stringify({ ids, at: Date.now() })); } catch (e) {}
+  const built = () => sfx('ring', { force: true, wait: 3000 });
+  if (window.OwnRing && OwnRing.O.has) OwnRing.play().then(ok => { if (!ok) built(); }); else built();
+  return true;
+}
+const ringStop = () => { if (window.OwnRing) OwnRing.stop(); if (NS) NS.quiet('ring'); };
+// message: a reminder coming due while the app is open. The engine is kept awake from a minute before, or it would sleep.
+// It stays quiet while the phone rings.
+function nextRemind() { const d = today(), now = Date.now(); let best = 0; for (const t of tasksOn(d)) { if (!t.remind || isDone(t, d)) continue; const at = new Date(`${d}T${remAt(t, d)}`).getTime(); if (at > now - 30e3 && (!best || at < best)) best = at; } return best; }
+setInterval(() => {
+  if (!SND.on || !NS || !NS.S.ctx) return; let at = 0; try { at = nextRemind(); } catch (e) {} const left = at ? at - Date.now() : Infinity;
+  NS.hold('message', left < 75e3 && left > -30e3);
+  if (at && left <= 0 && SND.msgAt !== at) { SND.msgAt = at; const ringing = NS.S.voices.some(v => v.nm === 'neon|ring') || (window.OwnRing && OwnRing.playing()); if (!ringing) sfx('message'); }
+}, 5000);
+// a new level plays the level-up the first time this device sees it (after the moment's own toasts); the first look
+// only remembers where he is
+function levelCheck() {
+  let lv = 0; try { lv = levelFor(xpTotal()).lvl; } catch (e) { return; }
+  const k = 'daybook_lvl_seen'; let seen = 0; try { seen = +localStorage.getItem(k) || 0; } catch (e) {}
+  if (lv === seen) return; try { localStorage.setItem(k, String(lv)); } catch (e) {}
+  if (!(seen && lv > seen)) return;
+  // the level-up bakes when earned (a few seconds on a phone), so the toast waits for it and both land together; at most 10 s
+  const show = () => { if (show.done) return; show.done = 1; island.toast(`Level ${lv}`, { icon: I.trophy, color: '#ffd60a', big: true }); };
+  const c = SND.on && NS && NS.S.ctx; if (!c) return show();
+  setTimeout(show, 10000); NS.bake('neon', 'level', c.sampleRate).then(() => { if (!show.done) { sfx('level', { wait: 500 }); show(); } }, show);
+}
+if (window.OwnRing) OwnRing.load().catch(() => {});
 const readLS = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? fb; } catch (e) { return fb; } };
 const writeLS = (k, v) => { MEMO.clear(); try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 // Per-render cache for storage reads; a full render used to parse the workout state dozens of times.
@@ -728,7 +762,7 @@ const SCHOOL = {
   },
   start(course) {
     if (S.studyClock) return false;
-    S.studyClock = { startTs: Date.now(), course: courseById(course) ? course : '' }; haptic(15); sfx('in'); commit();
+    S.studyClock = { startTs: Date.now(), course: courseById(course) ? course : '' }; haptic(15); sfx('study-in'); commit();
     island.toast(`Studying${courseLabel(course) ? ' · ' + courseLabel(course) : ''}`, { icon: I.school, color: SCH_C, action: { label: 'Undo', fn: () => { S.studyClock = null; commit(); island.toast('Restored'); } } });
     return true;
   },
@@ -738,7 +772,7 @@ const SCHOOL = {
     const st = new Date(c.startTs), en = new Date(); S.studyClock = null;
     if (en - st < 60e3) { commit(); island.toast('Under a minute, not logged'); return null; }
     const d = iso(st), sess = { start: hm(st), end: hm(en), course: c.course || '' }, was = S.study[d] ? JSON.stringify(S.study[d].s) : null;
-    S.study[d] = { s: [...studyOn(d), sess] }; haptic(15); sfx('out'); commit();
+    S.study[d] = { s: [...studyOn(d), sess] }; haptic(15); sfx('study-out'); commit();
     // Undo puts the clock back running, and the day back as it was
     island.toast(`${fh(Math.round(sessHours(sess) * 100) / 100)}h studied`, { icon: I.school, color: SCH_C, action: { label: 'Undo', fn: () => { if (was) S.study[d] = { s: JSON.parse(was) }; else delete S.study[d]; S.studyClock = c; commit(); island.toast('Restored'); } } });
     return { d, sess };
@@ -814,7 +848,7 @@ const SCHOOL = {
     S.school = { ...school(), res: r }; haptic(6); commit();
   },
   resAdd(text) { const v = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 80); if (!v) return false; const r = res(); r.list = [...r.list, { id: uid(), t: v, done: false }]; S.school = { ...school(), res: r }; haptic(); commit(); return true; },
-  resTick(id) { const r = res(), x = r.list.find(y => y.id === id); if (!x) return; r.list = r.list.map(y => y.id === id ? { ...y, done: !y.done } : y); S.school = { ...school(), res: r }; haptic(8); sfx(x.done ? 'uncheck' : 'check'); commit(); },
+  resTick(id) { const r = res(), x = r.list.find(y => y.id === id); if (!x) return; r.list = r.list.map(y => y.id === id ? { ...y, done: !y.done } : y); S.school = { ...school(), res: r }; haptic(8); sfx(x.done ? 'uncheck' : 'school-check'); commit(); },
   resDel(id) { const r = res(); if (!r.list.some(y => y.id === id)) return; r.list = r.list.filter(y => y.id !== id); S.school = { ...school(), res: r }; haptic(10); commit(); },
 };
 
@@ -1026,7 +1060,7 @@ function confetti(x, y, colors) {
       { duration: 900 + Math.random() * 700, easing: 'cubic-bezier(.15,.7,.35,1)' }).finished.then(() => el.remove());
   }
 }
-function celebrate(text, color) { haptic([12, 40, 18]); sfx('win'); island.toast(text, { icon: I.trophy, color: '#ffd60a', big: true }); confetti(innerWidth / 2, Math.min(140, innerHeight * .2), [color, '#fff', '#ffd60a']); }
+function celebrate(text, color, cue = 'win') { haptic([12, 40, 18]); sfx(cue); island.toast(text, { icon: I.trophy, color: '#ffd60a', big: true }); confetti(innerWidth / 2, Math.min(140, innerHeight * .2), [color, '#fff', '#ffd60a']); }
 
 /* ---------- dynamic island ---------- */
 let REST = null;
@@ -1190,7 +1224,7 @@ function checkTrophies() {
   const fresh = earnedTrophies().filter(t => !S.seen.includes(t.id));
   if (!fresh.length) return;
   S.seen.push(...fresh.map(t => t.id)); save();
-  fresh.slice(0, 1).forEach(t => celebrate(t.name + ' unlocked', '#ffd60a'));
+  fresh.slice(0, 1).forEach(t => celebrate(t.name + ' unlocked', '#ffd60a', 'trophy'));
 }
 // A clear day is recorded once, so the reward can't be farmed by re-ticking.
 function noteClearDay() {
@@ -1259,6 +1293,7 @@ function render() {
   syncAuto();
   island.live(); tick();
   window.City && City.update();
+  clearTimeout(SND.lvT); SND.lvT = setTimeout(levelCheck, 2600);
   // open reminders on the app icon
   try { const n = slipped().length; if (navigator.setAppBadge) (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {}); } catch (e) {}
 }
@@ -1312,12 +1347,12 @@ function clockOut() {
 }
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); }
-  catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+  catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); if (!ok) { sfx('error'); return island.toast('Could not copy here'); } }
   island.toast('Copied to clipboard', { icon: I.check, color: '#30d158' });
 }
 
 document.addEventListener('click', e => {
-  if (e.target.closest('[data-il]')) { e.stopPropagation(); const fn = island.action; island.action = null; island.mode = null; clearTimeout(island.timer); fn && fn(); island.live(); return; }
+  if (e.target.closest('[data-il]')) { e.stopPropagation(); const fn = island.action; island.action = null; island.mode = null; clearTimeout(island.timer); if (fn) sfx('undo'); fn && fn(); island.live(); return; }
   const el = e.target.closest('[data-act]'); if (!el) return;
   const a = el.dataset.act, v = el.dataset.v;
   switch (a) {
@@ -1336,10 +1371,14 @@ document.addEventListener('click', e => {
       return fetch('api/push/test', { headers: { 'x-sync-key': SYNC.code } })
         .then(r => r.json())
         .then(d => island.toast(d.ok ? 'Test sent — check your notifications' : (d.error || 'Test failed')))
-        .catch(() => island.toast('Test failed'));
+        .catch(() => { sfx('error'); island.toast('Test failed'); });
     }
     case 'set-nag': S.settings.nag = +v; return commit();
-    case 'set-sound': { SND.on = v === '1'; try { localStorage.setItem('daybook_sound', SND.on ? '1' : '0'); } catch (x) {} haptic(6); return sfx('check'); }
+    case 'set-sound': { haptic(6); return soundOn(v === '1'); }
+    case 'set-amb': { SND.amb = ['low', 'medium'].includes(v) ? v : 'off'; try { localStorage.setItem('daybook_amb', SND.amb); } catch (x) {} haptic(6); if (SND.amb === 'off' && window.AmbSound) AmbSound.stop(); return sfx('tick'); }
+    case 'ring-clear': { haptic(6); return window.OwnRing && OwnRing.clear().then(() => { island.toast('Your ring is removed from this device'); window.City && City.update(); }); }
+    case 'ring-test': { if (!SND.on) return island.toast('Turn Sound on first'); sndBoot(); if (OwnRing.O.has) { ringStop(); return OwnRing.play().then(ok => ok || sfx('error')); } return sfx('ring', { force: true, reps: 1 }); }
+    case 'ring-stop': return ringStop();
     case 'set-perf': { if (window.Perf) window.Perf.set(v); else { try { localStorage.setItem('daybook_perf', v); } catch (x) {} } return haptic(6); }
     case 'copy-log': { let log = []; try { log = JSON.parse(localStorage.getItem('daybook_log') || '[]'); } catch (x) {}
       const head = `Arcadia problem log · ${navigator.userAgent} · perf ${perfLabel()} · ${devicePixelRatio}x · ${innerWidth}x${innerHeight}`;
@@ -1352,7 +1391,7 @@ document.addEventListener('click', e => {
       commit(); return island.toast('Back at ' + t12(at), { icon: I.bell, color: '#ff9f0a' }); }
     case 'rm-tomorrow': { const t = S.tasks.find(x => x.id === el.dataset.id); t.date = iso(addDays(parse(today()), 1)); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } commit(); return island.toast('Moved to tomorrow', { icon: I.arrow, color: '#0a84ff' }); }
     case 'sync-off': return setSyncCode('');
-    case 'sync-now': return syncNow();
+    case 'sync-now': return syncNow().then(() => { if (SYNC.state === 'err') sfx('error'); });
     case 'export': { const blob = new Blob([JSON.stringify({ daybook: S, workout: { state: readLS(W_STATE, {}), cardio: cardioLogs(), pushups: benchLogs('pushups'), plank: benchLogs('plank'), row: benchLogs('row') } }, null, 2)], { type: 'application/json' }); const name = `arcadia-backup-${today()}.json`, file = typeof File === 'function' && new File([blob], name, { type: 'application/json' });
       if (file && navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer:coarse)').matches) return navigator.share({ files: [file], title: 'Arcadia backup' }).catch(() => {});
       const a2 = document.createElement('a'); a2.href = URL.createObjectURL(blob); a2.download = name; a2.click(); return setTimeout(() => URL.revokeObjectURL(a2.href), 4000); }
@@ -1370,7 +1409,7 @@ $('#importFile').addEventListener('change', async e => {
     localStorage.setItem(KEY, JSON.stringify(db));
     if (data.workout) { if (data.workout.state) writeLS(W_STATE, data.workout.state); writeLS(W_CARDIO, data.workout.cardio || []); ['pushups', 'plank', 'row'].forEach(k => data.workout[k] && writeLS(W_LOGS[k], data.workout[k])); }
     S = load(); render(); island.toast('Backup restored', { icon: I.check, color: '#30d158' });
-  } catch (err) { island.toast('That isn’t an Arcadia backup'); }
+  } catch (err) { sfx('error'); island.toast('That isn’t an Arcadia backup'); }
   e.target.value = '';
 });
 
@@ -1441,6 +1480,19 @@ addEventListener('storage', e => { if (e.key && (e.key.startsWith('workout_') ||
 window.CityApp = {
   log: e => window.logProblem('city', e),
   sfx,
+  // sound: the city's place and weather for the ambience, the apartment phone, and his own ring picked in System
+  ambWant,
+  ring: ringDecide,
+  ringStop,
+  ownPick(file) {
+    if (!window.OwnRing || !file) return;
+    island.toast('Reading the sound on this device');
+    return OwnRing.pick(file).then(r => {
+      if (!r.ok) { sfx('error'); island.toast('This browser can’t play the sound in that file. Try an M4A, MP3 or WAV.'); }
+      else island.toast(r.kept ? 'Your ring is saved on this device' : 'Your ring is set until you reload: this browser blocks storage', { icon: I.check, color: '#30d158' });
+      window.City && City.update();
+    });
+  },
   // run an existing data-act, exactly as if its button had been tapped on a page
   act(a, data) { const b = document.createElement('button'); b.hidden = true; Object.assign(b.dataset, data, { act: a }); document.body.append(b); b.click(); b.remove(); },
   toast: (msg, o) => island.toast(msg, o),
@@ -1633,7 +1685,7 @@ window.CityApp = {
   sys() {
     const st = S.settings;
     return { name: esc(st.name || ''), rate: st.rate || '', payCycle: +st.payCycle === 7 ? 7 : 14, payAnchor: esc(st.payAnchor || '2026-09-25'), payCutoff: st.payCutoff ?? 1, paySubmitDays: st.paySubmitDays ?? 4, extraHours: st.extraHours || '', hoursGoal: st.hoursGoal || '', appGoal: st.appGoal || '',
-      push: PUSH.on, pushSay: esc(pushLabel()), brief: !!st.remindDaily, remindAt: esc(st.remindAt || '08:00'), nag: st.nag == null ? 240 : +st.nag, sound: SND.on, perf: perfNow().pick, perfSay: esc(perfLabel()), probs: probCount(), sync: !!SYNC.code, syncSay: esc(syncLabel()), build: BUILD };
+      push: PUSH.on, pushSay: esc(pushLabel()), brief: !!st.remindDaily, remindAt: esc(st.remindAt || '08:00'), nag: st.nag == null ? 240 : +st.nag, sound: SND.on, amb: SND.amb, own: window.OwnRing ? { has: OwnRing.O.has, name: esc(OwnRing.O.name), secs: OwnRing.O.secs, kept: OwnRing.O.kept } : null, perf: perfNow().pick, perfSay: esc(perfLabel()), probs: probCount(), sync: !!SYNC.code, syncSay: esc(syncLabel()), build: BUILD };
   },
   setting(k, v) {
     const num = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours', 'payCutoff', 'paySubmitDays'];
