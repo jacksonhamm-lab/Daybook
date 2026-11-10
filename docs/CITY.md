@@ -313,6 +313,9 @@ Technical state only. Updated 2026-11-06.
   no context loss, city 28 to 29 fps, chalet 46-51 to 48-60, flight 32 to 27 (that run had reflections back on).
   Full battery passed. Before/after in Documents/Daybook City/ski_before_after.png.
 - **Built (p18, the old app's code deleted, 2026-11-09, his go on the cleanup):**
+  - **Renamed Arcadia** (2026-11-10, his call, the name his website first had): every name he sees. Storage keys,
+    caches, the Worker, the repo, the domain and the backup's `daybook` key stay, so nothing moves. A Home Screen icon
+    keeps its old label until it's added again.
   - **index.html, 3,982 to 1,737 lines:** the pages, their views, sheets, spotlight, navigation, Dex's hooks, drag and
     drop, and the old forms' input, change and submit handlers are gone; the markup is the boot screen, the island and
     the import picker; the `<style>` went from 1,058 lines to 110 (the boot screen, the toasts, CITY OFFLINE, confetti).

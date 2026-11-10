@@ -1,7 +1,7 @@
 {
-  "name": "Daybook",
-  "short_name": "Daybook",
-  "description": "Work hours, tasks, training and job applications — one ledger.",
+  "name": "Arcadia",
+  "short_name": "Arcadia",
+  "description": "Work hours, tasks, training and school, on one island.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

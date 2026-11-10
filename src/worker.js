@@ -1,4 +1,4 @@
-// Daybook's Worker: the sync, push, sky and model APIs and the reminder cron. Everything else is a static asset.
+// Arcadia's Worker (the app was Daybook; the Worker is still named daybook): the sync, push, sky and model APIs and the reminder cron. Everything else is a static asset.
 
 import { sendPush } from './push.js';
 import { schoolReminders } from './school-reminders.js';
@@ -101,7 +101,7 @@ async function pushApi(request, env, url) {
   }
   if (url.pathname === '/api/push/test') {
     if (!subs.length) return json({ error: 'no devices registered' }, 400);
-    await deliver(hash, subs, { title: 'Daybook', body: 'Reminders are working.', tag: 'test' }, env);
+    await deliver(hash, subs, { title: 'Arcadia', body: 'Reminders are working.', tag: 'test' }, env);
     return json({ ok: true, devices: subs.length });
   }
   return json({ error: 'not found' }, 404);

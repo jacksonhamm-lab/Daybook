@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Daybook</title>
-<meta name="description" content="Work hours, tasks, training and job applications in one place.">
+<title>Arcadia</title>
+<meta name="description" content="Work hours, tasks, training and school, on one island.">
 <meta name="theme-color" content="#05060a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Daybook">
+<meta name="apple-mobile-web-app-title" content="Arcadia">
 <link rel="manifest" href="manifest.webmanifest" crossorigin="use-credentials">
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -17,7 +17,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
-// Daybook is the city (the old home, Dex and its pages were retired in November 2026). The old ?city= switch and the
+// Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
 // per-device flag it kept are cleared, so a link with them still opens cleanly.
 (function () {
   try {
@@ -155,7 +155,7 @@ html[data-perf=saver] *,html[data-perf=saver] *::before,html[data-perf=saver] *:
 <div id="boot" class="cb" aria-hidden="true">
   <div class="cb-frame"><i class="cb-c tl"></i><i class="cb-c tr"></i><i class="cb-c bl"></i><i class="cb-c br"></i>
     <div class="cb-top"><span>SYS // LINK</span><span class="cb-hatch"></span></div><div class="cb-line"></div>
-    <div class="cb-word" data-t="DAYBOOK">DAYBOOK</div><div class="cb-sub"><span class="cb-tag">CITY</span><span class="cb-meta" id="bootLine"></span></div></div>
+    <div class="cb-word" data-t="ARCADIA">ARCADIA</div><div class="cb-sub"><span class="cb-tag">CITY</span><span class="cb-meta" id="bootLine"></span></div></div>
   <div class="cb-scan"></div>
 </div>
 
@@ -164,7 +164,7 @@ html[data-perf=saver] *,html[data-perf=saver] *::before,html[data-perf=saver] *:
 
 <script>
 /* ============================================================
-   Daybook — work hours, tasks, training, job applications.
+   Arcadia (the app was Daybook; storage keys still say so) — work hours, tasks, training, school.
    The training program lives here in program.json (five days, D1-D5); it used to be
    read out of the old workout app. Set ticks and benchmark logs are per device (localStorage).
    ============================================================ */
@@ -257,7 +257,7 @@ function load() {
   return defaults();
 }
 let S = load();
-// Days before you started using Daybook shouldn't count as missed workouts.
+// Days before you started using the app shouldn't count as missed workouts.
 if (!S.since) { const n = new Date(); S.since = [...Object.keys(S.workouts), ...Object.keys(S.shifts), `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`].sort()[0]; }
 S.tomb = S.tomb || {};
 S.extra = S.extra || {};
@@ -420,7 +420,7 @@ const standalone = () => matchMedia('(display-mode: standalone)').matches || nav
 async function enablePush() {
   if (PUSH.busy) return;
   if (!SYNC.code) return island.toast('Connect sync first — reminders ride on your sync code');
-  if (!canPush()) return island.toast(isIOS() && !standalone() ? 'Add Daybook to your Home Screen first' : 'This browser can’t do notifications');
+  if (!canPush()) return island.toast(isIOS() && !standalone() ? 'Add Arcadia to your Home Screen first' : 'This browser can’t do notifications');
   PUSH.busy = true;
   try {
     const perm = await Notification.requestPermission();
@@ -453,9 +453,9 @@ async function disablePush() {
   PUSH.on = false; try { localStorage.removeItem('daybook_push'); } catch (e) {}
 }
 const unb64 = s => { const p = s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4); return Uint8Array.from(atob(p), c => c.charCodeAt(0)); };
-const pushLabel = () => !canPush() ? (isIOS() && !standalone() ? 'Add Daybook to your Home Screen, then turn these on' : 'Not supported in this browser')
+const pushLabel = () => !canPush() ? (isIOS() && !standalone() ? 'Add Arcadia to your Home Screen, then turn these on' : 'Not supported in this browser')
   : PUSH.busy ? 'Setting up…'
-  : PUSH.perm === 'denied' ? 'Blocked — allow notifications for Daybook in your device settings'
+  : PUSH.perm === 'denied' ? 'Blocked — allow notifications for Arcadia in your device settings'
   : PUSH.on ? 'On for this device' : 'Off on this device';
 
 // e.g. "Rejected (GET) · 28 chars day…026 · apps.jacksonhamm.ca · sw:yes"
@@ -1054,7 +1054,7 @@ const island = {
 };
 
 /* ---------- fuel ----------
-   The recipes live in meals.json (three portions each); Daybook tracks what you picked
+   The recipes live in meals.json (three portions each); the app tracks what you picked
    for the week and how much protein you've actually eaten. */
 let BOOK = null;
 // A book cached by an older version of the app is missing pieces this one needs,
@@ -1221,7 +1221,7 @@ const IC = {
 };
 
 /* ---------- attributes ----------
-   The city's five stats are your Daybook. Each one has a level earned from everything you've
+   The city's five stats are your life here. Each one has a level earned from everything you've
    ever logged there, and a bar for how this week (or today) is going. */
 const attrLvl = (n, per) => Math.floor(Math.sqrt(Math.max(0, n) / per)) + 1;
 function attributes() {
@@ -1342,7 +1342,7 @@ document.addEventListener('click', e => {
     case 'set-sound': { SND.on = v === '1'; try { localStorage.setItem('daybook_sound', SND.on ? '1' : '0'); } catch (x) {} haptic(6); return sfx('check'); }
     case 'set-perf': { if (window.Perf) window.Perf.set(v); else { try { localStorage.setItem('daybook_perf', v); } catch (x) {} } return haptic(6); }
     case 'copy-log': { let log = []; try { log = JSON.parse(localStorage.getItem('daybook_log') || '[]'); } catch (x) {}
-      const head = `Daybook problem log · ${navigator.userAgent} · perf ${perfLabel()} · ${devicePixelRatio}x · ${innerWidth}x${innerHeight}`;
+      const head = `Arcadia problem log · ${navigator.userAgent} · perf ${perfLabel()} · ${devicePixelRatio}x · ${innerWidth}x${innerHeight}`;
       return copy([head, ...log.map(l => `${l.t} [${l.w}] ${l.m}`)].join('\n')).then(() => island.toast(log.length ? 'Log copied, paste it to Claude' : 'Nothing logged, copied device info')); }
     case 'toggle-brief': S.settings.remindDaily = !S.settings.remindDaily; return commit();
     case 'rm-done': { const t = S.tasks.find(x => x.id === el.dataset.id); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } else t.done = true; commit(); return island.toast('Done', { icon: I.check, color: '#30d158' }); }
@@ -1353,8 +1353,8 @@ document.addEventListener('click', e => {
     case 'rm-tomorrow': { const t = S.tasks.find(x => x.id === el.dataset.id); t.date = iso(addDays(parse(today()), 1)); if (t.repeat) { t.doneOn = t.doneOn || {}; t.doneOn[today()] = true; } commit(); return island.toast('Moved to tomorrow', { icon: I.arrow, color: '#0a84ff' }); }
     case 'sync-off': return setSyncCode('');
     case 'sync-now': return syncNow();
-    case 'export': { const blob = new Blob([JSON.stringify({ daybook: S, workout: { state: readLS(W_STATE, {}), cardio: cardioLogs(), pushups: benchLogs('pushups'), plank: benchLogs('plank'), row: benchLogs('row') } }, null, 2)], { type: 'application/json' }); const name = `daybook-backup-${today()}.json`, file = typeof File === 'function' && new File([blob], name, { type: 'application/json' });
-      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer:coarse)').matches) return navigator.share({ files: [file], title: 'Daybook backup' }).catch(() => {});
+    case 'export': { const blob = new Blob([JSON.stringify({ daybook: S, workout: { state: readLS(W_STATE, {}), cardio: cardioLogs(), pushups: benchLogs('pushups'), plank: benchLogs('plank'), row: benchLogs('row') } }, null, 2)], { type: 'application/json' }); const name = `arcadia-backup-${today()}.json`, file = typeof File === 'function' && new File([blob], name, { type: 'application/json' });
+      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer:coarse)').matches) return navigator.share({ files: [file], title: 'Arcadia backup' }).catch(() => {});
       const a2 = document.createElement('a'); a2.href = URL.createObjectURL(blob); a2.download = name; a2.click(); return setTimeout(() => URL.revokeObjectURL(a2.href), 4000); }
     case 'import': return $('#importFile').click();
   }
@@ -1366,11 +1366,11 @@ $('#importFile').addEventListener('change', async e => {
   try {
     const data = JSON.parse(await f.text()), db = data.daybook || data;
     if (!db || !Array.isArray(db.tasks)) throw 0;
-    if (!confirm('Replace everything in Daybook with this backup?')) return;
+    if (!confirm('Replace everything in Arcadia with this backup?')) return;
     localStorage.setItem(KEY, JSON.stringify(db));
     if (data.workout) { if (data.workout.state) writeLS(W_STATE, data.workout.state); writeLS(W_CARDIO, data.workout.cardio || []); ['pushups', 'plank', 'row'].forEach(k => data.workout[k] && writeLS(W_LOGS[k], data.workout[k])); }
     S = load(); render(); island.toast('Backup restored', { icon: I.check, color: '#30d158' });
-  } catch (err) { island.toast('That isn’t a Daybook backup'); }
+  } catch (err) { island.toast('That isn’t an Arcadia backup'); }
   e.target.value = '';
 });
 
@@ -1701,14 +1701,14 @@ window.CityApp = {
   },
   // only this task goes back: a sync can land while the toast is up, and restoring everything would delete what it brought
   undoTask(id) { const snap = JSON.stringify(S.tasks.find(x => x.id === id)), u = { label: 'Undo', used: false, fn: () => { u.used = true; const i = S.tasks.findIndex(x => x.id === id); if (i >= 0) S.tasks[i] = JSON.parse(snap); commit(); island.toast('Restored'); } }; return u; },
-  // no WebGL, or city.js wouldn't load. Daybook is the city, so this says why and keeps what works without 3D:
+  // no WebGL, or city.js wouldn't load. Arcadia is the city, so this says why and keeps what works without 3D:
   // sync carries on underneath, and a backup and the problem log are a tap away
   fallback(msg, e) {
     window.logProblem('city', e || msg);
     window.City = undefined;
     const h = $('#cityHost'); if (h) h.remove();
     let el = $('#noCity'); if (!el) { el = document.createElement('div'); el.id = 'noCity'; el.setAttribute('role', 'alert'); document.body.append(el); }
-    el.innerHTML = `<div class="nc"><i class="nc-c tl"></i><i class="nc-c br"></i><b>DAYBOOK</b><span class="nc-t">CITY OFFLINE</span><p>${esc(msg)}</p><p>Daybook runs in 3D. Reload, or open it in Safari or Chrome with hardware acceleration on. Your data is safe and still syncs.</p>
+    el.innerHTML = `<div class="nc"><i class="nc-c tl"></i><i class="nc-c br"></i><b>ARCADIA</b><span class="nc-t">CITY OFFLINE</span><p>${esc(msg)}</p><p>Arcadia runs in 3D. Reload, or open it in Safari or Chrome with hardware acceleration on. Your data is safe and still syncs.</p>
       <div class="nc-a"><button type="button" data-nc="reload">RELOAD</button><button type="button" data-nc="export">EXPORT BACKUP</button><button type="button" data-nc="copy-log">COPY PROBLEM LOG</button></div></div>`;
     el.onclick = ev => { const b = ev.target.closest('[data-nc]'); if (!b) return; if (b.dataset.nc === 'reload') location.reload(); else this.act(b.dataset.nc); };
   },

@@ -1,4 +1,4 @@
-/* Daybook City: Daybook itself, the island and its rooms (docs/CITY.md). All 3D is built in code. The HUD lives in a shadow root, so its
+/* Arcadia (the app once called Daybook): the island and its rooms (docs/CITY.md). All 3D is built in code. The HUD lives in a shadow root, so its
    styles and the app's never touch. Everything it says about his data comes from window.CityApp,
    defined in index.html from the app's own functions. Nothing here is saved or synced. */
 import * as THREE from 'three';
@@ -513,7 +513,7 @@ const MARKUP = `
 <div id="hud" class="city" data-room="shop">
   <div class="vgn"></div>
   <div class="top">
-    <button class="frame brand" data-hud="prog" data-m="city fly" aria-label="Progress"><div class="in"><i></i><div><b>DAYBOOK</b><small id="brandLv">LV 1</small></div></div></button>
+    <button class="frame brand" data-hud="prog" data-m="city fly" aria-label="Progress"><div class="in"><i></i><div><b>ARCADIA</b><small id="brandLv">LV 1</small></div></div></button>
     <button class="back" id="btnBack" data-m="room" aria-label="Back to the city"><span><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8"/></svg></span></button>
     <button class="frame brand" data-hud="prog" data-m="room" data-r="shop" aria-label="Progress"><div class="in"><i></i><div><b>SHOP</b><small id="shopPer">PERIOD</small></div></div></button>
     <button class="frame brand" data-hud="prog" data-m="room" data-r="apartment" aria-label="Progress"><div class="in"><i></i><div><b>APARTMENT</b><small id="aptDate">TODAY</small></div></div></button>
@@ -791,7 +791,7 @@ const MARKUP = `
   </aside>
   <div class="scanl" id="scan"></div>
 </div>
-<div id="boot"><div class="wrap"><b>DAYBOOK CITY</b><div class="bar"><i id="bootB"></i></div><span class="mi" id="bootT">INIT</span></div></div>
+<div id="boot"><div class="wrap"><b>ARCADIA</b><div class="bar"><i id="bootB"></i></div><span class="mi" id="bootT">INIT</span></div></div>
 `;
 const host = document.createElement('div'); host.id = 'cityHost'; host.hidden = true;
 const ROOT = host.attachShadow({ mode: 'open' });

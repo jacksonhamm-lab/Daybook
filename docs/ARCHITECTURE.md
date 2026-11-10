@@ -5,7 +5,9 @@ Start here before touching code.
 
 ## Files
 
-Daybook is the city (`city.js`). The old home, Dex and the pages were retired in November 2026: the city took over in
+Daybook is the city (`city.js`), and since 2026-11-10 it is called **Arcadia** on screen (title, Home Screen name, boot, HUD,
+notifications, backups). The repo, the Worker (`daybook`), the domain, storage keys (`daybook_v1`...), caches and the
+backup's `daybook` key keep the old name so data, sync and old backups keep working. The old home, Dex and the pages were retired in November 2026: the city took over in
 p17 and their code was deleted in p18. index.html keeps the data, sync and app logic the city reads through
 `window.CityApp`.
 
