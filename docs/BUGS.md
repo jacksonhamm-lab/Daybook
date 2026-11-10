@@ -1,6 +1,7 @@
 # Bugs
 
-Known problems, what causes them, and status. Newest at the top of each section.
+Known problems, what causes them, and status. Newest at the top of each section. Everything under Fixed and the audits
+before November 2026 is about the old app (Dex and its pages), which is retired.
 
 ## Open
 
@@ -56,10 +57,7 @@ _None right now. Add new ones here with what you did, what happened, and on whic
 
 ## Watch list
 
-- Opening a tile scrolls it into view; if you're scrolling at the same moment it can
-  feel like a fight. Revisit when the navigation is redesigned (see NAV.md).
-- Typing a task into a day's add box drops it straight onto that day, while Quick add
-  asks questions first. Two behaviours for one action.
+_None right now._
 
 ## Audit (2026-09-30), fixed
 

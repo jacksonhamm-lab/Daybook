@@ -1,11 +1,10 @@
-/* Daybook City: the island home and the shop room, behind the per-device flag (docs/CITY.md).
-   Loaded only when the flag is on. All 3D is built in code. The HUD lives in a shadow root, so its
+/* Daybook City: Daybook itself, the island and its rooms (docs/CITY.md). All 3D is built in code. The HUD lives in a shadow root, so its
    styles and the app's never touch. Everything it says about his data comes from window.CityApp,
    defined in index.html from the app's own functions. Nothing here is saved or synced. */
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p17';
+export const BUILD = 'p18';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -6292,7 +6291,7 @@ const isInsideRoom = () => { const p = CAM.position, b = room.box; return p.x < 
 function wake() { S.lastInput = performance.now(); if (S.idle) { S.idle = false; S.frames = 0; S.acc = 0; } }
 function tick(now) {
   if (host.hidden) { looping = false; return; }
-  if (APP.covered() || S.lost) { S.last = now; requestAnimationFrame(tick); return; }
+  if (S.lost) { S.last = now; requestAnimationFrame(tick); return; }
   if (!RIG) {
     S.idle = (S.mode === 'city' || S.mode === 'room') && now - S.lastInput > 6000;
     const iv = 1000 / (S.idle ? PM.idle : PM.fps), el = now - (S.drawn || 0);
@@ -6530,15 +6529,14 @@ function hudInit() {
   hudEl.addEventListener('click', e => { if (justArrived()) { e.stopPropagation(); e.preventDefault(); } }, true);
   /* A held Enter would click again with every repeat, and focus moving between WORK and close would flap the sheet. */
   hudEl.addEventListener('keydown', e => { if (e.repeat && e.key === 'Enter' && e.target.closest('button')) e.preventDefault(); }, true);
-  /* anything marked data-act runs the app's own action; data-go opens one of its pages */
+  /* anything marked data-act runs the app's own action */
   ROOT.addEventListener('click', e => {
-    const el = e.target.closest && e.target.closest('[data-act],[data-go]'); if (!el) return;
-    if (el.dataset.go) return APP.open(el.dataset.go, el);
+    const el = e.target.closest && e.target.closest('[data-act]'); if (!el) return;
     APP.act(el.dataset.act, { ...el.dataset });
   });
   /* capture: this has to see an open sheet before the app's own Escape closes it */
   addEventListener('keydown', e => {
-    if (APP.tab() !== 'today' || APP.covered() || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     const tg = e.composedPath()[0]; if (tg && tg.matches && tg.matches('input,textarea,select')) return;
     if (e.key === 'Escape' && S.mode === 'fly' && S.fly && S.fly.dir > 0) return goBack();
     if (S.mode !== 'room') return;
@@ -6549,7 +6547,6 @@ function hudInit() {
     const h = room.hot.find(x => x.hotkey.toLowerCase() === e.key.toLowerCase()); if (h && !S.sheet) { e.stopPropagation(); e.preventDefault(); tapHot(h.key); }
   }, true);
   addEventListener('popstate', () => {
-    if (APP.tab() !== 'today') return;   // leaving a page: the app brings us home, the camera stays put
     /* back out of the close-up first; forward into it again */
     const cl = !!(history.state && history.state.close);
     if (S.close && !cl && history.state && history.state.city === room.id) { closeUp(false, true); return; }
@@ -6645,7 +6642,6 @@ function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideRoom() 
 function tapHot(k) {
   const h = room.hot.find(x => x.key === k); if (!h) return;
   if (h.run) { h.run(); return; }
-  if (h.go) { APP.open(h.go); return; }
   openSheet(h.sheet);
   tagEls.forEach(t => { if (t.h.key === k) { t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 600); } });
 }
@@ -6714,7 +6710,7 @@ function refreshWork() {
   paintClock();
 }
 /* a room's panels read through the app; a throw here must not stop the app's own render */
-function refreshRoom() { if (gOpen && S.sheet) try { refreshGlobal(gOpen); } catch (e) { APP.log(e); } if (room.def && room.def.refresh && APP.tab() === 'today') try { room.def.refresh(); } catch (e) { APP.log(e); } }
+function refreshRoom() { if (gOpen && S.sheet) try { refreshGlobal(gOpen); } catch (e) { APP.log(e); } if (room.def && room.def.refresh) try { room.def.refresh(); } catch (e) { APP.log(e); } }
 let aptDay = null, shopDay = null, aptWeek = null, shopP = null;
 /* rows ticked on this visit stay in the list, in the order he found them, so nothing moves under his thumb until he leaves */
 const aptKeep = new Set(), aptOrd = new Map();
@@ -6911,7 +6907,7 @@ function refreshCastle() {
   if (fk && !fo.isConnected) { const to = [...ROOT.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv) || $('#btnClose'); if (to) to.focus({ preventScroll: true }); }
 }
 /* the study clock counts on the panel and the card, and the sand runs, while he's in the castle */
-setInterval(() => { if (room.id !== 'castle' || S.mode === 'city' || !APP.tab || APP.tab() !== 'today') return; const T = APP.school(); if (!T.clock.on) return; setText('#csClk', hms(T.clock.ms)); setText('#vS3', hms(T.clock.ms)); if (room.sand && (S.sandT = (S.sandT || 0) + 1) % 3 === 0) room.sand(T); }, 1000);
+setInterval(() => { if (room.id !== 'castle' || S.mode === 'city') return; const T = APP.school(); if (!T.clock.on) return; setText('#csClk', hms(T.clock.ms)); setText('#vS3', hms(T.clock.ms)); if (room.sand && (S.sandT = (S.sandT || 0) + 1) % 3 === 0) room.sand(T); }, 1000);
 function castleInit() {
   $('#btnScSheet').addEventListener('click', () => openSheet('cDue'));
   $('#btnStudy').addEventListener('click', () => { if (APP.school().clock.on) APP.schoolDo('stop'); else APP.schoolDo('start', csCourse); });
@@ -7078,17 +7074,16 @@ function resume() {
 }
 /* index.html calls this at the end of every render(). */
 function update() {
-  const home = APP.tab() === 'today';
   if (ready && host.hidden) S.away = true;
-  host.hidden = !home;
-  if (home && !started) { started = true; boot(); }
+  host.hidden = false;
+  if (!started) { started = true; boot(); }
   if (!ready) return;
   /* a room paints today's date, and her spot by the clock. A new day while he watches repaints the room around her as she
-     is; back from another page or the Home Screen, she may have moved on */
-  if (home && S.mode === 'room') { const day = room.day && room.day !== new Date().toDateString(), moved = S.away && room.spot && room.spot !== figSpot(); if (day || moved) try { loadRoom(room.id, !S.away); } catch (e) { APP.log(e); } }
-  if (home && !document.hidden) S.away = false;
+     is; back from the Home Screen, she may have moved on */
+  if (S.mode === 'room') { const day = room.day && room.day !== new Date().toDateString(), moved = S.away && room.spot && room.spot !== figSpot(); if (day || moved) try { loadRoom(room.id, !S.away); } catch (e) { APP.log(e); } }
+  if (!document.hidden) S.away = false;
   refreshWork(); refreshRoom();
-  if (home) { refreshHome(); resume(); }
+  refreshHome(); resume();
 }
 function rig() {
   /* test scripts only: draws one frame on request, needs ?cityrig */

@@ -1,5 +1,8 @@
 # Character: Dex
 
+> **Retired (November 2026).** Dex and `rider.js` are gone; Daybook is the city. Kept for the model pipeline
+> (Models v5, `tools/blender/`), which the city's figure (`her.glb`) still uses.
+
 ## Now (v6, rider.js)
 
 - **Jackson's own VRoid model**, four outfits by time of day (from `buddyContext().mode`):

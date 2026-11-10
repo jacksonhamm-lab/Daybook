@@ -290,7 +290,7 @@ Technical state only. Updated 2026-11-06.
   (set as a secret); `her.glb?v=1` (KV, unchanged since p4) serves.
   Pushes go `git push origin <branch>:main`, never the branch itself, until Cloudflare branch builds are confirmed
   off (§15). Workers Builds took about 15 minutes to pick up the p5 push, about one minute for p6 to p10. He checked p9 on his iPhone at `?city=1` (2026-11-04): smooth, no heat, no reloads.
-- **Branch:** `city-school` (pushed as main, live 2026-11-09). Build `p17`. `BUILD` is `'p17'` in `city.js`, `index.html` and the
+- **Branch:** `city-clean`, build `p18` (not pushed yet). `BUILD` is `'p18'` in `city.js`, `index.html` and the
   `city.js?v=` query.
 - **Built (p15, light Auto on a plain laptop chip, 2026-11-08, his call):** measured on his Intel UHD (visible window,
   vsync off, a GPU sync per frame): the city is bound by pixels. 119 ms a frame at the usual 1.5x, 68 at 1x, 58 at 1x
@@ -312,6 +312,20 @@ Technical state only. Updated 2026-11-06.
   About 160 more 3D spruce round the chalet and the village from their own rng(4242), so nothing else moves. His Intel UHD:
   no context loss, city 28 to 29 fps, chalet 46-51 to 48-60, flight 32 to 27 (that run had reflections back on).
   Full battery passed. Before/after in Documents/Daybook City/ski_before_after.png.
+- **Built (p18, the old app's code deleted, 2026-11-09, his go on the cleanup):**
+  - **index.html, 3,982 to 1,737 lines:** the pages, their views, sheets, spotlight, navigation, Dex's hooks, drag and
+    drop, and the old forms' input, change and submit handlers are gone; the markup is the boot screen, the island and
+    the import picker; the `<style>` went from 1,058 lines to 110 (the boot screen, the toasts, CITY OFFLINE, confetti).
+    What's left is the data, sync, pay, quick add, School, the island and `window.CityApp`.
+  - **What still runs through it:** one click handler for the `data-act` names the city and the island fire (clocking,
+    rest, copy for Len, estimates, roll-over, push, sound, performance, brief, nag, sync, export, import, problem log);
+    `render()` only tells the city (`City.update()`), refreshes the island and sets the app badge. `toggleTask(id, day)`
+    and `toggleSet(s, i, j)` take data; the city no longer builds throwaway buttons to call them.
+  - **Gone from `CityApp`:** `tab`, `covered`, `open`, `openTask`. city.js lost its page checks and `data-go`.
+  - **Boot:** the city's opening (`#boot.cb`) is the page's own markup now, so the old boot screen never paints.
+  - **Also deleted:** `vendor/three-vrm.module.min.js`, `RoomEnvironment.js`, `RoundedBoxGeometry.js` (only Dex used
+    them) and `docs/NAV.md`. `docs/CHARACTER.md` is marked retired, kept for the model pipeline.
+  - **Tests:** t65 (the code is gone, and what the city runs through index.html still works).
 - **Built (p17, School and the castle; the old app retired, 2026-11-09, his calls: "the castle is the school", "the city
   is going to be the app now", "retire all of the old stuff"):**
   - **School's data** (index.html): `study{date}: { s: [{ start, end, course }], u }`, `courses[]` with ids,
@@ -341,7 +355,7 @@ Technical state only. Updated 2026-11-06.
     (`rider.js`, `buddy.js`, `motion.js`, `gear.js`, `dress.js`, `scenes/`) is deleted; old pages can't open, their
     keys are off, Ctrl K and / open the city's quick add. When 3D can't start, `#noCity` says why with Reload, Export
     backup and Copy problem log, and sync carries on. Dex's models are still in KV (deleting them needs his go).
-    The old pages' code in index.html is unreachable and is the next cleanup.
+    The old pages' code was deleted in p18.
   - **Tests:** t60 (School's data), t61 (the castle), t62 (the gaps), t63 (reminders), t64 (retirement, no 3D).
 - **Built (p16, round 2, the chalet in a ski valley, 2026-11-08, his call: "being on the mountain doesn't make sense, there
   should be a ski resort on the mountain"):** a valley carved into the massif's front (mtnH: mtnRaw plus a flat floor from
