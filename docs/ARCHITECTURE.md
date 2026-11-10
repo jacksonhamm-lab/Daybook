@@ -24,7 +24,7 @@ p17 and their code was deleted in p18. index.html keeps the data, sync and app l
 | `src/worker.js` | Cloudflare Worker: sync, push, sky and model APIs, reminder cron. |
 | `src/push.js` | Web Push encryption (RFC 8291) and VAPID signing (RFC 8292), no libraries. |
 | `wrangler.jsonc` | Worker config: custom domain, KV binding, Durable Object `Store` (synced state), cron, VAPID public key. |
-| `icons/`, `manifest.webmanifest` | Home-screen app icons and manifest. |
+| `icons/`, `manifest.webmanifest` | Home-screen app icons and manifest. The icon is Arcadia's A (2026-11-10); `icons/arcadia.svg` is its source, rendered to the four PNGs (512, 192, 180, 64) in headless Edge. |
 | `docs/` | These notes. `CITY.md` is the plan for the city home, with its Handoff. Not served on the site (`.assetsignore`). |
 
 ## Hosting and deploy

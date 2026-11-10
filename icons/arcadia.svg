@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+<radialGradient id="glow" cx="50%" cy="78%" r="62%"><stop offset="0" stop-color="#ff4646" stop-opacity=".32"/><stop offset=".55" stop-color="#ff4646" stop-opacity=".07"/><stop offset="1" stop-color="#ff4646" stop-opacity="0"/></radialGradient>
+<radialGradient id="glowc" cx="50%" cy="50%" r="55%"><stop offset="0" stop-color="#5ae4ec" stop-opacity=".16"/><stop offset="1" stop-color="#5ae4ec" stop-opacity="0"/></radialGradient>
+<pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#fff" opacity=".035"/></pattern>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#120d18"/><stop offset=".7" stop-color="#2a0f17"/><stop offset="1" stop-color="#3b1119"/></linearGradient>
+</defs><rect width="512" height="512" fill="#0a090d"/><rect width="512" height="512" fill="url(#glow)"/><rect width="512" height="512" fill="url(#scan)"/><g fill="none" stroke="#ff4646" stroke-width="10" stroke-linecap="square">
+<path d="M64 122V64H122"/><path d="M390 64H448V122"/><path d="M64 390V448H122"/><path d="M390 448H448V390"/></g>
+<g stroke="#ff4646" stroke-width="6"><path d="M318 112L330 96"/><path d="M332 112L344 96"/><path d="M346 112L358 96"/><path d="M360 112L372 96"/><path d="M374 112L386 96"/></g>
+<path d="M150 396 L256 116 L362 396" fill="none" stroke="#ede6d6" stroke-width="46" stroke-linejoin="miter" stroke-miterlimit="10"/>
+<path d="M196 292 H388 L372 320 H196 Z" fill="#ff4646"/>
+<rect x="112" y="414" width="64" height="14" fill="#ff4646"/>
+<rect x="186" y="414" width="22" height="14" fill="#ff4646" opacity=".5"/>
+</svg>
