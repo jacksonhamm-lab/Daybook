@@ -1518,13 +1518,15 @@ window.CityApp = {
     const cash = h => rate ? money(h * rate) : `${fh(h)}H`, tip = t => t.toUpperCase().replace(/ · /g, ' / ');
     const rows = dates.map(d => {
       const s = S.shifts[d] || {}, h = shiftHours(s), hr = t => +t.slice(0, 2) + +t.slice(3, 5) / 60, a = h ? hr(s.start) : 0, b = h ? hr(s.end) : 0, left = Math.max(0, Math.min(100, (a - 8) / 12 * 100));
-      return { d, h, dow: DOW[dowIdx(d)].toUpperCase(), day: short(d).toUpperCase(), today: d === td, hrs: fh(h), left: left.toFixed(1), width: Math.max(2, Math.min(100 - left, (b - a) / 12 * 100)).toFixed(1), aria: esc(`${DOW_LONG[dowIdx(d)]} ${short(d)}: ${h ? `${t12(s.start)} to ${t12(s.end)}, ${fh(h)} hours` : 'not logged'}. Edit.`) };
+      const gp = Math.max(0, +S.settings.payCutoff ?? 1), tag = d === p.end ? 'DUE' : periodFor(iso(addDays(parse(d), -gp))).end === iso(addDays(parse(d), -gp)) ? 'PAYDAY' : '';
+      return { d, h, dow: DOW[dowIdx(d)].toUpperCase(), day: short(d).toUpperCase(), today: d === td, hrs: fh(h), times: h ? `${t12(s.start)}–${t12(s.end)}` : '', brk: h && +s.brk ? `${+s.brk}M BREAK` : '', tag, left: left.toFixed(1), width: Math.max(2, Math.min(100 - left, (b - a) / 12 * 100)).toFixed(1), aria: esc(`${DOW_LONG[dowIdx(d)]} ${short(d)}: ${h ? `${t12(s.start)} to ${t12(s.end)}, ${fh(h)} hours` : 'not logged'}. Edit.`) };
     });
     const checks = [[true, `Paid ${DOW_LONG[dowIdx(p.payday)]} ${short(p.payday)}`, 'PAY/01'], [td > submitDay(p), payWhen(p).split(' · ')[0], 'LEN/02']];
     if (ex) checks.push([true, `Subscriptions ${fh(ex)}h`, 'SUB/03']);
-    if (pend.length) checks.push([false, `About ${fh(total + estimateHours(p))}h with ${pend.map(x => DOW[dowIdx(x.date)]).join(', ')} estimated`, 'EST/04']);
+    if (pend.length) checks.push([false, `About ${fh(total + estimateHours(p))}h with ${pend.map(x => `${DOW[dowIdx(x.date)]} ${fh(shiftHours(x.est))}h`).join(', ')} estimated`, 'EST/04']);
+    const wkH = L => fh(L.reduce((a, d) => a + shiftHours(S.shifts[d]), 0)), weeks = p.cyc === 14 ? [wkH(dates.slice(0, 7)), wkH(dates.slice(7))] : null;
     return { period: `${tip(short(p.start))} / ${tip(short(p.end))}`, periodEnd: `TO ${tip(short(p.end))}`, hours: fh(total), worked: dates.filter(d => shiftHours(S.shifts[d]) > 0).length, goal: goal ? fh(target) : '-', pct: total / target, ringSub: goal ? '% GOAL' : 'OF 80H',
-      rows, pay: cash(total), payEst: rate ? ' est.' : '', six: cash(sum), sixBar: sum ? total / Math.max(...vals, 1) : 0, win: pend.length > 0, checks, cyc: p.cyc, dayOf: dates.filter(d => d <= td).length,
+      rows, pay: cash(total), payEst: rate ? ' est.' : '', rate: rate ? money(rate) + '/H' : '-', logged: fh(hrs), sub: ex ? fh(ex) : '', weeks, six: cash(sum), sixBar: sum ? total / Math.max(...vals, 1) : 0, win: pend.length > 0, checks, cyc: p.cyc, dayOf: dates.filter(d => d <= td).length,
       isNow: p.start <= td && td <= p.end, past: p.end < td, start: p.start, end: p.end, prev: iso(addDays(parse(p.start), -1)), next: iso(addDays(parse(p.end), 1)), mon: iso(mondayOf(parse(td < p.start ? p.start : td > p.end ? p.start : td))),
       trend: past.map((x, i) => ({ label: short(x.start).toUpperCase(), h: vals[i], hrs: fh(vals[i]), cur: i === 5 })), top: Math.max(goal ? goal * p.cyc / 7 : 0, ...vals, 1) };
   },
@@ -1542,11 +1544,13 @@ window.CityApp = {
   plan(wk) {
     const d = today(), row = (t, x) => ({ id: esc(t.id), d: x, title: esc(t.title), done: isDone(t, x), c: catOf(t.cat).color, meta: esc([catOf(t.cat).label, t.remind ? t12(t.remind) : '', t.repeat ? repeatLabel(t.repeat) : ''].filter(Boolean).join(' · ').toUpperCase()) });
     const list = tasksOn(d).map(t => row(t, d)), mon = mondayOf(wk && /^\d{4}-\d\d-\d\d$/.test(wk) ? parse(wk) : new Date());
-    const week = datesOf(mon).map((x, i) => { const w = wo(x), h = shiftHours(S.shifts[x]), l = tasksOn(x).map(t => row(t, x)); return { d: x, dow: DOW[i].toUpperCase(), day: parse(x).getDate(), long: longDate(x), today: x === d, total: l.length, left: l.filter(t => !t.done).length, tasks: l, note: esc([h ? fh(h) + 'h shift' : '', w.s !== 'REST' ? w.s : ''].filter(Boolean).join(' · ')) }; });
+    const week = datesOf(mon).map((x, i) => { const w = wo(x), sh = S.shifts[x] || {}, h = shiftHours(sh), l = tasksOn(x).map(t => row(t, x)); return { d: x, dow: DOW[i].toUpperCase(), day: parse(x).getDate(), long: longDate(x), today: x === d, total: l.length, left: l.filter(t => !t.done).length, tasks: l,
+      note: esc([h ? `${t12(sh.start)}–${t12(sh.end)}` : '', w.s !== 'REST' ? `${w.s === 'HIIT' ? '' : w.s + ' '}${sessName(w.s)}${w.done ? ' ✓' : ''}` : ''].filter(Boolean).join(' · ')),
+      sess: { s: w.s, name: esc(sessName(w.s)), sub: esc(sessSub(w.s)), done: !!w.done, c: SESS[w.s].color, prog: w.prog ? `${w.prog.done}/${w.prog.total} SETS` : '' } }; });
     const notes = [...S.notes].sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || (b.edited || b.created) - (a.edited || a.created));
     return { date: short(d).toUpperCase(), today: list, done: list.filter(t => t.done).length, overdue: overdue().length, late: overdue().sort((a, b) => a.date.localeCompare(b.date)).map(t => ({ ...row(t, t.date), meta: esc([catOf(t.cat).label, 'WAS ' + short(t.date)].join(' · ').toUpperCase()) })), week, weekLabel: esc(weekLabel(mon)).toUpperCase(), isNow: iso(mon) === iso(mondayOf(new Date())), mon: iso(mon),
       decide: slipped().map(t => ({ id: esc(t.id), title: esc(t.title), was: t12(remAt(t, d)) })),
-      noteCount: S.notes.length, notes: notes.slice(0, 6).map(n => ({ id: esc(n.id), title: esc(noteTitle(n)), body: esc(noteBody(n).slice(0, 90)), pin: !!n.pin, when: esc(rel(iso(new Date(n.edited || n.created))).toUpperCase()) })) };
+      noteCount: S.notes.length, notes: notes.map(n => ({ id: esc(n.id), title: esc(noteTitle(n)), body: esc(noteBody(n).slice(0, 240)), pin: !!n.pin, cat: n.cat && CATS[n.cat] ? esc(CATS[n.cat].label.toUpperCase()) : '', q: String(n.text || '').toLowerCase(), when: esc(rel(iso(new Date(n.edited || n.created))).toUpperCase()) })) };
   },
   // the gym's panels: today's session and its sets, this week's split, the benchmarks, the rest timer. Names are escaped here too.
   // sel: another day of this week, for the gym's sheet; the panel always asks for today
@@ -1663,11 +1667,12 @@ window.CityApp = {
     S.notes.splice(i, 1); haptic(10); commit();
     island.toast('Note deleted', { action: { label: 'Undo', fn: () => { if (!S.notes.some(x => x.id === id)) S.notes.splice(Math.min(i, S.notes.length), 0, JSON.parse(snap)); commit(); island.toast('Restored'); } } });
   },
-  shift(d) { const s = S.shifts[d] || {}, h = shiftHours(s); return { d, start: s.start || '', end: s.end || '', brk: s.brk ?? '', h: fh(h), on: h > 0, long: esc(longDate(d)), presets: presets().map(p => ({ ...p, label: `${t12(p.start)}–${t12(p.end)}` })) }; },
+  shift(d) { const s = S.shifts[d] || {}, h = shiftHours(s); return { d, start: s.start || '', end: s.end || '', brk: s.brk ?? '', note: esc(s.note || ''), h: fh(h), on: h > 0, long: esc(longDate(d)), presets: presets().map(p => ({ ...p, label: `${t12(p.start)}–${t12(p.end)}` })) }; },
   shiftSet(d, f) {
     const s = S.shifts[d] || (S.shifts[d] = {});
     for (const k of ['start', 'end']) if (f[k] !== undefined) s[k] = /^\d\d:\d\d$/.test(f[k]) ? f[k] : '';
     if (f.brk !== undefined) s.brk = f.brk === '' ? '' : Math.max(0, +f.brk || 0);
+    if (f.note !== undefined) { const v = String(f.note).trim().slice(0, 200); if (v) s.note = v; else delete s.note; }
     if (!s.start && !s.end && !s.note && !s.brk) delete S.shifts[d];
     haptic(6); commit();
     if (f.start !== undefined && f.end !== undefined && shiftHours(S.shifts[d])) island.toast(`${rel(d)} · ${fh(shiftHours(S.shifts[d]))}h logged`, { icon: I.hours, color: '#64d2ff' });

@@ -214,21 +214,23 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .ptr i span{width:70%;min-height:2px;background:var(--hud-cyan-soft);box-shadow:inset 0 0 0 1px var(--hud-cyan-line)}
 .ptr i.cur span{background:var(--hud-yellow)}
 .ptr i b{font:700 11px/1 var(--hud-font);color:var(--hud-text)}
-.ptr i em{font:600 8px/1 var(--micro);font-style:normal;letter-spacing:.04em;color:var(--hud-text3)}
+.ptr i em{font:600 10px/1 var(--micro);font-style:normal;letter-spacing:.04em;color:var(--hud-text3)}
 .csce{margin-top:6px}
 .git{width:100%;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:44px;border-top:1px solid var(--hud-hair);text-align:left;color:var(--hud-text)}
 .git i,.rcr .pk i{width:22px;height:22px;display:grid;place-items:center;font:700 13px/1 var(--hud-font);font-style:normal;color:transparent;box-shadow:inset 0 0 0 1.5px var(--hud-cyan-line)}
 .git.on i,.rcr.on .pk i{background:var(--hud-cyan);color:var(--hud-ink);box-shadow:none}
-.git b{font:600 14px/1.2 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.git b{font:600 14px/1.25 var(--body);overflow-wrap:anywhere;padding:6px 0}
+.git b small{display:block;margin-top:3px;font:12px/1.3 var(--body);color:var(--hud-text2)}
 .git.on b{opacity:.5;text-decoration:line-through}
-.git em{font:600 10px/1 var(--micro);font-style:normal;letter-spacing:.04em;color:var(--hud-text3);white-space:nowrap}
+.git em{font:600 12px/1 var(--micro);font-style:normal;letter-spacing:.04em;color:var(--hud-text2);white-space:nowrap}
 .gsec{margin:12px 0 2px;font:700 11px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-yellow)}
 .gsec:first-child{margin-top:2px}
 .rcr{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;border-top:1px solid var(--hud-hair)}
 .rcr .pk{width:44px;height:44px;display:grid;place-items:center}
 .rcr .op{min-height:48px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;color:var(--hud-text);padding-right:2px}
-.rcr .op b{display:block;font:600 14px/1.2 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rcr .op small{display:block;margin-top:3px;font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcr .op{padding-top:6px;padding-bottom:6px}
+.rcr .op b{display:block;font:600 14px/1.25 var(--body)}
+.rcr .op small{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin-top:3px;font:12px/1.3 var(--body);color:var(--hud-text2)}
 .rcr .op em{font:700 13px/1 var(--hud-font);font-style:normal;color:var(--hud-yellow)}
 .fcats{margin-bottom:6px}
 .rch{margin:12px 0 4px;font:700 11px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-yellow)}
@@ -382,8 +384,8 @@ label.rbtn{cursor:pointer}
 .tick i{display:block;width:20px;height:20px;box-shadow:inset 0 0 0 1.5px var(--c,var(--hud-cyan));clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%);transition:background .12s}
 .trow.done .tick i{background:var(--c,var(--hud-cyan))}
 .ttl{min-width:0;text-align:left;padding:6px 6px 6px 0;display:flex;flex-direction:column;justify-content:center;gap:3px}
-.ttl b{font:600 14px/1.15 var(--body);color:var(--hud-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ttl small{font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl b{font:600 14px/1.25 var(--body);color:var(--hud-text);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.ttl small{font:11px/1.2 var(--micro);letter-spacing:.04em;color:var(--hud-text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trow.done .ttl b{opacity:.5;text-decoration:line-through}
 .none{padding:12px 9px;font:13px/1.3 var(--body);color:var(--hud-text2)}
 .wk{width:100%;text-align:left;display:grid;grid-template-columns:42px 26px minmax(0,1fr) auto;gap:8px;align-items:center;min-height:44px;border-top:1px solid var(--hud-hair);font:13px/1.2 var(--body);color:var(--hud-text2)}
@@ -391,14 +393,22 @@ label.rbtn{cursor:pointer}
 .wk b{font:700 13px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-text)}
 .wk.today b{background:var(--hud-yellow);color:var(--hud-ink);padding:3px 4px;text-align:center}
 .wk span{font-weight:700;font-variant-numeric:tabular-nums;color:var(--hud-text)}
-.wk div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+/* the selected day's session: its name, how far, and a way to it */
+.wks{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;min-height:48px;margin:2px 0 6px;padding:6px 8px;text-align:left;background:var(--hud-s2);box-shadow:inset 2px 0 0 var(--c)}
+.wks>b{font:700 14px/1 var(--hud-font);color:var(--hud-ink);background:var(--c);padding:5px 6px}
+.wks strong{display:block;font:600 14px/1.2 var(--body);color:var(--hud-text)}
+.wks small{display:block;margin-top:3px;font:11px/1.2 var(--micro);letter-spacing:.04em;color:var(--hud-text2)}
+.wks em{font:700 11px/1 var(--hud-font);font-style:normal;letter-spacing:.08em;color:var(--hud-cyan)}
 .wk em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums;color:var(--hud-text);text-align:right}
 .wk.sel{box-shadow:inset 2px 0 0 var(--hud-red);background:var(--hud-s2)}
 .nrow{width:100%;text-align:left;display:block;min-height:44px;padding:7px 2px;border-top:1px solid var(--hud-hair)}
 .nrow:first-of-type{border-top:0}
-.nrow b{display:block;font:600 14px/1.2 var(--body);color:var(--hud-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nrow p{margin:3px 0 0;font:12px/1.3 var(--body);color:var(--hud-text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nrow small{display:block;margin-top:3px;font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3)}
+.nrow b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font:600 14px/1.25 var(--body);color:var(--hud-text);overflow-wrap:anywhere}
+.nrow p{margin:3px 0 0;font:13px/1.35 var(--body);color:var(--hud-text2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere}
+.nrow small{display:block;margin-top:5px;font:11px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3)}
+.nq{margin:0 0 6px}
+.nmore{width:100%;margin-top:6px}
 .dcd{padding:8px 0;border-top:1px solid var(--hud-hair)}
 .dcd:first-child{border-top:0}
 .dcd b{display:block;font:600 14px/1.2 var(--body);color:var(--hud-text);overflow-wrap:anywhere}
@@ -441,11 +451,19 @@ label.rbtn{cursor:pointer}
 .stat{background:var(--hud-s2);padding:7px 8px;clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%)}
 .stat label{display:block;font:600 11px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-text3);text-transform:uppercase;margin-bottom:4px}
 .stat b{font:700 21px/1 var(--hud-font);color:var(--hud-text)}
-.sh{width:100%;text-align:left;display:grid;grid-template-columns:42px 62px 1fr 34px;gap:8px;align-items:center;min-height:32px;border-top:1px solid var(--hud-hair);font:14px/1 var(--body);color:var(--hud-text2)}
+.sh{width:100%;text-align:left;display:grid;grid-template-columns:42px 62px 1fr 34px;gap:8px;align-items:center;min-height:44px;border-top:1px solid var(--hud-hair);font:14px/1 var(--body);color:var(--hud-text2)}
 .sh:first-of-type{border-top:0}
 .sh b{font:700 13px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-text)}
 .sh.today b{background:var(--hud-yellow);color:var(--hud-ink);padding:3px 4px;text-align:center}
-.sh .tr{height:7px;background:var(--hud-s3);position:relative}
+.sh .tr{height:4px;background:var(--hud-s3);position:relative}
+.sh .stt{display:flex;flex-direction:column;gap:5px;min-width:0}
+.sh .stt>span{font:600 12.5px/1.1 var(--body);color:var(--hud-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh.off .stt>span{color:var(--hud-text3);font-weight:500}
+.sh .dt{display:flex;flex-direction:column;gap:3px;font:600 12px/1 var(--body);color:var(--hud-text2)}
+.sh .dt i{font:700 9.5px/1 var(--hud-font);font-style:normal;letter-spacing:.08em;color:var(--hud-yellow)}
+.pst{margin:10px 0 4px}
+.pst .stat b{font-size:17px}
+.sedn{grid-column:1/-1}
 .sh .tr i{position:absolute;top:0;bottom:0;background:var(--hud-red)}
 .sh.off .tr{background:repeating-linear-gradient(-45deg,var(--hud-hair2) 0 1px,transparent 1px 4px)}
 .sh em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums;color:var(--hud-text);text-align:right}
@@ -703,13 +721,15 @@ const MARKUP = `
             <div class="kick">This week<span class="mi" id="wkL"></span></div>
             <div id="wkNav"></div>
             <div id="wkRows"></div>
-            <div id="wkDay" style="margin-top:8px"></div>
+            <div id="wkSess" style="margin-top:8px"></div>
+            <div id="wkDay"></div>
             <div id="wkAdd"></div>
             <div id="wkShift"></div>
           </section>
           <section class="card" id="cNotes" data-r="apartment">
             <div class="kick">Notes<span class="mi" id="ntN"></span></div>
             <form class="hadd nadd" data-nadd="1"><textarea class="hin" rows="2" placeholder="WRITE ONE" aria-label="Write a note"></textarea><button class="rbtn" type="submit">SAVE</button></form>
+            <input class="hin nq" id="ntQ" type="search" autocomplete="off" placeholder="SEARCH NOTES" aria-label="Search notes" hidden>
             <div id="ntRows"></div>
           </section>
           <section class="card" id="cDecide" data-r="apartment">
@@ -799,6 +819,8 @@ const MARKUP = `
           <section class="card" id="cPay" data-r="shop">
             <div class="kick">Pay<span class="mi" id="payWin"></span></div>
             <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px"><div class="big"><span id="payBig">$0</span><small id="payEst"> est.</small></div><canvas id="wvD" class="mini" style="width:96px;height:26px" aria-hidden="true"></canvas></div>
+            <p class="rcm" id="paySub" style="margin:2px 0 0"></p>
+            <div class="stats pst" id="paySt"></div>
             <div class="rw" style="margin:8px 0 7px"><span>6 PAYS</span><div class="bar y" id="bF"></div><em id="payAll">$0</em></div>
             <div id="payChk"></div>
             <div class="acts"><button class="rbtn" id="btnLen" data-act="copy-submit">COPY FOR LEN</button><button class="rbtn ol" id="btnFill" data-act="fill-estimates" hidden>FILL THEM IN</button><button class="rbtn ol" data-wcopy="1">COPY PERIOD</button></div>
@@ -6464,7 +6486,9 @@ function hudInit() {
   /* the apartment's and the shop's editors: tasks, notes, shifts, all in place */
   const focusIn = sel => requestAnimationFrame(() => { const el = ROOT.querySelector(sel); if (el) { el.focus({ preventScroll: false }); if (el.setSelectionRange && el.type === 'text') el.setSelectionRange(el.value.length, el.value.length); } });
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-topen],[data-tw],[data-tcat],[data-trep],[data-tdel],[data-nopen],[data-npin],[data-ndel],[data-spre],[data-sclr],[data-shday],[data-pp],[data-wlast],[data-wcopy],[data-late],[data-aw]'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-topen],[data-tw],[data-tcat],[data-trep],[data-tdel],[data-nopen],[data-npin],[data-ndel],[data-spre],[data-sclr],[data-shday],[data-pp],[data-wlast],[data-wcopy],[data-late],[data-aw],[data-nall],[data-gogym]'); if (!b) return; const d = b.dataset;
+    if (d.nall) { noteAll = true; refreshApt(); return; }
+    if (d.gogym) { const day = d.gogym; goPlace('gym', 'cSess', () => { gymDay = day; }); return; }
     if (d.topen) {
       const k = d.topen + '|' + d.date;
       /* from the panel: the sheet opens on today, that task's editor open */
@@ -6519,7 +6543,7 @@ function hudInit() {
     if (d.jdel) APP.jobDel(d.jdel);
   });
   hudEl.addEventListener('change', e => { const el = e.target; if (el.id === 'gRingF') { const f = el.files && el.files[0]; el.value = ''; if (f) Promise.resolve(APP.ownPick(f)).then(() => refreshGlobal('sys')); return; } if (el.dataset && el.dataset.set) APP.setting(el.dataset.set, el.value); });
-  hudEl.addEventListener('input', e => { if (e.target.id === 'gAddI') quickPrev(); });
+  hudEl.addEventListener('input', e => { if (e.target.id === 'gAddI') quickPrev(); if (e.target.id === 'ntQ') { noteQ = e.target.value; refreshApt(); } });
   hudEl.addEventListener('submit', e => {
     const f = e.target;
     if (f.id === 'gAddF') { e.preventDefault(); const i = $('#gAddI'); if (APP.quick(i.value)) { i.value = ''; quickPrev(); } i.focus(); return; }
@@ -6663,10 +6687,21 @@ function flyOut() {
   else { flightRes(true); makeFlight(-1, y); setMode('fly'); glitchHud(1); }
   APP.sfx('exit');
 }
+/* one tap from where a thing shows to the room that owns it: straight there (no stop in the city), its card opening on landing */
+function goPlace(id, card, then) {
+  if (S.mode === 'room' && room.id === id) { if (then) then(); openSheet(card); return; }
+  try { loadRoom(id); } catch (x) { APP.log(x); APP.toast('That room could not load'); APP.sfx('error'); return; }
+  closeReset(); aptKeep.clear(); aptOrd.clear(); aptOpen = null; aptNote = null;
+  S.land = { id, card, then }; APP.sfx('tap', { room: id });
+  const inRoom = history.state && history.state.city;
+  if (S.mode === 'fly') S.mode = 'city';   // a flight under way gives way to this one
+  flyIn(id, !inRoom); if (inRoom) history.replaceState({ city: id }, '');
+}
 function goBack() { if (S.close) return stepBack(); if (history.state && history.state.city) history.back(); else flyOut(); }
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
-function enterRoom() { const y = S.fly && S.fly.yaw || 0; S.fly = null; flightRes(false); setMode('room'); APP.sfx('land', { room: room.id }); if (room.id === 'apartment') { const at = S.modeT; setTimeout(() => { if (S.mode === 'room' && room.id === 'apartment' && S.modeT === at && APP.ring) APP.ring(); }, 1000); } S.ringIn = S.t; S.yaw = y; S.yawGoal = RIG ? y : restYaw(); S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
-function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; gymDay = null; shopDay = null; aptWeek = null; shopP = null; aptOpen = null; aptNote = null; csWeek = null; csDay = null; csOpen = null; csCedit = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
+function enterRoom() { if (S.land) { const L = S.land; S.land = null; if (L.id === room.id) setTimeout(() => { if (S.mode === 'room' && room.id === L.id) { if (L.then) L.then(); openSheet(L.card); } }, 450); }
+  const y = S.fly && S.fly.yaw || 0; S.fly = null; flightRes(false); setMode('room'); APP.sfx('land', { room: room.id }); if (room.id === 'apartment') { const at = S.modeT; setTimeout(() => { if (S.mode === 'room' && room.id === 'apartment' && S.modeT === at && APP.ring) APP.ring(); }, 1000); } S.ringIn = S.t; S.yaw = y; S.yawGoal = RIG ? y : restYaw(); S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
+function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; gymDay = null; shopDay = null; aptWeek = null; shopP = null; aptOpen = null; aptNote = null; noteQ = ''; noteAll = false; { const q = $('#ntQ'); if (q) q.value = ''; } csWeek = null; csDay = null; csOpen = null; csCedit = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
 const flyLabel = dir => setText('#flyT', (dir > 0 ? 'APPROACH: ' : 'DEPART: ') + room.def.name);
 function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideRoom() ? 0 : ''; flyLabel(dir); $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - room.box.x, CAM.position.z - room.box.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
 function tapHot(k) {
@@ -6730,9 +6765,11 @@ function refreshWork() {
   setHTML('#shNav', `<div class="seg2 csnav"><button class="rbtn ol" data-pp="${W.prev}" aria-label="The period before">‹</button><button class="rbtn${W.isNow ? '' : ' ol'}" data-pp="">${W.isNow ? 'THIS PERIOD' : 'TO NOW'}</button><button class="rbtn ol" data-pp="${W.next}" aria-label="The period after">›</button></div>`);
   setHTML('#shActs', `<button class="rbtn ol" data-wlast="${W.mon}">COPY LAST WEEK IN</button>`);
   const sd = W.rows.find(r => r.d === shopDay) || W.rows.find(r => r.today) || W.rows[W.rows.length - 1];
-  setHTML('#shRows', W.rows.map(r => `<button class="sh ${r.h ? '' : 'off'} ${r.today ? 'today' : ''}${r === sd ? ' sel' : ''}" data-shday="${r.d}" aria-pressed="${r === sd}" aria-label="${r.aria.replace(/ Edit\.$/, '')}"><b>${r.dow}</b><span>${r.day}</span><div class="tr">${r.h ? `<i style="left:${r.left}%;width:${r.width}%"></i>` : ''}</div><em>${r.h ? r.hrs : '-'}</em></button>`).join(''));
+  setHTML('#shRows', W.rows.map(r => `<button class="sh ${r.h ? '' : 'off'} ${r.today ? 'today' : ''}${r === sd ? ' sel' : ''}" data-shday="${r.d}" aria-pressed="${r === sd}" aria-label="${r.aria.replace(/ Edit\.$/, '')}"><b>${r.dow}</b><span class="dt">${r.day}${r.tag ? `<i>${r.tag}</i>` : ''}</span><div class="stt"><span>${r.h ? r.times + (r.brk ? ' · ' + r.brk.toLowerCase() : '') : 'Not logged'}</span><div class="tr">${r.h ? `<i style="left:${r.left}%;width:${r.width}%"></i>` : ''}</div></div><em>${r.h ? r.hrs : '-'}</em></button>`).join(''));
   if (sd) shiftInto('#shEd', APP.shift(sd.d));
-  setText('#payBig', W.pay); setText('#payEst', W.payEst); setBar($('#bF'), pct01(W.sixBar)); setText('#payAll', W.six); setText('#payWin', !W.isNow ? W.period : W.win ? 'SUBMIT.WIN OPEN' : 'SUBMIT.WIN SHUT');
+  setText('#payBig', W.pay); setText('#payEst', W.payEst);
+  setHTML('#paySt', `<div class="stat"><label>Hours</label><b>${W.hours}</b></div><div class="stat"><label>Rate</label><b>${W.rate}</b></div>${W.weeks ? `<div class="stat"><label>Wk 1 / Wk 2</label><b>${W.weeks[0]} / ${W.weeks[1]}</b></div>` : `<div class="stat"><label>Shifts</label><b>${W.worked}</b></div>`}`);
+  setText('#paySub', W.sub ? `${W.logged}h worked + ${W.sub}h subscriptions` : ''); $('#paySub').hidden = !W.sub; setBar($('#bF'), pct01(W.sixBar)); setText('#payAll', W.six); setText('#payWin', !W.isNow ? W.period : W.win ? 'SUBMIT.WIN OPEN' : 'SUBMIT.WIN SHUT');
   setHTML('#payChk', chkHTML(W.checks)); setHTML('#roomChk', chkHTML(N.checks.slice(0, 3)));
   $('#btnFill').hidden = !W.win || !W.isNow; $('#btnLen').hidden = !W.isNow;
   setHTML('#payTr', W.trend.map(x => `<i class="${x.cur ? 'cur' : ''}"><span style="height:${Math.max(2, x.h / W.top * 64).toFixed(1)}px"></span><b>${x.h ? x.hrs : '-'}</b><em>${x.label}</em></i>`).join(''));
@@ -6748,7 +6785,7 @@ const aptKeep = new Set(), aptOrd = new Map();
 const rowKey = t => t.id + '|' + t.d;
 const aptSort = l => { for (const t of l) if (!aptOrd.has(rowKey(t))) aptOrd.set(rowKey(t), aptOrd.size); return [...l].sort((a, b) => aptOrd.get(rowKey(a)) - aptOrd.get(rowKey(b))); };
 /* a task: its tick, its title. In the sheet a tap on the title opens its editor in the row: rename, move, a time, delete */
-let aptOpen = null, aptNote = null;
+let aptOpen = null, aptNote = null, noteQ = '', noteAll = false;
 /* the editor: rename; move to today, tomorrow, next week or any date; a time; what it's for; whether it repeats; delete */
 const REPS = [['none', 'ONCE'], ['daily', 'DAILY'], ['weekdays', 'WEEKDAYS'], ['weekly', 'WEEKLY']];
 const taskEd = t => { const x = APP.task(t.id); if (!x) return ''; return `<div class="ted"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" data-tt="${t.id}" value="${x.title}" aria-label="Rename the task"><div class="tacts"><button class="rbtn ol" data-tw="${t.id}:today">TODAY</button><button class="rbtn ol" data-tw="${t.id}:tomorrow">TOMORROW</button><button class="rbtn ol" data-tw="${t.id}:nextweek">NEXT WEEK</button><label class="tm">ON<input class="hin" type="date" data-tdate="${t.id}" value="${x.date}" aria-label="Move to a date"></label><label class="tm">AT<input class="hin" type="time" data-trem="${t.id}" value="${x.remind}" aria-label="Remind me at"></label></div>
@@ -6756,7 +6793,7 @@ const taskEd = t => { const x = APP.task(t.id); if (!x) return ''; return `<div 
   <div class="tacts" role="group" aria-label="Repeats">${REPS.map(([k, l]) => `<button class="rbtn${x.rep === k ? '' : ' ol'}" data-trep="${t.id}:${k}" aria-pressed="${x.rep === k}">${l}</button>`).join('')}<button class="rbtn ol dng" data-tdel="${t.id}" style="margin-left:auto">DELETE</button></div></div>`; };
 const taskRow = (t, ed) => { const op = ed && aptOpen === rowKey(t); return `<div class="trow${t.done ? ' done' : ''}${op ? ' open' : ''}" style="--c:${t.c}"><button class="tick" data-tick="${t.id}" data-date="${t.d}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-topen="${t.id}" data-date="${t.d}" aria-expanded="${!!op}"><b>${t.title}</b>${t.meta ? `<small>${t.meta}</small>` : ''}</button>${op ? taskEd(t) : ''}</div>`; };
 /* a shift's editor, the same in the apartment's week and the shop */
-const shiftEd = x => `<div class="sed" data-sdate="${x.d}"><div class="sedh"><b>SHIFT / ${x.long.toUpperCase()}</b><em>${x.on ? x.h + 'H' : 'NONE'}</em></div><div class="sedg"><label>START<input class="hin" type="time" data-sx="start" value="${x.start}"></label><label>END<input class="hin" type="time" data-sx="end" value="${x.end}"></label><label>BREAK MIN<input class="hin" type="number" inputmode="numeric" min="0" step="5" placeholder="0" data-sx="brk" value="${x.brk}"></label></div>${x.presets.length || x.on ? `<div class="tacts">${x.presets.map(p => `<button class="rbtn ol" data-spre="${p.start}|${p.end}|${p.brk}">${p.label}</button>`).join('')}${x.on ? '<button class="rbtn ol dng" data-sclr="1">CLEAR</button>' : ''}</div>` : ''}</div>`;
+const shiftEd = x => `<div class="sed" data-sdate="${x.d}"><div class="sedh"><b>SHIFT / ${x.long.toUpperCase()}</b><em>${x.on ? x.h + 'H' : 'NONE'}</em></div><div class="sedg"><label>START<input class="hin" type="time" data-sx="start" value="${x.start}"></label><label>END<input class="hin" type="time" data-sx="end" value="${x.end}"></label><label>BREAK MIN<input class="hin" type="number" inputmode="numeric" min="0" step="5" placeholder="0" data-sx="brk" value="${x.brk}"></label><label class="sedn">NOTE<input class="hin" type="text" enterkeyhint="done" autocomplete="off" maxlength="200" placeholder="OPTIONAL" data-sx="note" value="${x.note}"></label></div>${x.presets.length || x.on ? `<div class="tacts">${x.presets.map(p => `<button class="rbtn ol" data-spre="${p.start}|${p.end}|${p.brk}">${p.label}</button>`).join('')}${x.on ? '<button class="rbtn ol dng" data-sclr="1">CLEAR</button>' : ''}</div>` : ''}</div>`;
 /* while he types in a box, leave that box's part of the sheet alone */
 const typing = sel => { const a = ROOT.activeElement; return !!(a && a.matches && a.matches('input,textarea') && a.closest(sel)); };
 /* a shift editor: redrawn, or while he's in one of its boxes only its hours */
@@ -6775,12 +6812,19 @@ function refreshApt() {
   setText('#wkL', P.weekLabel);
   setHTML('#wkNav', `<div class="seg2 csnav"><button class="rbtn ol" data-aw="-1" aria-label="The week before">‹</button><button class="rbtn${P.isNow ? '' : ' ol'}" data-aw="0">${P.isNow ? 'THIS WEEK' : 'TO NOW'}</button><button class="rbtn ol" data-aw="1" aria-label="The week after">›</button></div>`);
   setHTML('#wkRows', P.week.map(d => `<button class="wk${d.today ? ' today' : ''}${d === day ? ' sel' : ''}" data-day="${d.d}" aria-pressed="${d === day}" aria-label="${d.long}: ${d.left} open"><b>${d.dow}</b><span>${d.day}</span><div>${d.note}</div><em>${d.total ? `${d.total - d.left}/${d.total}` : '-'}</em></button>`).join(''));
+  const ss = day.sess; setHTML('#wkSess', ss.s === 'REST' ? '' : `<button class="wks" style="--c:${ss.c}" data-gogym="${day.d}" aria-label="${ss.name}${ss.done ? ', done' : ''}. Open it in the gym."><b>${ss.s === 'HIIT' ? 'HIIT' : ss.s}</b><div><strong>${ss.name}${ss.done ? ' ✓' : ''}</strong><small>${(ss.prog && P.isNow ? ss.prog + ' / ' : '') + ss.sub.toUpperCase()}</small></div><em>GYM ›</em></button>`);
   if (!typing('#wkDay')) setRows('#wkDay', day.tasks.length ? aptSort(day.tasks).map(t => taskRow(t, true)).join('') : noneRow(`Nothing on ${day.long}.`));
   setHTML('#wkAdd', `<form class="hadd" data-hadd="${day.d}"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD TO ${day.dow}" aria-label="Add a task for ${day.long}"><button class="rbtn" type="submit">ADD</button></form>`);
   shiftInto('#wkShift', APP.shift(day.d));
   setText('#ntN', String(P.noteCount));
   if (aptNote && !P.notes.some(o => o.id === aptNote)) aptNote = null;
-  if (!typing('#ntRows')) setHTML('#ntRows', P.notes.length ? P.notes.map(o => { const op = aptNote === o.id, x = op && APP.note(o.id); return `<div class="nrow${op ? ' open' : ''}"><button class="nhit" data-nopen="${o.id}" aria-expanded="${op}"><b>${o.title}</b>${o.body && !op ? `<p>${o.body}</p>` : ''}<small>${o.pin ? 'PINNED / ' : ''}${o.when}</small></button>${x ? `<div class="ned"><textarea class="hin" rows="5" data-nt="${o.id}" aria-label="The note">${x.text}</textarea><div class="tacts"><button class="rbtn ol" data-npin="${o.id}">${x.pin ? 'UNPIN' : 'PIN'}</button><button class="rbtn ol dng" data-ndel="${o.id}">DELETE</button></div></div>` : ''}</div>`; }).join('') : noneRow('Nothing written down yet.'));
+  const nq = $('#ntQ'); nq.hidden = P.noteCount <= 5 && !noteQ;
+  const qs = noteQ.trim().toLowerCase(), hit = qs ? P.notes.filter(o => o.q.includes(qs)) : P.notes, cap = qs || noteAll ? hit : hit.slice(0, 8);
+  const nRow = o => { const op = aptNote === o.id, x = op && APP.note(o.id); return `<div class="nrow${op ? ' open' : ''}"><button class="nhit" data-nopen="${o.id}" aria-expanded="${op}"><b>${o.title}</b>${o.body && !op ? `<p>${o.body}</p>` : ''}<small>${o.cat ? o.cat + ' / ' : ''}${o.when}</small></button>${x ? `<div class="ned"><textarea class="hin" rows="5" data-nt="${o.id}" aria-label="The note">${x.text}</textarea><div class="tacts"><button class="rbtn ol" data-npin="${o.id}">${x.pin ? 'UNPIN' : 'PIN'}</button><button class="rbtn ol dng" data-ndel="${o.id}">DELETE</button></div></div>` : ''}</div>`; };
+  const pins = cap.filter(o => o.pin), rest = cap.filter(o => !o.pin);
+  if (!typing('#ntRows')) setHTML('#ntRows', !P.notes.length ? noneRow('Nothing written down yet.') : !hit.length ? noneRow('No notes match that.')
+    : (pins.length ? `<div class="gsec">PINNED / ${pins.length}</div>${pins.map(nRow).join('')}${rest.length ? '<div class="gsec">OTHER</div>' : ''}` : '') + rest.map(nRow).join('')
+    + (cap.length < hit.length ? `<button class="rbtn ol nmore" data-nall="1">SHOW ALL ${hit.length}</button>` : ''));
   refreshCareer();
   setText('#dcN', String(P.decide.length));
   setHTML('#dcRows', P.decide.length ? P.decide.map(t => `<div class="dcd"><b>${t.title}</b><small>Was due ${t.was}</small><div class="acts"><button class="rbtn" data-dec="rm-done" data-id="${t.id}">DONE</button><button class="rbtn ol" data-dec="rm-later" data-id="${t.id}">+2H</button><button class="rbtn ol" data-dec="rm-tomorrow" data-id="${t.id}">TOMORROW</button></div></div>`).join('') : noneRow('Nothing waiting on you.'));
@@ -6846,7 +6890,7 @@ function refreshChalet() {
   setText('#flN', F.all ? `${F.done}/${F.all} IN THE CART` : F.book ? 'NOTHING PICKED' : 'OPENING THE BOOK');
   setRows('#flRows', F.list.length ? F.list.map(sec => `<div class="gsec">${sec.sec.toUpperCase()}</div>` + sec.items.map(i => `<button class="git${i.on ? ' on' : ''}" data-fgroc="${i.id}" aria-pressed="${i.on}"><i>✓</i><b>${i.n}</b><em>${i.q}</em></button>`).join('')).join('') : noneRow(F.book ? 'Pick meals in MEALS and what they need shows up here.' : 'Opening the book.'));
   setHTML('#flActs', F.done ? '<button class="rbtn ol" data-fclear="">CLEAR TICKS</button>' : '');
-  setHTML('#flSnk', F.snacks.length ? `<b>ADD A SNACK</b>${['Salty', 'Sweet'].map(t => `<div class="gsec">${t.toUpperCase()}</div>` + F.snacks.filter(x => x.t === t).map(x => `<button class="git${x.on ? ' on' : ''}" data-fsnack="${x.n}" aria-pressed="${x.on}"><i>✓</i><b>${x.n}</b><em>${x.p}G</em></button>`).join('')).join('')}` : '');
+  setHTML('#flSnk', F.snacks.length ? `<b>ADD A SNACK</b>${['Salty', 'Sweet'].map(t => `<div class="gsec">${t.toUpperCase()}</div>` + F.snacks.filter(x => x.t === t).map(x => `<button class="git${x.on ? ' on' : ''}" data-fsnack="${x.n}" aria-pressed="${x.on}"><i>✓</i><b>${x.n}${x.note ? `<small>${x.note}</small>` : ''}</b><em>${x.p}G</em></button>`).join('')).join('')}` : '');
   /* the meals */
   const R = chRecipe ? APP.recipe(unesc(chRecipe)) : null; if (chRecipe && !R && F.book) chRecipe = null;
   setText('#fmK', R ? 'Recipe' : "This week's meals"); setText('#fmN', `${F.picked.length} PICKED`);
