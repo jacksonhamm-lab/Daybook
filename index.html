@@ -1553,11 +1553,12 @@ window.CityApp = {
   train(sel) {
     const t = today(), mon = mondayOf(new Date()), week0 = datesOf(mon), d = sel && week0.includes(sel) ? sel : t, w = wo(d), lift = /^D\d$/.test(w.s);
     const st = lift ? wState()[w.s.toLowerCase()] || {} : {};
-    const ex = lift ? flatEx(w.s.toLowerCase()).map((e, i) => { const a = st[i] || []; return { i, name: esc(e.name.split(' · ')[0]), reps: esc(e.name.split(' · ').slice(1).join(' · ')), sets: e.sets, on: [...Array(e.sets)].map((_, j) => !!a[j]), done: a.filter(Boolean).length, warm: e.accent === 'warmup' }; }) : [];
+    const ex = lift ? flatEx(w.s.toLowerCase()).map((e, i) => { const a = st[i] || []; return { i, name: esc(e.name.split(' · ')[0]), reps: esc(e.name.split(' · ').slice(1).join(' · ')), sets: e.sets, on: [...Array(e.sets)].map((_, j) => !!a[j]), done: a.filter(Boolean).length, warm: e.accent === 'warmup', sec: esc(e.section || ''), det: e.detail ? esc(e.detail) : '' }; }) : [];
+    const pg = lift && PROGRAM && PROGRAM[w.s.toLowerCase()], cardio = pg && pg.cardio ? esc(pg.cardio) : '';
     const week = week0.map((x, i) => { const o = wo(x); return { d: x, dow: DOW[i].toUpperCase(), long: DOW_LONG[i], day: parse(x).getDate(), s: o.s, name: esc(sessName(o.s)), done: o.done, today: x === t, sel: x === d, c: SESS[o.s].color }; });
     const plan = week.filter(x => x.s !== 'REST');
     const bench = [['pushups', 'PUSHUPS', 'REPS'], ['plank', 'PLANK', 'SEC'], ['row', '1-ARM ROW 10KG', 'REPS']].map(([k, label, unit]) => { const L = benchLogs(k).map(x => +x.reps || 0); return { k, label, unit, last: L.length ? L[L.length - 1] : null, pb: L.length ? Math.max(...L) : null, n: L.length, recent: L.slice(-12) }; });
-    return { d, isToday: d === t, long: DOW_LONG[dowIdx(d)], date: short(t).toUpperCase(), s: w.s, name: esc(sessName(w.s)), sub: esc(sessSub(w.s)), c: SESS[w.s].color, done: w.done, prog: w.prog ? { done: w.prog.done, total: w.prog.total, p: w.prog.p } : null, ex,
+    return { d, isToday: d === t, long: DOW_LONG[dowIdx(d)], date: short(t).toUpperCase(), s: w.s, name: esc(sessName(w.s)), sub: esc(sessSub(w.s)), c: SESS[w.s].color, done: w.done, prog: w.prog ? { done: w.prog.done, total: w.prog.total, p: w.prog.p } : null, ex, cardio,
       week, sDone: plan.filter(x => x.done).length, plan: plan.length, streak: weekStreak(), bench, rest: this.restLeft(),
       tpl: S.template.map((k, i) => ({ i, dow: DOW[i].toUpperCase(), k })), opts: SESS_KEYS.map(k => ({ k, name: esc(sessName(k)) })) };
   },

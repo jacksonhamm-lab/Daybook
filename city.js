@@ -271,8 +271,21 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .ssh small{display:block;margin-top:2px;font:12px/1.3 var(--body);color:var(--hud-text2)}
 .exr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;min-height:42px;border-top:1px solid var(--hud-hair)}
 .exr:first-child{border-top:0}
-.exr b{display:block;font:600 14px/1.2 var(--body);color:var(--hud-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.exr small{display:block;margin-top:3px;font:9px/1 var(--micro);letter-spacing:.05em;color:var(--hud-text3)}
+.exr b{display:block;font:600 14px/1.25 var(--body);color:var(--hud-text)}
+.exr small{display:block;margin-top:4px;font:11px/1.1 var(--micro);letter-spacing:.05em;color:var(--hud-text2)}
+/* the session in its sections, as the program lists it: each with its own count */
+.exh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:16px 0 2px;padding-bottom:5px;border-bottom:1px solid var(--c);font:700 11px/1 var(--micro);letter-spacing:.1em;color:var(--c)}
+.exh:first-child{margin-top:4px}
+.exh em{font-style:normal;font-weight:600;color:var(--hud-text2)}
+.exh.done em{color:var(--c)}
+.exh+.exr{border-top:0}
+/* a name with a coaching note: tap it to show the note */
+.exq{display:block;width:100%;padding:8px 0;text-align:left;background:none;border:0;color:inherit;cursor:pointer}
+.exq b::after{content:' +';color:var(--hud-cyan);font-weight:700}
+.exr.open .exq b::after{content:' \\2212'}
+.exd{display:none;grid-column:1/-1;margin:0 0 10px;padding-left:10px;font:13px/1.4 var(--body);color:var(--hud-text2);white-space:normal;background:none;box-shadow:inset 2px 0 0 var(--hud-cyan-line)}
+.exr.open .exd{display:block}
+.exn{margin-top:14px;padding:10px 12px;font:13px/1.4 var(--body);color:var(--hud-text2);box-shadow:inset 2px 0 0 var(--c)}
 .exr>span{display:flex;gap:4px}
 .exr.warm b{color:var(--hud-text2);font-weight:500}
 .exr.done b{opacity:.55}
@@ -6439,7 +6452,8 @@ function hudInit() {
   });
   /* the gym's rest buttons start the app's own rest timer, the one the island counts down between sets */
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-rest],[data-gset],[data-gdone],[data-gday],[data-gpick]'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-rest],[data-gset],[data-gdone],[data-gday],[data-gpick],[data-gex]'); if (!b) return; const d = b.dataset;
+    if (d.gex) { if (!gymOpen.delete(d.gex)) gymOpen.add(d.gex); refreshGym(); return; }
     if (d.gpick) { APP.sessPick(d.d, d.gpick); return; }
     if (d.rest) { APP.rest(+d.rest); restSeen = -1; return; }
     /* a set flips at once; the app's own tick (sound, rest timer, sync) follows */
@@ -6970,9 +6984,10 @@ function castleInit() {
     if (d.cscadd) { if (APP.schoolDo('courseAdd', { code: v('code'), name: v('name'), start: v('start'), end: v('end') })) { const n = ROOT.querySelector('[data-cscadd]'); if (n) { n.reset(); n.elements.code.focus(); } } else f.elements.code.focus(); }
   });
 }
+const gymOpen = new Set();
 function refreshGym() {
   /* rows are rewritten below: note what had focus, to hand it back */
-  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['gset', 'gday', 'gdone'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
+  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['gset', 'gday', 'gdone', 'gex'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
   const T = APP.train(), V = gymDay ? APP.train(gymDay) : T;
   const said = X => X.prog ? `${X.prog.done}/${X.prog.total} SETS` : X.s === 'REST' ? 'REST DAY' : X.done ? 'DONE' : 'NOT DONE YET';
   const n = said(T), p = T.prog ? T.prog.p : T.done ? 1 : 0;
@@ -6983,7 +6998,9 @@ function refreshGym() {
   /* the session: every set a button, ticked here exactly as on the Training page */
   setText('#ssK', V.isToday ? "Today's session" : `${V.long}'s session`); setText('#ssN', said(V));
   setHTML('#ssHead', `<b style="--c:${V.c}">${V.s}</b><div><strong>${V.name}</strong><small>${V.sub}</small></div>`);
-  setRows('#ssRows', V.ex.length ? V.ex.map(e => `<div class="exr${e.warm ? ' warm' : ''}${e.done >= e.sets ? ' done' : ''}"><div><b>${e.name}</b>${e.reps ? `<small>${e.warm ? 'WARM UP / ' : ''}${e.reps.toUpperCase()}</small>` : e.warm ? '<small>WARM UP</small>' : ''}</div><span>${e.on.map((on, j) => `<button class="st${on ? ' on' : ''}" data-gset="${e.i}:${j}" data-s="${V.s}" aria-pressed="${on}" aria-label="${e.name}, set ${j + 1} of ${e.sets}">${e.sets === 1 ? '✓' : j + 1}</button>`).join('')}</span></div>`).join('') : noneRow(V.s === 'REST' ? 'Rest day. Recover.' : V.s === 'HIIT' ? 'Conditioning: HIIT or a hill climb.' : 'Nothing listed for this day.'));
+  setRows('#ssRows', V.ex.length ? V.ex.map((e, k) => { const first = !k || V.ex[k - 1].sec !== e.sec, grp = first ? V.ex.filter(x => x.sec === e.sec) : null, gd = grp && grp.reduce((a, x) => a + Math.min(x.done, x.sets), 0), gt = grp && grp.reduce((a, x) => a + x.sets, 0), key = `${V.s}:${e.i}`, open = e.det && gymOpen.has(key);
+    const name = `<b>${e.name}</b>${e.reps ? `<small>${e.reps.toUpperCase()}</small>` : ''}`;
+    return `${first && e.sec ? `<div class="exh${gd >= gt ? ' done' : ''}" style="--c:${e.warm ? 'var(--hud-text3)' : V.c}">${e.sec.toUpperCase()}<em>${gd}/${gt}</em></div>` : ''}<div class="exr${e.warm ? ' warm' : ''}${e.done >= e.sets ? ' done' : ''}${open ? ' open' : ''}">${e.det ? `<button class="exq" data-gex="${key}" aria-expanded="${!!open}">${name}</button>` : `<div>${name}</div>`}<span>${e.on.map((on, j) => `<button class="st${on ? ' on' : ''}" data-gset="${e.i}:${j}" data-s="${V.s}" aria-pressed="${on}" aria-label="${e.name}, set ${j + 1} of ${e.sets}">${e.sets === 1 ? '✓' : j + 1}</button>`).join('')}</span>${e.det ? `<p class="exd">${e.det}</p>` : ''}</div>`; }).join('') + (V.cardio ? `<p class="exn" style="--c:${V.c}">${V.cardio}</p>` : '') : noneRow(V.s === 'REST' ? 'Rest day. Recover.' : V.s === 'HIIT' ? 'Conditioning: HIIT or a hill climb.' : 'Nothing listed for this day.'));
   setHTML('#ssActs', V.s === 'REST' ? '' : `<button class="rbtn${V.done ? ' ol' : ''}" data-gdone="${V.d}">${V.done ? 'DONE ✓ / UNDO' : 'MARK DONE'}</button>${V.isToday ? '' : '<button class="rbtn ol" data-gday="">BACK TO TODAY</button>'}`);
   /* that day's session can be swapped for another, that day only */
   if (!typing('#ssSwap')) setHTML('#ssSwap', `<b>SWAP ${V.isToday ? 'TODAY' : V.long.toUpperCase()}</b><div class="seg2">${T.opts.map(o => `<button class="rbtn${o.k === V.s ? '' : ' ol'}" data-gpick="${o.k}" data-d="${V.d}" aria-pressed="${o.k === V.s}" aria-label="${o.k === 'REST' ? 'Rest' : o.k}: ${o.name}">${o.k === 'REST' ? 'REST' : o.k}</button>`).join('')}</div><p>This day only. The weekly pattern is on the split.</p>`);
