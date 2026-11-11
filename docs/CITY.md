@@ -338,6 +338,16 @@ Technical state only. Updated 2026-11-06.
     .2), so at the chalet rain is snow. Wind: `/api/sky` now passes `wind_speed_10m`, 45 km/h and up counts as full.
     The level table `CAL` is measured ahead by tools/amb-cal.html, so a phone never renders one.
   - **Tests:** t66 (the engine matches the lab; every moment above in the app, muted; a generated tone for the picker).
+- **Built (p20, 2026-11-10, his catch: "I don't have a school tab to click on yet"):** a place whose pin is off the
+  screen keeps its whole pin (icon, name, readout) docked at that edge with an arrow pointing the way; a tap flies there
+  as usual. The castle sits left of the city's opening view at every size, so School was a 2 px line at the left edge.
+  The right edge docks by the pin's measured width; two pins docked on one edge part up and down. LIVE 2026-11-10.
+- **Built (p21, 2026-11-10, his ask: "pan around Mira Kade... see all sides"; his pick: turn her, not orbit the
+  camera, since she stands at the glass):** close up, a drag left or right turns her on the spot (`S.spin`, about the
+  middle of where she stands close up, a full turn across about a phone's width; .009 rad/px on a laptop); the arrow
+  keys turn her an eighth. A tap still steps back (a drag never does); she unwinds the short way as the view pulls
+  back, and leaving the room (`closeReset`) sets her straight at once. Room-view drags still look round the room.
+  Hint: DRAG TO TURN HER · TAP TO STEP BACK. Test t67 (both sizes), with shots of four sides.
 - **Built (p18, the old app's code deleted, 2026-11-09, his go on the cleanup):**
   - **Renamed Arcadia** (2026-11-10, his call, the name his website first had): every name he sees. Storage keys,
     caches, the Worker, the repo, the domain and the backup's `daybook` key stay, so nothing moves. A Home Screen icon
@@ -635,6 +645,6 @@ Technical state only. Updated 2026-11-06.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. p19 (sound and ambience) on branch city-sound, not pushed: his go, then his ears on the iPhone (Sound on, then
-     Ambience LOW, his own ring added once on that device).
+  1. p19 and p20 are live. p21 (turn her round) on branch city-spin, not pushed: his go. Then his ears on the iPhone
+     for p19 (Sound on, then Ambience LOW, his own ring added once on that device).
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

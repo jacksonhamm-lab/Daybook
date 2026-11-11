@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p20';
+export const BUILD = 'p21';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -5903,6 +5903,7 @@ function figGo(j, t) {
 /* close up, mid-move: each upper arm travels straight from where it was to where it's going, bowed out in front of
    her (not round through her side, over her head or through her body), and the elbow folds in on the way, the way a
    hand travels. The bone blend keeps the twist; this only sets where the arm points and how bent it is */
+const UP_Y = new THREE.Vector3(0, 1, 0);
 const SW = { A: new THREE.Vector3(), E: new THREE.Vector3(), H: new THREE.Vector3(), d: new THREE.Vector3(), d2: new THREE.Vector3(), f: new THREE.Vector3(), U: new THREE.Vector3(0, 1, 0), q: new THREE.Quaternion(), pq: new THREE.Quaternion() };
 function figSwing(k, b, u) {
   const F = FIG, ax = k.ax, { A, E, H, d, d2, f, q, pq } = SW;
@@ -5949,6 +5950,8 @@ function figTick(t) {
   const b = F.go && !F.go.far ? K[F.go.j] : null, G = b && F.go.st ? F.lag : null;
   for (let i = 0; i < F.bones.length; i++) { const q = F.bones[i].quaternion.copy(k.q[i]); if (b) q.slerp(b.q[i], G ? ease(Math.min(1, Math.max(0, (u - G[i]) / .76))) : w); }
   if (b) { F.root.position.lerpVectors(k.P, b.P, w); F.root.quaternion.slerpQuaternions(k.R, b.R, w); } else { F.root.position.copy(k.P); F.root.quaternion.copy(k.R); }
+  /* close up he can turn her round to see every side: a turn about the middle of where she stands */
+  if (S.spin) { const c = room.def.figure.close[0].at, px = room.box.x + c[0], pz = room.box.z + c[2], q = F.q.setFromAxisAngle(UP_Y, S.spin); F.v.set(F.root.position.x - px, 0, F.root.position.z - pz).applyQuaternion(q); F.root.position.x = px + F.v.x; F.root.position.z = pz + F.v.z; F.root.quaternion.premultiply(q); }
   if (G) figSwing(k, b, u);
   const on = b && w > .5 ? b : k;
   if (!REDUCED) {
@@ -6026,7 +6029,7 @@ function resize() {
 }
 
 /* ---------- state ---------- */
-const S = { mode: 'city', t: 0, az: 0, azGoal: 0, el: 0, elGoal: 0, yaw: 0, yawGoal: 0, pitch: 0, fly: null, last: 0, frames: 0, acc: 0, fps: 0, scanT: -9, glitchT: -9, needsPlace: true, sheet: false, drag: null, close: false, closeK: 0 };
+const S = { spin: 0, spinGoal: 0, mode: 'city', t: 0, az: 0, azGoal: 0, el: 0, elGoal: 0, yaw: 0, yawGoal: 0, pitch: 0, fly: null, last: 0, frames: 0, acc: 0, fps: 0, scanT: -9, glitchT: -9, needsPlace: true, sheet: false, drag: null, close: false, closeK: 0 };
 /* low over the harbour, a third of the way up the tower, one near tower cropping the frame */
 const POSE = () => CAM.aspect < .8 ? { p: [-8, 22, 408], l: [-8, 112, -200], fov: 84 } : CAM.aspect < 1.3 ? { p: [66, 50, 505], l: [-10, 220, -180], fov: 66 } : { p: [66, 52, 505], l: [-10, 196, -160], fov: 58 };
 /* how far in on her the view is, eased (0 at rest) */
@@ -6210,6 +6213,8 @@ function updateCamera(dt) {
     /* tapping her moves the view in on her, and back */
     const ck = clamp(S.closeK + (S.close ? 1 : -1) * dt / (REDUCED ? .25 : 1.15));
     if (ck !== S.closeK) { S.closeK = ck; applyFov(); }
+    if (!S.close) S.spinGoal = 0;
+    if (S.spin !== S.spinGoal) { S.spin += (S.spinGoal - S.spin) * (1 - Math.exp(-dt * (REDUCED ? 40 : 7))); if (Math.abs(S.spinGoal - S.spin) < 1e-4) S.spin = S.spinGoal; }
     const fv = room.def.figure && room.def.figure.view, e = closeE();
     if (fv && e > 0) { const c = fv(CAM.aspect); for (let i = 0; i < 3; i++) { v.p[i] = lerp(v.p[i], c.p[i], e); v.l[i] = lerp(v.l[i], c.l[i], e); } }
     CAM.position.set(v.p[0], v.p[1] + breathe, v.p[2]); CAM.lookAt(...v.l);
@@ -6551,6 +6556,7 @@ function hudInit() {
     if (e.key === 'Escape') { if (S.sheet) closeSheet(); else goBack(); return; }
     /* V: in on her and back out */
     if (e.key.toLowerCase() === 'v' && !S.sheet && room.def.figure && room.def.figure.close) { e.stopPropagation(); e.preventDefault(); if (S.close) stepBack(); else closeUp(true); return; }
+    if (S.close && !S.sheet && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.stopPropagation(); e.preventDefault(); S.spinGoal += (e.key === 'ArrowRight' ? 1 : -1) * Math.PI / 4; return; }
     if (S.close) return;
     const h = room.hot.find(x => x.hotkey.toLowerCase() === e.key.toLowerCase()); if (h && !S.sheet) { e.stopPropagation(); e.preventDefault(); tapHot(h.key); }
   }, true);
@@ -6564,8 +6570,8 @@ function hudInit() {
   });
   /* drag: small orbit in the city, look around in the room; vertical stays with the page */
   const dom = canvas;
-  dom.addEventListener('pointerdown', e => { S.drag = { x: e.clientX, y: e.clientY, a: S.azGoal, e: S.elGoal, yaw: S.yawGoal, moved: false, id: e.pointerId, t: performance.now(), mode: S.mode }; try { dom.setPointerCapture(e.pointerId); } catch (_) {} });
-  dom.addEventListener('pointermove', e => { const d = S.drag; if (!d) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; if (Math.abs(dx) + Math.abs(dy) > 8) d.moved = true; if (S.mode === 'city') { S.azGoal = clamp(d.a - dx * .0016, -.3, .3); if (e.pointerType === 'mouse') S.elGoal = clamp(d.e + dy * .0024, -.3, .4); } else if (S.mode === 'room' && !S.sheet && !S.close) { S.yawGoal = clamp(d.yaw + dx * (isPhone ? .0052 : .0028), -.61, .61); S.lastDrag = performance.now(); } });
+  dom.addEventListener('pointerdown', e => { S.drag = { x: e.clientX, y: e.clientY, a: S.azGoal, e: S.elGoal, yaw: S.yawGoal, spin: S.spinGoal, moved: false, id: e.pointerId, t: performance.now(), mode: S.mode }; try { dom.setPointerCapture(e.pointerId); } catch (_) {} });
+  dom.addEventListener('pointermove', e => { const d = S.drag; if (!d) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; if (Math.abs(dx) + Math.abs(dy) > 8) d.moved = true; if (S.mode === 'city') { S.azGoal = clamp(d.a - dx * .0016, -.3, .3); if (e.pointerType === 'mouse') S.elGoal = clamp(d.e + dy * .0024, -.3, .4); } else if (S.mode === 'room' && !S.sheet && !S.close) { S.yawGoal = clamp(d.yaw + dx * (isPhone ? .0052 : .0028), -.61, .61); S.lastDrag = performance.now(); } else if (S.mode === 'room' && !S.sheet && S.close && d.moved) S.spinGoal = d.spin + dx * (isPhone ? .016 : .009); });
   const up = e => { const d = S.drag; S.drag = null; if (!d) return; if (!d.moved && d.mode === S.mode && performance.now() - d.t < 500) tapWorld(e.clientX, e.clientY); else S.lastDrag = performance.now(); };
   dom.addEventListener('pointerup', up); dom.addEventListener('pointercancel', () => { S.drag = null; S.lastDrag = performance.now(); });
   addEventListener('resize', () => { if (host.hidden) S.sizeStale = true; else resize(); });
@@ -6597,8 +6603,9 @@ function onHer(x, y) {
 function closeUp(on, pop) {
   if (on === S.close) return;
   if (on) { if (S.mode !== 'room' || S.sheet || !FIG || !room.def.figure || !room.def.figure.close) return; if (!pop) history.pushState({ city: room.id, close: 1 }, ''); }
+  if (!on) { const T = Math.PI * 2; S.spin = ((S.spin % T) + T + Math.PI) % T - Math.PI; }
   S.close = on; figClose(on); hudEl.classList.toggle('close', on); $(room.def.panel).inert = on; $('#herBox').setAttribute('aria-hidden', String(!on)); if (on) herCard();
-  const h = $('#hint'); h.textContent = on ? 'TAP TO STEP BACK' : 'DRAG TO LOOK'; h.style.opacity = 1; clearTimeout(S.hintT); S.hintT = setTimeout(() => { h.style.opacity = 0; }, on ? 2600 : 1800);
+  const h = $('#hint'); h.textContent = on ? 'DRAG TO TURN HER · TAP TO STEP BACK' : 'DRAG TO LOOK'; h.style.opacity = 1; clearTimeout(S.hintT); S.hintT = setTimeout(() => { h.style.opacity = 0; }, on ? 2600 : 1800);
   glitchHud(.2); APP.sfx(on ? 'open' : 'back');
 }
 /* her card: mood follows his day (today's tasks done), link his overall progress; the pose line follows her */
@@ -6617,7 +6624,7 @@ function herPose() {
 }
 function stepBack() { if (history.state && history.state.close) history.back(); else closeUp(false); }
 /* leaving the room from close up: no pull back, she's simply where the clock says */
-function closeReset() { if (!S.close && !S.closeK) return; S.close = false; S.closeK = 0; figClose(false, true); hudEl.classList.remove('close'); $('#herBox').setAttribute('aria-hidden', 'true'); const p = room.def && $(room.def.panel); if (p) p.inert = false; applyFov(); }
+function closeReset() { S.spin = S.spinGoal = 0; if (!S.close && !S.closeK) return; S.close = false; S.closeK = 0; figClose(false, true); hudEl.classList.remove('close'); $('#herBox').setAttribute('aria-hidden', 'true'); const p = room.def && $(room.def.panel); if (p) p.inert = false; applyFov(); }
 function tapIcon(k) {
   if (S.mode !== 'city') return;
   const e = iconEls.find(i => i.k === k);
@@ -7135,7 +7142,7 @@ function rig() {
     /* close up, start the move into close pose j now (held there once it's done) */
     closeGo(j) { if (!FIG) return 0; figGo(FIG.nS + j % (FIG.keys.length - FIG.nS), S.t); FIG.next = Infinity; return FIG.go.dur; },
     tapHer() { const b = FIG && FIG.keys[FIG.i].box; if (!b) return null; const p = project([room.box.x + (b[0][0] + b[1][0]) / 2, room.box.y + (b[0][1] + b[1][1]) / 2, room.box.z + (b[0][2] + b[1][2]) / 2]); return [p.x, p.y]; },
-    stats() { return { id: room.id, day: room.day, spot: room.spot, pose: FIG ? FIG.i : null, poses: FIG ? FIG.nS : 0, close: S.close, closeK: S.closeK, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
+    stats() { return { id: room.id, day: room.day, spot: room.spot, pose: FIG ? FIG.i : null, poses: FIG ? FIG.nS : 0, close: S.close, closeK: S.closeK, spin: Math.round(S.spin * 1e3) / 1e3, spinGoal: Math.round(S.spinGoal * 1e3) / 1e3, herQ: FIG ? FIG.root.quaternion.toArray().map(x => Math.round(x * 1e3) / 1e3) : null, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
   };
 }
 window.City = {
