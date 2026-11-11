@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p19';
+export const BUILD = 'p20';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -70,10 +70,13 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .ic .lab{display:block;margin-left:1px;padding:2px 6px 2px 5px;background:var(--hud-plate);font:700 11.5px/1.05 var(--hud-font);letter-spacing:.09em;text-transform:uppercase;color:var(--hud-text);box-shadow:inset 0 -1px 0 var(--k);white-space:nowrap}
 .ic .lab small{display:block;font:8px/1.1 var(--micro);letter-spacing:.04em;color:var(--k);margin-top:1px}
 .ic .edgea{position:absolute;top:50%;width:0;height:0;margin-top:-5px;border:5px solid transparent;opacity:0}
-.ic.el,.ic.er{width:44px}
-.ic.el .plate,.ic.el .lab,.ic.er .plate,.ic.er .lab,.ic.el .live,.ic.er .live,.ic.el .tk,.ic.er .tk{display:none}
-.ic.el .edgea,.ic.er .edgea{opacity:1;top:8px;margin:0;width:2px;height:28px;border:0;background:var(--k);box-shadow:0 0 6px var(--k)}
-.ic.el .edgea{left:2px}.ic.er .edgea{right:2px}
+/* a place off the screen keeps its whole pin, docked at that edge, with an arrow pointing the way */
+.ic.el,.ic.er{width:auto}
+.ic.el{padding-left:11px}.ic.er{padding-right:11px}
+.ic.el .tk,.ic.er .tk{display:none}
+.ic.el .edgea,.ic.er .edgea{opacity:1;margin-top:-6px;filter:drop-shadow(0 0 3px var(--k))}
+.ic.el .edgea{left:0;border-width:6px 7px 6px 0;border-color:transparent var(--k) transparent transparent}
+.ic.er .edgea{right:0;border-width:6px 0 6px 7px;border-color:transparent transparent transparent var(--k)}
 #leaders{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
 #leaders path{fill:none;stroke:var(--hud-red);stroke-width:1;opacity:.75}
 #leaders rect{fill:none;stroke:var(--hud-red);stroke-width:1}
@@ -7029,12 +7032,12 @@ function hudFrame(dt) {
     const PW = 90, PH = 40, botLimit = (innerWidth < 900 ? cover.top : innerHeight) - PH - 6;
     const pinLift = innerWidth < 900 ? { train: -74, fuel: 88 } : {}; const px = iconEls.map(o => { const p = project(o.a); return { o, ax: p.x, ay: p.y, x: p.x - 12, y: p.y - 58 + (pinLift[o.k] || 0), on: p.on, off: p.x < 4 ? -1 : p.x > innerWidth - 4 ? 1 : 0 }; });
     const boxes = innerWidth >= 900 ? [cover, $('#dataBox').getBoundingClientRect()] : [];
-    const bound = p => { p.x = p.off < 0 ? 0 : p.off > 0 ? innerWidth - 44 : clamp(p.x, 12, innerWidth - PW - 12); p.y = clamp(p.y, safeTop, botLimit); for (const b of boxes) if (p.x + PW > b.left - 6 && p.x < b.right + 6 && p.y + PH > b.top - 6) p.y = b.top - PH - 6; };
+    const bound = p => { p.x = p.off < 0 ? 0 : p.off > 0 ? innerWidth - (p.o.w || PW + 11) : clamp(p.x, 12, innerWidth - PW - 12); p.y = clamp(p.y, safeTop, botLimit); for (const b of boxes) if (p.x + PW > b.left - 6 && p.x < b.right + 6 && p.y + PH > b.top - 6) p.y = b.top - PH - 6; };
     px.forEach(bound);
     /* pins never overlap each other */
-    for (let it = 0; it < 5; it++) { for (let i = 0; i < px.length; i++) for (let j = i + 1; j < px.length; j++) { const a = px[i], b = px[j]; if (a.off || b.off) continue; const ox = PW + 4 - Math.abs(a.x - b.x), oy = PH + 4 - Math.abs(a.y - b.y); if (ox > 0 && oy > 0) { if (oy < ox) { const k = (a.y < b.y ? -1 : 1) * oy / 2; a.y += k; b.y -= k; } else { const k = (a.x < b.x ? -1 : 1) * ox / 2; a.x += k; b.x -= k; } } } px.forEach(bound); }
+    for (let it = 0; it < 5; it++) { for (let i = 0; i < px.length; i++) for (let j = i + 1; j < px.length; j++) { const a = px[i], b = px[j]; if ((a.off || b.off) && a.off !== b.off) continue; const ox = PW + 4 - Math.abs(a.x - b.x), oy = PH + 4 - Math.abs(a.y - b.y); if (ox > 0 && oy > 0) { if (oy < ox || a.off) { const k = (a.y < b.y ? -1 : 1) * oy / 2; a.y += k; b.y -= k; } else { const k = (a.x < b.x ? -1 : 1) * ox / 2; a.x += k; b.x -= k; } } } px.forEach(bound); }
     for (const p of px) {
-      place(p.o.el, p.x, p.y, p.on ? 1 : 0); p.o.el.classList.toggle('el', p.off < 0); p.o.el.classList.toggle('er', p.off > 0);
+      place(p.o.el, p.x, p.y, p.on ? 1 : 0); if (p.o.off !== p.off) { p.o.off = p.off; p.o.el.classList.toggle('el', p.off < 0); p.o.el.classList.toggle('er', p.off > 0); p.o.w = p.off ? p.o.el.offsetWidth : 0; }
       const inView = p.on && !p.off && p.ay > safeTop - 30 && p.ay < innerHeight - 4;
       if (inView) { const sx = p.x + 12, sy = p.y + 34; p.o.ld.setAttribute('d', `M${sx.toFixed(1)} ${sy.toFixed(1)}V${Math.max(sy, p.ay - 6).toFixed(1)}L${p.ax.toFixed(1)} ${p.ay.toFixed(1)}`); p.o.dt.setAttribute('x', (p.ax - 2.5).toFixed(1)); p.o.dt.setAttribute('y', (p.ay - 2.5).toFixed(1)); p.o.ld.style.display = p.o.dt.style.display = ''; }
       else p.o.ld.style.display = p.o.dt.style.display = 'none';
