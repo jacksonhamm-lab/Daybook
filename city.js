@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p22';
+export const BUILD = 'p23';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -855,6 +855,11 @@ const MARKUP = `
             <div class="acts"><button class="rbtn" id="btnLen" data-act="copy-submit">COPY FOR LEN</button><button class="rbtn ol" id="btnFill" data-act="fill-estimates" hidden>FILL THEM IN</button><button class="rbtn ol" data-wcopy="1">COPY PERIOD</button><button class="rbtn ol" data-hud="sys" data-sg="pay">PAY SETTINGS</button></div>
             <div class="sgp" style="margin-top:8px"><b>LAST 6 PERIODS</b><div class="ptr" id="payTr" role="img"></div></div>
           </section>
+          <section class="card" id="cWtask" data-r="shop">
+            <div class="kick">Work tasks<span class="mi" id="wtN"></span></div>
+            <div id="wtRows"></div>
+            <form class="hadd" id="wtAdd" data-hadd="" data-hcat="work"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD A WORK TASK, E.G. EMAIL LEN FRI" aria-label="Add a work task"><button class="rbtn" type="submit">ADD</button></form>
+          </section>
         </div>
       </div>
     </div>
@@ -1228,6 +1233,7 @@ function drawSigns() {
   cell('frame', 160, 200, (x, w, h) => { x.fillStyle = '#1c1830'; x.fillRect(0, 0, w, h); x.fillStyle = '#efe4c6'; x.fillRect(14, 14, w - 28, h - 28); x.fillStyle = '#2a2138'; x.beginPath(); x.arc(w / 2, 76, 24, 0, TAU); x.fill(); x.fillRect(w / 2 - 34, 100, 68, 70); x.fillStyle = '#efe4c6'; x.beginPath(); x.moveTo(w / 2 - 12, 100); x.lineTo(w / 2 + 12, 100); x.lineTo(w / 2, 142); x.fill(); });
   cell('sale', 150, 80, (x, w, h) => { x.fillStyle = '#e8c56a'; x.fillRect(0, 0, w, h); x.fillStyle = '#1a1420'; x.font = `800 22px ${FONT_EN}`; x.textAlign = 'center'; x.fillText('MADE TO MEASURE', w / 2, 34); x.font = `700 16px ${FONT_JP}`; x.fillText('採寸・仕立て', w / 2, 60); });
   cell('ticket', 110, 180, (x, w, h) => { x.fillStyle = '#ece4d0'; x.fillRect(0, 0, w, h); x.fillStyle = '#1a1826'; x.font = `500 11px ${FONT_MONO}`; for (let i = 0; i < 9; i++) x.fillRect(8, 16 + i * 16, R.range(40, 92), 3); });
+  cell('todo', 96, 128, (x, w, h) => { x.fillStyle = '#f2ecdc'; x.fillRect(0, 0, w, h); x.fillStyle = '#20204a'; x.font = `italic 700 15px Georgia,serif`; x.fillText('to do', 8, 19); x.fillRect(8, 23, 36, 1.5); x.strokeStyle = '#20204a'; x.lineWidth = 1.5; for (let i = 0; i < 6; i++) { const y = 40 + i * 15; x.strokeRect(8, y - 6, 7, 7); x.fillRect(20, y - 3, R.range(34, 66), 2); if (i < 2) { x.beginPath(); x.moveTo(9, y - 3); x.lineTo(11.5, y); x.lineTo(17, y - 8); x.stroke(); } } });
   cell('rug', 420, 256, (x, w, h) => { const Rr = rng(808); x.fillStyle = '#3a2430'; x.fillRect(0, 0, w, h);
     /* outer border, guard stripes, then a quiet field */
     const band = (m, c) => { x.fillStyle = c; x.fillRect(m, m, w - 2 * m, h - 2 * m); };
@@ -4102,6 +4108,12 @@ function buildRoom() {
       }
       /* price stand */
       M.set({ kind: K.BRASS, c: PAL.brass }); M.cyl(tx0 + .62, y, tz0 + .4, .05, .05, .006, 8, {}); M.cyl(tx0 + .62, y, tz0 + .4, .004, .004, .13, 3, { top: false }); paper(tx0 + .62, y + .16, tz0 + .4, .17, .09, -Math.PI / 2, 'sale'); piece();
+      /* the work list: a clipboard leant on the shirts, facing the counter (the TASKS hotspot) */
+      { const z0 = .1, bx = -1.47, tx1 = -1.39, h = .3, hw = .115, pw = .1, u = CELL.todo;
+        setPlain(M, 0x6a4a2a, L.WOOD); M.quad([bx, y, z0 - hw], [bx, y, z0 + hw], [tx1, y + h, z0 + hw], [tx1, y + h, z0 - hw]);
+        M.quad([bx + .006, y, z0 + hw], [bx + .006, y, z0 - hw], [tx1 + .006, y + h, z0 - hw], [tx1 + .006, y + h, z0 + hw]);
+        M.set({ kind: K.PAPER, c: [1, 1, 1], em: 0, layer: 0, id: M.nid() }); { const k = .012, ax = bx - .002 + (tx1 - bx) * .04, cx2 = tx1 - .002 - (tx1 - bx) * .18; M.quad([ax, y + k, z0 - pw], [ax, y + k, z0 + pw], [cx2, y + h * .82, z0 + pw], [cx2, y + h * .82, z0 - pw], u); }
+        M.set({ kind: K.BRASS, c: 0xc8d0dc }); M.box(tx1 - .012, y + h - .03, z0, .02, .035, .08, {}); piece(); piece(); }
     }
     /* the tailor's form, jacket half built, pinned and chalked */
     { const fx = .15, fz = -2.65; const y0 = 0;
@@ -4283,6 +4295,7 @@ function buildRoom() {
     { key: 'clock', label: 'CLOCK IN', hotkey: 'E', line: 34, run: tapClock, p: w(-2.78, 1.5, -.82) },
     { key: 'shifts', label: 'SHIFTS', hotkey: 'R', line: 20, sheet: 'cShifts', p: w(-2.82, 1.08, -.38) },
     { key: 'pay', label: 'PAY', hotkey: 'F', line: 28, sheet: 'cPay', p: w(-2.82, 1.06, .02) },
+    { key: 'wtask', label: 'TASKS', hotkey: 'G', line: 14, sheet: 'cWtask', p: w(-1.42, .95, .1) },
   ];
   const door = new THREE.Vector3();
   return {
@@ -6112,7 +6125,7 @@ const ROOM_REST = () => room.def.rest(CAM.aspect);
 /* Everything that differs between rooms. A room looks toward +X with its window on that wall: the gobo, the head shift and the window rectangle all rely on it. */
 const ROOM_DEF = {
   shop: {
-    box: SHOP, name: 'SHOP', build: buildRoom, panel: '#roomBox', sheet: ['Work', 'PAGE.01/03'], shadow: [134, 22], doorAt: [SHOP.x + SHOP.w / 2, SHOP.z + 1.6],
+    box: SHOP, name: 'SHOP', build: buildRoom, panel: '#roomBox', sheet: ['Work', 'PAGE.01/04'], shadow: [134, 22], doorAt: [SHOP.x + SHOP.w / 2, SHOP.z + 1.6],
     amb: [[.3, .25, .34], [.2, .11, .2], [.05, .05, .09], [.3, .72, .85]],
     mirror: [SHOP.x + 3.55, 1.1, SHOP.z + SHOP.d / 2 - .26],
     window: { x: SHOP.x + SHOP.w / 2 + .05, zs: [SHOP.z - SHOP.d / 2, SHOP.z + SHOP.d / 2], ys: [0, SHOP.h] },
@@ -6525,7 +6538,7 @@ function hudInit() {
       const k = d.topen + '|' + d.date;
       /* from the panel: the sheet opens on today, that task's editor open */
       if (b.closest('#aptList')) { aptOpen = k; openSheet('cToday'); return focusIn(`#tdRows [data-tt="${d.topen}"]`); }
-      aptOpen = aptOpen === k ? null : k; refreshApt(); if (aptOpen) focusIn(`[data-tt="${d.topen}"]`); return;
+      const cd = b.closest('.card'); aptOpen = aptOpen === k ? null : k; refreshApt(); refreshWtask(); if (aptOpen) focusIn(`${cd ? '#' + cd.id + ' ' : ''}[data-tt="${d.topen}"]`); return;
     }
     if (d.tw) { const [id, when] = d.tw.split(':'); aptOpen = null; APP.taskSet(id, { when }); return; }
     if (d.tcat) { const [id, cat] = d.tcat.split(':'); APP.taskSet(id, { cat }); return; }
@@ -6562,7 +6575,7 @@ function hudInit() {
   hudEl.addEventListener('focusout', e => { if (e.target.matches && e.target.matches('.hin')) setTimeout(() => { if (!typing('#sheet')) { refreshRoom(); refreshWork(); } }, 60); });
   hudEl.addEventListener('submit', e => {
     const f = e.target; if (!f.dataset || (f.dataset.hadd === undefined && !f.dataset.nadd)) return; e.preventDefault();
-    const inp = f.querySelector('.hin'), ok = f.dataset.nadd ? APP.noteAdd(inp.value) : APP.addTask(inp.value, f.dataset.hadd || null);
+    const inp = f.querySelector('.hin'), ok = f.dataset.nadd ? APP.noteAdd(inp.value) : APP.addTask(inp.value, f.dataset.hadd || null, f.dataset.hcat);
     if (ok) inp.value = ''; inp.focus();
   });
   /* the top bar's own: quick add, progress, system */
@@ -6617,7 +6630,7 @@ function hudInit() {
   hudEl.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-tick],[data-task],[data-dec],[data-day]'); if (!b) return;
     const d = b.dataset;
-    if (d.tick) { aptKeep.add(d.tick + '|' + d.date); APP.tick(d.tick, d.date); const r = b.closest('.trow'), on = r.classList.toggle('done'); b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^Mark (not )?done/, 'Mark ' + (on ? 'not done' : 'done'))); kick = 1; for (const id of ['#aptList', '#tdRows', '#wkDay']) $(id)._h = null; return; }
+    if (d.tick) { aptKeep.add(d.tick + '|' + d.date); APP.tick(d.tick, d.date); const r = b.closest('.trow'), on = r.classList.toggle('done'); b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^Mark (not )?done/, 'Mark ' + (on ? 'not done' : 'done'))); kick = 1; for (const id of ['#aptList', '#tdRows', '#wkDay', '#wtRows']) $(id)._h = null; return; }
     if (d.dec) return APP.decide(d.dec, d.id);
     aptDay = d.day; refreshApt();
   });
@@ -6762,7 +6775,7 @@ const GCARD = { add: ['gAdd', 'Quick add', 'SYS.INPUT'], prog: ['gProg', 'Progre
 let gOpen = null;
 function openGlobal(k) { if (!GCARD[k]) return; if (!S.sheet || gOpen !== k) APP.sfx('open'); gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
 /* a room's sheet shows one card at a time; tabs switch between them */
-const TABS = { apartment: [['cToday', 'TODAY'], ['cWeek', 'WEEK'], ['cNotes', 'NOTES'], ['cDecide', 'DECIDE'], ['cCareer', 'CAREER']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'TESTS'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY']], chalet: [['cList', 'LIST'], ['cMeals', 'MEALS'], ['cShakes', 'SHAKES'], ['cCardio', 'CARDIO']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'CURRENT'], ['cShelf', 'ALL COURSES']] };
+const TABS = { apartment: [['cToday', 'TODAY'], ['cWeek', 'WEEK'], ['cNotes', 'NOTES'], ['cDecide', 'DECIDE'], ['cCareer', 'CAREER']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'TESTS'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY'], ['cWtask', 'TASKS']], chalet: [['cList', 'LIST'], ['cMeals', 'MEALS'], ['cShakes', 'SHAKES'], ['cCardio', 'CARDIO']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'CURRENT'], ['cShelf', 'ALL COURSES']] };
 /* a tab can carry a count (what's left, what's waiting) */
 const tabN = {};
 function tabCount(id, n) { if (tabN[id] === n) return; tabN[id] = n; if (S.sheet && curCard) paintTabs(curCard); }
@@ -6828,7 +6841,15 @@ function refreshWork() {
   setHTML('#payTr', W.trend.map(x => `<i class="${x.cur ? 'cur' : ''}"><span style="height:${Math.max(2, x.h / W.top * 64).toFixed(1)}px"></span><b>${x.h ? x.hrs : '-'}</b><em>${x.label}</em></i>`).join(''));
   $('#payTr').setAttribute('aria-label', 'Hours in the last six pay periods: ' + W.trend.map(x => `${x.label} ${x.hrs}`).join(', '));
   setText('#vG', N.dayOf + '/' + N.cyc); setBar($('#bG'), N.dayOf / N.cyc);
-  paintClock();
+  paintClock(); refreshWtask();
+}
+/* the shop's TASKS: work tasks late, today and the next week; the same rows and editor as the apartment's (they still show there too) */
+function refreshWtask() {
+  const T = APP.tasksFor('work'), late = T.late.length, open = T.today.filter(t => !t.done).length;
+  setText('#wtN', late ? `${late} LATE / ${open} TODAY` : `${open} TODAY`); tabCount('cWtask', T.left);
+  const sec = (h, L) => L.length ? `<div class="gsec">${h} / ${L.length}</div>` + aptSort(L).map(t => taskRow(t, true)).join('') : '';
+  if (!typing('#wtRows')) setRows('#wtRows', late + T.today.length + T.soon.length ? sec('LATE', T.late) + sec('TODAY', T.today) + sec('COMING UP', T.soon) : noneRow('No work tasks this week. Add one below, or tag one Work anywhere.'));
+  const g = tagEls.find(x => x.h.key === 'wtask'); if (g) { const m = g.el.querySelector('small'); setText2(m, T.left ? String(T.left) : ''); m.hidden = !T.left; }
 }
 /* a room's panels read through the app; a throw here must not stop the app's own render */
 function refreshRoom() { if (gOpen && S.sheet) try { refreshGlobal(gOpen); } catch (e) { APP.log(e); } if (room.def && room.def.refresh) try { room.def.refresh(); } catch (e) { APP.log(e); } }
@@ -7008,7 +7029,7 @@ function refreshCastle() {
   /* DUE: an add box, then overdue, this week, later, done */
   setText('#cdN', T.set ? (T.over.length ? `${T.over.length} LATE / ` : '') + `${T.week.length} THIS WEEK` : 'NOT SET UP');
   const part = (sel, h) => { if (!typing(sel)) setHTML(sel, h); };
-  { if (!T.set) { part('#cdAdd', csSetup(T, true)); setHTML('#cdRows', ''); }
+  { if (!T.set) { part('#cdAdd', csSetup(T, true)); part('#cdRows', [['OVERDUE', T.over], ['THIS WEEK', T.week], ['LATER', T.later]].filter(([, L]) => L.length).map(([h, L]) => `<div class="gsec">${h} / ${L.length}</div>` + L.map(t => csRow(T, t)).join('')).join('')); }
     else { tabCount('cDue', T.over.length + T.week.filter(t => !t.done).length); const none = !T.over.length && !T.week.length && !T.later.length;
       if (!csAddOpen && !none) part('#cdAdd', `<button class="rbtn ol" data-csaddo="1" style="margin-top:8px">+ ADD SOMETHING DUE</button>`); else part('#cdAdd', `<form class="csadd" data-csadd="1"><input class="hin" name="title" type="text" enterkeyhint="done" autocomplete="off" placeholder="WHAT'S DUE" aria-label="What's due"><div class="sgg"><label>COURSE<select class="hin" name="course">${csOpts(T, T.course ? T.course.id : '')}</select></label><label>TYPE<select class="hin" name="type">${csTypes(T, 'Reading')}</select></label><label>DUE<input class="hin" name="date" type="date" value="${T.days.find(d => d.today) ? T.days.find(d => d.today).d : ''}"></label><label>&nbsp;<button class="rbtn" type="submit">ADD</button></label></div></form>`);
       part('#cdRows', [['OVERDUE', T.over], ['THIS WEEK', T.week], ['LATER', T.later]].filter(([, L]) => L.length).map(([h, L]) => `<div class="gsec">${h} / ${L.length}</div>` + L.map(t => csRow(T, t)).join('')).join('')

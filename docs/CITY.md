@@ -373,6 +373,23 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p23, 2026-11-12, his ask: "tasks for work should appear in work as well, tasks for school so I don't have
+  to go to the apartment to see tasks that are related to other things"; his picks: work and school only, not the gym;
+  Jobs becomes School):**
+  - **The shop's TASKS** (`cWtask`, fourth tab, a count of late + open today): work tasks LATE, TODAY and COMING UP
+    (the next 7 days, a repeating task once). The apartment's rows and editor (`taskRow`), so tick, rename, move and
+    the rest work the same; they still show in the apartment too. Its add box tags untyped text Work
+    (`APP.addTask(text, d, cat)`; a #tag still wins). Data: `APP.tasksFor(cat)`. Hotspot: a clipboard with a to-do
+    list leant on the shirt table (atlas cell `todo`); the notepad on the work-corner wall is behind the resting
+    camera, so not that.
+  - **Jobs is retired; the tag is School.** `CAT_ORDER` is work, gym, school, life, so the task editor offers SCHOOL:
+    the task becomes School work (`toSchool`: one due date, a repeating one lands once on today, type Admin, no course)
+    and shows in the castle's DUE, with Undo. Old `cat:'jobs'` tasks convert on load, stamped so the change syncs.
+    `#j`/`#job`/`#jobs` in quick add mean School; job words now guess Personal. `CATS.jobs` stays only so an old copy's
+    task never breaks.
+  - **School work shows before setup.** `schoolShown()` (set up, or any School work exists) gates the apartment's and
+    the city's school rows, and the castle's DUE lists them under the setup form.
+  - Test t71 (both sizes).
 - **Built (p18, the old app's code deleted, 2026-11-09, his go on the cleanup):**
   - **Renamed Arcadia** (2026-11-10, his call, the name his website first had): every name he sees. Storage keys,
     caches, the Worker, the repo, the domain and the backup's `daybook` key stay, so nothing moves. A Home Screen icon
@@ -670,6 +687,7 @@ Technical state only. Updated 2026-11-06.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. p19, p20 and p21 are live. p22 (readability and connections) on branch city-p22, not pushed: his go. Then his
-     ears on the iPhone for p19 (Sound on, then Ambience LOW, his own ring added once on that device).
+  1. p22 is live (he checked it on his iPhone, Nov 11). p23 (tasks where they belong) on branch city-tasks, not
+     pushed: his go. Ambience v2 is in the Sound Lab only, waiting on his listen; then into sound.js (CAL, day from
+     the sun, t66).
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

@@ -26,9 +26,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p22';
+  window.DAYBOOK_BUILD = 'p23';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p22'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p23'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -36,7 +36,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p22').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p23').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -179,12 +179,19 @@ const CATS = {
   life: { label: 'Personal', color: '#bf5af2' },
   school: { label: 'School',  color: '#30d158' },
 };
-const CAT_ORDER = ['work', 'gym', 'jobs', 'life'];
+const CAT_ORDER = ['work', 'gym', 'school', 'life'];   // Jobs retired 2026-11: those tasks are School work now (jobsToSchool)
 // A category this version doesn't know (a newer version's) never crashes: it borrows
 // Personal's colour, and the task lists skip those tasks (knownCat). XP still counts them.
 // School work lives on the School page only: never in Today, Plan, overdue, reminders or the badge (planTask).
 const knownCat = t => Object.prototype.hasOwnProperty.call(CATS, t.cat);
 const planTask = t => knownCat(t) && t.cat !== 'school';
+// School work shows wherever school does: once school is set up, or as soon as there is any (a task tagged School before setup)
+const schoolShown = () => !!(S.school && S.school.on) || S.tasks.some(t => t.cat === 'school');
+// a task turned into School work: one due date, no repeat (a repeating one lands once, on today), a type, no course yet
+function toSchool(t, td) {
+  if (t.repeat) { t.done = !!(t.doneOn && t.doneOn[td]); t.date = td; t.repeat = null; } else t.done = !!t.done;
+  t.cat = 'school'; t.type = t.type || 'Admin'; t.course = t.course || ''; t.note = t.note || ''; t.doneOn = {};
+}
 const catOf = k => Object.prototype.hasOwnProperty.call(CATS, k) ? CATS[k] : CATS.life;
 const SESS = {
   D1:   { color: '#64d2ff', art: 'linear-gradient(140deg,#062a4a 0%,#0a6fd6 55%,#64d2ff 100%)' },
@@ -272,6 +279,8 @@ if (!S.settings.rateSet && !+S.settings.rate) S.settings.rate = 20;
 { // the Inbox is gone: anything without a day lands on today
   const n = new Date(), td = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
   S.tasks.forEach(t => { if (!t.date) { t.date = td; t.u = Date.now(); } });
+  // Jobs is gone: its tasks become School work (stamped, so the change syncs over the old copy)
+  S.tasks.forEach(t => { if (t.cat === 'jobs') { toSchool(t, td); t.u = Date.now(); } });
 }
 let LAST = JSON.parse(JSON.stringify(S)); // snapshot used to spot what changed
 function save() {
@@ -945,7 +954,7 @@ const DOW3 = ['mon','tue','wed','thu','fri','sat','sun'];
 const MON3 = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 const BREAK_RE = /(?:^|\s)(?:(\d{1,3})\s*(?:m|min|mins|minutes?)?\s*(?:break|lunch)|(?:break|lunch)\s*(\d{1,3})\s*(?:m|min|mins|minutes?)?)(?=\s|$)/i;
 function guessCat(t) {
-  if (/\b(apply|applied|application|resume|cv|cover letter|interview|recruiter|linkedin|job|portfolio|follow[- ]?up with)\b/i.test(t)) return 'jobs';
+  if (/\b(apply|applied|application|resume|cv|cover letter|interview|recruiter|linkedin|job|portfolio|follow[- ]?up with)\b/i.test(t)) return 'life';
   if (/\b(gym|workout|lift|run|hiit|stretch|ski|hike|cardio|mobility|protein)\b/i.test(t)) return 'gym';
   if (/\b(len|tim|jim|store|tj|thomas jeffery|mailchimp|campaign|newsletter|coppley|promo|website|seo|ads?|instagram|shift)\b/i.test(t)) return 'work';
   return 'life';
@@ -958,7 +967,7 @@ function parseQuick(raw, base) {
   const setD = d => { r.date = iso(d); r.dateSet = true; };
   let m;
   if ((m = cut(/\s#(w|work|g|gym|train|training|j|job|jobs|p|life|personal|s|school)(?=\s)/i)))
-    r.tagged = true, r.cat = { w:'work', work:'work', g:'gym', gym:'gym', train:'gym', training:'gym', j:'jobs', job:'jobs', jobs:'jobs', p:'life', life:'life', personal:'life', s:'school', school:'school' }[m[1].toLowerCase()];
+    r.tagged = true, r.cat = { w:'work', work:'work', g:'gym', gym:'gym', train:'gym', training:'gym', j:'school', job:'school', jobs:'school', p:'life', life:'life', personal:'life', s:'school', school:'school' }[m[1].toLowerCase()];
   /* school: one of his own course codes (from his course list, spaces or not) makes it school work */
   { const known = (S.courses || []).filter(c => c.code).map(c => [c.code.replace(/\s+/g, '').toLowerCase(), c.id]);
     if (known.length && (m = s.match(/\s([a-z]{2,6}) ?(\d{2,4}[a-z]?)(?=\s)/i))) { const k = (m[1] + m[2]).toLowerCase(), hit = known.find(([c]) => c === k); if (hit) { s = s.replace(m[0], ' '); r.cat = 'school'; r.tagged = true; r.course = hit[1]; r.code = (m[1] + ' ' + m[2]).toUpperCase(); } } }
@@ -1507,7 +1516,7 @@ window.CityApp = {
     A.forEach(a => { attrs[a.k] = { go: a.go, bar: a.bar, lvl: a.lvl, val: plain(a.val) }; });
     const { lvl, into, need } = levelFor(xpTotal()), d = today(), list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, slip = slipped().length, sh = S.shifts[d];
     const sync = !SYNC.code ? 'SYNC OFF' : 'SYNC ' + String(SYNC.state).toUpperCase();
-    const w = wo(d), sOn = !!(S.school && S.school.on), sDue = sOn ? S.tasks.filter(t => t.cat === 'school' && !t.done && t.date && t.date <= d).length : 0, clk = S.studyClock;
+    const w = wo(d), sOn = schoolShown(), sDue = sOn ? S.tasks.filter(t => t.cat === 'school' && !t.done && t.date && t.date <= d).length : 0, clk = S.studyClock;
     const todayRows = [
       { k: 'tasks', l: 'TASKS', v: `${done}/${list.length}`, ok: !list.length || done === list.length, go: 'apartment|cToday' },
       ...(slip ? [{ k: 'decide', l: 'DECIDE', v: String(slip), ok: false, go: 'apartment|cToday' }] : []),
@@ -1559,7 +1568,7 @@ window.CityApp = {
       note: esc([h ? `${t12(sh.start)}–${t12(sh.end)}` : '', w.s !== 'REST' ? `${w.s === 'HIIT' ? '' : w.s + ' '}${sessName(w.s)}${w.done ? ' ✓' : ''}` : ''].filter(Boolean).join(' · ')),
       sess: { s: w.s, name: esc(sessName(w.s)), sub: esc(sessSub(w.s)), done: !!w.done, c: SESS[w.s].color, prog: w.prog ? `${w.prog.done}/${w.prog.total} SETS` : '' } }; });
     const notes = [...S.notes].sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || (b.edited || b.created) - (a.edited || a.created));
-    const sOn = !!(S.school && S.school.on), sch = sOn ? S.tasks.filter(t => t.cat === 'school' && t.date) : [];
+    const sOn = schoolShown(), sch = sOn ? S.tasks.filter(t => t.cat === 'school' && t.date) : [];
     const sRow = t => ({ id: esc(t.id), title: esc(t.title), done: !!t.done, meta: esc([courseLabel(t.course), t.type, !t.done && t.date < d ? 'WAS ' + short(t.date) : ''].filter(Boolean).join(' · ').toUpperCase()) });
     const schToday = sch.filter(t => t.date === d || (!t.done && t.date < d)).sort((a, b) => a.date.localeCompare(b.date)).map(sRow);
     return { date: short(d).toUpperCase(), today: list, done: list.filter(t => t.done).length, overdue: overdue().length, late: overdue().sort((a, b) => a.date.localeCompare(b.date)).map(t => ({ ...row(t, t.date), meta: esc([catOf(t.cat).label, 'WAS ' + short(t.date)].join(' · ').toUpperCase()) })), week, weekLabel: esc(weekLabel(mon)).toUpperCase(), isNow: iso(mon) === iso(mondayOf(new Date())), mon: iso(mon),
@@ -1654,7 +1663,16 @@ window.CityApp = {
   cardioType(t) { t = String(t || '').trim().slice(0, 24); if (t) cardioType = t; },
   // the rooms edit in place, the pages' own way: tasks added, renamed, moved, deleted; notes written, edited, pinned,
   // deleted; shifts set and cleared. A delete gives back only what it took (a sync may have landed since).
-  addTask(text, d) { const v = String(text || '').trim(); if (!v) return false; return !!applyQuick(parseQuick(v, d || today())); },
+  addTask(text, d, cat) { const v = String(text || '').trim(); if (!v) return false; const r = parseQuick(v, d || today()); if (r && r.kind === 'task' && !r.tagged && CAT_ORDER.includes(cat) && cat !== 'school') r.cat = cat; return !!applyQuick(r); },
+  // one kind of task where that kind lives (the shop's work): late, today, the next 7 days (each task once). Escaped like plan()'s rows.
+  tasksFor(cat) {
+    const d = today(), td = parse(d), seen = new Set();
+    const m = (t, x, pre) => ({ id: esc(t.id), d: x, title: esc(t.title), done: isDone(t, x), c: catOf(t.cat).color, meta: esc([pre, t.remind ? t12(t.remind) : '', t.repeat ? repeatLabel(t.repeat) : ''].filter(Boolean).join(' · ').toUpperCase()) });
+    const late = overdue().filter(t => t.cat === cat).sort((a, b) => a.date.localeCompare(b.date)).map(t => m(t, t.date, 'WAS ' + short(t.date)));
+    const now = tasksOn(d).filter(t => t.cat === cat).map(t => { seen.add(t.id); return m(t, d); }), soon = [];
+    for (let i = 1; i <= 7; i++) { const x = iso(addDays(td, i)); tasksOn(x).filter(t => t.cat === cat && !seen.has(t.id) && !isDone(t, x)).forEach(t => { seen.add(t.id); soon.push(m(t, x, rel(x))); }); }
+    return { late, today: now, soon, left: now.filter(t => !t.done).length + late.length };
+  },
   task(id) { const t = S.tasks.find(x => x.id === id); return t ? { id: esc(t.id), title: esc(t.title), remind: t.remind || '', repeat: !!t.repeat, rep: t.repeat ? t.repeat.t : 'none', date: t.date || '', cat: t.cat, cats: CAT_ORDER.map(k => [k, CATS[k].label, CATS[k].color]) } : null; },
   taskSet(id, f) {
     const t = S.tasks.find(x => x.id === id); if (!t) return;
@@ -1663,7 +1681,10 @@ window.CityApp = {
     if (f.remind !== undefined) t.remind = f.remind || null;
     // any date, a category, a repeat: the old task sheet's own rules (tm-when, tm-cat, tm-rep)
     if (f.date !== undefined) { if (!/^\d{4}-\d\d-\d\d$/.test(f.date)) return; t.date = f.date; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); island.toast(`Moved to ${rel(t.date)}`, { icon: I.check, color: catOf(t.cat).color }); }
-    if (f.cat !== undefined) { if (!CAT_ORDER.includes(f.cat)) return; t.cat = f.cat; }
+    if (f.cat !== undefined) { if (!CAT_ORDER.includes(f.cat) || f.cat === t.cat) return;
+      if (f.cat === 'school') { const snap = JSON.stringify(t); toSchool(t, today()); haptic(6); commit();
+        island.toast(`Moved to School · ${dueSay(t.date)}`, { icon: I.school, color: SCH_C, action: { label: 'Undo', fn: () => { const i = S.tasks.findIndex(x => x.id === id); if (i >= 0) { S.tasks[i] = JSON.parse(snap); commit(); island.toast('Restored'); } } } }); return; }
+      t.cat = f.cat; }
     if (f.repeat !== undefined) { const v = f.repeat; if (!['none', 'daily', 'weekdays', 'weekly'].includes(v)) return; t.repeat = v === 'none' ? null : { t: v, dow: dowIdx(t.date || today()) }; if (t.repeat && !t.date) t.date = today(); t.doneOn = t.doneOn || {}; }
     haptic(6); commit();
   },

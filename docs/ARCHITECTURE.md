@@ -100,6 +100,8 @@ They only exist on the device that ran it, so `syncAuto()` only un-ticks an auto
   Personal, and `tasksOn`, `slipped` and `overdue` skip tasks whose `cat` isn't in `CATS` (`knownCat`), so Today,
   Plan, Tomorrow, Needs a decision, the overdue roll-over and the app badge leave them alone. XP, trophies and the
   clear-day check still count every task.
+- **School tasks** (`cat:'school'`) live in the castle's DUE, not Today or Plan (`planTask`). The task editor's SCHOOL tag
+  converts a task (`toSchool`). `cat:'jobs'` is retired: those tasks convert to School on load (p23).
 - **`BUILD`** (set as `window.DAYBOOK_BUILD` in `<head>`, now `'p18'`, live; `city.js` and the `city.js?v=` query must match) is shown as "BUILD p0" in the city's system card, so each device can
   show which copy it runs. Bump it when a release changes the data's shape.
 
