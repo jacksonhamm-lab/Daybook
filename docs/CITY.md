@@ -348,6 +348,31 @@ Technical state only. Updated 2026-11-06.
   keys turn her an eighth. A tap still steps back (a drag never does); she unwinds the short way as the view pulls
   back, and leaving the room (`closeReset`) sets her straight at once. Room-view drags still look round the room.
   Hint: DRAG TO TURN HER · TAP TO STEP BACK. Test t67 (both sizes), with shots of four sides.
+- **Built (p22, 2026-11-11, his ask: "ui improvements ... ease of use and readability", e.g. the session "used to be split
+  by category"; then "everything should be clear, not overwhelming and connected to each process"; his picks from two
+  audits against the old app):**
+  - **Lost structure back.** The gym session in its program sections, each with a set count, a tap on a name for its
+    coaching note (`.exnote`), the day's cardio note. Every note reachable (it was the newest 6): PINNED / OTHER,
+    eight then SHOW ALL, search past five notes (whole text). Week rows say the shift's times and the session's
+    name; the selected day has a session row that flies to the gym on that day. Shop rows say their times and break,
+    DUE and PAYDAY tags, 44px rows; pay shows hours, rate, week 1 / week 2 and each estimated day's hours; a shift
+    keeps a note again.
+  - **Readable.** Titles wrap (two lines) in tasks, notes, groceries, recipes; the micro lines under them 11-12px.
+  - **Connected.** `goPlace(room, card, then)` flies from wherever he is straight to a room with a card open on
+    landing (history replaced, so back still means the city). The city's Today box: a row per thing (tasks, a
+    decision, today's session, the shift, school due, sync, the study clock with STOP), each going where it lives.
+    On a phone it replaces the district scan, folded to a summary line until he opens it (remembered). School work
+    due today and late shows under SCHOOL in the apartment's Today, and on the day in Week, ticked there, a title
+    to the castle's DUE. A running study clock lights the School pin.
+  - **Clear.** Decisions on top of Today; tabs carry counts (TODAY, DECIDE, castle DUE); CAREER last. RACK is TESTS,
+    the castle's tabs CURRENT and ALL COURSES, the chalet's panel says LIST; the chalet and castle name themselves
+    in the top bar. GFX moved into System > Performance (QUALITY READOUT); the System button is a gear; the debug
+    lines are gone; the district scan holds still (a tap moves it on). The gym's swap folds behind one button and
+    names each session (D1 PUSH). System's groups fold (Reminders open); plain pay labels; PAY SETTINGS from the shop.
+  - **Safety.** Sync TURN OFF takes a second tap; a travel checklist removal has Undo; the castle's DUE shows the list
+    first, the add form behind + ADD.
+  - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
+    template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
 - **Built (p18, the old app's code deleted, 2026-11-09, his go on the cleanup):**
   - **Renamed Arcadia** (2026-11-10, his call, the name his website first had): every name he sees. Storage keys,
     caches, the Worker, the repo, the domain and the backup's `daybook` key stay, so nothing moves. A Home Screen icon
@@ -645,6 +670,6 @@ Technical state only. Updated 2026-11-06.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. p19 and p20 are live. p21 (turn her round) on branch city-spin, not pushed: his go. Then his ears on the iPhone
-     for p19 (Sound on, then Ambience LOW, his own ring added once on that device).
+  1. p19, p20 and p21 are live. p22 (readability and connections) on branch city-p22, not pushed: his go. Then his
+     ears on the iPhone for p19 (Sound on, then Ambience LOW, his own ring added once on that device).
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

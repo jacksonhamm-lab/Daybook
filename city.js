@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p21';
+export const BUILD = 'p22';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -141,6 +141,34 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 #cityBox:not(.slim) .dtog{bottom:auto;height:44px}
 @media (max-width:899px){.dtog{display:block}#cityBox.slim .sq{margin-right:26px}}
 #dataBox{display:none}
+/* the city's Today: each row a way to where the thing lives */
+.hlist{display:grid}
+.tdr{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;min-height:34px;padding:0 2px;text-align:left;border-top:1px solid var(--hud-hair);font:13px/1.2 var(--body);color:var(--hud-text2)}
+.tdr:first-child{border-top:0}
+.tdr i{width:8px;height:8px;background:var(--hud-green)}
+.tdr.w i{background:var(--hud-yellow)}
+.tdr span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--hud-text)}
+.tdr em{font:700 12px/1 var(--hud-font);font-style:normal;letter-spacing:.06em;color:var(--hud-text);font-variant-numeric:tabular-nums}
+.tdr em::after{content:' \\203A';color:var(--hud-cyan)}
+.tdrs{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;border-top:1px solid var(--hud-hair)}
+.tdrs .tdr{border-top:0}
+.tdrs .tdr i{background:var(--hud-green);animation:lv 1.4s steps(2) infinite}
+.tdrs .rbtn{min-height:32px;padding:0 10px}
+.tsum{margin-left:10px;color:var(--hud-text2);opacity:1}
+#dataBox:not(.slim) .tsum{display:none}
+@media (max-width:899px){#cityBox{display:none}#dataBox{display:block;left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px)}#dataBox .dtog{display:block}#dataBox:not(.slim) .dtog{bottom:auto;height:44px}#dataBox .dhead{min-height:44px;align-items:center}#dataBox #wvB,#dataBox .rw{display:none}#dataBox .nums{margin-right:26px}.tdr{min-height:38px}}
+#dataBox.slim .tickr,#dataBox.slim .tbody{display:none!important}
+#dataBox .dtog::after{transform:rotate(135deg);top:13px}
+#dataBox.slim .dtog::after{transform:rotate(-45deg);top:17px}
+/* a tab's count */
+.tn{margin-left:5px;padding:1px 4px;font:700 10px/1 var(--hud-font);font-style:normal;color:var(--hud-ink);background:var(--hud-yellow)}
+.gear{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:square;display:block}
+/* System: each group folds */
+details.sgp>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;min-height:40px;font:700 12px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-text)}
+details.sgp>summary::-webkit-details-marker{display:none}
+details.sgp>summary::after{content:'+';font-size:16px;color:var(--hud-cyan)}
+details.sgp[open]>summary::after{content:'\\2212'}
+.sgsw{margin-top:8px}
 .sel{font:700 15px/1 var(--hud-font);letter-spacing:.05em;color:var(--hud-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* side rails */
@@ -285,8 +313,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .exq{display:block;width:100%;padding:8px 0;text-align:left;background:none;border:0;color:inherit;cursor:pointer}
 .exq b::after{content:' +';color:var(--hud-cyan);font-weight:700}
 .exr.open .exq b::after{content:' \\2212'}
-.exd{display:none;grid-column:1/-1;margin:0 0 10px;padding-left:10px;font:13px/1.4 var(--body);color:var(--hud-text2);white-space:normal;background:none;box-shadow:inset 2px 0 0 var(--hud-cyan-line)}
-.exr.open .exd{display:block}
+.exnote{display:none;grid-column:1/-1;margin:0 0 10px;padding-left:10px;font:13px/1.4 var(--body);color:var(--hud-text2);white-space:normal;background:none;box-shadow:inset 2px 0 0 var(--hud-cyan-line)}
+.exr.open .exnote{display:block}
 .exn{margin-top:14px;padding:10px 12px;font:13px/1.4 var(--body);color:var(--hud-text2);box-shadow:inset 2px 0 0 var(--c)}
 .exr>span{display:flex;gap:4px}
 .exr.warm b{color:var(--hud-text2);font-weight:500}
@@ -555,11 +583,12 @@ const MARKUP = `
     <button class="frame brand" data-hud="prog" data-m="room" data-r="shop" aria-label="Progress"><div class="in"><i></i><div><b>SHOP</b><small id="shopPer">PERIOD</small></div></div></button>
     <button class="frame brand" data-hud="prog" data-m="room" data-r="apartment" aria-label="Progress"><div class="in"><i></i><div><b>APARTMENT</b><small id="aptDate">TODAY</small></div></div></button>
     <button class="frame brand" data-hud="prog" data-m="room" data-r="gym" aria-label="Progress"><div class="in"><i></i><div><b>GYM</b><small id="gymDate">TODAY</small></div></div></button>
+    <button class="frame brand" data-hud="prog" data-m="room" data-r="chalet" aria-label="Progress"><div class="in"><i></i><div><b>CHALET</b><small>FOOD</small></div></div></button>
+    <button class="frame brand" data-hud="prog" data-m="room" data-r="castle" aria-label="Progress"><div class="in"><i></i><div><b>CASTLE</b><small>SCHOOL</small></div></div></button>
     <div class="frame eqw"><div class="in"><canvas id="eq" aria-hidden="true"></canvas><div class="row"><span class="mi">SIGNAL</span><span class="mi" id="eqv">SYNC OFF</span></div></div></div>
     <div class="frame clk"><div class="in"><b id="clk">00:00</b><span class="mi" id="clkd"></span></div></div>
     <button class="q" data-hud="add" aria-label="Quick add"><span style="font-size:22px;font-weight:400">+</span></button>
-    <button class="q" data-hud="sys" aria-label="System settings"><span id="btnMe">J</span></button>
-    <button class="q" id="btnQ" aria-pressed="false" aria-label="Show quality readout"><span>GFX</span></button>
+    <button class="q" data-hud="sys" aria-label="System settings"><span><svg class="gear" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span></button>
   </div>
   <div id="perf" class="frame" hidden><div class="in"><h4>QUALITY</h4>FPS <b id="pF">-</b><br>DRAW CALLS <b id="pC">-</b><br>TRIANGLES <b id="pT">-</b><br>RENDER <b id="pR">-</b><br>SCALE <b id="pS">-</b><br>BLOOM/REFL <b id="pB">-</b></div></div>
   <svg id="leaders" data-m="city" aria-hidden="true"></svg>
@@ -576,7 +605,7 @@ const MARKUP = `
           <div style="display:flex;gap:6px;align-items:center;min-width:0"><div class="pl" id="dName">DOWNTOWN</div><div class="conn" aria-hidden="true"><i></i><b></b></div><canvas class="mini" id="wvA" style="flex:1;min-width:20px" aria-hidden="true"></canvas></div>
           <div class="rw"><span>NOW</span><div class="bar" id="bA"></div><em id="vA">0</em></div>
           <div class="rw"><span>LEVEL</span><div class="bar y" id="bB"></div><em id="vB">1</em></div>
-          <div class="rw"><span>ALL SIX</span><div class="bar c" id="bC"></div><em id="vC">0</em></div>
+          <div class="rw"><span>OVERALL</span><div class="bar c" id="bC"></div><em id="vC">0</em></div>
         </div>
       </div>
       <div class="dfoot"><span class="mi" id="lvL">LV 1</span><div class="load"><i id="lA" style="width:0"></i></div><span class="mi" id="lAv">0/0 XP</span><div class="hatch"></div></div>
@@ -584,15 +613,12 @@ const MARKUP = `
   </section>
   <section class="dbox frame" id="dataBox" data-m="city" aria-label="Today">
     <div class="in">
-      <div class="dhead"><b>TODAY</b><span class="nums" style="margin-left:auto"><span id="nA"></span><i></i><span id="nB"></span></span></div>
+      <div class="dhead"><b>TODAY</b><span class="mi tsum" id="tSum"></span><span class="nums" style="margin-left:auto"><span id="nA"></span><i></i><span id="nB"></span></span></div><button class="dtog" id="tTog" type="button" aria-expanded="true" aria-label="Hide today"></button>
       <div class="tickr"></div>
-      <div style="padding:7px 9px;display:grid;gap:5px">
-        <div class="pl" style="align-self:auto">ISLAND NET</div>
-        <div class="cells" id="cellsA" aria-hidden="true"></div>
-        <div id="homeChk" style="display:grid;gap:5px"></div>
+      <div class="tbody" style="padding:5px 9px 7px;display:grid;gap:5px">
+        <div id="homeChk" class="hlist"></div>
         <canvas id="wvB" aria-hidden="true" style="width:100%;height:30px;display:block"></canvas>
         <div class="rw"><span>XP</span><div class="bar" id="bD"></div><em id="vD">0</em></div>
-        <div class="mi" style="line-height:1.5;white-space:normal">//CARS <span id="cCars">0</span> //DRAWS <span id="cWin">0</span><br>//FPS <span id="cT">0</span></div>
       </div>
     </div>
   </section>
@@ -669,7 +695,7 @@ const MARKUP = `
       <div class="tickr"></div>
       <div class="gyb">
         <div class="rw"><span>SHAKES</span><div class="bar y" id="bK1"></div><em id="vK1">0/2</em></div>
-        <div class="rw"><span>CART</span><div class="bar c" id="bK2"></div><em id="vK2">-</em></div>
+        <div class="rw"><span>LIST</span><div class="bar c" id="bK2"></div><em id="vK2">-</em></div>
         <div class="rw"><span>CARDIO</span><div class="bar" id="bK3"></div><em id="vK3">0</em></div>
       </div>
     </div>
@@ -713,8 +739,10 @@ const MARKUP = `
           </section>
           <section class="card" id="cToday" data-r="apartment">
             <div class="kick">Today<span class="mi" id="tdN"></span></div>
+            <div id="tdDec"></div>
             <div id="tdLate"></div>
             <div id="tdRows"></div>
+            <div id="tdSch"></div>
             <form class="hadd" id="tdAdd" data-hadd=""><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD A TASK, E.G. CALL LEN 3PM" aria-label="Add a task for today"><button class="rbtn" type="submit">ADD</button></form>
           </section>
           <section class="card" id="cWeek" data-r="apartment">
@@ -723,6 +751,7 @@ const MARKUP = `
             <div id="wkRows"></div>
             <div id="wkSess" style="margin-top:8px"></div>
             <div id="wkDay"></div>
+            <div id="wkSch"></div>
             <div id="wkAdd"></div>
             <div id="wkShift"></div>
           </section>
@@ -750,7 +779,7 @@ const MARKUP = `
             <div class="sed"><div class="sedh">EDIT THE SPLIT<em>REPEATS WEEKLY</em></div><div class="gtpl" id="spTpl"></div></div>
           </section>
           <section class="card" id="cBench" data-r="gym">
-            <div class="kick">Benchmarks<span class="mi">THE RACK</span></div>
+            <div class="kick">Benchmarks<span class="mi">WEEKLY TESTS</span></div>
             <div id="bnRows"></div>
           </section>
           <section class="card" id="cRest" data-r="gym">
@@ -782,7 +811,7 @@ const MARKUP = `
           </section>
           <section class="card" id="cDue" data-r="castle">
             <div class="kick">What's due<span class="mi" id="cdN"></span></div>
-            <div id="cdAdd"></div><div id="cdRows"></div>
+            <div id="cdRows"></div><div id="cdAdd"></div>
           </section>
           <section class="card" id="cStudy" data-r="castle">
             <div class="kick">Study<span class="mi" id="cyN"></span></div>
@@ -823,7 +852,7 @@ const MARKUP = `
             <div class="stats pst" id="paySt"></div>
             <div class="rw" style="margin:8px 0 7px"><span>6 PAYS</span><div class="bar y" id="bF"></div><em id="payAll">$0</em></div>
             <div id="payChk"></div>
-            <div class="acts"><button class="rbtn" id="btnLen" data-act="copy-submit">COPY FOR LEN</button><button class="rbtn ol" id="btnFill" data-act="fill-estimates" hidden>FILL THEM IN</button><button class="rbtn ol" data-wcopy="1">COPY PERIOD</button></div>
+            <div class="acts"><button class="rbtn" id="btnLen" data-act="copy-submit">COPY FOR LEN</button><button class="rbtn ol" id="btnFill" data-act="fill-estimates" hidden>FILL THEM IN</button><button class="rbtn ol" data-wcopy="1">COPY PERIOD</button><button class="rbtn ol" data-hud="sys" data-sg="pay">PAY SETTINGS</button></div>
             <div class="sgp" style="margin-top:8px"><b>LAST 6 PERIODS</b><div class="ptr" id="payTr" role="img"></div></div>
           </section>
         </div>
@@ -4666,7 +4695,7 @@ function buildGym() {
   const hot = [
     { key: 'board', label: 'SESSION', hotkey: 'E', line: 16, sheet: 'cSess', p: w(.6, 1.95, 1.4) },
     { key: 'split', label: 'SPLIT', hotkey: 'R', line: 14, sheet: 'cSplit', p: w(W - .1, 3.9, 3.05) },
-    { key: 'rack', label: 'RACK', hotkey: 'F', line: 22, sheet: 'cBench', p: w(1.0, 2.38, -1.5) },
+    { key: 'rack', label: 'TESTS', hotkey: 'F', line: 22, sheet: 'cBench', p: w(1.0, 2.38, -1.5) },
     { key: 'timer', label: 'REST', hotkey: 'G', line: 12, sheet: 'cRest', p: w(W - .1, dh + 1.3, 0) },
   ];
   return {
@@ -6445,7 +6474,7 @@ function hudInit() {
   ICONS.forEach(o => {
     const b = document.createElement('button'); b.className = 'ic'; b.type = 'button'; b.dataset.k = o.attr; b.style.setProperty('--acc', o.c); b.style.setProperty('--c', o.c); b.setAttribute('aria-label', o.word + ', ' + o.d.toLowerCase());
     b.innerHTML = `<span class="plate"><svg viewBox="0 0 24 24">${o.svg}</svg></span><span class="lab">${o.word}<small>${o.r}</small></span><i class="edgea"></i><i class="tk"></i>`;
-    if (o.k === 'work') b.insertAdjacentHTML('afterbegin', '<i class="live" aria-hidden="true" hidden></i>');
+    if (o.k === 'work' || o.k === 'school') b.insertAdjacentHTML('afterbegin', `<i class="live" data-lk="${o.k}" aria-hidden="true" hidden></i>`);
     b.addEventListener('click', () => { if (S.drag && S.drag.moved) return; tapIcon(o.k); });
     b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && !S.drag && S.mode === 'city') APP.sfx('hover'); }); b.addEventListener('focus', () => { if (b.matches(':focus-visible')) APP.sfx('hover'); });
     wrap.appendChild(b); const ns = 'http://www.w3.org/2000/svg', ld = document.createElementNS(ns, 'path'), dt = document.createElementNS(ns, 'rect'); dt.setAttribute('width', 5); dt.setAttribute('height', 5); ld.style.setProperty('--acc', o.c); dt.style.setProperty('--acc', o.c); $('#leaders').append(ld, dt); iconEls.push({ el: b, a: ANCHORS[o.k], k: o.k, ld, dt, sm: b.querySelector('small'), o });
@@ -6453,7 +6482,7 @@ function hudInit() {
   buildTags();
   /* readouts */
   $('#ringA').innerHTML = ringHTML('0', 0, 'PROGRESS'); $('#ringB').innerHTML = ringHTML('0', 0, 'PERIOD'); $('#ringC').innerHTML = ringHTML('0', 0, '% GOAL');
-  barInto($('#bG'), 18, 0); S.ringIn = 0; for (const id of ['#cellsA', '#cellsB']) { const el = $(id); el.innerHTML = '<i class="on"></i>'.repeat(3) + '<i></i>'.repeat(1); }
+  barInto($('#bG'), 18, 0); S.ringIn = 0; for (const id of ['#cellsB']) { const el = $(id); el.innerHTML = '<i class="on"></i>'.repeat(3) + '<i></i>'.repeat(1); }
   barInto($('#bH1'), 18, 0); barInto($('#bH2'), 18, 0); barInto($('#bY1'), 18, 0); for (const k of ['#bK1', '#bK2', '#bK3', '#bK4']) barInto($(k), 18, 0);
   $('#btnGymSheet').addEventListener('click', () => openSheet('cSess'));
   $('#btnChSheet').addEventListener('click', () => openSheet('cList'));
@@ -6474,9 +6503,10 @@ function hudInit() {
   });
   /* the gym's rest buttons start the app's own rest timer, the one the island counts down between sets */
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-rest],[data-gset],[data-gdone],[data-gday],[data-gpick],[data-gex]'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-rest],[data-gset],[data-gdone],[data-gday],[data-gpick],[data-gex],[data-gswap]'); if (!b) return; const d = b.dataset;
+    if (d.gswap) { gymSwap = true; refreshGym(); const f = ROOT.querySelector('#ssSwap [data-gpick]'); if (f) f.focus({ preventScroll: true }); return; }
     if (d.gex) { if (!gymOpen.delete(d.gex)) gymOpen.add(d.gex); refreshGym(); return; }
-    if (d.gpick) { APP.sessPick(d.d, d.gpick); return; }
+    if (d.gpick) { gymSwap = false; APP.sessPick(d.d, d.gpick); return; }
     if (d.rest) { APP.rest(+d.rest); restSeen = -1; return; }
     /* a set flips at once; the app's own tick (sound, rest timer, sync) follows */
     if (d.gset) { const [i, j] = d.gset.split(':').map(Number), on = b.classList.toggle('on'); b.setAttribute('aria-pressed', String(on)); $('#ssRows')._h = null; APP.set(d.s, i, j); return; }
@@ -6486,7 +6516,9 @@ function hudInit() {
   /* the apartment's and the shop's editors: tasks, notes, shifts, all in place */
   const focusIn = sel => requestAnimationFrame(() => { const el = ROOT.querySelector(sel); if (el) { el.focus({ preventScroll: false }); if (el.setSelectionRange && el.type === 'text') el.setSelectionRange(el.value.length, el.value.length); } });
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-topen],[data-tw],[data-tcat],[data-trep],[data-tdel],[data-nopen],[data-npin],[data-ndel],[data-spre],[data-sclr],[data-shday],[data-pp],[data-wlast],[data-wcopy],[data-late],[data-aw],[data-nall],[data-gogym]'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-topen],[data-tw],[data-tcat],[data-trep],[data-tdel],[data-nopen],[data-npin],[data-ndel],[data-spre],[data-sclr],[data-shday],[data-pp],[data-wlast],[data-wcopy],[data-late],[data-aw],[data-nall],[data-gogym],[data-stick],[data-sgo]'); if (!b) return; const d = b.dataset;
+    if (d.stick) { APP.schoolDo('taskTick', d.stick); return; }
+    if (d.sgo) { goPlace('castle', 'cDue'); return; }
     if (d.nall) { noteAll = true; refreshApt(); return; }
     if (d.gogym) { const day = d.gogym; goPlace('gym', 'cSess', () => { gymDay = day; }); return; }
     if (d.topen) {
@@ -6535,14 +6567,21 @@ function hudInit() {
   });
   /* the top bar's own: quick add, progress, system */
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-hud],[data-sact],[data-jst],[data-jdel]'); if (!b) return; const d = b.dataset;
-    if (d.hud) return openGlobal(d.hud);
+    const b = e.target.closest && e.target.closest('[data-hud],[data-sact],[data-jst],[data-jdel],[data-hgo],[data-hstop],[data-gfx]'); if (!b) return; const d = b.dataset;
+    if (d.hgo) { const [r, c] = d.hgo.split('|'); goPlace(r, c); return; }
+    if (d.hstop) { APP.schoolDo('stop'); return; }
+    if (d.gfx !== undefined) { const p = $('#perf'); p.hidden = !p.hidden; refreshGlobal('sys'); return; }
+    if (d.hud) { if (d.sg) sysOpen.add(d.sg); openGlobal(d.hud); if (d.sg) setTimeout(() => { const g = ROOT.querySelector(`#gSysB [data-sg="${d.sg}"]`); if (g) g.scrollIntoView({ block: 'start' }); }, 80); return; }
+    /* turning sync off forgets the code on this device: a second tap to be sure */
+    if (d.sact === 'sync-off' && !syncArm) { syncArm = true; refreshGlobal('sys'); clearTimeout(syncArmT); syncArmT = setTimeout(() => { syncArm = false; refreshGlobal('sys'); }, 4000); return; }
+    if (d.sact === 'sync-off') syncArm = false;
     /* a system switch runs the app's own action, then the card redraws to show it */
     if (d.sact) { APP.act(d.sact, d.v !== undefined ? { v: d.v } : {}); setTimeout(() => refreshGlobal('sys'), 120); setTimeout(() => refreshGlobal('sys'), 1500); return; }
     if (d.jst) { const [id, st] = d.jst.split('|'); APP.jobStatus(id, st); return; }
     if (d.jdel) APP.jobDel(d.jdel);
   });
   hudEl.addEventListener('change', e => { const el = e.target; if (el.id === 'gRingF') { const f = el.files && el.files[0]; el.value = ''; if (f) Promise.resolve(APP.ownPick(f)).then(() => refreshGlobal('sys')); return; } if (el.dataset && el.dataset.set) APP.setting(el.dataset.set, el.value); });
+  hudEl.addEventListener('toggle', e => { const g = e.target; if (g.dataset && g.dataset.sg) { if (g.open) sysOpen.add(g.dataset.sg); else sysOpen.delete(g.dataset.sg); } }, true);
   hudEl.addEventListener('input', e => { if (e.target.id === 'gAddI') quickPrev(); if (e.target.id === 'ntQ') { noteQ = e.target.value; refreshApt(); } });
   hudEl.addEventListener('submit', e => {
     const f = e.target;
@@ -6562,7 +6601,12 @@ function hudInit() {
   /* ladder on the side, laptop only */
   let lad = ''; for (let i = 0; i <= 20; i++) { const y = 5 + i * 10, big = i % 5 === 0; lad += `<line x1="${big ? 18 : 28}" y1="${y}" x2="44" y2="${y}" stroke="#ff4646" stroke-width="${big ? 1.4 : .7}" opacity="${big ? .9 : .45}"/>${big ? `<text x="0" y="${y + 3}" fill="#ff4646" font-size="8" font-family="${FONT_MONO.replace(/"/g, '')}">${(20 - i) * 30}</text>` : ''}`; } lad += '<path d="M46 100l-9-5v10z" fill="#f2dd3d"/>'; $('#ladL').innerHTML = lad;
   EQ.v = new Array(48).fill(.2);
-  $('#btnQ').addEventListener('click', () => { const p = $('#perf'); p.hidden = !p.hidden; $('#btnQ').setAttribute('aria-pressed', String(!p.hidden)); });
+  /* the city's Today folds on a phone; it remembers */
+  { const tb = $('#dataBox'), tg = $('#tTog'); let shut = true; try { shut = localStorage.getItem('arc_today_shut') !== '0'; } catch (e) { }
+    const put = sl => { tb.classList.toggle('slim', sl); tg.setAttribute('aria-expanded', sl ? 'false' : 'true'); tg.setAttribute('aria-label', (sl ? 'Show' : 'Hide') + ' today'); };
+    put(shut && innerWidth < 900); tg.addEventListener('click', () => { const sl = !tb.classList.contains('slim'); put(sl); try { localStorage.setItem('arc_today_shut', sl ? '1' : '0'); } catch (e) { } }); }
+  /* the district scan: a tap moves it to the next place (it no longer changes by itself) */
+  $('#cityBox .dgrid').addEventListener('click', () => { sel = (sel + 1) % ICONS.length; updateSel(); });
   $('#btnBack').addEventListener('click', goBack);
   $('#btnSheet').addEventListener('click', () => openSheet('cClock'));
   $('#btnClose').addEventListener('click', () => closeSheet());
@@ -6701,7 +6745,7 @@ function goBack() { if (S.close) return stepBack(); if (history.state && history
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
 function enterRoom() { if (S.land) { const L = S.land; S.land = null; if (L.id === room.id) setTimeout(() => { if (S.mode === 'room' && room.id === L.id) { if (L.then) L.then(); openSheet(L.card); } }, 450); }
   const y = S.fly && S.fly.yaw || 0; S.fly = null; flightRes(false); setMode('room'); APP.sfx('land', { room: room.id }); if (room.id === 'apartment') { const at = S.modeT; setTimeout(() => { if (S.mode === 'room' && room.id === 'apartment' && S.modeT === at && APP.ring) APP.ring(); }, 1000); } S.ringIn = S.t; S.yaw = y; S.yawGoal = RIG ? y : restYaw(); S.lastDrag = performance.now(); scanNow(); glitchHud(1); applyFov(); room.setDoor(0); tagEls.forEach((t, i) => { t.el.classList.remove('hot'); t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 900 + i * 120); }); const b = $(room.def.panel); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); $('#hint').style.opacity = 1; setTimeout(() => { $('#hint').style.opacity = 0; }, 3600); }
-function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; gymDay = null; shopDay = null; aptWeek = null; shopP = null; aptOpen = null; aptNote = null; noteQ = ''; noteAll = false; { const q = $('#ntQ'); if (q) q.value = ''; } csWeek = null; csDay = null; csOpen = null; csCedit = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
+function enterCity() { aptKeep.clear(); aptOrd.clear(); aptDay = null; gymDay = null; shopDay = null; aptWeek = null; shopP = null; aptOpen = null; aptNote = null; noteQ = ''; noteAll = false; gymSwap = false; csAddOpen = false; { const q = $('#ntQ'); if (q) q.value = ''; } csWeek = null; csDay = null; csOpen = null; csCedit = null; refreshRoom(); S.fly = null; flightRes(false); setMode('city'); S.ringIn = S.t; applyFov(); room.setDoor(0); const b = $('#cityBox'); b.classList.remove('rvl'); void b.offsetWidth; b.classList.add('rvl'); glitchHud(.2); }
 const flyLabel = dir => setText('#flyT', (dir > 0 ? 'APPROACH: ' : 'DEPART: ') + room.def.name);
 function onFlightProgress(e, dir) { $('#flyBox').style.opacity = isInsideRoom() ? 0 : ''; flyLabel(dir); $('#flyP').style.width = (e * 100).toFixed(1) + '%'; $('#flyAlt').textContent = 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M'; const d = Math.hypot(CAM.position.x - room.box.x, CAM.position.z - room.box.z); $('#flyD').textContent = 'DST ' + String(Math.round(d)).padStart(4, '0') + 'M'; }
 function tapHot(k) {
@@ -6718,12 +6762,16 @@ const GCARD = { add: ['gAdd', 'Quick add', 'SYS.INPUT'], prog: ['gProg', 'Progre
 let gOpen = null;
 function openGlobal(k) { if (!GCARD[k]) return; if (!S.sheet || gOpen !== k) APP.sfx('open'); gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
 /* a room's sheet shows one card at a time; tabs switch between them */
-const TABS = { apartment: [['cToday', 'TODAY'], ['cWeek', 'WEEK'], ['cNotes', 'NOTES'], ['cCareer', 'CAREER'], ['cDecide', 'DECIDE']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'RACK'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY']], chalet: [['cList', 'LIST'], ['cMeals', 'MEALS'], ['cShakes', 'SHAKES'], ['cCardio', 'CARDIO']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'COURSE'], ['cShelf', 'COURSES']] };
+const TABS = { apartment: [['cToday', 'TODAY'], ['cWeek', 'WEEK'], ['cNotes', 'NOTES'], ['cDecide', 'DECIDE'], ['cCareer', 'CAREER']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'TESTS'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY']], chalet: [['cList', 'LIST'], ['cMeals', 'MEALS'], ['cShakes', 'SHAKES'], ['cCardio', 'CARDIO']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'CURRENT'], ['cShelf', 'ALL COURSES']] };
+/* a tab can carry a count (what's left, what's waiting) */
+const tabN = {};
+function tabCount(id, n) { if (tabN[id] === n) return; tabN[id] = n; if (S.sheet && curCard) paintTabs(curCard); }
+const paintTabs = id => { const T = TABS[room.id] || []; setHTML('#shTabs', T.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === id}" aria-controls="${k}">${l}${tabN[k] ? `<i class="tn">${tabN[k]}</i>` : ''}</button>`).join('')); };
 let curCard = null;
 function showCard(id) {
   const T = TABS[room.id] || []; if (!T.some(t => t[0] === id)) id = T.length ? T[0][0] : null; curCard = id;
   ROOT.querySelectorAll('#sheet .card[data-r]').forEach(c => c.classList.toggle('cur', c.id === id));
-  setHTML('#shTabs', T.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === id}" aria-controls="${k}">${l}</button>`).join(''));
+  paintTabs(id);
   const i = T.findIndex(t => t[0] === id); setText('#shPage', i < 0 ? '' : `${String(i + 1).padStart(2, '0')}/${String(T.length).padStart(2, '0')}`);
   const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0;
 }
@@ -6746,10 +6794,15 @@ function updateSel() {
 /* Everything the HUD says about his data comes through here, from the app's own functions. */
 function refreshHome() {
   HOME = APP.home();
-  setText('#brandLv', 'LV ' + HOME.lvl); setText('#btnMe', HOME.initial); setText('#lvL', 'LV ' + HOME.lvl); setText('#lAv', HOME.into + '/' + HOME.need + ' XP'); setText('#vD', String(HOME.into));
+  setText('#brandLv', 'LV ' + HOME.lvl); setText('#lvL', 'LV ' + HOME.lvl); setText('#lAv', HOME.into + '/' + HOME.need + ' XP'); setText('#vD', String(HOME.into));
   setText('#eqv', HOME.sync);
   $('#lA').style.width = (pct01(HOME.into / HOME.need) * 100).toFixed(1) + '%'; setBar($('#bD'), pct01(HOME.into / HOME.need));
-  setHTML('#homeChk', chkHTML(HOME.checks));
+  /* each row goes where the thing lives: the room, its card open */
+  const hRow = r => `<button class="tdr${r.ok ? '' : ' w'}" ${r.go === 'sys' ? 'data-hud="sys" data-sg="sync"' : `data-hgo="${r.go}"`} aria-label="${r.l}: ${r.v}. Open it."><i></i><span>${r.l}</span><em>${r.v}</em></button>`;
+  setHTML('#homeChk', HOME.today.map(hRow).join('') + (HOME.studyAt ? `<div class="tdrs"><button class="tdr" data-hgo="castle|cStudy" aria-label="Studying. Open the castle."><i></i><span>STUDYING</span><em id="hStudy">${hms(Date.now() - HOME.studyAt)}</em></button><button class="rbtn ol" data-hstop="1">STOP</button></div>` : ''));
+  setText('#tSum', [HOME.left ? `${HOME.left} LEFT` : 'TASKS DONE', HOME.slip ? `${HOME.slip} TO DECIDE` : '', HOME.studyAt ? 'STUDYING' : ''].filter(Boolean).join(' / '));
+  /* a running study clock shows on the School pin too */
+  const lv = $('#icons [data-lk=school]'); if (lv) lv.hidden = !HOME.studyAt;
   for (const e of iconEls) setText2(e.sm, e.o.r + HOME.attrs[e.o.attr].val);
   updateSel();
 }
@@ -6827,6 +6880,13 @@ function refreshApt() {
     + (cap.length < hit.length ? `<button class="rbtn ol nmore" data-nall="1">SHOW ALL ${hit.length}</button>` : ''));
   refreshCareer();
   setText('#dcN', String(P.decide.length));
+  /* what needs a decision, at the top of Today too */
+  setHTML('#tdDec', P.decide.length ? `<div class="gsec">NEEDS A DECISION / ${P.decide.length}</div>` + P.decide.map(t => `<div class="dcd"><b>${t.title}</b><small>Was due ${t.was}</small><div class="acts"><button class="rbtn" data-dec="rm-done" data-id="${t.id}">DONE</button><button class="rbtn ol" data-dec="rm-later" data-id="${t.id}">+2H</button><button class="rbtn ol" data-dec="rm-tomorrow" data-id="${t.id}">TOMORROW</button></div></div>`).join('') + (P.late.length ? '' : '<div class="gsec">TODAY</div>') : '');
+  tabCount('cDecide', P.decide.length); tabCount('cToday', P.today.length - P.done);
+  /* school work: today's and the selected day's, ticked here, opened in the castle */
+  const schRow = t => `<div class="trow${t.done ? ' done' : ''}" style="--c:var(--hud-green)"><button class="tick" data-stick="${t.id}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-sgo="1"><b>${t.title}</b><small>${t.meta ? t.meta + ' / ' : ''}CASTLE ›</small></button></div>`;
+  setHTML('#tdSch', P.school.length ? `<div class="gsec">SCHOOL / ${P.school.filter(t => !t.done).length}</div>${P.school.map(schRow).join('')}` : '');
+  { const L = P.schoolDays[day.d] || []; setHTML('#wkSch', L.length ? `<div class="gsec">SCHOOL</div>${L.map(schRow).join('')}` : ''); }
   setHTML('#dcRows', P.decide.length ? P.decide.map(t => `<div class="dcd"><b>${t.title}</b><small>Was due ${t.was}</small><div class="acts"><button class="rbtn" data-dec="rm-done" data-id="${t.id}">DONE</button><button class="rbtn ol" data-dec="rm-later" data-id="${t.id}">+2H</button><button class="rbtn ol" data-dec="rm-tomorrow" data-id="${t.id}">TOMORROW</button></div></div>`).join('') : noneRow('Nothing waiting on you.'));
   const tag = k => tagEls.find(g => g.h.key === k), say = (g, s) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, s); m.hidden = !s; };
   say(tag('today'), P.today.length ? `${P.done}/${P.today.length}` : ''); say(tag('decide'), P.decide.length ? String(P.decide.length) : '');
@@ -6835,6 +6895,7 @@ function refreshApt() {
 /* the city's own cards: quick add's preview, progress, system */
 const KIND_C = { task: 'var(--hud-cyan)', shift: '#64d2ff', job: 'var(--hud-green)', school: 'var(--hud-green)', wo: '#ff9f0a', city: 'var(--hud-red)' };
 function quickPrev() { const i = $('#gAddI'), d = i && APP.quickSay(i.value); setHTML('#gAddP', d ? `<b>${d.title}</b><div class="pills" style="--k:${KIND_C[d.kind] || KIND_C.task}">${d.chips.map(c => `<span>${c}</span>`).join('')}</div>` : '<span>A task, a shift or an application. Dates like "tomorrow" or "fri", #work #gym #school #life, "every mon", "9-5 shift", a course code and "post thu".</span>'); }
+const sysOpen = new Set(['rem']); let syncArm = false, syncArmT = 0;
 function refreshGlobal(k) {
   if (k === 'add') return quickPrev();
   if (k === 'prog') {
@@ -6851,19 +6912,19 @@ function refreshGlobal(k) {
     const X = APP.sys(), on = (a, b) => a === b ? '' : ' ol';
     setText('#gsB', 'BUILD ' + X.build);
     const num = (k, l, v, o = '') => `<label>${l}<input class="hin" type="number" inputmode="decimal" data-set="${k}" value="${v}" ${o}></label>`;
-    setHTML('#gSysB', `<div class="sgp"><b>YOU</b><div class="sgg"><label class="w">YOUR NAME<input class="hin" type="text" data-set="name" value="${X.name}" autocomplete="off"></label></div></div>
-      <div class="sgp"><b>PAY</b><div class="sgg">${num('rate', 'HOURLY RATE (CAD)', X.rate, 'step="0.25" placeholder="HIDE PAY"')}<label>PAID EVERY<select class="hin" data-set="payCycle"><option value="7"${X.payCycle === 7 ? ' selected' : ''}>WEEK</option><option value="14"${X.payCycle === 14 ? ' selected' : ''}>2 WEEKS</option></select></label>
-        <label class="w">NEXT (OR LAST) PAYDAY<input class="hin" type="date" data-set="payAnchor" value="${X.payAnchor}"></label>${num('payCutoff', 'HOURS DUE, DAYS BEFORE', X.payCutoff, 'min="0" max="7"')}${num('paySubmitDays', 'SEND TO LEN, DAYS BEFORE', X.paySubmitDays, 'min="0" max="10"')}<label class="w">SUBSCRIPTION HOURS A PERIOD<input class="hin" type="number" inputmode="decimal" step="0.5" min="0" data-set="extraHours" value="${X.extraHours}" placeholder="0"></label></div></div>
-      <div class="sgp"><b>GOALS</b><div class="sgg">${num('hoursGoal', 'WEEKLY HOURS', X.hoursGoal, 'placeholder="NONE"')}${num('appGoal', 'WEEKLY APPLICATIONS', X.appGoal, 'placeholder="NONE"')}</div></div>
-      <div class="sgp"><b>REMINDERS</b><div class="seg2">${X.push ? '<button class="rbtn ol" data-sact="push-off">TURN OFF</button><button class="rbtn" data-sact="push-test">SEND A TEST</button>' : '<button class="rbtn" data-sact="push-on">TURN ON NOTIFICATIONS</button>'}</div><p>${X.pushSay}</p>
+    setHTML('#gSysB', `<details class="sgp" data-sg="you"${sysOpen.has('you') ? ' open' : ''}><summary>YOU</summary><div class="sgg"><label class="w">YOUR NAME<input class="hin" type="text" data-set="name" value="${X.name}" autocomplete="off"></label></div></details>
+      <details class="sgp" data-sg="pay"${sysOpen.has('pay') ? ' open' : ''}><summary>PAY</summary><div class="sgg">${num('rate', 'HOURLY RATE (CAD)', X.rate, 'step="0.25" placeholder="HIDE PAY"')}<label>PAID EVERY<select class="hin" data-set="payCycle"><option value="7"${X.payCycle === 7 ? ' selected' : ''}>WEEK</option><option value="14"${X.payCycle === 14 ? ' selected' : ''}>2 WEEKS</option></select></label>
+        <label class="w">NEXT (OR LAST) PAYDAY<input class="hin" type="date" data-set="payAnchor" value="${X.payAnchor}"></label>${num('payCutoff', 'DAYS FROM LAST WORK DAY TO PAYDAY', X.payCutoff, 'min="0" max="7"')}${num('paySubmitDays', 'SEND HOURS TO LEN, DAYS BEFORE PAYDAY', X.paySubmitDays, 'min="0" max="10"')}<label class="w">SUBSCRIPTION HOURS ADDED EACH PERIOD<input class="hin" type="number" inputmode="decimal" step="0.5" min="0" data-set="extraHours" value="${X.extraHours}" placeholder="0"></label></div></details>
+      <details class="sgp" data-sg="goals"${sysOpen.has('goals') ? ' open' : ''}><summary>GOALS</summary><div class="sgg">${num('hoursGoal', 'WEEKLY HOURS', X.hoursGoal, 'placeholder="NONE"')}${num('appGoal', 'WEEKLY APPLICATIONS', X.appGoal, 'placeholder="NONE"')}</div></details>
+      <details class="sgp" data-sg="rem"${sysOpen.has('rem') ? ' open' : ''}><summary>REMINDERS</summary><div class="seg2">${X.push ? '<button class="rbtn ol" data-sact="push-off">TURN OFF</button><button class="rbtn" data-sact="push-test">SEND A TEST</button>' : '<button class="rbtn" data-sact="push-on">TURN ON NOTIFICATIONS</button>'}</div><p>${X.pushSay}</p>
         <div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn${X.brief ? '' : ' ol'}" data-sact="toggle-brief" aria-pressed="${X.brief}">MORNING RUNDOWN</button><input class="hin" type="time" data-set="remindAt" value="${X.remindAt}" style="width:130px" aria-label="Rundown time"></div>
-        <p>Keep reminding until it is done:</p><div class="seg2" style="margin-top:6px">${[[0, 'OFF'], [120, 'EVERY 2H'], [240, 'EVERY 4H']].map(([m, l]) => `<button class="rbtn${on(X.nag, m)}" data-sact="set-nag" data-v="${m}" aria-pressed="${X.nag === m}">${l}</button>`).join('')}</div></div>
-      <div class="sgp"><b>SOUND</b><div class="seg2">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.sound ? '1' : '0', v)}" data-sact="set-sound" data-v="${v}" aria-pressed="${(X.sound ? '1' : '0') === v}">${l}</button>`).join('')}</div><p>This device only. An iPhone's silent switch mutes it.</p>
+        <p>Keep reminding until it is done:</p><div class="seg2" style="margin-top:6px">${[[0, 'OFF'], [120, 'EVERY 2H'], [240, 'EVERY 4H']].map(([m, l]) => `<button class="rbtn${on(X.nag, m)}" data-sact="set-nag" data-v="${m}" aria-pressed="${X.nag === m}">${l}</button>`).join('')}</div></details>
+      <details class="sgp" data-sg="sound"${sysOpen.has('sound') ? ' open' : ''}><summary>SOUND</summary><div class="seg2">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.sound ? '1' : '0', v)}" data-sact="set-sound" data-v="${v}" aria-pressed="${(X.sound ? '1' : '0') === v}">${l}</button>`).join('')}</div><p>This device only. An iPhone's silent switch mutes it.</p>
         <p style="margin-top:12px">Ambience: quiet background for each place, shaped by the weather where you are.</p><div class="seg2" style="margin-top:6px">${[['off', 'OFF'], ['low', 'LOW'], ['medium', 'MEDIUM']].map(([v, l]) => `<button class="rbtn${on(X.amb, v)}" data-sact="set-amb" data-v="${v}" aria-pressed="${X.amb === v}">${l}</button>`).join('')}</div><p>${!X.sound ? 'Plays once Sound is on.' : X.amb !== 'off' && X.perf === 'saver' ? 'Paused while Performance is on Saver.' : 'Dips under every sound and stops when you leave the app.'}</p>
-        ${X.own ? `<p style="margin-top:12px">Ring: ${X.own.has ? `your sound, ${X.own.name} (${X.own.secs} s)${X.own.kept ? '' : ', until you reload'}.` : 'the built-in ring. You can use a sound of your own: it stays on this device and is never uploaded.'} It rings when a decision is waiting.</p><div class="seg2" style="margin-top:6px"><input class="vh" id="gRingF" type="file" accept="audio/*,video/*,.mov,.m4a,.mp3,.wav"><label class="rbtn ol" for="gRingF">${X.own.has ? 'CHANGE' : 'USE MY OWN'}</label><button class="rbtn ol" data-sact="ring-test">PLAY</button><button class="rbtn ol" data-sact="ring-stop">STOP</button>${X.own.has ? '<button class="rbtn ol" data-sact="ring-clear">REMOVE</button>' : ''}</div>` : ''}</div>
-      <div class="sgp"><b>PERFORMANCE</b><div class="seg2">${[['auto', 'AUTO'], ['smooth', 'SMOOTH'], ['balanced', 'BALANCED'], ['saver', 'SAVER']].map(([v, l]) => `<button class="rbtn${on(X.perf, v)}" data-sact="set-perf" data-v="${v}" aria-pressed="${X.perf === v}">${l}</button>`).join('')}</div><p>${X.perfSay}</p><div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn ol" data-sact="copy-log">COPY PROBLEM LOG</button><span class="mi">${X.probs} LOGGED</span></div></div>
-      <div class="sgp"><b>SYNC</b>${X.sync ? '<div class="seg2"><button class="rbtn" data-sact="sync-now">SYNC NOW</button><button class="rbtn ol" data-sact="sync-off">TURN OFF</button></div>' : '<form class="hadd" id="gSyncF" style="margin-top:0"><input class="hin" id="gSyncI" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="SYNC CODE" aria-label="Sync code"><button class="rbtn" type="submit">CONNECT</button></form>'}<p>${X.syncSay}</p></div>
-      <div class="sgp"><b>BACKUP</b><div class="seg2"><button class="rbtn ol" data-sact="export">EXPORT BACKUP</button><button class="rbtn ol" data-sact="import">IMPORT BACKUP</button></div><p>Install: iPhone Share, then Add to Home Screen.</p></div>`);
+        ${X.own ? `<p style="margin-top:12px">Ring: ${X.own.has ? `your sound, ${X.own.name} (${X.own.secs} s)${X.own.kept ? '' : ', until you reload'}.` : 'the built-in ring. You can use a sound of your own: it stays on this device and is never uploaded.'} It rings when a decision is waiting.</p><div class="seg2" style="margin-top:6px"><input class="vh" id="gRingF" type="file" accept="audio/*,video/*,.mov,.m4a,.mp3,.wav"><label class="rbtn ol" for="gRingF">${X.own.has ? 'CHANGE' : 'USE MY OWN'}</label><button class="rbtn ol" data-sact="ring-test">PLAY</button><button class="rbtn ol" data-sact="ring-stop">STOP</button>${X.own.has ? '<button class="rbtn ol" data-sact="ring-clear">REMOVE</button>' : ''}</div>` : ''}</details>
+      <details class="sgp" data-sg="perf"${sysOpen.has('perf') ? ' open' : ''}><summary>PERFORMANCE</summary><div class="seg2">${[['auto', 'AUTO'], ['smooth', 'SMOOTH'], ['balanced', 'BALANCED'], ['saver', 'SAVER']].map(([v, l]) => `<button class="rbtn${on(X.perf, v)}" data-sact="set-perf" data-v="${v}" aria-pressed="${X.perf === v}">${l}</button>`).join('')}</div><p>${X.perfSay}</p><div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn ol" data-sact="copy-log">COPY PROBLEM LOG</button><span class="mi">${X.probs} LOGGED</span></div><div class="seg2 sgsw"><button class="rbtn${$('#perf').hidden ? ' ol' : ''}" data-gfx="1" aria-pressed="${!$('#perf').hidden}">QUALITY READOUT</button></div></details>
+      <details class="sgp" data-sg="sync"${sysOpen.has('sync') ? ' open' : ''}><summary>SYNC</summary>${X.sync ? `<div class="seg2"><button class="rbtn" data-sact="sync-now">SYNC NOW</button><button class="rbtn ol${syncArm ? ' dng' : ''}" data-sact="sync-off">${syncArm ? 'TAP AGAIN: TURN OFF' : 'TURN OFF'}</button></div>` : '<form class="hadd" id="gSyncF" style="margin-top:0"><input class="hin" id="gSyncI" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="SYNC CODE" aria-label="Sync code"><button class="rbtn" type="submit">CONNECT</button></form>'}<p>${X.syncSay}</p></details>
+      <details class="sgp" data-sg="backup"${sysOpen.has('backup') ? ' open' : ''}><summary>BACKUP</summary><div class="seg2"><button class="rbtn ol" data-sact="export">EXPORT BACKUP</button><button class="rbtn ol" data-sact="import">IMPORT BACKUP</button></div><p>Install: iPhone Share, then Add to Home Screen.</p></details>`);
   }
 }
 /* the apartment's career drawer: applications, their status in one tap, a new one, a remove */
@@ -6876,7 +6937,7 @@ function refreshCareer() {
 /* the gym: today's session on the panel and the whiteboard, the week on the chart, the benchmarks, the rest timer */
 const spark = v => { if (v.length < 2) return '<svg viewBox="0 0 72 24" aria-hidden="true"></svg>'; const lo = Math.min(...v), hi = Math.max(...v), r = hi - lo || 1; return `<svg viewBox="0 0 72 24" aria-hidden="true"><polyline fill="none" stroke="#ff4646" stroke-width="1.6" points="${v.map((y, i) => `${(i / (v.length - 1) * 70 + 1).toFixed(1)},${(22 - (y - lo) / r * 20).toFixed(1)}`).join(' ')}"/></svg>`; };
 /* the day the gym's sheet shows: today unless he picked another on the split */
-let gymDay = null;
+let gymDay = null, gymSwap = false;
 /* the chalet: the meals card shows this week's picks, the book by category, or one recipe in full */
 let chCat = 'This week', chRecipe = null;
 function refreshChalet() {
@@ -6934,6 +6995,7 @@ const csTypes = (X, sel) => X.types.map(t => `<option${t === sel ? ' selected' :
 const csSetup = (X, first) => `<div class="sgp"><b>${first ? 'SET UP SCHOOL' : 'SETUP'}</b>${first ? '<p style="margin:0 0 8px">Four things. Change them any time on the shelf.</p>' : ''}<div class="seg2">${X.streams.map(([k, l]) => `<button class="rbtn${X.stream === k ? '' : ' ol'}" data-csstream="${k}" aria-pressed="${X.stream === k}">${l.toUpperCase()}</button>`).join('')}</div>
   <div class="sgg" style="margin-top:8px"><label>TRACK<select class="hin" data-csx="track">${X.tracks.map(([k, l]) => `<option value="${k}"${X.track === k ? ' selected' : ''}>${l.toUpperCase()}</option>`).join('')}</select></label><label>WEEKLY GOAL (H)<input class="hin" type="number" inputmode="numeric" min="1" max="80" data-csx="goal" value="${X.goal}"></label><label class="w">COURSE SITE<input class="hin" type="url" inputmode="url" data-csx="link" value="${X.linkRaw}" placeholder="HTTPS://"></label></div>
   ${first ? '<div class="acts" style="margin-top:8px"><button class="rbtn" data-csgo="1">START SCHOOL</button></div>' : ''}</div>`;
+let csAddOpen = false;
 const csRow = (X, t) => { const op = csOpen === t.id; return `<div class="trow${t.done ? ' done' : ''}${op ? ' open' : ''}" style="--c:${t.late ? 'var(--hud-red)' : 'var(--hud-green)'}"><button class="tick" data-cstick="${t.id}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-csopen="${t.id}" aria-expanded="${op}"><b>${t.title}</b><small>${[t.course, t.type.toUpperCase(), t.done ? 'DONE' : t.due + ' / ' + t.day].filter(Boolean).join(' / ')}</small></button>${op ? `<div class="ted"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" data-cst="${t.id}:title" value="${t.title}" aria-label="Rename it"><div class="sgg"><label>COURSE<select class="hin" data-cst="${t.id}:course">${csOpts(X, t.courseId)}</select></label><label>TYPE<select class="hin" data-cst="${t.id}:type">${csTypes(X, unesc(t.type))}</select></label><label>DUE<input class="hin" type="date" data-cst="${t.id}:date" value="${t.date}"></label><label>NOTE OR LINK<input class="hin" type="text" autocomplete="off" data-cst="${t.id}:note" value="${t.note}" placeholder="OPTIONAL"></label></div><div class="tacts">${t.link ? `<a class="rbtn ol" href="${t.link}" target="_blank" rel="noopener noreferrer">OPEN LINK</a>` : ''}<button class="rbtn ol dng" data-csdel="${t.id}">DELETE</button></div></div>` : ''}</div>`; };
 function refreshCastle() {
   const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['cstick', 'csopen', 'csday', 'cswk', 'cspick', 'csclock', 'csc', 'csrt'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
@@ -6947,7 +7009,8 @@ function refreshCastle() {
   setText('#cdN', T.set ? (T.over.length ? `${T.over.length} LATE / ` : '') + `${T.week.length} THIS WEEK` : 'NOT SET UP');
   const part = (sel, h) => { if (!typing(sel)) setHTML(sel, h); };
   { if (!T.set) { part('#cdAdd', csSetup(T, true)); setHTML('#cdRows', ''); }
-    else { part('#cdAdd', `<form class="csadd" data-csadd="1"><input class="hin" name="title" type="text" enterkeyhint="done" autocomplete="off" placeholder="WHAT'S DUE" aria-label="What's due"><div class="sgg"><label>COURSE<select class="hin" name="course">${csOpts(T, T.course ? T.course.id : '')}</select></label><label>TYPE<select class="hin" name="type">${csTypes(T, 'Reading')}</select></label><label>DUE<input class="hin" name="date" type="date" value="${T.days.find(d => d.today) ? T.days.find(d => d.today).d : ''}"></label><label>&nbsp;<button class="rbtn" type="submit">ADD</button></label></div></form>`);
+    else { tabCount('cDue', T.over.length + T.week.filter(t => !t.done).length); const none = !T.over.length && !T.week.length && !T.later.length;
+      if (!csAddOpen && !none) part('#cdAdd', `<button class="rbtn ol" data-csaddo="1" style="margin-top:8px">+ ADD SOMETHING DUE</button>`); else part('#cdAdd', `<form class="csadd" data-csadd="1"><input class="hin" name="title" type="text" enterkeyhint="done" autocomplete="off" placeholder="WHAT'S DUE" aria-label="What's due"><div class="sgg"><label>COURSE<select class="hin" name="course">${csOpts(T, T.course ? T.course.id : '')}</select></label><label>TYPE<select class="hin" name="type">${csTypes(T, 'Reading')}</select></label><label>DUE<input class="hin" name="date" type="date" value="${T.days.find(d => d.today) ? T.days.find(d => d.today).d : ''}"></label><label>&nbsp;<button class="rbtn" type="submit">ADD</button></label></div></form>`);
       part('#cdRows', [['OVERDUE', T.over], ['THIS WEEK', T.week], ['LATER', T.later]].filter(([, L]) => L.length).map(([h, L]) => `<div class="gsec">${h} / ${L.length}</div>` + L.map(t => csRow(T, t)).join('')).join('')
       + (!due && !T.later.length ? noneRow('Nothing due. Add it here, or in quick add: one of your course codes, then "post thu".') : '')
       + (T.doneN ? `<div class="gsec">DONE / ${T.doneN}</div>` + T.done.slice(0, 8).map(t => csRow(T, t)).join('') : '')); } }
@@ -6995,7 +7058,8 @@ function castleInit() {
   $('#btnScSheet').addEventListener('click', () => openSheet('cDue'));
   $('#btnStudy').addEventListener('click', () => { if (APP.school().clock.on) APP.schoolDo('stop'); else APP.schoolDo('start', csCourse); });
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-cstick],[data-csopen],[data-csdel],[data-cswk],[data-csday],[data-cspick],[data-cssdel],[data-csstream],[data-csgo],[data-csrt],[data-csrd],[data-csc],[data-cscdel]'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-cstick],[data-csopen],[data-csdel],[data-cswk],[data-csday],[data-cspick],[data-cssdel],[data-csstream],[data-csgo],[data-csrt],[data-csrd],[data-csc],[data-cscdel],[data-csaddo]'); if (!b) return; const d = b.dataset;
+    if (d.csaddo) { csAddOpen = true; refreshCastle(); const i = ROOT.querySelector('[data-csadd] [name=title]'); if (i) i.focus(); return; }
     if (d.cstick) { APP.schoolDo('taskTick', d.cstick); kick = 1; return; }
     if (d.csopen) { csOpen = csOpen === d.csopen ? null : d.csopen; refreshCastle(); if (csOpen) requestAnimationFrame(() => { const el = ROOT.querySelector(`[data-cst="${csOpen}:title"]`); if (el) el.focus({ preventScroll: false }); }); return; }
     if (d.csdel) { csOpen = null; APP.schoolDo('taskDel', d.csdel); return; }
@@ -7022,7 +7086,7 @@ function castleInit() {
   hudEl.addEventListener('focusout', e => { if (e.target.closest && e.target.closest('#cDue,#cStudy,#cBoard,#cShelf')) setTimeout(() => { if (!typing('#sheet') && room.id === 'castle') refreshCastle(); }, 60); });
   hudEl.addEventListener('submit', e => {
     const f = e.target, d = f.dataset || {}; if (!(d.csadd || d.cssadd || d.csradd || d.cscadd)) return; e.preventDefault(); const v = n => f.elements[n] ? f.elements[n].value : '';
-    if (d.csadd) { if (APP.schoolDo('taskAdd', { title: v('title'), course: v('course'), type: v('type'), date: v('date') })) { const i = ROOT.querySelector('[data-csadd] [name=title]'); if (i) { i.value = ''; i.focus(); } } else f.elements.title.focus(); return; }
+    if (d.csadd) { csAddOpen = true; if (APP.schoolDo('taskAdd', { title: v('title'), course: v('course'), type: v('type'), date: v('date') })) { const i = ROOT.querySelector('[data-csadd] [name=title]'); if (i) { i.value = ''; i.focus(); } } else f.elements.title.focus(); return; }
     if (d.cssadd) { if (APP.schoolDo('sessAdd', d.cssadd, { start: v('start'), end: v('end'), course: v('course') })) { const n = ROOT.querySelector('[data-cssadd]'); if (n) { n.elements.start.value = ''; n.elements.end.value = ''; } } else f.elements.start.focus(); return; }
     if (d.csradd) { const i = f.querySelector('input'); if (APP.schoolDo('resAdd', i.value)) { const n = ROOT.querySelector('[data-csradd] input'); if (n) { n.value = ''; n.focus(); } } return; }
     if (d.cscadd) { if (APP.schoolDo('courseAdd', { code: v('code'), name: v('name'), start: v('start'), end: v('end') })) { const n = ROOT.querySelector('[data-cscadd]'); if (n) { n.reset(); n.elements.code.focus(); } } else f.elements.code.focus(); }
@@ -7044,10 +7108,10 @@ function refreshGym() {
   setHTML('#ssHead', `<b style="--c:${V.c}">${V.s}</b><div><strong>${V.name}</strong><small>${V.sub}</small></div>`);
   setRows('#ssRows', V.ex.length ? V.ex.map((e, k) => { const first = !k || V.ex[k - 1].sec !== e.sec, grp = first ? V.ex.filter(x => x.sec === e.sec) : null, gd = grp && grp.reduce((a, x) => a + Math.min(x.done, x.sets), 0), gt = grp && grp.reduce((a, x) => a + x.sets, 0), key = `${V.s}:${e.i}`, open = e.det && gymOpen.has(key);
     const name = `<b>${e.name}</b>${e.reps ? `<small>${e.reps.toUpperCase()}</small>` : ''}`;
-    return `${first && e.sec ? `<div class="exh${gd >= gt ? ' done' : ''}" style="--c:${e.warm ? 'var(--hud-text3)' : V.c}">${e.sec.toUpperCase()}<em>${gd}/${gt}</em></div>` : ''}<div class="exr${e.warm ? ' warm' : ''}${e.done >= e.sets ? ' done' : ''}${open ? ' open' : ''}">${e.det ? `<button class="exq" data-gex="${key}" aria-expanded="${!!open}">${name}</button>` : `<div>${name}</div>`}<span>${e.on.map((on, j) => `<button class="st${on ? ' on' : ''}" data-gset="${e.i}:${j}" data-s="${V.s}" aria-pressed="${on}" aria-label="${e.name}, set ${j + 1} of ${e.sets}">${e.sets === 1 ? '✓' : j + 1}</button>`).join('')}</span>${e.det ? `<p class="exd">${e.det}</p>` : ''}</div>`; }).join('') + (V.cardio ? `<p class="exn" style="--c:${V.c}">${V.cardio}</p>` : '') : noneRow(V.s === 'REST' ? 'Rest day. Recover.' : V.s === 'HIIT' ? 'Conditioning: HIIT or a hill climb.' : 'Nothing listed for this day.'));
+    return `${first && e.sec ? `<div class="exh${gd >= gt ? ' done' : ''}" style="--c:${e.warm ? 'var(--hud-text3)' : V.c}">${e.sec.toUpperCase()}<em>${gd}/${gt}</em></div>` : ''}<div class="exr${e.warm ? ' warm' : ''}${e.done >= e.sets ? ' done' : ''}${open ? ' open' : ''}">${e.det ? `<button class="exq" data-gex="${key}" aria-expanded="${!!open}">${name}</button>` : `<div>${name}</div>`}<span>${e.on.map((on, j) => `<button class="st${on ? ' on' : ''}" data-gset="${e.i}:${j}" data-s="${V.s}" aria-pressed="${on}" aria-label="${e.name}, set ${j + 1} of ${e.sets}">${e.sets === 1 ? '✓' : j + 1}</button>`).join('')}</span>${e.det ? `<p class="exnote">${e.det}</p>` : ''}</div>`; }).join('') + (V.cardio ? `<p class="exn" style="--c:${V.c}">${V.cardio}</p>` : '') : noneRow(V.s === 'REST' ? 'Rest day. Recover.' : V.s === 'HIIT' ? 'Conditioning: HIIT or a hill climb.' : 'Nothing listed for this day.'));
   setHTML('#ssActs', V.s === 'REST' ? '' : `<button class="rbtn${V.done ? ' ol' : ''}" data-gdone="${V.d}">${V.done ? 'DONE ✓ / UNDO' : 'MARK DONE'}</button>${V.isToday ? '' : '<button class="rbtn ol" data-gday="">BACK TO TODAY</button>'}`);
   /* that day's session can be swapped for another, that day only */
-  if (!typing('#ssSwap')) setHTML('#ssSwap', `<b>SWAP ${V.isToday ? 'TODAY' : V.long.toUpperCase()}</b><div class="seg2">${T.opts.map(o => `<button class="rbtn${o.k === V.s ? '' : ' ol'}" data-gpick="${o.k}" data-d="${V.d}" aria-pressed="${o.k === V.s}" aria-label="${o.k === 'REST' ? 'Rest' : o.k}: ${o.name}">${o.k === 'REST' ? 'REST' : o.k}</button>`).join('')}</div><p>This day only. The weekly pattern is on the split.</p>`);
+  if (!typing('#ssSwap')) setHTML('#ssSwap', !gymSwap ? `<button class="rbtn ol" data-gswap="1">SWAP ${V.isToday ? "TODAY'S" : V.long.toUpperCase() + "'S"} SESSION</button>` : `<b>SWAP ${V.isToday ? 'TODAY' : V.long.toUpperCase()}</b><div class="seg2">${T.opts.map(o => `<button class="rbtn${o.k === V.s ? '' : ' ol'}" data-gpick="${o.k}" data-d="${V.d}" aria-pressed="${o.k === V.s}" aria-label="${o.k === 'REST' ? 'Rest' : o.k}: ${o.name}">${o.k === 'REST' ? 'REST' : o.k === 'HIIT' ? 'HIIT' : `${o.k} ${o.name.toUpperCase()}`}</button>`).join('')}</div><p>This day only. The weekly pattern is on the split.</p>`);
   /* the weekly pattern, the Plan page's split */
   if (!typing('#spTpl')) setHTML('#spTpl', T.tpl.map(t => `<label>${t.dow}<select class="hin" data-gtpl="${t.i}" aria-label="${t.dow} every week">${T.opts.map(o => `<option value="${o.k}"${o.k === t.k ? ' selected' : ''}>${o.k === 'REST' ? 'REST' : `${o.k} / ${o.name.toUpperCase()}`}</option>`).join('')}</select></label>`).join(''));
   /* the week: a day shows its session in the card above */
@@ -7084,7 +7148,7 @@ function paintClock() {
   setText('#shS', c.status);
   if (t) { t.el.classList.toggle('on', c.on); setText2(t.el.querySelector('b'), c.on ? 'CLOCK OUT' : 'CLOCK IN'); t.el.setAttribute('aria-label', c.on ? 'Clock out' : 'Clock in'); t.el.querySelector('small').hidden = !c.on; }
   sqInto($('#sqB'), 9, c.on ? 7 : 3);
-  const live = $('#icons .live'); if (live) live.hidden = !c.on;
+  const live = $('#icons [data-lk=work]'); if (live) live.hidden = !c.on;
 }
 
 let hudFrameN = 0;
@@ -7096,7 +7160,7 @@ function hudFrame(dt) {
   if (S.close) herPose();
   if (S.mode === 'city') {
     const safeTop = (parseFloat(getComputedStyle(hudEl).getPropertyValue('--st')) || 0) + 84;
-    const cover = $('#cityBox').getBoundingClientRect();
+    const cover = $(innerWidth < 900 ? '#dataBox' : '#cityBox').getBoundingClientRect();
     const PW = 90, PH = 40, botLimit = (innerWidth < 900 ? cover.top : innerHeight) - PH - 6;
     const pinLift = innerWidth < 900 ? { train: -74, fuel: 88 } : {}; const px = iconEls.map(o => { const p = project(o.a); return { o, ax: p.x, ay: p.y, x: p.x - 12, y: p.y - 58 + (pinLift[o.k] || 0), on: p.on, off: p.x < 4 ? -1 : p.x > innerWidth - 4 ? 1 : 0 }; });
     const boxes = innerWidth >= 900 ? [cover, $('#dataBox').getBoundingClientRect()] : [];
@@ -7110,9 +7174,7 @@ function hudFrame(dt) {
       if (inView) { const sx = p.x + 12, sy = p.y + 34; p.o.ld.setAttribute('d', `M${sx.toFixed(1)} ${sy.toFixed(1)}V${Math.max(sy, p.ay - 6).toFixed(1)}L${p.ax.toFixed(1)} ${p.ay.toFixed(1)}`); p.o.dt.setAttribute('x', (p.ax - 2.5).toFixed(1)); p.o.dt.setAttribute('y', (p.ay - 2.5).toFixed(1)); p.o.ld.style.display = p.o.dt.style.display = ''; }
       else p.o.ld.style.display = p.o.dt.style.display = 'none';
     }
-    if (hudFrameN % 24 === 0 && innerWidth >= 900) { const cs = $('#cellsA').children; const on = 1 + Math.floor(Math.random() * 4); for (let i = 0; i < cs.length; i++) cs[i].classList.toggle('on', i < on); }
-    if (t - selT > 6) { sel = (sel + 1) % ICONS.length; selT = t; updateSel(); }
-    if (RIG || hudFrameN % 2 === 0) { wave($('#wvA'), (x, w, h, d) => drawWave(x, w, h, d, t)); if (innerWidth >= 900) { wave($('#wvB'), (x, w, h, d) => drawWave(x, w, h, d, t, '#ff4646', 1.1, 2.2)); $('#cCars').textContent = S.carCount || 0; const ii = info(); $('#cWin').textContent = ii.calls; $('#cT').textContent = ii.fps; } }
+    if (RIG || hudFrameN % 2 === 0) { wave($('#wvA'), (x, w, h, d) => drawWave(x, w, h, d, t)); if (innerWidth >= 900) wave($('#wvB'), (x, w, h, d) => drawWave(x, w, h, d, t, '#ff4646', 1.1, 2.2)); }
     const kIn = sstep(0, .9, t - (S.ringIn || 0)); if (kIn < 1 && !RIG && HOME) { const a = HOME.attrs[ICONS[sel].attr], v = pct01(a.bar); setRing($('#ringA'), String(Math.round(v * 100 * kIn)), v * kIn); setBar($('#bA'), v * kIn); setBar($('#bB'), HOME.into / HOME.need * kIn); setBar($('#bC'), HOME.overall * kIn); }
     const arc = $('#ringA .arc2'); if (arc) arc.setAttribute('transform', `rotate(${(t * 40) % 360} 50 50)`);
   } else if (S.mode === 'room') {

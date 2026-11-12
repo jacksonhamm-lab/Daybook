@@ -26,9 +26,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p21';
+  window.DAYBOOK_BUILD = 'p22';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p21'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p22'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -36,7 +36,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p21').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p22').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -849,7 +849,8 @@ const SCHOOL = {
   },
   resAdd(text) { const v = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 80); if (!v) return false; const r = res(); r.list = [...r.list, { id: uid(), t: v, done: false }]; S.school = { ...school(), res: r }; haptic(); commit(); return true; },
   resTick(id) { const r = res(), x = r.list.find(y => y.id === id); if (!x) return; r.list = r.list.map(y => y.id === id ? { ...y, done: !y.done } : y); S.school = { ...school(), res: r }; haptic(8); sfx(x.done ? 'uncheck' : 'school-check'); commit(); },
-  resDel(id) { const r = res(); if (!r.list.some(y => y.id === id)) return; r.list = r.list.filter(y => y.id !== id); S.school = { ...school(), res: r }; haptic(10); commit(); },
+  resDel(id) { const r = res(), i = r.list.findIndex(y => y.id === id); if (i < 0) return; const gone = r.list[i]; r.list = r.list.filter(y => y.id !== id); S.school = { ...school(), res: r }; haptic(10); commit();
+    island.toast('Removed', { action: { label: 'Undo', fn: () => { const q = res(); if (!q.list.some(y => y.id === id)) { q.list = [...q.list.slice(0, i), gone, ...q.list.slice(i)]; S.school = { ...school(), res: q }; commit(); island.toast('Restored'); } } } }); },
 };
 
 /* ---------- jobs ---------- */
@@ -1506,7 +1507,17 @@ window.CityApp = {
     A.forEach(a => { attrs[a.k] = { go: a.go, bar: a.bar, lvl: a.lvl, val: plain(a.val) }; });
     const { lvl, into, need } = levelFor(xpTotal()), d = today(), list = tasksOn(d), done = list.filter(t => isDone(t, d)).length, slip = slipped().length, sh = S.shifts[d];
     const sync = !SYNC.code ? 'SYNC OFF' : 'SYNC ' + String(SYNC.state).toUpperCase();
+    const w = wo(d), sOn = !!(S.school && S.school.on), sDue = sOn ? S.tasks.filter(t => t.cat === 'school' && !t.done && t.date && t.date <= d).length : 0, clk = S.studyClock;
+    const todayRows = [
+      { k: 'tasks', l: 'TASKS', v: `${done}/${list.length}`, ok: !list.length || done === list.length, go: 'apartment|cToday' },
+      ...(slip ? [{ k: 'decide', l: 'DECIDE', v: String(slip), ok: false, go: 'apartment|cToday' }] : []),
+      ...(w.s !== 'REST' ? [{ k: 'sess', l: esc(((w.s === 'HIIT' ? '' : w.s + ' ') + sessName(w.s)).toUpperCase()), v: w.done ? 'DONE' : w.prog ? `${w.prog.done}/${w.prog.total}` : '-', ok: !!w.done, go: 'gym|cSess' }] : []),
+      { k: 'shift', l: 'SHIFT', v: S.clock ? 'LIVE' : shiftHours(sh) ? `${t12(sh.start)}–${t12(sh.end)}`.toUpperCase() : 'NONE', ok: true, go: 'shop|cClock' },
+      ...(sOn ? [{ k: 'school', l: 'SCHOOL DUE', v: String(sDue), ok: !sDue, go: 'castle|cDue' }] : []),
+      { k: 'sync', l: 'SYNC', v: sync.slice(5), ok: !SYNC.code || SYNC.state === 'ok', go: 'sys' },
+    ];
     return { attrs, lvl, into, need, sync, initial: (S.settings.name || 'J')[0].toUpperCase(), overall: A.reduce((s, a) => s + clamp01(a.bar), 0) / A.length,
+      today: todayRows, studyAt: clk ? clk.startTs : 0, left: list.length - done, slip,
       checks: [[!list.length || done === list.length, 'Tasks today', `${done}/${list.length}`], [!slip, 'Needs a decision', String(slip)], [true, 'Shift today', S.clock ? 'LIVE' : shiftHours(sh) ? fh(shiftHours(sh)) + 'H' : 'NONE'], [!SYNC.code || SYNC.state === 'ok', 'Sync', sync.slice(5)]] };
   },
   // d: a date in the pay period to show (the shop can step back through old ones); none is the current period
@@ -1548,8 +1559,12 @@ window.CityApp = {
       note: esc([h ? `${t12(sh.start)}–${t12(sh.end)}` : '', w.s !== 'REST' ? `${w.s === 'HIIT' ? '' : w.s + ' '}${sessName(w.s)}${w.done ? ' ✓' : ''}` : ''].filter(Boolean).join(' · ')),
       sess: { s: w.s, name: esc(sessName(w.s)), sub: esc(sessSub(w.s)), done: !!w.done, c: SESS[w.s].color, prog: w.prog ? `${w.prog.done}/${w.prog.total} SETS` : '' } }; });
     const notes = [...S.notes].sort((a, b) => (b.pin ? 1 : 0) - (a.pin ? 1 : 0) || (b.edited || b.created) - (a.edited || a.created));
+    const sOn = !!(S.school && S.school.on), sch = sOn ? S.tasks.filter(t => t.cat === 'school' && t.date) : [];
+    const sRow = t => ({ id: esc(t.id), title: esc(t.title), done: !!t.done, meta: esc([courseLabel(t.course), t.type, !t.done && t.date < d ? 'WAS ' + short(t.date) : ''].filter(Boolean).join(' · ').toUpperCase()) });
+    const schToday = sch.filter(t => t.date === d || (!t.done && t.date < d)).sort((a, b) => a.date.localeCompare(b.date)).map(sRow);
     return { date: short(d).toUpperCase(), today: list, done: list.filter(t => t.done).length, overdue: overdue().length, late: overdue().sort((a, b) => a.date.localeCompare(b.date)).map(t => ({ ...row(t, t.date), meta: esc([catOf(t.cat).label, 'WAS ' + short(t.date)].join(' · ').toUpperCase()) })), week, weekLabel: esc(weekLabel(mon)).toUpperCase(), isNow: iso(mon) === iso(mondayOf(new Date())), mon: iso(mon),
       decide: slipped().map(t => ({ id: esc(t.id), title: esc(t.title), was: t12(remAt(t, d)) })),
+      school: schToday, schoolOn: sOn, schoolDays: Object.fromEntries(week.map(x => [x.d, sch.filter(t => t.date === x.d).map(sRow)])),
       noteCount: S.notes.length, notes: notes.map(n => ({ id: esc(n.id), title: esc(noteTitle(n)), body: esc(noteBody(n).slice(0, 240)), pin: !!n.pin, cat: n.cat && CATS[n.cat] ? esc(CATS[n.cat].label.toUpperCase()) : '', q: String(n.text || '').toLowerCase(), when: esc(rel(iso(new Date(n.edited || n.created))).toUpperCase()) })) };
   },
   // the gym's panels: today's session and its sets, this week's split, the benchmarks, the rest timer. Names are escaped here too.
