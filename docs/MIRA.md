@@ -26,9 +26,16 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
    session, list, late, decisions, school, pay. Each step that belongs somewhere has GO, which flies there. From 9 pm
    it's the check-in: each open task today with DONE / TOMORROW / LET GO, then a closing line. Sundays from 5 pm, the
    week in review (hours, sessions, study, what slipped) then the check-in.
-2. **M2 Caller and reactions.** Reminders and decisions ring as her (his own ring); pick up and she reads it.
-   A cheer when the list clears, a word on a new benchmark best, an evening nudge if training isn't done. Where she
-   stands follows his day (at the door while he's on the clock, asleep after 11).
+2. **M2 Caller and reactions (built p26, 2026-11-14).**
+   - **The phone:** picking up DECIDE puts her on the line (`miraCall`, `#dcCall`): one thing waiting, its name and
+     time; several, how many; none, she just wanted to hear him. Her voice after the pickup sound; hanging up stops her.
+   - **Reactions** (`miraReact` in index.html): her voice a beat after the moment, her words in the island once it's
+     free (an Undo goes first; after 8 s the words are dropped). Cleared list, new benchmark best, clocking out.
+   - **The evening nudge** (`miraNudge`): 7 to 9 pm, a lifting or HIIT day not done, once a day while the app is open;
+     its GYM button flies there (`City.go`).
+   - **Where she is** (`figSpot`): on the clock by day, `work` (tablet, or her phone at the glass); 11 pm `late` (in bed
+     on her phone); after midnight `sleep` (asleep, no phone). The door is behind the resting camera, so "waiting at the
+     door" became waiting with her tablet. Test hook `City._.work(on)`. Test t74.
 3. **M3 Everywhere.** A small holo call of her in the gym (rest countdown), the castle (keeps the study clock), the
    shop (clock-in). "Tell Mira": plain words become a note or a task.
 4. **M4 Closeness.** LINK only grows (streaks, finished lists, sessions, study). Levels unlock poses, outfits,

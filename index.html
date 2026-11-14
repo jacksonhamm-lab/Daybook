@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="sound.js?v=p19"></script>
-<script src="mira.js?v=p25"></script>
+<script src="mira.js?v=p26"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -27,9 +27,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p25';
+  window.DAYBOOK_BUILD = 'p26';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p25'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p26'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -37,7 +37,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p25').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p26').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -564,6 +564,26 @@ function mvSay(id) {
   return true;
 }
 // a talk's lines, fetched ahead so each one starts on the tap
+// Mira reacts (docs/MIRA.md M2): her voice a beat after the moment, her words in the island once nothing else needs it
+// (an Undo matters more; after 8 s the words are dropped, the voice already said it). act: an island button, e.g. GYM
+function miraReact(kind, delay = 2400, act) {
+  if (!window.Mira) return; const ln = Mira.line(kind, today() + '|' + Date.now());
+  setTimeout(() => {
+    if (document.hidden) return; mvSay(ln.id); const t0 = Date.now();
+    const show = () => { if (document.hidden) return; if (island.action && Date.now() - t0 < 8000) return void setTimeout(show, 500); if (!island.action) island.toast('Mira: ' + ln.say, { icon: I.heart, color: '#ff4646', ms: 4200, action: act }); };
+    show();
+  }, delay);
+  return ln;
+}
+// the evening nudge: between 7 and 9 pm, a lifting or HIIT day not done yet, once a day, while the app is open
+function miraNudge() {
+  const d = today(), h = new Date().getHours(), w = wo(d);
+  if (document.hidden || h < 19 || h >= 21 || w.s === 'REST' || w.done) return;
+  let last = ''; try { last = localStorage.getItem('daybook_nudge') || ''; } catch (e) {}
+  if (last === d) return; try { localStorage.setItem('daybook_nudge', d); } catch (e) {}
+  miraReact('nudge.gym', 0, { label: 'GYM', fn: () => window.City && City.go && City.go('gym', 'cSess') });
+}
+setInterval(miraNudge, 60e3); document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(miraNudge, 4000); });
 function mvPre(ids) { if (!MV.on || !SND.on || !NS) return; const c = sndBoot(); if (c) ids.filter(Boolean).slice(0, 16).forEach(id => mvGet(id, c).catch(() => {})); }
 document.addEventListener('visibilitychange', () => { if (document.hidden) mvStop(); });
 function sfx(name, o) { if (!SND.on || document.hidden || !NS) return 0; try { sndBoot(); return NS.play(name, o) || 0; } catch (e) { return 0; } }
@@ -1354,7 +1374,7 @@ function toggleTask(id, d = null) {
     const l = tasksOn(d);
     if (l.length > 1 && l.every(x => isDone(x, d))) {
       clearTimeout(toggleTask.c);
-      toggleTask.c = setTimeout(() => { if (noteClearDay()) celebrate('Day cleared · +' + XP.clearDay + ' XP', '#30d158'); }, 350);
+      toggleTask.c = setTimeout(() => { if (noteClearDay()) { celebrate('Day cleared · +' + XP.clearDay + ' XP', '#30d158'); miraReact('react.clear'); } }, 350);
     }
   }
   clearTimeout(toggleTask.tr); toggleTask.tr = setTimeout(checkTrophies, 600);
@@ -1382,6 +1402,7 @@ function clockOut() {
   const was = S.shifts[c.date], mins = t => +t.slice(0, 2) * 60 + +t.slice(3, 5);
   const add = was && was.start && was.end && was.end !== end ? { start: was.start, end, brk: (+was.brk || 0) + brk + Math.max(0, mins(start) - mins(was.end)) } : { start, end, brk };
   withUndo(`Clocked out · ${fh(shiftHours({ start, end, brk }))}h logged`, () => { S.shifts[c.date] = { ...(was || {}), ...add }; S.clock = null; });
+  miraReact('react.home', 1600);
 }
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); }
@@ -1642,7 +1663,7 @@ window.CityApp = {
     v = parseInt(v); if (!W_LOGS[k] || !(v > 0)) return false;
     const L = benchLogs(k), prevBest = L.length ? Math.max(...L.map(x => x.reps)) : 0, n = new Date();
     L.push({ reps: v, week: `Wk ${L.length + 1} · ${MON[n.getMonth()]} ${n.getDate()}` }); writeLS(W_LOGS[k], L); haptic(10); render();
-    if (v > prevBest && prevBest) celebrate(`New PR · ${v}`, '#ff9f0a'); else island.toast('Benchmark logged', { icon: I.check, color: '#ff9f0a' });
+    if (v > prevBest && prevBest) { celebrate(`New PR · ${v}`, '#ff9f0a'); miraReact('react.best'); } else island.toast('Benchmark logged', { icon: I.check, color: '#ff9f0a' });
     return true;
   },
   // the chalet: Fuel and Cardio in one kitchen. Today's shakes, this week's meals and the list they make, the recipe book, cardio
@@ -1712,7 +1733,7 @@ window.CityApp = {
       week: { hours: fh(days.reduce((a, d) => a + shiftHours(S.shifts[d]), 0)), sessDone, sessPlan: plan.length, study: fh(Math.round(st * 10) / 10), studyGoal: stG, done, slipped: slip, good: sessDone >= plan.length - 1 && slip <= 2 } };
   },
   // her check-in's buttons: done, tomorrow, let go (a delete, with Undo)
-  say: id => mvSay(id), sayStop: () => mvStop(), sayPre: ids => mvPre(ids),
+  say: id => mvSay(id), sayStop: () => mvStop(), sayPre: ids => mvPre(ids), clockOn: () => !!S.clock, miraTest: (k, d) => miraReact(k, d || 0), miraNudge: () => miraNudge(),
   miraDo(act, id, d) {
     const t = S.tasks.find(x => x.id === id); if (!t) return false;
     if (act === 'done') { if (!isDone(t, d)) this.tick(id, d); return true; }

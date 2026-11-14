@@ -44,6 +44,14 @@
     'review.good': ['Not bad at all. I\'m proud of you.', 'Good week. Really.'],
     'review.meh': ['Next week we go again. Together.', 'Some weeks are like that. New one tomorrow.'],
     'idle': ['I\'m here.', 'Mm?', 'Take your time.'],
+    // M2: her calls (the phone in the apartment), her reactions anywhere, the evening nudge
+    'call.one': ["Hey, it's me. Did this one happen?", "It's me. This one's still waiting."],
+    'call.many': ["Hey, it's me. A few things slipped by.", "It's me. Some things got away from you today."],
+    'call.none': ["Hey, it's me. Nothing's waiting. I just wanted to hear you.", "It's me. All clear. I just missed you."],
+    'react.clear': ["That's everything done. I'm proud of you.", "List cleared. Come home and show off."],
+    'react.best': ["New best? Look at you.", "Stronger every week. I noticed."],
+    'react.home': ["Shift's done. Come home.", "Off work? Good. I'm waiting."],
+    'nudge.gym': ["Still time for the gym, you know.", "Your workout's waiting. Just saying."],
   };
   // what she says out loud when her voice is Japanese (the English stays on screen as the subtitle), by variant id
   const JA = {
@@ -143,6 +151,20 @@
     'idle.1': 'ここにいるよ。',
     'idle.2': 'ん？',
     'idle.3': 'ゆっくりでいいよ。',
+    'call.one.1': "もしもし、私。これ、やった？",
+    'call.one.2': "私だよ。これ、まだ待ってるよ。",
+    'call.many.1': "もしもし、私。いくつか過ぎちゃってるよ。",
+    'call.many.2': "私だよ。今日、取りこぼしちゃったのがあるよ。",
+    'call.none.1': "もしもし、私。何も残ってないよ。声が聞きたかっただけ。",
+    'call.none.2': "私だよ。全部大丈夫。ちょっと寂しかっただけ。",
+    'react.clear.1': "全部終わったね。誇らしいよ。",
+    'react.clear.2': "リスト完了。帰ってきて自慢して。",
+    'react.best.1': "自己ベスト？すごいじゃん。",
+    'react.best.2': "毎週強くなってる。ちゃんと見てるよ。",
+    'react.home.1': "お仕事おつかれ。早く帰ってきて。",
+    'react.home.2': "仕事終わった？よかった。待ってるね。",
+    'nudge.gym.1': "まだジム間に合うよ。",
+    'nudge.gym.2': "トレーニングが待ってるよ。言っとくけど。",
   };
   // stable for the day: the same line until tomorrow, a different one on another day
   const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };

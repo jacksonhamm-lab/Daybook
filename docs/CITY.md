@@ -373,6 +373,8 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p26, 2026-11-14): Mira M2.** Her calls, reactions, the evening nudge, where she is; [MIRA.md](MIRA.md)
+  phase 2. 14 new lines (EN + JA clips). Test t74.
 - **Built (p25, 2026-11-14): Mira's voice.** Japanese clips (ElevenLabs), English on screen; details in
   [MIRA.md](MIRA.md) phase V. Test t73.
 - **Built (p24, 2026-11-13, his ask: Mira "all she does right now is just stand there"; he liked every idea, phases
@@ -698,7 +700,7 @@ Technical state only. Updated 2026-11-06.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. p22 is live (he checked it on his iPhone, Nov 11). p23 (tasks where they belong), p24 (Mira talks) and p25 (her
-     voice) on branch city-tasks, not pushed: his go, plus a go for the clips' KV upload. Then Mira M2 (caller, reactions, where she stands). Ambience v2 is in the Sound Lab only, waiting on his listen; then into sound.js (CAL, day from
+  1. p22 is live (he checked it on his iPhone, Nov 11). p23 to p25 live (Nov 14, he checked them). p26 (Mira M2) on
+     city-tasks, not pushed: his go, plus a go for the new clips' KV upload. Then Mira M2 (caller, reactions, where she stands). Ambience v2 is in the Sound Lab only, waiting on his listen; then into sound.js (CAL, day from
      the sun, t66).
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

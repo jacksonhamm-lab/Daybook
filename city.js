@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p25';
+export const BUILD = 'p26';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -526,6 +526,9 @@ label.rbtn{cursor:pointer}
 .macts .rbtn{min-height:40px}
 .mtask{margin-top:6px;max-height:34vh;overflow:auto}
 .mrow{padding:7px 0;border-top:1px solid var(--hud-hair)}
+.mcall{margin:4px 0 10px;padding:8px 10px 9px;border-left:2px solid var(--hud-red);background:rgba(255,70,70,.07)}
+.mcall p{margin:6px 0 0;font:600 15px/1.38 var(--body);color:var(--hud-text)}
+.mcall small{display:block;margin-top:5px;font:12px/1.4 var(--micro);color:var(--hud-cyan);overflow-wrap:anywhere}
 .mrow b{display:block;font:600 14px/1.3 var(--body);color:var(--hud-text);overflow-wrap:anywhere}
 .mrow .seg2{margin-top:6px}
 .mrow .seg2 .rbtn{min-height:36px;padding:0 10px;font-size:12px}
@@ -782,6 +785,7 @@ const MARKUP = `
           </section>
           <section class="card" id="cDecide" data-r="apartment">
             <div class="kick">Needs a decision<span class="mi" id="dcN"></span></div>
+            <div id="dcCall"></div>
             <div id="dcRows"></div>
           </section>
           <section class="card" id="cSess" data-r="gym">
@@ -5773,7 +5777,8 @@ void main(){
 let FIG = null, figTok = 0, figP = null, HOUR = null;
 const FIG_PH = { value: new THREE.Vector4() }, FIG_CUT = { value: 1e4 }, FIG_DAY = { value: 0 };
 /* where she is by the clock: the window corner by day, the glass from six, in bed from eleven. Read on the way in, so she never changes spot while the room is on screen */
-const figSpot = () => { const h = HOUR != null ? HOUR : new Date().getHours(); return h >= 23 || h < 6 ? 'late' : h >= 18 ? 'eve' : 'day'; };
+const figSpot = () => { const h = HOUR != null ? HOUR : new Date().getHours(); return h < 6 ? 'sleep' : h >= 23 ? 'late' : h >= 18 ? 'eve' : (FIG_WORK != null ? FIG_WORK : APP.clockOn && APP.clockOn()) ? 'work' : 'day'; };
+let FIG_WORK = null;   // tests: pretend he's on the clock
 /* on a phone the resting view may turn toward her spot (the bed sits at the edge of a narrow screen) */
 const restYaw = () => CAM.aspect < .8 && room.def && (room.def.figure && room.def.figure.turn && room.def.figure.turn[room.spot] || room.def.turn) || 0;
 function dropFigure() {
@@ -6173,7 +6178,7 @@ const ROOM_DEF = {
        A model file, private like Dex's. Each spot lists her key poses: at is the middle of her posed footprint at its
        lowest point, ry her heading, lay turns her whole body after the pose (onto her back), phone 'both' | 'l' | 'r' | 'tablet'.
        turn: on a phone the resting view leans this far toward her spot (late: the bed) */
-    figure: { url: 'models/her.glb?v=1', h: 1.7, turn: { late: .18 }, spots: {
+    figure: { url: 'models/her.glb?v=1', h: 1.7, turn: { late: .18, sleep: .18 }, spots: {
       day: [{ pose: 'dayStretch', at: [3.82, .05, .98], ry: -1.9, look: 0 },
         { pose: 'dayRead', at: [4.087, .05, .85], ry: -2.36, look: 0, phone: 'tablet' },
         { pose: 'dayLean', at: [4.27, .17, .291], ry: -.5, look: -.25, phone: 'r' }],
@@ -6182,7 +6187,13 @@ const ROOM_DEF = {
         { pose: 'stepSit', at: [4.274, .16, .65], ry: .03, look: 0, phone: 'both' }],
       late: [{ pose: 'lie', at: [3.8, .535, 3.0], ry: Math.PI, look: 0, phone: 'both', lay: [1, 0, 0, -Math.PI / 2] },
         { pose: 'sideLie', at: [3.75, .556, 3.0], ry: -Math.PI / 2, look: 0, phone: 'r', lay: [0, 0, 1, -Math.PI / 2] },
-        { pose: 'headboardSit', at: [3.75, .559, 3.208], ry: Math.PI, look: 0, phone: 'both' }] },
+        { pose: 'headboardSit', at: [3.75, .559, 3.208], ry: Math.PI, look: 0, phone: 'both' }],
+      /* while he's at work: curled up with her tablet, or on her phone at the glass, waiting */
+      work: [{ pose: 'dayRead', at: [4.087, .05, .85], ry: -2.36, look: 0, phone: 'tablet' },
+        { pose: 'dayLean', at: [4.27, .17, .291], ry: -.5, look: -.25, phone: 'r' }],
+      /* after midnight: asleep, no phone */
+      sleep: [{ pose: 'sideLie', at: [3.75, .556, 3.0], ry: -Math.PI / 2, look: 0, lay: [0, 0, 1, -Math.PI / 2] },
+        { pose: 'lie', at: [3.8, .535, 3.0], ry: Math.PI, look: 0, lay: [1, 0, 0, -Math.PI / 2] }] },
       /* tap her: the view moves in on her at the glass (whatever the hour, she comes to it) and she turns to him. Each
          pose in turn, every 7 to 11 s; the wave first. view: where the camera stands, a longer lens (fov x .78) */
       close: [{ pose: 'closeWave', at: [3.7, .05, .55], ry: -1.76, look: 0, wave: true },
@@ -6797,6 +6808,14 @@ function miraIdle(say) {
   $('#mSay').textContent = say || Mira.idle(c).say; setText('#mInfo', ''); setText('#mDot', ''); setHTML('#mTasks', ''); $('#mLine').setAttribute('aria-label', 'Talk to her');
   mOut(miraMore() || '<button class="rbtn ol" data-mk="brief">MY DAY</button>');
 }
+/* the phone: picking up is her on the line. One thing waiting, its name; several, how many; none, she just wanted to hear him */
+function miraCall() {
+  if (!window.Mira) return; let P; try { P = APP.plan(); } catch (e) { return; }
+  const n = P.decide.length, ln = Mira.line(n > 1 ? 'call.many' : n ? 'call.one' : 'call.none', new Date().toDateString() + n);
+  const info = n === 1 ? `${P.decide[0].title} · WAS ${P.decide[0].was}`.toUpperCase() : n ? `${n} WAITING` : '';
+  setHTML('#dcCall', `<div class="mcall"><b class="mwho">MIRA // ON THE LINE</b><p>${ln.say}</p>${info ? `<small>${info}</small>` : ''}</div>`);
+  setTimeout(() => { if (S.sheet && curCard === 'cDecide' && APP.say) APP.say(ln.id); }, 650);   // after the pickup sound
+}
 function miraGo(to) {
   const [id, card] = to.split('|'); miraStop();
   if (id === room.id) { stepBack(); setTimeout(() => { if (S.mode === 'room' && !S.close) openSheet(card); }, 160); return; }
@@ -6851,6 +6870,7 @@ function tapHot(k) {
   if (h.run) { h.run(); return; }
   if (h.key === 'decide') { if (APP.ringStop) APP.ringStop(); APP.sfx('pickup'); } else APP.sfx('press');
   openSheet(h.sheet);
+  if (h.key === 'decide') miraCall();
   tagEls.forEach(t => { if (t.h.key === k) { t.el.classList.add('hot'); setTimeout(() => t.el.classList.remove('hot'), 600); } });
 }
 /* The same state change as the Work page. The app shows the toast with Undo, then calls City.update. */
@@ -6879,7 +6899,7 @@ function openSheet(id) {
   setText('#shName', g ? GCARD[g][1] : room.def.sheet[0]); setText('#shPage', g ? GCARD[g][2] : room.def.sheet[1]); sh0.setAttribute('aria-label', g ? GCARD[g][1] : room.def.sheet[0]);
   if (!g) showCard(id);
   refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) { $('#aptBox').inert = true; $('#gymBox').inert = true; $('#chBox').inert = true; $('#scBox').inert = true; } const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0; scanNow(); $('#btnClose').focus({ preventScroll: true }); }
-function closeSheet(quiet) { if (S.sheet && !quiet) APP.sfx(!gOpen && curCard === 'cDecide' ? 'hangup' : 'back'); S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; $('#chBox').inert = false; $('#scBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
+function closeSheet(quiet) { if (curCard === 'cDecide' && APP.sayStop) APP.sayStop(); setHTML('#dcCall', ''); if (S.sheet && !quiet) APP.sfx(!gOpen && curCard === 'cDecide' ? 'hangup' : 'back'); S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; $('#chBox').inert = false; $('#scBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
 function updateSel() {
   if (!HOME) return;
   const o = ICONS[sel], a = HOME.attrs[o.attr], v = Math.round(pct01(a.bar) * 100);
@@ -7358,6 +7378,7 @@ function rig() {
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
     figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
     hour(h) { HOUR = h; return figSpot(); },
+    work(on) { FIG_WORK = on == null ? null : !!on; return figSpot(); },
     /* the sky by name ('dusk,snow') or as numbers; null goes back to the real one (in the rig: the painted night) */
     umb: () => city.umb ? city.umb.map(p => p.wet.visible && !p.dry.visible) : null, lampK: () => room.lampK, pq: () => ({ ...PM, weakGpu: WEAK, bloom: Q.bloom, refl: Q.refl, scale: Q.scale, w: renderer.domElement.width }),
     sky(s) { SKY.over = skyParse(s); SKY.next = 0; return frame().then(() => ({ el: SKY.el, L: SKY.L, w: { ...SKY.w } })); },
@@ -7381,6 +7402,7 @@ window.City = {
   update,
   /* Ctrl K and / open the HUD's quick add, from the city or any room */
   quickAdd: () => { if (S.mode === 'fly') return; openGlobal('add'); },
+  go: (id, card) => { if (S.mode === 'fly' || !ROOM_DEF[id]) return; if (S.close) closeReset(); if (S.sheet) closeSheet(true); goPlace(id, card); },
   chip: k => { if (S.mode !== 'city') return null; const e = iconEls.find(i => i.o.attr === k); return e ? e.el : null; },
   _: rig(),
 };
