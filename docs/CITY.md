@@ -373,6 +373,13 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p24, 2026-11-13, his ask: Mira "all she does right now is just stand there"; he liked every idea, phases
+  in [MIRA.md](MIRA.md); her voice warm and teasing; AI chat skipped; ElevenLabs voice later):** M1, she talks. Her
+  close-up opens a dialogue box in her card (`#mTalk`): the day brief (shift, session, list, late, decisions, school,
+  pay; GO flies to where each lives), the check-in from 9 pm (each open task: DONE / TOMORROW / LET GO, then a closing
+  line that fits what he did), Sunday from 5 pm the week in review then the check-in. Back within 20 minutes: a hello
+  and MY DAY, not the brief again. Lines in `mira.js` (ids, `say` without data, `info` with it); context `APP.mira()`,
+  actions `APP.miraDo()`. Lines type out (instant under reduced motion), a tick per line. Test t72 (both sizes).
 - **Built (p23, 2026-11-12, his ask: "tasks for work should appear in work as well, tasks for school so I don't have
   to go to the apartment to see tasks that are related to other things"; his picks: work and school only, not the gym;
   Jobs becomes School):**
@@ -675,6 +682,8 @@ Technical state only. Updated 2026-11-06.
     count-up caught mid-way differ (Dex's files are unchanged).
 - **Not tested:** a real iPhone (FPS, heat, memory with the live rig), Safari, the real sync code.
 - **Open:**
+  - t66 "an object opens with press" and "and closes with back" fail on p23 and p24 alike since Nov 14 (both passed
+    Nov 12): something date or timing related in the test, not a p24 change. Check before the next sound work.
   - `her.glb` changes need a `?v=` bump and a new KV upload (its own go): `npx wrangler kv key put --binding SYNC
     --remote "model:her.glb" --path models/her.glb.gz`.
   - The secret `SKY_AT` (the place the sky follows) lives only in Cloudflare (`wrangler secret put SKY_AT`), never in
@@ -687,7 +696,7 @@ Technical state only. Updated 2026-11-06.
   - `seen`, `clearDays` and `submitted` are known keys `mergeState` never merged (a rev bump per sync, no data loss).
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
-  1. p22 is live (he checked it on his iPhone, Nov 11). p23 (tasks where they belong) on branch city-tasks, not
-     pushed: his go. Ambience v2 is in the Sound Lab only, waiting on his listen; then into sound.js (CAL, day from
+  1. p22 is live (he checked it on his iPhone, Nov 11). p23 (tasks where they belong) and p24 (Mira talks) on branch
+     city-tasks, not pushed: his go. Then Mira M2 (caller, reactions, where she stands). Ambience v2 is in the Sound Lab only, waiting on his listen; then into sound.js (CAL, day from
      the sun, t66).
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

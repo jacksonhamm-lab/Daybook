@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p23';
+export const BUILD = 'p24';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -515,6 +515,24 @@ label.rbtn{cursor:pointer}
 .hrow{display:flex;align-items:center;gap:6px;min-width:0}
 .hlike{white-space:normal;line-height:1.45}
 @media (max-width:899px){#herBox .hlike{display:none}}
+.mtalk{margin:6px 0 4px}
+.mline{position:relative;padding:8px 10px 10px;border-left:2px solid var(--hud-red);background:rgba(255,70,70,.07);cursor:pointer}
+.mwho{font:700 10px/1 var(--micro);letter-spacing:.14em;color:var(--hud-red)}
+.mline p{margin:6px 0 0;font:600 16px/1.38 var(--body);color:var(--hud-text);min-height:22px}
+.mline small{display:block;margin-top:6px;font:12px/1.4 var(--micro);color:var(--hud-cyan);letter-spacing:.04em;overflow-wrap:anywhere}
+.mline small:empty{display:none}
+.mline .mdot{position:absolute;right:9px;bottom:7px;font:10px/1 var(--micro);color:var(--hud-redd)}
+.macts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.macts .rbtn{min-height:40px}
+.mtask{margin-top:6px;max-height:34vh;overflow:auto}
+.mrow{padding:7px 0;border-top:1px solid var(--hud-hair)}
+.mrow b{display:block;font:600 14px/1.3 var(--body);color:var(--hud-text);overflow-wrap:anywhere}
+.mrow .seg2{margin-top:6px}
+.mrow .seg2 .rbtn{min-height:36px;padding:0 10px;font-size:12px}
+.mrow em{display:block;margin-top:5px;font:700 11px/1 var(--micro);letter-spacing:.1em;font-style:normal;color:var(--hud-green)}
+.mrow.mv em{color:var(--hud-yellow)}.mrow.gone em{color:var(--hud-redd)}.mrow.gone b{text-decoration:line-through;opacity:.6}
+@media (max-width:899px){#hud.talk #herBox .hbody{display:none}}
+@media (min-width:900px){#herBox{width:340px}}
 @media (prefers-reduced-motion:reduce){.hon i{animation:none}}
 
 /* moments */
@@ -669,6 +687,7 @@ const MARKUP = `
     <div class="in">
       <div class="dhead"><b>MIRA KADE</b><span class="hon"><i></i>ONLINE</span><div class="sq" id="sqH"></div></div>
       <div class="tickr"></div>
+      <div class="mtalk" id="mTalk"><div class="mline" id="mLine" role="button" tabindex="0" aria-label="Next"><b class="mwho">MIRA</b><p id="mSay" aria-live="polite"></p><small id="mInfo"></small><span class="mdot" id="mDot"></span></div><div class="mtask" id="mTasks"></div><div class="macts" id="mActs"></div></div>
       <div class="hbody">
         <div class="mi">RESIDENT // FL 88 // AGE 27</div>
         <div class="hrow"><div class="pl" id="hPose">HELLO</div><div class="conn" aria-hidden="true"><i></i><b></b></div><span class="mi" id="hPoseN">POSE 01/05</span></div>
@@ -6626,6 +6645,15 @@ function hudInit() {
   $('#shTabs').addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-tab]'); if (t) { showCard(t.dataset.tab); const n = $(`#shTabs [data-tab="${t.dataset.tab}"]`); if (n) n.focus({ preventScroll: true }); } });
   $('#btnClock').addEventListener('click', tapClock);
   $('#btnAptSheet').addEventListener('click', () => openSheet('cToday'));
+  $('#mTalk').addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-mnext],[data-mbye],[data-mgo],[data-mk],[data-mdo],#mLine'); if (!b) return; const d = b.dataset;
+    if (d.mdo) { if (!MT || MT.acted[d.id]) return; if (APP.miraDo(d.mdo, d.id, d.d)) { MT.acted[d.id] = d.mdo; if (d.mdo === 'done') MT.res.done++; else if (d.mdo === 'tomorrow') MT.res.moved++; miraTasks(MT.steps[MT.i]); const n = ROOT.querySelector('#mTasks [data-mdo]'); if (n) n.focus({ preventScroll: true }); } return; }
+    if (d.mnext !== undefined || b.id === 'mLine') { if (MT) miraNext(); else miraStart('brief'); return; }
+    if (d.mbye) { miraIdle(); APP.sfx('back'); return; }
+    if (d.mgo) { miraGo(d.mgo); return; }
+    if (d.mk) miraStart(d.mk);
+  });
+  $('#mLine').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#mLine').click(); } });
   /* the apartment's rows: the tick flips at once, and refreshApt keeps every row where it was until he leaves */
   hudEl.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-tick],[data-task],[data-dec],[data-day]'); if (!b) return;
@@ -6699,7 +6727,7 @@ function closeUp(on, pop) {
   if (on === S.close) return;
   if (on) { if (S.mode !== 'room' || S.sheet || !FIG || !room.def.figure || !room.def.figure.close) return; if (!pop) history.pushState({ city: room.id, close: 1 }, ''); }
   if (!on) { const T = Math.PI * 2; S.spin = ((S.spin % T) + T + Math.PI) % T - Math.PI; }
-  S.close = on; figClose(on); hudEl.classList.toggle('close', on); $(room.def.panel).inert = on; $('#herBox').setAttribute('aria-hidden', String(!on)); if (on) herCard();
+  S.close = on; figClose(on); hudEl.classList.toggle('close', on); $(room.def.panel).inert = on; $('#herBox').setAttribute('aria-hidden', String(!on)); if (on) { herCard(); miraStart(); } else miraStop();
   const h = $('#hint'); h.textContent = on ? 'DRAG TO TURN HER · TAP TO STEP BACK' : 'DRAG TO LOOK'; h.style.opacity = 1; clearTimeout(S.hintT); S.hintT = setTimeout(() => { h.style.opacity = 0; }, on ? 2600 : 1800);
   glitchHud(.2); APP.sfx(on ? 'open' : 'back');
 }
@@ -6717,9 +6745,66 @@ function herPose() {
   if (!FIG) return; const j = FIG.go ? FIG.go.j : FIG.i, k = FIG.keys[j]; if (!k.close) return;
   setText('#hPose', HER_POSE[k.pose] || 'HELLO'); setText('#hPoseN', `POSE ${String(j - FIG.nS + 1).padStart(2, '0')}/${String(FIG.keys.length - FIG.nS).padStart(2, '0')}`);
 }
+/* ---------- Mira talks (docs/MIRA.md). mira.js writes the lines from APP.mira(); one step at a time, typed out ---------- */
+let MT = null, miraLast = 0, MIRA_AT = {};
+const mOut = h => setHTML('#mActs', h);
+function miraStart(kind) {
+  if (!window.Mira || !APP.mira) return;
+  let c; try { c = APP.mira(MIRA_AT); } catch (e) { APP.log(e); return; }
+  const again = !kind && Date.now() - miraLast < 20 * 60e3; miraLast = Date.now();
+  /* back within 20 minutes: a hello, not the whole day again */
+  if (again) { MT = null; miraIdle(Mira.line('greet.again', c.date + miraLast).say); APP.sfx('tick'); return; }
+  const k = kind || Mira.which(c);
+  MT = { kind: k, c, steps: Mira.talk(k, c, again), i: 0, res: { done: 0, moved: 0, left: 0 }, acted: {}, tt: 0 };
+  hudEl.classList.add('talk'); miraShow();
+}
+function miraStop() { if (MT) clearInterval(MT.tt); MT = null; hudEl.classList.remove('talk'); }
+/* the moment's other talks, at the end of one */
+function miraMore() {
+  const c = MT ? MT.c : APP.mira(MIRA_AT), b = [];
+  if (!MT || MT.kind !== 'brief') b.push(['brief', 'MY DAY']);
+  if ((c.hour >= 17 || c.hour < 5) && (!MT || MT.kind === 'brief')) b.push(['checkin', 'CHECK IN']);
+  if (c.dow === 6 && (!MT || MT.kind !== 'review')) b.push(['review', 'MY WEEK']);
+  return b.map(([k, l]) => `<button class="rbtn ol" data-mk="${k}">${l}</button>`).join('');
+}
+function miraType(text) {
+  const p = $('#mSay'); clearInterval(MT.tt);
+  if (REDUCED || MIRA_AT.instant || !text) { p.textContent = text; return; }
+  let n = 0; p.textContent = ''; MT.typing = true;
+  MT.tt = setInterval(() => { n += 2; p.textContent = text.slice(0, n); if (n >= text.length) { clearInterval(MT.tt); MT.typing = false; } }, 28);
+}
+function miraShow() {
+  if (!MT) return;
+  let st = MT.steps[MT.i];
+  /* the check-in's last word depends on what he did with the list */
+  if (st.after) { const T = MT.steps.find(x => x.tasks); if (T) MT.res.left = T.tasks.filter(t => !MT.acted[t.id]).length; st = MT.steps[MT.i] = { ...Mira.checkinEnd(MT.c, MT.res), end: true }; }
+  miraType(st.say); setText('#mInfo', st.info ? st.info.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'") : '');
+  setText('#mDot', st.end ? '' : `${MT.i + 1}/${MT.steps.length}`);
+  $('#mLine').setAttribute('aria-label', st.end ? st.say : 'Next');
+  miraTasks(st);
+  const go = st.go ? `<button class="rbtn" data-mgo="${st.go}">GO ›</button>` : '';
+  mOut(st.end ? `${go}<button class="rbtn${go ? ' ol' : ''}" data-mbye="1">BYE</button>${miraMore()}` : `${go}<button class="rbtn${go ? ' ol' : ''}" data-mnext="1">NEXT</button>`);
+  APP.sfx('tick');
+}
+/* the check-in's list: each open task with DONE / TOMORROW / LET GO; what he picked stays in place, labelled */
+function miraTasks(st) {
+  setHTML('#mTasks', st.tasks ? st.tasks.map(t => { const a = MT.acted[t.id]; return `<div class="mrow${a === 'tomorrow' ? ' mv' : a === 'drop' ? ' gone' : ''}"><b>${t.title}</b>${a ? `<em>${a === 'done' ? 'DONE' : a === 'tomorrow' ? 'TOMORROW' : 'LET GO'}</em>` : `<div class="seg2"><button class="rbtn" data-mdo="done" data-id="${t.id}" data-d="${t.d}">DONE</button><button class="rbtn ol" data-mdo="tomorrow" data-id="${t.id}" data-d="${t.d}">TOMORROW</button><button class="rbtn ol" data-mdo="drop" data-id="${t.id}" data-d="${t.d}">LET GO</button></div>`}</div>`; }).join('') : '');
+}
+function miraNext() { if (!MT) return; if (MT.typing) { clearInterval(MT.tt); MT.typing = false; $('#mSay').textContent = MT.steps[MT.i].say; return; } if (MT.i < MT.steps.length - 1) { MT.i++; miraShow(); } }
+/* after BYE: she's just there, with the talks the moment offers */
+function miraIdle(say) {
+  const c = APP.mira(MIRA_AT); MT = null; hudEl.classList.remove('talk');
+  $('#mSay').textContent = say || Mira.idle(c).say; setText('#mInfo', ''); setText('#mDot', ''); setHTML('#mTasks', ''); $('#mLine').setAttribute('aria-label', 'Talk to her');
+  mOut(miraMore() || '<button class="rbtn ol" data-mk="brief">MY DAY</button>');
+}
+function miraGo(to) {
+  const [id, card] = to.split('|'); miraStop();
+  if (id === room.id) { stepBack(); setTimeout(() => { if (S.mode === 'room' && !S.close) openSheet(card); }, 160); return; }
+  goPlace(id, card);
+}
 function stepBack() { if (history.state && history.state.close) history.back(); else closeUp(false); }
 /* leaving the room from close up: no pull back, she's simply where the clock says */
-function closeReset() { S.spin = S.spinGoal = 0; if (!S.close && !S.closeK) return; S.close = false; S.closeK = 0; figClose(false, true); hudEl.classList.remove('close'); $('#herBox').setAttribute('aria-hidden', 'true'); const p = room.def && $(room.def.panel); if (p) p.inert = false; applyFov(); }
+function closeReset() { S.spin = S.spinGoal = 0; miraStop(); if (!S.close && !S.closeK) return; S.close = false; S.closeK = 0; figClose(false, true); hudEl.classList.remove('close'); $('#herBox').setAttribute('aria-hidden', 'true'); const p = room.def && $(room.def.panel); if (p) p.inert = false; applyFov(); }
 function tapIcon(k) {
   if (S.mode !== 'city') return;
   const e = iconEls.find(i => i.k === k);
@@ -7282,6 +7367,8 @@ function rig() {
     figBox() { return FIG ? FIG.keys[FIG.i].box : null; },
     pose(i, go) { if (!FIG) return 0; const n = FIG.nS; if (go) figGo(i % n, S.t); else { FIG.i = i % n; FIG.go = null; FIG_CUT.value = 1e4; } FIG.next = Infinity; return n; },
     /* close up on her: on, and pose i of the close-up set held (null: let them run). Snapped, no easing */
+    mira(at) { if (at) { MIRA_AT = at; miraLast = at.last || 0; } return MT ? { kind: MT.kind, i: MT.i, n: MT.steps.length, step: MT.steps[MT.i], res: MT.res, acted: MT.acted } : null; },
+    miraStart(k) { miraStart(k); return !!MT; },
     close(on, i = 0) { closeUp(!!on, true); S.closeK = on ? 1 : 0; applyFov(); if (!FIG) return 0; const n = FIG.keys.length - FIG.nS; if (on && i != null) { FIG.i = FIG.nS + i % n; FIG.go = null; FIG_CUT.value = 1e4; FIG.t1 = S.t; FIG.next = Infinity; } else if (!on) { if (FIG.go) FIG.i = FIG.go.j; FIG.go = null; FIG_CUT.value = 1e4; } return n; },
     /* close up, start the move into close pose j now (held there once it's done) */
     closeGo(j) { if (!FIG) return 0; figGo(FIG.nS + j % (FIG.keys.length - FIG.nS), S.t); FIG.next = Infinity; return FIG.go.dur; },

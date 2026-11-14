@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="sound.js?v=p19"></script>
+<script src="mira.js?v=p24"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -26,9 +27,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p23';
+  window.DAYBOOK_BUILD = 'p24';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p23'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p24'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -36,7 +37,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p23').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p24').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -1664,6 +1665,32 @@ window.CityApp = {
   // the rooms edit in place, the pages' own way: tasks added, renamed, moved, deleted; notes written, edited, pinned,
   // deleted; shifts set and cleared. A delete gives back only what it took (a sync may have landed since).
   addTask(text, d, cat) { const v = String(text || '').trim(); if (!v) return false; const r = parseQuick(v, d || today()); if (r && r.kind === 'task' && !r.tagged && CAT_ORDER.includes(cat) && cat !== 'school') r.cat = cat; return !!applyQuick(r); },
+  // Mira's picture of his day (docs/MIRA.md): plain data, escaped, for mira.js to talk from. at: { hour, dow } for tests
+  mira(at = {}) {
+    const n = new Date(), td = today(), hour = at.hour ?? n.getHours(), dow = at.dow ?? dowIdx(td), mon = mondayOf(n);
+    const list = tasksOn(td), open = list.filter(t => !isDone(t, td)).map(t => ({ id: esc(t.id), d: td, title: esc(t.title) }));
+    const sh = S.shifts[td] || {}, on = shiftHours(sh) > 0, w = wo(td), lab = (w.s === 'HIIT' ? 'HIIT' : w.s + ' ' + sessName(w.s)).toUpperCase();
+    const sOn = schoolShown(), g = schoolGroups(), nd = nextDue(), p = periodFor(td), toPay = daysBetween(td, p.payday);
+    const days = datesOf(mon), plan = days.filter(d => wo(d).s !== 'REST'), sessDone = plan.filter(d => wo(d).done).length;
+    let done = 0; days.filter(d => d <= td).forEach(d => tasksOn(d).forEach(t => { if (isDone(t, d)) done++; }));
+    const slip = overdue().length, stG = +school().goal || 15, st = weekStudy(mon);
+    return { date: td, hour, dow, name: esc(S.settings.name || ''),
+      tasks: { total: list.length, open, late: slip },
+      decide: slipped().length,
+      shift: { on, live: !!S.clock, since: S.clock ? t12(hm(new Date(S.clock.startTs))).toUpperCase() : '', over: on && !S.clock && (at.hour != null ? pad(hour) + ':00' : nowHM()) > sh.end, times: on ? `${t12(sh.start)} to ${t12(sh.end)}`.toUpperCase() : '' },
+      sess: { rest: w.s === 'REST', done: !!w.done, started: !!(w.prog && w.prog.done), prog: w.prog && w.prog.total ? `${w.prog.done}/${w.prog.total} SETS` : '', label: esc(lab) },
+      school: { on: sOn, over: sOn ? g.over.length : 0, next: sOn && nd ? { title: esc(nd.title), when: dueSay(nd.date).toUpperCase() } : null },
+      pay: { soon: toPay >= 0 && toPay <= 3 ? `PAYDAY ${DOW_LONG[dowIdx(p.payday)].toUpperCase()} ${short(p.payday).toUpperCase()}` : '', submit: inSubmitWindow(p) && td <= submitDay(p) ? payWhen(p).split(' · ')[0].toUpperCase() : '' },
+      week: { hours: fh(days.reduce((a, d) => a + shiftHours(S.shifts[d]), 0)), sessDone, sessPlan: plan.length, study: fh(Math.round(st * 10) / 10), studyGoal: stG, done, slipped: slip, good: sessDone >= plan.length - 1 && slip <= 2 } };
+  },
+  // her check-in's buttons: done, tomorrow, let go (a delete, with Undo)
+  miraDo(act, id, d) {
+    const t = S.tasks.find(x => x.id === id); if (!t) return false;
+    if (act === 'done') { if (!isDone(t, d)) this.tick(id, d); return true; }
+    if (act === 'tomorrow') { this.taskSet(id, { when: 'tomorrow' }); return true; }
+    if (act === 'drop') { this.taskDel(id); return true; }
+    return false;
+  },
   // one kind of task where that kind lives (the shop's work): late, today, the next 7 days (each task once). Escaped like plan()'s rows.
   tasksFor(cat) {
     const d = today(), td = parse(d), seen = new Set();
