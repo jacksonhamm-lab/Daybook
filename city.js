@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p24';
+export const BUILD = 'p25';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -6753,12 +6753,12 @@ function miraStart(kind) {
   let c; try { c = APP.mira(MIRA_AT); } catch (e) { APP.log(e); return; }
   const again = !kind && Date.now() - miraLast < 20 * 60e3; miraLast = Date.now();
   /* back within 20 minutes: a hello, not the whole day again */
-  if (again) { MT = null; miraIdle(Mira.line('greet.again', c.date + miraLast).say); APP.sfx('tick'); return; }
+  if (again) { MT = null; const g = Mira.line('greet.again', c.date + miraLast); miraIdle(g.say); if (!(APP.say && APP.say(g.id))) APP.sfx('tick'); return; }
   const k = kind || Mira.which(c);
   MT = { kind: k, c, steps: Mira.talk(k, c, again), i: 0, res: { done: 0, moved: 0, left: 0 }, acted: {}, tt: 0 };
-  hudEl.classList.add('talk'); miraShow();
+  hudEl.classList.add('talk'); if (APP.sayPre) APP.sayPre(MT.steps.map(x => x.say ? x.id : '')); miraShow();
 }
-function miraStop() { if (MT) clearInterval(MT.tt); MT = null; hudEl.classList.remove('talk'); }
+function miraStop() { if (MT) clearInterval(MT.tt); MT = null; hudEl.classList.remove('talk'); if (APP.sayStop) APP.sayStop(); }
 /* the moment's other talks, at the end of one */
 function miraMore() {
   const c = MT ? MT.c : APP.mira(MIRA_AT), b = [];
@@ -6784,7 +6784,7 @@ function miraShow() {
   miraTasks(st);
   const go = st.go ? `<button class="rbtn" data-mgo="${st.go}">GO ›</button>` : '';
   mOut(st.end ? `${go}<button class="rbtn${go ? ' ol' : ''}" data-mbye="1">BYE</button>${miraMore()}` : `${go}<button class="rbtn${go ? ' ol' : ''}" data-mnext="1">NEXT</button>`);
-  APP.sfx('tick');
+  if (!(APP.say && APP.say(st.id))) APP.sfx('tick');
 }
 /* the check-in's list: each open task with DONE / TOMORROW / LET GO; what he picked stays in place, labelled */
 function miraTasks(st) {
@@ -6793,7 +6793,7 @@ function miraTasks(st) {
 function miraNext() { if (!MT) return; if (MT.typing) { clearInterval(MT.tt); MT.typing = false; $('#mSay').textContent = MT.steps[MT.i].say; return; } if (MT.i < MT.steps.length - 1) { MT.i++; miraShow(); } }
 /* after BYE: she's just there, with the talks the moment offers */
 function miraIdle(say) {
-  const c = APP.mira(MIRA_AT); MT = null; hudEl.classList.remove('talk');
+  const c = APP.mira(MIRA_AT); if (MT) clearInterval(MT.tt); MT = null; hudEl.classList.remove('talk'); if (!say && APP.sayStop) APP.sayStop();
   $('#mSay').textContent = say || Mira.idle(c).say; setText('#mInfo', ''); setText('#mDot', ''); setHTML('#mTasks', ''); $('#mLine').setAttribute('aria-label', 'Talk to her');
   mOut(miraMore() || '<button class="rbtn ol" data-mk="brief">MY DAY</button>');
 }
@@ -7027,6 +7027,7 @@ function refreshGlobal(k) {
         <p>Keep reminding until it is done:</p><div class="seg2" style="margin-top:6px">${[[0, 'OFF'], [120, 'EVERY 2H'], [240, 'EVERY 4H']].map(([m, l]) => `<button class="rbtn${on(X.nag, m)}" data-sact="set-nag" data-v="${m}" aria-pressed="${X.nag === m}">${l}</button>`).join('')}</div></details>
       <details class="sgp" data-sg="sound"${sysOpen.has('sound') ? ' open' : ''}><summary>SOUND</summary><div class="seg2">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.sound ? '1' : '0', v)}" data-sact="set-sound" data-v="${v}" aria-pressed="${(X.sound ? '1' : '0') === v}">${l}</button>`).join('')}</div><p>This device only. An iPhone's silent switch mutes it.</p>
         <p style="margin-top:12px">Ambience: quiet background for each place, shaped by the weather where you are.</p><div class="seg2" style="margin-top:6px">${[['off', 'OFF'], ['low', 'LOW'], ['medium', 'MEDIUM']].map(([v, l]) => `<button class="rbtn${on(X.amb, v)}" data-sact="set-amb" data-v="${v}" aria-pressed="${X.amb === v}">${l}</button>`).join('')}</div><p>${!X.sound ? 'Plays once Sound is on.' : X.amb !== 'off' && X.perf === 'saver' ? 'Paused while Performance is on Saver.' : 'Dips under every sound and stops when you leave the app.'}</p>
+        <p style="margin-top:12px">Mira's voice: she speaks Japanese, the English is on screen.</p><div class="seg2" style="margin-top:6px">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.mvoice ? '1' : '0', v)}" data-sact="set-mvoice" data-v="${v}" aria-pressed="${(X.mvoice ? '1' : '0') === v}">${l}</button>`).join('')}</div>
         ${X.own ? `<p style="margin-top:12px">Ring: ${X.own.has ? `your sound, ${X.own.name} (${X.own.secs} s)${X.own.kept ? '' : ', until you reload'}.` : 'the built-in ring. You can use a sound of your own: it stays on this device and is never uploaded.'} It rings when a decision is waiting.</p><div class="seg2" style="margin-top:6px"><input class="vh" id="gRingF" type="file" accept="audio/*,video/*,.mov,.m4a,.mp3,.wav"><label class="rbtn ol" for="gRingF">${X.own.has ? 'CHANGE' : 'USE MY OWN'}</label><button class="rbtn ol" data-sact="ring-test">PLAY</button><button class="rbtn ol" data-sact="ring-stop">STOP</button>${X.own.has ? '<button class="rbtn ol" data-sact="ring-clear">REMOVE</button>' : ''}</div>` : ''}</details>
       <details class="sgp" data-sg="perf"${sysOpen.has('perf') ? ' open' : ''}><summary>PERFORMANCE</summary><div class="seg2">${[['auto', 'AUTO'], ['smooth', 'SMOOTH'], ['balanced', 'BALANCED'], ['saver', 'SAVER']].map(([v, l]) => `<button class="rbtn${on(X.perf, v)}" data-sact="set-perf" data-v="${v}" aria-pressed="${X.perf === v}">${l}</button>`).join('')}</div><p>${X.perfSay}</p><div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn ol" data-sact="copy-log">COPY PROBLEM LOG</button><span class="mi">${X.probs} LOGGED</span></div><div class="seg2 sgsw"><button class="rbtn${$('#perf').hidden ? ' ol' : ''}" data-gfx="1" aria-pressed="${!$('#perf').hidden}">QUALITY READOUT</button></div></details>
       <details class="sgp" data-sg="sync"${sysOpen.has('sync') ? ' open' : ''}><summary>SYNC</summary>${X.sync ? `<div class="seg2"><button class="rbtn" data-sact="sync-now">SYNC NOW</button><button class="rbtn ol${syncArm ? ' dng' : ''}" data-sact="sync-off">${syncArm ? 'TAP AGAIN: TURN OFF' : 'TURN OFF'}</button></div>` : '<form class="hadd" id="gSyncF" style="margin-top:0"><input class="hin" id="gSyncI" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="SYNC CODE" aria-label="Sync code"><button class="rbtn" type="submit">CONNECT</button></form>'}<p>${X.syncSay}</p></details>

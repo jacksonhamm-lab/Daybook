@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="sound.js?v=p19"></script>
-<script src="mira.js?v=p24"></script>
+<script src="mira.js?v=p25"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -27,9 +27,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p24';
+  window.DAYBOOK_BUILD = 'p25';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p24'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p25'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -37,7 +37,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p24').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p25').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -539,6 +539,33 @@ function sndBoot() {
   return c;
 }
 ['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => { if (SND.on) sndBoot(); }, true));
+/* Mira's voice (docs/MIRA.md): her clips are Japanese, the English stays on screen. Through the cue engine like his ring
+   (its volume, the silent switch, the ambience dips under her); one line at a time. This device's switch, on by default.
+   The clips live in KV (models/voice/<lang>/<line id>.mp3 through the Worker), never in the repo; bump v when they change. */
+const MV = { on: true, lang: 'ja', v: 1, buf: new Map(), src: null, want: '' };
+try { MV.on = localStorage.getItem('daybook_mvoice') !== '0'; } catch (e) {}
+function mvGet(id, c) {
+  let p = MV.buf.get(id);
+  if (!p) { p = fetch(`models/voice/${MV.lang}/${id}.mp3?v=${MV.v}`).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status)).then(b => c.decodeAudioData(b)); p.catch(() => MV.buf.delete(id)); MV.buf.set(id, p); }
+  return p;
+}
+function mvStop() { MV.want = ''; const s = MV.src; MV.src = null; if (s) { try { s.onended = null; s.stop(); s.disconnect(); } catch (e) {} } if (NS) NS.hold('mira', false); }
+// true when she'll speak it (the caller skips its tick)
+function mvSay(id) {
+  mvStop();
+  if (!MV.on || !SND.on || document.hidden || !NS || !id) return false;
+  const c = sndBoot(); if (!c) return false; MV.want = id;
+  mvGet(id, c).then(b => {
+    if (MV.want !== id || !SND.on || document.hidden || NS.S.ctx !== c || !NS.S.bus) return;
+    const s = c.createBufferSource(); s.buffer = b; s.connect(NS.S.bus.ui);
+    s.onended = () => { if (MV.src === s) { MV.src = null; NS.hold('mira', false); } try { s.disconnect(); } catch (e) {} };
+    NS.hold('mira', true); s.start(); MV.src = s; NS.S.started++;
+  }).catch(() => {});
+  return true;
+}
+// a talk's lines, fetched ahead so each one starts on the tap
+function mvPre(ids) { if (!MV.on || !SND.on || !NS) return; const c = sndBoot(); if (c) ids.filter(Boolean).slice(0, 16).forEach(id => mvGet(id, c).catch(() => {})); }
+document.addEventListener('visibilitychange', () => { if (document.hidden) mvStop(); });
 function sfx(name, o) { if (!SND.on || document.hidden || !NS) return 0; try { sndBoot(); return NS.play(name, o) || 0; } catch (e) { return 0; } }
 function soundOn(on) {
   SND.on = on; try { localStorage.setItem('daybook_sound', on ? '1' : '0'); } catch (x) {}
@@ -1386,6 +1413,7 @@ document.addEventListener('click', e => {
     }
     case 'set-nag': S.settings.nag = +v; return commit();
     case 'set-sound': { haptic(6); return soundOn(v === '1'); }
+    case 'set-mvoice': { MV.on = v === '1'; try { localStorage.setItem('daybook_mvoice', MV.on ? '1' : '0'); } catch (x) {} haptic(6); if (!MV.on) mvStop(); render(); return MV.on ? mvSay('greet.again.3') || sfx('tick') : sfx('tick'); }
     case 'set-amb': { SND.amb = ['low', 'medium'].includes(v) ? v : 'off'; try { localStorage.setItem('daybook_amb', SND.amb); } catch (x) {} haptic(6); if (SND.amb === 'off' && window.AmbSound) AmbSound.stop(); return sfx('tick'); }
     case 'ring-clear': { haptic(6); return window.OwnRing && OwnRing.clear().then(() => { island.toast('Your ring is removed from this device'); window.City && City.update(); }); }
     case 'ring-test': { if (!SND.on) return island.toast('Turn Sound on first'); sndBoot(); if (OwnRing.O.has) { ringStop(); return OwnRing.play().then(ok => ok || sfx('error')); } return sfx('ring', { force: true, reps: 1 }); }
@@ -1684,6 +1712,7 @@ window.CityApp = {
       week: { hours: fh(days.reduce((a, d) => a + shiftHours(S.shifts[d]), 0)), sessDone, sessPlan: plan.length, study: fh(Math.round(st * 10) / 10), studyGoal: stG, done, slipped: slip, good: sessDone >= plan.length - 1 && slip <= 2 } };
   },
   // her check-in's buttons: done, tomorrow, let go (a delete, with Undo)
+  say: id => mvSay(id), sayStop: () => mvStop(), sayPre: ids => mvPre(ids),
   miraDo(act, id, d) {
     const t = S.tasks.find(x => x.id === id); if (!t) return false;
     if (act === 'done') { if (!isDone(t, d)) this.tick(id, d); return true; }
@@ -1754,7 +1783,7 @@ window.CityApp = {
   sys() {
     const st = S.settings;
     return { name: esc(st.name || ''), rate: st.rate || '', payCycle: +st.payCycle === 7 ? 7 : 14, payAnchor: esc(st.payAnchor || '2026-09-25'), payCutoff: st.payCutoff ?? 1, paySubmitDays: st.paySubmitDays ?? 4, extraHours: st.extraHours || '', hoursGoal: st.hoursGoal || '', appGoal: st.appGoal || '',
-      push: PUSH.on, pushSay: esc(pushLabel()), brief: !!st.remindDaily, remindAt: esc(st.remindAt || '08:00'), nag: st.nag == null ? 240 : +st.nag, sound: SND.on, amb: SND.amb, own: window.OwnRing ? { has: OwnRing.O.has, name: esc(OwnRing.O.name), secs: OwnRing.O.secs, kept: OwnRing.O.kept } : null, perf: perfNow().pick, perfSay: esc(perfLabel()), probs: probCount(), sync: !!SYNC.code, syncSay: esc(syncLabel()), build: BUILD };
+      push: PUSH.on, pushSay: esc(pushLabel()), brief: !!st.remindDaily, remindAt: esc(st.remindAt || '08:00'), nag: st.nag == null ? 240 : +st.nag, sound: SND.on, amb: SND.amb, mvoice: MV.on, own: window.OwnRing ? { has: OwnRing.O.has, name: esc(OwnRing.O.name), secs: OwnRing.O.secs, kept: OwnRing.O.kept } : null, perf: perfNow().pick, perfSay: esc(perfLabel()), probs: probCount(), sync: !!SYNC.code, syncSay: esc(syncLabel()), build: BUILD };
   },
   setting(k, v) {
     const num = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours', 'payCutoff', 'paySubmitDays'];

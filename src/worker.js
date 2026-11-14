@@ -264,6 +264,13 @@ async function runReminders(hash, env) {
 // Upload: npx wrangler kv key put --binding SYNC --remote "model:ski.vrm" --path models/ski.vrm.gz
 async function modelApi(url, env) {
   const name = url.pathname.slice('/models/'.length);
+  // Mira's voice clips (ElevenLabs, made with tools/mira-voice.mjs): KV key voice:<lang>/<line id>.mp3, sent as they are
+  const v = name.match(/^voice\/(ja|en)\/([a-z]+(?:\.[a-z]+)*\.\d+)\.mp3$/);
+  if (v) {
+    const clip = await env.SYNC.get(`voice:${v[1]}/${v[2]}.mp3`, 'arrayBuffer');
+    if (!clip) return new Response('Not found', { status: 404 });
+    return new Response(clip, { headers: { 'content-type': 'audio/mpeg', 'cache-control': 'private, max-age=2592000, immutable', 'x-content-type-options': 'nosniff' } });
+  }
   // the .vrm models, and anims.json: Dex's Mixamo clips (also private: the licence doesn't allow sharing them raw)
   if (!/^([a-z]+\.(vrm|glb)|anims\.json)$/.test(name)) return new Response('Not found', { status: 404 });
   const body = await env.SYNC.get('model:' + name, 'arrayBuffer');

@@ -33,5 +33,16 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
    shop (clock-in). "Tell Mira": plain words become a note or a task.
 4. **M4 Closeness.** LINK only grows (streaks, finished lists, sessions, study). Levels unlock poses, outfits,
    apartment things and evening spots. Outfits need new models (his call on how).
-5. **V Voice.** ElevenLabs: a voice designed from a description (not a copy of anyone). A script he runs with his
-   own key generates one clip per line id; clips live in KV, never in the repo. Only `say` text is sent.
+5. **V Voice (built p25, 2026-11-14).** His picks: an ElevenLabs library voice (`mDxkcO3nsRCNeB4si9qg`; he turned down
+   "Kano"), and **Japanese with English subtitles** ("way better"). `Mira.JA` holds the Japanese for every variant id
+   (written by me, not a native speaker; worth a native read). `tools/mira-voice.mjs`:
+   - `sample|all <voice> --lang ja` makes clips into `models/voice/ja/` (gitignored); skips ones already made with the
+     same text and voice. 96 clips cost about 1,440 credits.
+   - The key: typed at a hidden prompt (Ctrl+V reads the clipboard), and kept, at his yes, in `%USERPROFILE%\.mira-voice-key`.
+   - `kvfile --lang ja` packs them for one upload: `npx wrangler kv bulk put --binding SYNC --remote models/voice/kv-ja.json`
+     (KV keys `voice:ja/<id>.mp3`; the Worker serves `/models/voice/ja/<id>.mp3`).
+   - App: `mvSay(id)` in index.html plays the clip through the cue engine's UI bus (volume, silent switch, ducks the
+     ambience), fetched ahead per talk, cached decoded; `MV.v` bumps the cache when clips change. Switch: System > Sound >
+     Mira's voice (per device, on by default, only with Sound on). Without her voice, the tick per line.
+   - **Changing a line:** edit `L` and `JA` in mira.js, run `all` again (only changed lines are made), `kvfile`, upload,
+     bump `MV.v`.
