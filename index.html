@@ -1772,6 +1772,10 @@ window.CityApp = {
     return `LINK LV ${L.lvl} · NEW: ` + fresh.slice(0, 3).join(' · ') + (fresh.length > 3 ? ` +${fresh.length - 3}` : '');
   },
   linkTold() { lsSet('daybook_link_told', link().lvl); },
+  /* her outfit colour: his pick (synced with his settings), if LINK has brought it; navy otherwise */
+  fitOk: id => id === 'navy' || !!(window.Mira && Mira.UNLOCKS && Mira.UNLOCKS.some(u => u.kind === 'fit' && u.id === id && u.lv <= link().lvl)),
+  fit() { const f = S.settings.miraFit; return f && this.fitOk(f) ? f : 'navy'; },
+  fitSet(id) { if (!this.fitOk(id)) return false; S.settings.miraFit = id; save(); return true; },
   linkTest(pts) { lsSet('daybook_link', Math.max(pts, lsNum('daybook_link'))); LINK_C = null; linkCheck(); return link(); },   // tests: raise it
   say: id => mvSay(id), sayStop: () => mvStop(), sayPre: ids => mvPre(ids), clockOn: () => !!S.clock, miraTest: (k, d) => miraReact(k, d || 0), miraNudge: () => miraNudge(),
   miraDo(act, id, d) {

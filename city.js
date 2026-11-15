@@ -525,6 +525,11 @@ label.rbtn{cursor:pointer}
 .mline .mdot{position:absolute;right:9px;bottom:7px;font:10px/1 var(--micro);color:var(--hud-redd)}
 .macts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .macts .rbtn{min-height:40px}
+.mfit{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:44px;min-height:44px;padding:4px 3px;background:none;border:1px solid rgba(255,70,70,.35);color:var(--hud-cyan);font:700 9px/1 var(--hud-font);letter-spacing:.08em;cursor:pointer}
+.mfit i{width:18px;height:18px;background:var(--sw);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.mfit.on{border-color:var(--hud-red);box-shadow:0 0 0 1px var(--hud-red),0 0 10px rgba(255,70,70,.45)}
+.mfit.lk{opacity:.4;cursor:default}.mfit.lk i{filter:grayscale(.7) brightness(.6)}
+.mfit:focus-visible{outline:2px solid var(--hud-cyan);outline-offset:1px}
 .macts[hidden]{display:none}
 /* Tell Mira: one line, plain words */
 .mtell:not([hidden]){display:flex;gap:6px;margin-top:8px}
@@ -5825,22 +5830,30 @@ function bakeShadows() {
    a short blend when it's a shift where she is, a digital blink when getting there would cross the furniture. */
 const FIG_VS = /* glsl */`
 #include <skinning_pars_vertex>
-out vec3 vW; out vec3 vN; out vec2 vU;
+out vec3 vW; out vec3 vN; out vec2 vU; out vec3 vP;
 void main(){
   vec3 objectNormal = vec3(normal);
   #include <skinbase_vertex>
   #include <skinnormal_vertex>
   vec3 transformed = vec3(position);
   #include <skinning_vertex>
-  vec4 w=modelMatrix*vec4(transformed,1.); vW=w.xyz; vN=mat3(modelMatrix)*objectNormal; vU=uv; gl_Position=projectionMatrix*viewMatrix*w; }`;
+  vec4 w=modelMatrix*vec4(transformed,1.); vW=w.xyz; vN=mat3(modelMatrix)*objectNormal; vU=uv; vP=position; gl_Position=projectionMatrix*viewMatrix*w; }`;
 const FIG_FS = /* glsl */`
-in vec3 vW; in vec3 vN; in vec2 vU; layout(location=0) out vec4 O;
-uniform sampler2D map; uniform vec3 uBase; uniform float uHasMap, uHair, uId, uEm, uCut, uDay; uniform vec4 uPh;
+in vec3 vW; in vec3 vN; in vec2 vU; in vec3 vP; layout(location=0) out vec4 O;
+uniform sampler2D map; uniform vec3 uBase; uniform float uHasMap, uHair, uId, uEm, uCut, uDay; uniform vec4 uPh, uFit;
 void main(){
   /* the blink: a scan line takes her away from the top down, and brings her back from her feet up */
   if(vW.y>uCut) discard;
   vec4 t=uHasMap>.5?texture(map,vU):vec4(1.); if(t.a<.45) discard;
   vec3 c=t.rgb*uBase;
+  /* her outfit colour: the texture's navy cloth (bluish, saturated or near black) takes a new colour, its shading kept */
+  if(uFit.w>0.&&uHasMap>.5){ float mx=max(t.r,max(t.g,t.b)), s=(mx-min(t.r,min(t.g,t.b)))/max(mx,1e-4);
+    /* her chest's pale satin too: in the model's own space it is the front-most pale cloth (front is -y, height z) */
+    float ch=smoothstep(-.06,-.09,vP.y)*smoothstep(.6,.64,vP.z)*smoothstep(.8,.76,vP.z)*smoothstep(.12,.09,abs(vP.x));
+    float k=smoothstep(-.03,.02,t.b-t.r)*max(max(smoothstep(.18,.28,s)*smoothstep(.64,.56,mx),smoothstep(.2,.12,mx)),ch);
+    /* but never her eyes (their spots on the 2048 texture) */
+    vec2 q=vU*2048.; k*=smoothstep(18.,22.,length(q-vec2(1620.,1470.)))*smoothstep(18.,22.,length(q-vec2(1620.,1520.)))*smoothstep(24.,28.,length(q-vec2(1658.,1597.)))*smoothstep(24.,28.,length(q-vec2(1658.,1655.)));
+    c=mix(c,uFit.rgb*clamp(dot(t.rgb,vec3(.3,.59,.11))/.3,0.,1.7),k*uFit.w); }
   /* hair goes near-black, its painted highlights turn magenta */
   if(uHair>.5){ float l=dot(t.rgb,vec3(.3,.59,.11)); c=mix(vec3(.04,.032,.065),vec3(.15,.11,.22),smoothstep(.12,.55,l)); c=mix(c,vec3(1.,.24,.62),smoothstep(.62,.9,l)*.9); }
   vec3 N=normalize(vN); if(!gl_FrontFacing) N=-N; vec3 V=normalize(cameraPosition-vW);
@@ -5865,7 +5878,7 @@ let FIG = null, figTok = 0, figP = null, HOUR = null;
 const linkLv = () => { try { return APP.link ? APP.link().lvl : 1; } catch (e) { return 1; } };
 const linkHas = (id, lv = linkLv()) => !!(window.Mira && Mira.UNLOCKS && Mira.UNLOCKS.some(u => u.id === id && u.lv <= lv));
 const linkOk = p => !p.un || linkHas(p.un);
-const FIG_PH = { value: new THREE.Vector4() }, FIG_CUT = { value: 1e4 }, FIG_DAY = { value: 0 };
+const FIG_PH = { value: new THREE.Vector4() }, FIG_CUT = { value: 1e4 }, FIG_DAY = { value: 0 }, FIG_FIT = { value: new THREE.Vector4() };
 /* where she is by the clock: the window corner by day, the glass from six, in bed from eleven. Read on the way in, so she never changes spot while the room is on screen */
 const figSpot = () => { const h = HOUR != null ? HOUR : new Date().getHours(); return h < 6 ? 'sleep' : h >= 23 ? 'late' : h >= 18 ? 'eve' : (FIG_WORK != null ? FIG_WORK : APP.clockOn && APP.clockOn()) ? 'work' : 'day'; };
 let FIG_WORK = null;   // tests: pretend he's on the clock
@@ -6068,8 +6081,9 @@ function addFigure(f) {
     const span = lay => { box.makeEmpty(); root.updateMatrixWorld(true); for (const o of meshes) { const pos = o.geometry.attributes.position; for (let i = 0; i < pos.count; i += 3) { v.fromBufferAttribute(pos, i); if (o.isSkinnedMesh) o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld); if (lay) v.applyQuaternion(lay); box.expandByPoint(v); } } return box; };
     /* her size comes from the rest pose: sitting or lying she is the same woman */
     const s = f.h / (span(null).max.y - box.min.y);
-    let id = 150; const mat = m => { const map = m && m.map; if (map) { map.colorSpace = THREE.NoColorSpace; map.needsUpdate = true; } return new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FIG_VS, fragmentShader: FIG_FS, side: THREE.DoubleSide, uniforms: { map: { value: map || null }, uBase: { value: (map ? new THREE.Color(1, 1, 1) : (m && m.color ? m.color.clone() : new THREE.Color(.5, .5, .5))) }, uHasMap: { value: map ? 1 : 0 }, uHair: { value: /hair/i.test((m && m.name) || '') ? 1 : 0 }, uId: { value: (id = id + 7 > 240 ? 150 : id + 7) }, uEm: { value: m && m.em ? 1 : 0 }, uCut: FIG_CUT, uPh: FIG_PH, uDay: FIG_DAY } }); };
+    let id = 150; const mat = m => { const map = m && m.map; if (map) { map.colorSpace = THREE.NoColorSpace; map.needsUpdate = true; } return new THREE.ShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FIG_VS, fragmentShader: FIG_FS, side: THREE.DoubleSide, uniforms: { map: { value: map || null }, uBase: { value: (map ? new THREE.Color(1, 1, 1) : (m && m.color ? m.color.clone() : new THREE.Color(.5, .5, .5))) }, uHasMap: { value: map ? 1 : 0 }, uHair: { value: /hair/i.test((m && m.name) || '') ? 1 : 0 }, uId: { value: (id = id + 7 > 240 ? 150 : id + 7) }, uEm: { value: m && m.em ? 1 : 0 }, uCut: FIG_CUT, uPh: FIG_PH, uDay: FIG_DAY, uFit: FIG_FIT } }); };
     for (const o of meshes) { const ms = [].concat(o.material).map(mat); o.material = ms.length > 1 ? ms : ms[0]; o.frustumCulled = false; }
+    fitApply();
     /* what she holds, her phone or a tablet: a dark slab, its lit face turned to her. It rides in the hand that holds it */
     const slab = (w, h) => { const g = new THREE.Group(); g.matrixAutoUpdate = false; g.visible = false; g.add(new THREE.Mesh(new THREE.BoxGeometry(w / s, h / s, .009 / s), mat({ color: new THREE.Color(.05, .05, .07) })), new THREE.Mesh(new THREE.PlaneGeometry((w - .008) / s, (h - .01) / s).translate(0, 0, .0047 / s), mat({ color: new THREE.Color(.55, .8, 1), em: 1 }))); g.children.forEach(m => { m.frustumCulled = false; }); return g; };
     const props = { phone: slab(.074, .152), tablet: slab(.25, .17) };
@@ -6780,8 +6794,9 @@ function hudInit() {
   $('#btnClock').addEventListener('click', tapClock);
   $('#btnAptSheet').addEventListener('click', () => openSheet('cToday'));
   $('#mTalk').addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-mnext],[data-mbye],[data-mgo],[data-mk],[data-mdo],[data-mtell],#mLine'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-mnext],[data-mbye],[data-mgo],[data-mk],[data-mdo],[data-mtell],[data-mfit],#mLine'); if (!b) return; const d = b.dataset;
     if (d.mtell) { tellOpen('m'); return; }
+    if (d.mfit) { if (d.mfit === '1') fitOpen(); else fitPick(d.mfit); return; }
     if (d.mdo) { if (!MT || MT.acted[d.id]) return; if (APP.miraDo(d.mdo, d.id, d.d)) { MT.acted[d.id] = d.mdo; if (d.mdo === 'done') MT.res.done++; else if (d.mdo === 'tomorrow') MT.res.moved++; miraTasks(MT.steps[MT.i]); const n = ROOT.querySelector('#mTasks [data-mdo]'); if (n) n.focus({ preventScroll: true }); } return; }
     if (d.mnext !== undefined || b.id === 'mLine') { if (MT) miraNext(); else miraStart('brief'); return; }
     if (d.mbye) { miraIdle(); APP.sfx('back'); return; }
@@ -6883,7 +6898,7 @@ function herCard() {
   try {
     const P = APP.plan(), n = P.today.length, mood = n ? .35 + .65 * P.done / n : .8, L = APP.link ? APP.link() : { lvl: 1, into: 0, need: 1 };
     setBar($('#bH1'), mood); setText('#vH1', String(Math.round(mood * 100))); setBar($('#bH2'), L.need ? L.into / L.need : 1); setText('#vH2', 'LV ' + L.lvl);
-    const nx = window.Mira && Mira.UNLOCKS && Mira.UNLOCKS.find(u => u.lv === L.lvl + 1); setText('#hNext', nx ? `NEXT // LV ${nx.lv} · ${nx.name.toUpperCase()}` : 'LINK // EVERYTHING UNLOCKED');
+    const nx = window.Mira && Mira.UNLOCKS ? Mira.UNLOCKS.filter(u => u.lv === L.lvl + 1) : []; setText('#hNext', nx.length ? `NEXT // LV ${nx[0].lv} · ${nx.map(u => u.name.toUpperCase()).join(' · ')}` : 'LINK // EVERYTHING UNLOCKED');
     sqInto($('#sqH'), 5, Math.max(1, Math.round(mood * 5)));
   } catch (e) { APP.log(e); }
   herPose();
@@ -6914,7 +6929,26 @@ function miraMore() {
   if (!MT || MT.kind !== 'brief') b.push(['brief', 'MY DAY']);
   if ((c.hour >= 17 || c.hour < 5) && (!MT || MT.kind === 'brief')) b.push(['checkin', 'CHECK IN']);
   if (c.dow === 6 && (!MT || MT.kind !== 'review')) b.push(['review', 'MY WEEK']);
-  return b.map(([k, l]) => `<button class="rbtn ol" data-mk="${k}">${l}</button>`).join('') + '<button class="rbtn ol" data-mtell="1">TELL</button>';
+  return b.map(([k, l]) => `<button class="rbtn ol" data-mk="${k}">${l}</button>`).join('') + '<button class="rbtn ol" data-mtell="1">TELL</button>' + (fitN() > 1 ? '<button class="rbtn ol" data-mfit="1">OUTFIT</button>' : '');
+}
+/* her outfit (docs/MIRA.md M4): the colour he picked, on her shader; the picker swaps her buttons for swatches, the
+   locked ones showing the level that brings them */
+const fitN = () => window.Mira && Mira.FITS && APP.fitOk ? Mira.FITS.filter(f => APP.fitOk(f.id)).length : 1;
+function fitApply() {
+  const id = APP.fit ? APP.fit() : 'navy', f = window.Mira && Mira.FITS && Mira.FITS.find(x => x.id === id);
+  if (f && f.rgb) FIG_FIT.value.set(f.rgb[0], f.rgb[1], f.rgb[2], 1); else FIG_FIT.value.set(0, 0, 0, 0);
+}
+function fitOpen() {
+  if (!window.Mira || !Mira.FITS) return; const cur = APP.fit();
+  mOut(Mira.FITS.map(f => { const u = Mira.UNLOCKS.find(x => x.kind === 'fit' && x.id === f.id), ok = APP.fitOk(f.id);
+    return ok ? `<button class="mfit${f.id === cur ? ' on' : ''}" data-mfit="${f.id}" style="--sw:${f.sw}" aria-label="${f.name}" aria-pressed="${f.id === cur}"><i></i><span>${f.name}</span></button>`
+      : `<button class="mfit lk" disabled style="--sw:${f.sw}" aria-label="${f.name}, LINK level ${u ? u.lv : ''}"><i></i><span>LV ${u ? u.lv : ''}</span></button>`; }).join('') + '<button class="rbtn ol" data-mbye="1">BACK</button>');
+  APP.sfx('press'); const b = ROOT.querySelector('#mActs [data-mfit].on'); if (b) b.focus({ preventScroll: true });
+}
+function fitPick(id) {
+  if (!APP.fitSet(id)) return; fitApply(); glitchHud(.12);
+  const ln = Mira.line('fit.pick', String(Date.now())); miraIdle(ln.say); setText('#mInfo', 'OUTFIT // ' + (Mira.FITS.find(f => f.id === id) || {}).name);
+  if (!(APP.say && APP.say(ln.id))) APP.sfx('tick');
 }
 function miraType(text) {
   const p = $('#mSay'); clearInterval(MT.tt);
@@ -7595,6 +7629,7 @@ function update() {
   host.hidden = false;
   if (!started) { started = true; boot(); }
   if (!ready) return;
+  fitApply();   // his outfit pick may have come in from another device
   /* a room paints today's date, and her spot by the clock. A new day while he watches repaints the room around her as she
      is; back from the Home Screen, she may have moved on */
   if (S.mode === 'room') { const day = room.day && room.day !== new Date().toDateString(), moved = S.away && ((room.spot && room.spot !== figSpot()) || (room.lv && room.lv !== linkLv())); if (day || moved) try { loadRoom(room.id, !S.away); } catch (e) { APP.log(e); } }
@@ -7620,6 +7655,7 @@ function rig() {
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
     figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
     hour(h) { HOUR = h; return figSpot(); },
+    fit(c) { if (c === undefined) return FIG_FIT.value.toArray(); if (c) FIG_FIT.value.set(c[0], c[1], c[2], 1); else FIG_FIT.value.set(0, 0, 0, 0); return 1; },
     holo: () => { holoTick(); const el = $('#holo'); return HO ? { k: HO.k, ctx: HO.ctx, on: el.classList.contains('on'), mini: el.classList.contains('hsm'), say: $('#hoSay').textContent, big: $('#hoBig').textContent, info: $('#hoInfo').textContent, face: !!FACE, r: el.getBoundingClientRect().toJSON() } : null; },
     hv: () => JSON.parse(JSON.stringify(HV)),
     face: () => !!FACE, faceClear() { FACE = null; faceDone = false; try { localStorage.removeItem('daybook_mface'); } catch (e) {} },

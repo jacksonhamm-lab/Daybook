@@ -66,9 +66,15 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
    - **A level up** (`linkCheck`, every 30 s and after a tick): once per device, a celebration and her line
      (`link.up`). A device's first run counts from LV1, so the levels he already has get their moment. Her next talk
      says what's new after her hello (`link.new`, info `LINK LV n · NEW: ...`), once (`daybook_link_told`).
-   - **Her card:** LINK shows LV and the bar to the next, and `NEXT // LV n · what it brings`.
-   - **Outfits:** not built. Her model is one mesh with one texture, so an outfit is a new model (his call).
-   - Test hooks `CityApp.link()`, `linkTest(pts)` (raises only), `City._.stats().lv/closeN`. Test t76.
+   - **Her card:** LINK shows LV and the bar to the next, and `NEXT // LV n · everything it brings`.
+   - **Outfit colours** (his pick over new models, Nov 15): navy is hers; crimson LV2, emerald LV4, violet LV6, pearl
+     LV8, gold LV10 (`Mira.FITS`, UNLOCKS kind `fit`). Her shader (`FIG_FS`, uniform `uFit`) tints the texture's navy
+     cloth (bluish, saturated or near black) keeping its shading; her chest's pale satin by its place in the model's own
+     space (front is -y, height z); never her eyes (four spots on the 2048 texture) or what she holds. OUTFIT on her
+     buttons swaps them for swatches, locked ones showing their level; a pick is kept in `S.settings.miraFit` (synced,
+     `APP.fit/fitSet/fitOk`) and she answers (`fit.pick`, 3 lines).
+   - Test hooks `CityApp.link()`, `linkTest(pts)` (raises only), `City._.stats().lv/closeN`, `City._.fit()`. Tests
+     t76, t77.
 5. **V Voice (built p25, 2026-11-14).** His picks: an ElevenLabs library voice (`mDxkcO3nsRCNeB4si9qg`; he turned down
    "Kano"), and **Japanese with English subtitles** ("way better"). `Mira.JA` holds the Japanese for every variant id
    (written by me, not a native speaker; worth a native read). `tools/mira-voice.mjs`:

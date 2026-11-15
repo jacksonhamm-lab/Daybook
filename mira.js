@@ -68,6 +68,8 @@
     'tell.task': ["Got it. I'll hold you to it.", "Added. Don't make me remind you twice.", "Okay. It's on your list."],
     'tell.note': ["Noted. It's safe with me.", "I wrote it down for you."],
     'tell.huh': ["Say that again?", "Hm? Tell me again."],
+    // M4: he picked what she wears
+    'fit.pick': ["You like it? I'll wear it for you.", "Good choice. I knew you'd pick that one.", "This one? Okay. Just for you."],
   };
   // what she says out loud when her voice is Japanese (the English stays on screen as the subtitle), by variant id
   const JA = {
@@ -214,6 +216,9 @@
     'link.new.1': "ちょっと部屋を変えてみたの。",
     'link.new.2': "何か新しいの、気づいた？あなたのためだよ。",
     'link.new.3': "とっておきのがあるの。",
+    'fit.pick.1': "気に入った？あなたのために着るね。",
+    'fit.pick.2': "いい選択。それを選ぶと思ってた。",
+    'fit.pick.3': "これ？いいよ。あなただけのためにね。",
   };
   // stable for the day: the same line until tomorrow, a different one on another day
   const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -272,14 +277,29 @@
   const LINK_AT = [0, 60, 160, 300, 480, 700, 960, 1260, 1600, 2000];
   const UNLOCKS = [
     { lv: 2, kind: 'pose', id: 'closeStretch', name: 'A stretch, close up' },
+    { lv: 2, kind: 'fit', id: 'crimson', name: 'Her outfit in crimson' },
     { lv: 3, kind: 'thing', id: 'lights', name: 'String lights on the glass' },
     { lv: 4, kind: 'spot', id: 'eveBed', name: 'Evenings in bed with her phone' },
+    { lv: 4, kind: 'fit', id: 'emerald', name: 'Her outfit in emerald' },
     { lv: 5, kind: 'pose', id: 'closeBehind', name: 'Hands behind her back' },
     { lv: 6, kind: 'thing', id: 'ramen', name: 'Late ramen on the table' },
+    { lv: 6, kind: 'fit', id: 'violet', name: 'Her outfit in violet' },
     { lv: 7, kind: 'spot', id: 'eveRead', name: 'Evenings reading by the glass' },
     { lv: 8, kind: 'thing', id: 'heart', name: 'A neon heart over the bed' },
+    { lv: 8, kind: 'fit', id: 'pearl', name: 'Her outfit in pearl' },
     { lv: 9, kind: 'pose', id: 'closeKiss', name: 'A kiss, blown' },
     { lv: 10, kind: 'thing', id: 'tree', name: 'A blossom tree by the glass' },
+    { lv: 10, kind: 'fit', id: 'gold', name: 'Her outfit in gold' },
   ];
-  window.Mira = { L, JA, LINK_AT, UNLOCKS, line, band, which, talk, brief, checkin, checkinEnd, review, idle: c => line('idle', c.date + Math.random()) };
+  /* her outfit's colours: navy is the one she came in; the rest come with LINK (UNLOCKS kind 'fit'). rgb: the shader's
+     tint (city.js FIG_FS), sw: the swatch on her card */
+  const FITS = [
+    { id: 'navy', name: 'NAVY', rgb: null, sw: '#26304a' },
+    { id: 'crimson', name: 'CRIMSON', rgb: [.8, .06, .12], sw: '#c8102e' },
+    { id: 'emerald', name: 'EMERALD', rgb: [.05, .62, .38], sw: '#0c9e62' },
+    { id: 'violet', name: 'VIOLET', rgb: [.5, .18, .85], sw: '#7f2ed9' },
+    { id: 'pearl', name: 'PEARL', rgb: [.95, .93, .92], sw: '#efeceb' },
+    { id: 'gold', name: 'GOLD', rgb: [.9, .62, .16], sw: '#e59e29' },
+  ];
+  window.Mira = { L, JA, LINK_AT, UNLOCKS, FITS, line, band, which, talk, brief, checkin, checkinEnd, review, idle: c => line('idle', c.date + Math.random()) };
 })();

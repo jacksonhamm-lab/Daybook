@@ -374,7 +374,8 @@ Technical state only. Updated 2026-11-06.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
 - **Built (p28, 2026-11-14): Mira M4.** LINK levels from his data, nine unlocks (three close poses, four things in the
-  apartment, two evening spots), a level-up moment; [MIRA.md](MIRA.md) phase 4. 6 new lines. Test t76.
+  apartment, two evening spots), a level-up moment, five outfit colours he picks on her card; [MIRA.md](MIRA.md)
+  phase 4. 9 new lines. Tests t76, t77.
 - **Built (p27, 2026-11-14): Mira M3.** Her holo call in the gym (rest), castle (study clock) and shop (clock-in), her
   face caught from the close-up, Tell Mira; [MIRA.md](MIRA.md) phase 3. 27 new lines (EN + JA clips). Test t75.
 - **Built (p26, 2026-11-14): Mira M2.** Her calls, reactions, the evening nudge, where she is; [MIRA.md](MIRA.md)
