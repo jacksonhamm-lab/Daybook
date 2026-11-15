@@ -373,6 +373,8 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p28, 2026-11-14): Mira M4.** LINK levels from his data, nine unlocks (three close poses, four things in the
+  apartment, two evening spots), a level-up moment; [MIRA.md](MIRA.md) phase 4. 6 new lines. Test t76.
 - **Built (p27, 2026-11-14): Mira M3.** Her holo call in the gym (rest), castle (study clock) and shop (clock-in), her
   face caught from the close-up, Tell Mira; [MIRA.md](MIRA.md) phase 3. 27 new lines (EN + JA clips). Test t75.
 - **Built (p26, 2026-11-14): Mira M2.** Her calls, reactions, the evening nudge, where she is; [MIRA.md](MIRA.md)
@@ -703,6 +705,6 @@ Technical state only. Updated 2026-11-06.
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
   1. p22 is live (he checked it on his iPhone, Nov 11). p23 to p25 live (Nov 14, he checked them). p26 (Mira M2) live (Nov 14).
-     p27 (Mira M3) on city-m3, not pushed: the new clips (his yes on credits), their KV upload, and the push each need his go. Ambience v2 is in the Sound Lab only, waiting on his listen; then into sound.js (CAL, day from
+     p27 (Mira M3) live (Nov 14). p28 (Mira M4) on city-m4, not pushed: new clips, KV upload, push each need his go. Ambience v2 is in the Sound Lab only, waiting on his listen; then into sound.js (CAL, day from
      the sun, t66).
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

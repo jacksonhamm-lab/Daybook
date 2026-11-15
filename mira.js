@@ -52,6 +52,9 @@
     'react.best': ["New best? Look at you.", "Stronger every week. I noticed."],
     'react.home': ["Shift's done. Come home.", "Off work? Good. I'm waiting."],
     'nudge.gym': ["Still time for the gym, you know.", "Your workout's waiting. Just saying."],
+    // M4: their LINK grows (a reaction), and the first talk after it tells him what's new
+    'link.up': ["We're getting closer. I like it.", "Look at us. Closer every week.", "You keep showing up. I noticed."],
+    'link.new': ["I made a few changes around here.", "Notice anything new? I did it for you.", "I've been saving something for you."],
     // M3: her holo call (gym rest, castle study clock, shop clock-in) and Tell Mira's answers
     'holo.rest': ["Breathe. I've got the clock.", "Rest. I'm counting.", "Shake it out. I'll tell you when."],
     'holo.rest.up': ["Up. Next set.", "Time. Go again.", "That's your rest. Back to it."],
@@ -205,6 +208,12 @@
     'tell.note.2': "書いておいたよ。",
     'tell.huh.1': "もう一回言って？",
     'tell.huh.2': "ん？もう一回教えて。",
+    'link.up.1': "私たち、近づいてるね。うれしい。",
+    'link.up.2': "見て、毎週もっと近くなってる。",
+    'link.up.3': "ちゃんと続けてるね。気づいてるよ。",
+    'link.new.1': "ちょっと部屋を変えてみたの。",
+    'link.new.2': "何か新しいの、気づいた？あなたのためだよ。",
+    'link.new.3': "とっておきのがあるの。",
   };
   // stable for the day: the same line until tomorrow, a different one on another day
   const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
@@ -258,5 +267,19 @@
   // which conversation the moment calls for
   const which = c => c.dow === 6 && c.hour >= 17 ? 'review' : c.hour >= 21 || c.hour < 5 ? 'checkin' : 'brief';
   const talk = (kind, c, again) => (kind === 'review' ? review : kind === 'checkin' ? checkin : brief)(c, again);
-  window.Mira = { L, JA, line, band, which, talk, brief, checkin, checkinEnd, review, idle: c => line('idle', c.date + Math.random()) };
+  /* M4: LINK, how close they are. Points come from what he has done (index.html linkPts); a level at each of these;
+     each level from 2 brings one thing (a close-up pose, a thing in the apartment, an evening spot). id: what city.js checks */
+  const LINK_AT = [0, 60, 160, 300, 480, 700, 960, 1260, 1600, 2000];
+  const UNLOCKS = [
+    { lv: 2, kind: 'pose', id: 'closeStretch', name: 'A stretch, close up' },
+    { lv: 3, kind: 'thing', id: 'lights', name: 'String lights on the glass' },
+    { lv: 4, kind: 'spot', id: 'eveBed', name: 'Evenings in bed with her phone' },
+    { lv: 5, kind: 'pose', id: 'closeBehind', name: 'Hands behind her back' },
+    { lv: 6, kind: 'thing', id: 'ramen', name: 'Late ramen on the table' },
+    { lv: 7, kind: 'spot', id: 'eveRead', name: 'Evenings reading by the glass' },
+    { lv: 8, kind: 'thing', id: 'heart', name: 'A neon heart over the bed' },
+    { lv: 9, kind: 'pose', id: 'closeKiss', name: 'A kiss, blown' },
+    { lv: 10, kind: 'thing', id: 'tree', name: 'A blossom tree by the glass' },
+  ];
+  window.Mira = { L, JA, LINK_AT, UNLOCKS, line, band, which, talk, brief, checkin, checkinEnd, review, idle: c => line('idle', c.date + Math.random()) };
 })();

@@ -54,8 +54,21 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
      "Remind me to", "I need to" and the like drop out of the title. She answers (`tell.task`, `tell.note`,
      `tell.huh`) with what was made as info.
    - Test hooks `City._.holo()`, `hv()`, `face()`, `faceClear()`, `tell(w, text)`. Test t75.
-4. **M4 Closeness.** LINK only grows (streaks, finished lists, sessions, study). Levels unlock poses, outfits,
-   apartment things and evening spots. Outfits need new models (his call on how).
+4. **M4 Closeness (built p28, 2026-11-14).**
+   - **LINK** (`link()` in index.html): points from his data, so it syncs: each cleared day 10, session 8, clean
+     training week 25 (any in the last two years), study hour 4, task 1. Only grows: each device keeps the most it has
+     seen (`localStorage.daybook_link`). Levels at `Mira.LINK_AT` (0, 60, 160, 300, 480, 700, 960, 1260, 1600, 2000).
+   - **Unlocks** (`Mira.UNLOCKS`; city.js `linkHas(id)`, spots and close poses carry `un`): LV2 close pose A STRETCH,
+     LV3 string lights on the glass, LV4 evenings in bed with her phone, LV5 close pose HANDS BEHIND HER, LV6 late ramen
+     on the table, LV7 evenings reading by the glass, LV8 a neon heart over the bed, LV9 close pose A KISS, LV10 a
+     blossom tree by the glass. Her things are drawn last in buildApartment with their own random stream; a new level
+     rebuilds the apartment on the way in (`room.lv`).
+   - **A level up** (`linkCheck`, every 30 s and after a tick): once per device, a celebration and her line
+     (`link.up`). A device's first run counts from LV1, so the levels he already has get their moment. Her next talk
+     says what's new after her hello (`link.new`, info `LINK LV n · NEW: ...`), once (`daybook_link_told`).
+   - **Her card:** LINK shows LV and the bar to the next, and `NEXT // LV n · what it brings`.
+   - **Outfits:** not built. Her model is one mesh with one texture, so an outfit is a new model (his call).
+   - Test hooks `CityApp.link()`, `linkTest(pts)` (raises only), `City._.stats().lv/closeN`. Test t76.
 5. **V Voice (built p25, 2026-11-14).** His picks: an ElevenLabs library voice (`mDxkcO3nsRCNeB4si9qg`; he turned down
    "Kano"), and **Japanese with English subtitles** ("way better"). `Mira.JA` holds the Japanese for every variant id
    (written by me, not a native speaker; worth a native read). `tools/mira-voice.mjs`:

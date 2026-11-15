@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p27';
+export const BUILD = 'p28';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -514,6 +514,7 @@ label.rbtn{cursor:pointer}
 .hbody{padding:7px 9px 8px;display:grid;gap:5px}
 .hrow{display:flex;align-items:center;gap:6px;min-width:0}
 .hlike{white-space:normal;line-height:1.45}
+.hnext{white-space:normal;line-height:1.4;color:var(--hud-cyan);opacity:.9}
 @media (max-width:899px){#herBox .hlike{display:none}}
 .mtalk{margin:6px 0 4px}
 .mline{position:relative;padding:8px 10px 10px;border-left:2px solid var(--hud-red);background:rgba(255,70,70,.07);cursor:pointer}
@@ -730,7 +731,8 @@ const MARKUP = `
         <div class="mi">RESIDENT // FL 88 // AGE 27</div>
         <div class="hrow"><div class="pl" id="hPose">HELLO</div><div class="conn" aria-hidden="true"><i></i><b></b></div><span class="mi" id="hPoseN">POSE 01/05</span></div>
         <div class="rw"><span>MOOD</span><div class="bar" id="bH1"></div><em id="vH1">0</em></div>
-        <div class="rw"><span>LINK</span><div class="bar c" id="bH2"></div><em id="vH2">0</em></div>
+        <div class="rw"><span>LINK</span><div class="bar c" id="bH2"></div><em id="vH2">LV 1</em></div>
+        <div class="mi hnext" id="hNext"></div>
         <div class="mi hlike">LIKES // RAIN ON GLASS / LATE RAMEN / A FINISHED LIST</div>
       </div>
     </div>
@@ -4506,6 +4508,46 @@ function buildApartment(spot = figSpot()) {
     setPlain(M, 0x0e0e16); M.box(-3.1, .55, -D + .015, 2.4, 1.8, .012, { id: M.nid() });
     /* WEEK: a lit grid hung from the ceiling in front of the glass, over the foot of the bed */
     { const x = W - .5, y = 2.45, z = 1.7; setPlain(M, 0x080c14); M.box(x + .045, y - .55, z, .06, 1.1, 1.36, { id: 214 }); plate(M, x, y, z, 1.3, 1.04, -Math.PI / 2, 'cal', 0, { kind: K.SIGN, em: 130, c: [1, 1, 1], seed: 0, id: 214 }); line(M, x - .004, y + .53, z, .012, .012, 1.34, ICE, 200); chrome(M, 0x6f7787); for (const dz of [-.5, .5]) M.box(x + .03, y + .55, z + dz, .012, H - y - .55, .012, { c: 0x6f7787 }); piece(); }
+
+    /* ---------- Mira's things (docs/MIRA.md M4): what their LINK has brought into the room. Drawn last, with their own
+       random stream, so everything before them is unchanged ---------- */
+    { const T = rng(7710);
+      /* string lights: a warm string sagging between the mullions along the head of the glass */
+      if (linkHas('lights')) {
+        const xs = W - .16, yt = wy1 - .05;
+        for (const [z0, z1] of [[wz0 + .12, -2.1], [-2.1, 0], [0, 2.1], [2.1, wz1 - .12]]) {
+          const pts = []; for (let i = 0; i <= 12; i++) { const u = i / 12; pts.push([xs, yt - Math.sin(u * Math.PI) * .24, z0 + (z1 - z0) * u]); }
+          setPlain(M, 0x2a2018); M.tube(pts, .0035, 24, 3, { c: 0x2a2018 });
+          for (let i = 1; i < 12; i++) { const [x, y, z] = pts[i]; line(M, x, y - .04, z, .024, .034, .024, 0xffc46a, 240); if (i % 2) G(x, y - .03, z, [.55, .32, .1], .32); }
+        }
+        piece(); }
+      /* late ramen on the table: a red bowl, the broth, an egg, chopsticks across, steam */
+      if (linkHas('ramen')) {
+        const x = tx + .32, z = tz + .12, y = top;
+        M.set({ kind: K.PLAIN, c: hex(0xb81c2a), layer: 0, em: 20 }); M.lathe(x, y, z, [[.045, 0], [.07, .012], [.098, .06], [.104, .086], [0, .086]], 20, { c: 0xb81c2a, grad: .9 });
+        M.set({ kind: K.PLAIN, c: hex(0xd89a48), layer: 0, em: 60 }); M.cyl(x, y + .07, z, .094, .094, .017, 20, { c: 0xd89a48, topc: 0xe8b060 });
+        M.set({ kind: K.PLAIN, c: hex(0xf2ead6), layer: 0, em: 50 }); M.blob(x + .035, y + .086, z + .025, .026, { c: 0xf2ead6, sy: .45, r: T });
+        M.set({ kind: K.PLAIN, c: hex(0x2c6a3a), layer: 0, em: 30 }); M.blob(x - .04, y + .086, z - .03, .03, { c: 0x2c6a3a, sy: .3, r: T });
+        setPlain(M, 0xc89a5a); M.beam([x - .13, y + .1, z - .05], [x + .14, y + .095, z + .02], .005, {}); M.beam([x - .13, y + .1, z - .03], [x + .14, y + .095, z + .045], .005, {});
+        G(x, y + .2, z, [.28, .26, .3], .55); piece(); }
+      /* a neon heart over the bed, on the wall its head is against */
+      if (linkHas('heart')) {
+        const cx = 3.35, cy = 2.18, z = D - .05, k = .017, pts = [];
+        for (let i = 0; i <= 40; i++) { const t = i / 40 * TAU; pts.push([cx + 16 * Math.pow(Math.sin(t), 3) * k, cy + (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * k, z]); }
+        setPlain(M, 0x0c0a12); M.box(cx, cy - .4, D - .02, .7, .66, .02, {});
+        setPlain(M, 0xff3c8e, 0, 230); M.tube(pts, .011, 60, 6, { c: 0xff3c8e }); M.set({ em: 0 });
+        for (const [dx, dy] of [[0, -.1], [-.17, .1], [.17, .1], [0, -.3]]) G(cx + dx, cy + dy, z - .06, [.9, .15, .45], .7);
+        piece(); }
+      /* a blossom tree in a black pot, in the corner by the glass and the chair */
+      if (linkHas('tree')) {
+        const x = 2.95, z = -D + .5;
+        M.set({ kind: K.PLAIN, c: hex(0x15151f), layer: 0 }); M.lathe(x, .05, z, [[.12, 0], [.16, .28], [.17, .3], [0, .3]], 18, { c: 0x15151f, grad: .9 }); line(M, x, .345, z, .3, .006, .3, 0x2a2026, 0);
+        const tr = [[x, .33, z], [x + .05, .62, z + .03], [x - .05, .92, z - .02], [x + .03, 1.18, z + .02], [x + .1, 1.36, z - .04]];
+        setPlain(M, 0x3a2a24); M.tube(tr, .028, 16, 6, { c: 0x3a2a24 }); M.tube([tr[2], [x - .28, 1.12, z + .1], [x - .38, 1.2, z + .14]], .014, 10, 5, { c: 0x3a2a24 }); M.tube([tr[3], [x + .26, 1.3, z + .16]], .012, 8, 5, { c: 0x3a2a24 });
+        for (let i = 0; i < 14; i++) { const a = T() * TAU, r = .1 + T() * .26, bx = x + Math.cos(a) * r + (i % 3 === 0 ? -.2 : 0), by = 1.15 + T() * .35, bz = z + Math.sin(a) * r * .8;
+          M.set({ kind: K.PLAIN, c: hex(i % 4 ? 0xff86c0 : 0xffc2dc), layer: 0, em: 70 }); M.blob(bx, by, bz, .06 + T() * .05, { c: i % 4 ? 0xff86c0 : 0xffc2dc, sy: .75, r: T }); }
+        G(x, 1.3, z, [.7, .25, .45], 1.1); G(x - .25, 1.15, z + .1, [.5, .18, .32], .6); piece(); }
+    }
   });
 
   /* the glass: what it shows comes from def.view */
@@ -4578,7 +4620,7 @@ function buildApartment(spot = figSpot()) {
     { key: 'career', label: 'CAREER', hotkey: 'T', line: 20, sheet: 'cCareer', p: w(1.85, 1.15, 1.35) },
   ];
   return {
-    geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(), spot,
+    geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(), spot, lv: linkLv(),
     setDoor() {},
   };
 }
@@ -5819,6 +5861,10 @@ void main(){
   O=vec4(col,uId/255.);
 }`;
 let FIG = null, figTok = 0, figP = null, HOUR = null;
+/* Mira's LINK (docs/MIRA.md M4): its level, and whether it has brought a thing (Mira.UNLOCKS ids) */
+const linkLv = () => { try { return APP.link ? APP.link().lvl : 1; } catch (e) { return 1; } };
+const linkHas = (id, lv = linkLv()) => !!(window.Mira && Mira.UNLOCKS && Mira.UNLOCKS.some(u => u.id === id && u.lv <= lv));
+const linkOk = p => !p.un || linkHas(p.un);
 const FIG_PH = { value: new THREE.Vector4() }, FIG_CUT = { value: 1e4 }, FIG_DAY = { value: 0 };
 /* where she is by the clock: the window corner by day, the glass from six, in bed from eleven. Read on the way in, so she never changes spot while the room is on screen */
 const figSpot = () => { const h = HOUR != null ? HOUR : new Date().getHours(); return h < 6 ? 'sleep' : h >= 23 ? 'late' : h >= 18 ? 'eve' : (FIG_WORK != null ? FIG_WORK : APP.clockOn && APP.clockOn()) ? 'work' : 'day'; };
@@ -5954,6 +6000,32 @@ const FIG_POSES = {
     aim(bone('r', 'up'), bone('r', 'lo'), V(-.2, -.4, .9)); aim(bone('r', 'up'), bone('r', 'lo'), V(-.55, .8, .15));
     aim(bone('r', 'lo'), bone('r', 'hand'), V(.6, .35, -.7));
     aim(neck, head, V(-.1, .97, .14));
+  },
+  /* M4, unlocked by their LINK: a stretch (arms overhead, fingers laced, the day stretch standing), hands behind her
+     back with her head tipped, a kiss blown from her fingertips */
+  closeStretch: ({ aim, twist, bone, neck, head, V }) => {
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.07, -1, 0)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.12, -1, .03));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.1, 0, 1)); aim(bone('l', 'up'), bone('l', 'lo'), V(.28, .95, .06)); twist(bone('l', 'up'), bone('l', 'lo'), -.6);
+    aim(bone('l', 'lo'), bone('l', 'hand'), V(-.43, .9, .08)); aim(bone('l', 'hand'), bone('l', 'mid'), V(-.78, .6, .1));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.1, 0, 1)); aim(bone('r', 'up'), bone('r', 'lo'), V(-.28, .95, .06)); twist(bone('r', 'up'), bone('r', 'lo'), .6);
+    aim(bone('r', 'lo'), bone('r', 'hand'), V(.43, .9, .08)); aim(bone('r', 'hand'), bone('r', 'mid'), V(.78, .6, .1));
+    aim(neck, head, V(.06, .97, .18));
+  },
+  closeBehind: ({ aim, turn, bone, hips, neck, head, V }) => {
+    turn(hips, V(0, 0, 1), -.05);
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.04, -1, .02)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.1, -1, .06));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.1, -.2, 1)); aim(bone('l', 'up'), bone('l', 'lo'), V(.14, -.95, -.28)); aim(bone('l', 'lo'), bone('l', 'hand'), V(-.62, -.45, -.64));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.1, -.2, 1)); aim(bone('r', 'up'), bone('r', 'lo'), V(-.14, -.95, -.28)); aim(bone('r', 'lo'), bone('r', 'hand'), V(.62, -.45, -.64));
+    aim(neck, head, V(.15, .96, .16));
+  },
+  closeKiss: ({ aim, turn, twist, bone, hips, neck, head, V }) => {
+    turn(hips, V(0, 0, 1), .05);
+    aim(bone('l', 'leg'), bone('l', 'shin'), V(.12, -1, .05)); aim(bone('r', 'leg'), bone('r', 'shin'), V(-.05, -1, 0));
+    aim(bone('l', 'up'), bone('l', 'lo'), V(.5, -.82, -.2)); aim(bone('l', 'lo'), bone('l', 'hand'), V(-.62, -.6, .2));
+    aim(bone('r', 'up'), bone('r', 'lo'), V(-.2, -.6, .8)); aim(bone('r', 'up'), bone('r', 'lo'), V(-.3, -.62, .72));
+    aim(bone('r', 'lo'), bone('r', 'hand'), V(.5, .74, .45)); twist(bone('r', 'lo'), bone('r', 'hand'), 1.3);
+    aim(bone('r', 'hand'), bone('r', 'mid'), V(.25, .75, .6)); twist(bone('r', 'hand'), bone('r', 'mid'), .5);
+    aim(neck, head, V(-.08, .97, .2));
   },
   /* side on to him, her chest and head turned back over her shoulder */
   closeShoulder: ({ aim, turn, bone, B, V }) => {
@@ -6127,7 +6199,7 @@ function figTick(t) {
 const EMPTY_GEOM = new THREE.BufferGeometry();
 /* keep: a repaint of the room he's watching (a new day) leaves her where she is and as she is. Only a way in moves her */
 function loadRoom(id, keep) {
-  if (room.id === id && (!room.day || room.day === new Date().toDateString()) && (!room.spot || room.spot === figSpot())) return;
+  if (room.id === id && (!room.day || room.day === new Date().toDateString()) && (!room.spot || room.spot === figSpot()) && (!room.lv || room.lv === linkLv())) return;
   const def = ROOM_DEF[id], pin = keep && room.id === id ? room.spot : null, same = !!pin && !!(FIG || figP); PIECES = 0;
   for (const g of [room.geom, room.clutterGeom, room.doorGeom, room.glassGeom, room.doorGlassGeom, room.fxGeom, room.backGeom]) if (g) g.dispose();
   if (room.atlas) room.atlas.dispose();
@@ -6146,7 +6218,7 @@ function loadRoom(id, keep) {
   skyRoom();
   room.id = id; hudEl.dataset.room = id; room.setDoor(0);
   setText('#shName', def.sheet[0]); setText('#shPage', def.sheet[1]); $('#sheet').setAttribute('aria-label', def.sheet[0]);
-  if (def.figure && !same) addFigure(room.spot ? { ...def.figure, poses: def.figure.spots[room.spot].concat((def.figure.close || []).map(p => ({ ...p, close: true }))), nS: def.figure.spots[room.spot].length } : def.figure);
+  if (def.figure && !same) { const sp = room.spot && def.figure.spots[room.spot].filter(linkOk); addFigure(room.spot ? { ...def.figure, poses: sp.concat((def.figure.close || []).filter(linkOk).map(p => ({ ...p, close: true }))), nS: sp.length } : def.figure); }
   if (ready) { bakeRoom(); buildTags(); refreshRoom(); }
 }
 
@@ -6228,7 +6300,10 @@ const ROOM_DEF = {
         { pose: 'dayLean', at: [4.27, .17, .291], ry: -.5, look: -.25, phone: 'r' }],
       eve: [{ pose: 'stand', at: [3.7, .05, .55], ry: -2.3, look: .45 },
         { pose: 'glassLook', at: [4.094, .05, .565], ry: .96, look: .4 },
-        { pose: 'stepSit', at: [4.274, .16, .65], ry: .03, look: 0, phone: 'both' }],
+        { pose: 'stepSit', at: [4.274, .16, .65], ry: .03, look: 0, phone: 'both' },
+        /* M4, unlocked by their LINK (un): curled up in bed early with her phone; reading on the step by the glass */
+        { pose: 'headboardSit', at: [3.75, .559, 3.208], ry: Math.PI, look: 0, phone: 'both', un: 'eveBed' },
+        { pose: 'dayRead', at: [4.087, .05, .85], ry: -2.36, look: 0, phone: 'tablet', un: 'eveRead' }],
       late: [{ pose: 'lie', at: [3.8, .535, 3.0], ry: Math.PI, look: 0, phone: 'both', lay: [1, 0, 0, -Math.PI / 2] },
         { pose: 'sideLie', at: [3.75, .556, 3.0], ry: -Math.PI / 2, look: 0, phone: 'r', lay: [0, 0, 1, -Math.PI / 2] },
         { pose: 'headboardSit', at: [3.75, .559, 3.208], ry: Math.PI, look: 0, phone: 'both' }],
@@ -6244,7 +6319,10 @@ const ROOM_DEF = {
         { pose: 'closeHips', at: [3.7, .05, .55], ry: -1.76, look: .05 },
         { pose: 'closeHair', at: [3.7, .05, .55], ry: -1.76, look: -.05 },
         { pose: 'closeFold', at: [3.7, .05, .55], ry: -1.76, look: 0 },
-        { pose: 'closeShoulder', at: [3.7, .05, .55], ry: -.8, look: -.6 }],
+        { pose: 'closeShoulder', at: [3.7, .05, .55], ry: -.8, look: -.6 },
+        { pose: 'closeStretch', at: [3.7, .05, .55], ry: -1.76, look: 0, un: 'closeStretch' },
+        { pose: 'closeBehind', at: [3.7, .05, .55], ry: -1.76, look: .05, un: 'closeBehind' },
+        { pose: 'closeKiss', at: [3.7, .05, .55], ry: -1.76, look: 0, un: 'closeKiss' }],
       view: a => a < .8 ? { p: local(2.57, 1.46, .33), l: local(3.7, 1.38, .55) } : { p: local(2.42, 1.5, .31), l: local(3.7, 1.42, .55) } },
     rest: a => a < .8 ? { p: local(-3.2, 1.62, 0), l: local(3, 1.1, 0) } : { p: local(-3.25, 1.6, -.1), l: local(3, 1.25, -.1) },
     flight(c, r, a) {
@@ -6800,11 +6878,12 @@ function closeUp(on, pop) {
   glitchHud(.2); APP.sfx(on ? 'open' : 'back');
 }
 /* her card: mood follows his day (today's tasks done), link his overall progress; the pose line follows her */
-const HER_POSE = { closeWave: 'HELLO', closeHips: 'HANDS ON HIPS', closeHair: 'HAND IN HAIR', closeFold: 'ARMS FOLDED', closeShoulder: 'OVER THE SHOULDER' };
+const HER_POSE = { closeWave: 'HELLO', closeHips: 'HANDS ON HIPS', closeHair: 'HAND IN HAIR', closeFold: 'ARMS FOLDED', closeShoulder: 'OVER THE SHOULDER', closeStretch: 'A STRETCH', closeBehind: 'HANDS BEHIND HER', closeKiss: 'A KISS' };
 function herCard() {
   try {
-    const P = APP.plan(), n = P.today.length, mood = n ? .35 + .65 * P.done / n : .8, link = HOME ? pct01(HOME.overall) : 0;
-    setBar($('#bH1'), mood); setText('#vH1', String(Math.round(mood * 100))); setBar($('#bH2'), link); setText('#vH2', Math.round(link * 100) + '%');
+    const P = APP.plan(), n = P.today.length, mood = n ? .35 + .65 * P.done / n : .8, L = APP.link ? APP.link() : { lvl: 1, into: 0, need: 1 };
+    setBar($('#bH1'), mood); setText('#vH1', String(Math.round(mood * 100))); setBar($('#bH2'), L.need ? L.into / L.need : 1); setText('#vH2', 'LV ' + L.lvl);
+    const nx = window.Mira && Mira.UNLOCKS && Mira.UNLOCKS.find(u => u.lv === L.lvl + 1); setText('#hNext', nx ? `NEXT // LV ${nx.lv} · ${nx.name.toUpperCase()}` : 'LINK // EVERYTHING UNLOCKED');
     sqInto($('#sqH'), 5, Math.max(1, Math.round(mood * 5)));
   } catch (e) { APP.log(e); }
   herPose();
@@ -6821,9 +6900,11 @@ function miraStart(kind) {
   let c; try { c = APP.mira(MIRA_AT); } catch (e) { APP.log(e); return; }
   const again = !kind && Date.now() - miraLast < 20 * 60e3; miraLast = Date.now();
   /* back within 20 minutes: a hello, not the whole day again */
-  if (again) { MT = null; const g = Mira.line('greet.again', c.date + miraLast); miraIdle(g.say); if (!(APP.say && APP.say(g.id))) APP.sfx('tick'); return; }
+  const news = !kind && APP.linkNews ? APP.linkNews() : null;
+  if (again && !news) { MT = null; const g = Mira.line('greet.again', c.date + miraLast); miraIdle(g.say); if (!(APP.say && APP.say(g.id))) APP.sfx('tick'); return; }
   const k = kind || Mira.which(c);
   MT = { kind: k, c, steps: Mira.talk(k, c, again), i: 0, res: { done: 0, moved: 0, left: 0 }, acted: {}, tt: 0 };
+  if (news) { MT.steps.splice(1, 0, Mira.line('link.new', c.date, news)); APP.linkTold(); }   // M4: after a level up, what's new
   hudEl.classList.add('talk'); if (APP.sayPre) APP.sayPre(MT.steps.map(x => x.say ? x.id : '')); miraShow();
 }
 function miraStop() { if (MT) clearInterval(MT.tt); MT = null; $('#mTell').hidden = true; $('#mActs').hidden = false; hudEl.classList.remove('talk'); if (APP.sayStop) APP.sayStop(); }
@@ -7516,7 +7597,7 @@ function update() {
   if (!ready) return;
   /* a room paints today's date, and her spot by the clock. A new day while he watches repaints the room around her as she
      is; back from the Home Screen, she may have moved on */
-  if (S.mode === 'room') { const day = room.day && room.day !== new Date().toDateString(), moved = S.away && room.spot && room.spot !== figSpot(); if (day || moved) try { loadRoom(room.id, !S.away); } catch (e) { APP.log(e); } }
+  if (S.mode === 'room') { const day = room.day && room.day !== new Date().toDateString(), moved = S.away && ((room.spot && room.spot !== figSpot()) || (room.lv && room.lv !== linkLv())); if (day || moved) try { loadRoom(room.id, !S.away); } catch (e) { APP.log(e); } }
   if (!document.hidden) S.away = false;
   refreshWork(); refreshRoom();
   refreshHome(); resume();
@@ -7560,7 +7641,7 @@ function rig() {
     /* close up, start the move into close pose j now (held there once it's done) */
     closeGo(j) { if (!FIG) return 0; figGo(FIG.nS + j % (FIG.keys.length - FIG.nS), S.t); FIG.next = Infinity; return FIG.go.dur; },
     tapHer() { const b = FIG && FIG.keys[FIG.i].box; if (!b) return null; const p = project([room.box.x + (b[0][0] + b[1][0]) / 2, room.box.y + (b[0][1] + b[1][1]) / 2, room.box.z + (b[0][2] + b[1][2]) / 2]); return [p.x, p.y]; },
-    stats() { return { id: room.id, day: room.day, spot: room.spot, pose: FIG ? FIG.i : null, poses: FIG ? FIG.nS : 0, close: S.close, closeK: S.closeK, spin: Math.round(S.spin * 1e3) / 1e3, spinGoal: Math.round(S.spinGoal * 1e3) / 1e3, herQ: FIG ? FIG.root.quaternion.toArray().map(x => Math.round(x * 1e3) / 1e3) : null, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
+    stats() { return { id: room.id, day: room.day, spot: room.spot, pose: FIG ? FIG.i : null, poses: FIG ? FIG.nS : 0, closeN: FIG ? FIG.keys.length - FIG.nS : 0, lv: room.lv || 0, close: S.close, closeK: S.closeK, spin: Math.round(S.spin * 1e3) / 1e3, spinGoal: Math.round(S.spinGoal * 1e3) / 1e3, herQ: FIG ? FIG.root.quaternion.toArray().map(x => Math.round(x * 1e3) / 1e3) : null, pieces: room.pieces, roomTris: room.tris, clutterTris: room.clutterTris, glow: GLOW.length, worldTris: city.world.geometry.attributes.position.count / 3, farTris: city.far.geometry.attributes.position.count / 3 }; },
   };
 }
 window.City = {

@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="sound.js?v=p19"></script>
-<script src="mira.js?v=p27"></script>
+<script src="mira.js?v=p28"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -27,9 +27,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p27';
+  window.DAYBOOK_BUILD = 'p28';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p27'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p28'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -37,7 +37,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p27').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p28').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -1275,6 +1275,37 @@ function weekStreak() {
   }
   return n;
 }
+/* Mira's LINK (docs/MIRA.md M4): how close they are. It comes from what he has done, so it syncs with his data: each
+   cleared day 10, each session 8, each clean training week 25, each study hour 4, each task 1. It only grows: each
+   device keeps the most it has seen. Levels (Mira.LINK_AT) unlock things in the city (Mira.UNLOCKS) */
+function cleanWeeks() {
+  let n = 0;
+  for (let wk = addDays(mondayOf(new Date()), -7), i = 0; i < 104; i++, wk = addDays(wk, -7)) { const plan = datesOf(wk).filter(d => wo(d).s !== 'REST'); if (plan.length && plan.every(d => wo(d).done)) n++; }
+  return n;
+}
+const linkPts = () => (S.clearDays || []).length * 10 + Object.values(S.workouts).filter(w => w.done).length * 8 + cleanWeeks() * 25 + Math.round(totalStudy() * 4) + doneTaskCount();
+let LINK_C = null;   // worked out at most every 5 s (cleanWeeks walks two years)
+function link() {
+  if (LINK_C && Date.now() - LINK_C.t < 5000) return LINK_C.v;
+  const AT = (window.Mira && Mira.LINK_AT) || [0]; let pts = linkPts(), kept = 0;
+  try { kept = +localStorage.getItem('daybook_link') || 0; } catch (e) {}
+  if (pts > kept) { try { localStorage.setItem('daybook_link', String(pts)); } catch (e) {} } else pts = kept;
+  let lvl = 1; while (lvl < AT.length && pts >= AT[lvl]) lvl++;
+  const v = { pts, lvl, max: AT.length, into: pts - AT[lvl - 1], need: lvl < AT.length ? AT[lvl] - AT[lvl - 1] : 0 };
+  LINK_C = { t: Date.now(), v }; return v;
+}
+const lsNum = k => { try { return +localStorage.getItem(k) || 0; } catch (e) { return 0; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch (e) {} };
+/* a level up: once per device, a celebration and her words. The first time on a device counts from level 1, so the
+   levels he already has get their moment */
+function linkCheck() {
+  if (document.hidden || !window.Mira || !Mira.LINK_AT) return; LINK_C = null;
+  const L = link(), seen = lsNum('daybook_link_lv') || 1;
+  if (L.lvl <= seen) { if (!lsNum('daybook_link_lv')) lsSet('daybook_link_lv', seen); return; }
+  lsSet('daybook_link_lv', L.lvl);
+  celebrate(`Link level ${L.lvl}`, '#ff4646'); miraReact('link.up', 2800);
+}
+setTimeout(linkCheck, 4000); setInterval(linkCheck, 30e3);
 const earnedTrophies = () => TROPHIES.filter(t => { try { return t.test(); } catch (e) { return false; } });
 // Anything newly earned pops once, then is remembered.
 function checkTrophies() {
@@ -1377,7 +1408,7 @@ function toggleTask(id, d = null) {
       toggleTask.c = setTimeout(() => { if (noteClearDay()) { celebrate('Day cleared · +' + XP.clearDay + ' XP', '#30d158'); miraReact('react.clear'); } }, 350);
     }
   }
-  clearTimeout(toggleTask.tr); toggleTask.tr = setTimeout(checkTrophies, 600);
+  clearTimeout(toggleTask.tr); toggleTask.tr = setTimeout(() => { checkTrophies(); setTimeout(linkCheck, 3000); }, 600);
 }
 function toggleSet(s, i, j) {
   const id = s.toLowerCase(), e = flatEx(id)[i]; if (!e) return;
@@ -1733,6 +1764,15 @@ window.CityApp = {
       week: { hours: fh(days.reduce((a, d) => a + shiftHours(S.shifts[d]), 0)), sessDone, sessPlan: plan.length, study: fh(Math.round(st * 10) / 10), studyGoal: stG, done, slipped: slip, good: sessDone >= plan.length - 1 && slip <= 2 } };
   },
   // her check-in's buttons: done, tomorrow, let go (a delete, with Undo)
+  // M4: LINK, and what's new since she last told him (her first talk after a level up says so)
+  link: () => link(),
+  linkNews() {
+    if (!window.Mira || !Mira.UNLOCKS) return null; const L = link(), told = lsNum('daybook_link_told') || 1; if (L.lvl <= told) return null;
+    const fresh = Mira.UNLOCKS.filter(u => u.lv > told && u.lv <= L.lvl).map(u => u.name.toUpperCase());
+    return `LINK LV ${L.lvl} · NEW: ` + fresh.slice(0, 3).join(' · ') + (fresh.length > 3 ? ` +${fresh.length - 3}` : '');
+  },
+  linkTold() { lsSet('daybook_link_told', link().lvl); },
+  linkTest(pts) { lsSet('daybook_link', Math.max(pts, lsNum('daybook_link'))); LINK_C = null; linkCheck(); return link(); },   // tests: raise it
   say: id => mvSay(id), sayStop: () => mvStop(), sayPre: ids => mvPre(ids), clockOn: () => !!S.clock, miraTest: (k, d) => miraReact(k, d || 0), miraNudge: () => miraNudge(),
   miraDo(act, id, d) {
     const t = S.tasks.find(x => x.id === id); if (!t) return false;
