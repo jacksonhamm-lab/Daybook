@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p28';
+export const BUILD = 'p29';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -530,6 +530,46 @@ label.rbtn{cursor:pointer}
 .mfit.on{border-color:var(--hud-red);box-shadow:0 0 0 1px var(--hud-red),0 0 10px rgba(255,70,70,.45)}
 .mfit.lk{opacity:.4;cursor:default}.mfit.lk i{filter:grayscale(.7) brightness(.6)}
 .mfit:focus-visible{outline:2px solid var(--hud-cyan);outline-offset:1px}
+/* the plan board (p29): the week's tasks on one screen, from the city or any room */
+#plan{position:absolute;left:calc(var(--sl) + 6px);right:calc(var(--sr) + 6px);top:calc(var(--st) + 6px);bottom:calc(var(--sb) + 6px);z-index:7;--ct:18px;display:flex;flex-direction:column;opacity:0;transform:translateY(14px);visibility:hidden;transition:opacity .22s var(--ease),transform .32s var(--ease),visibility 0s .32s}
+#hud #plan.open{opacity:1;transform:none;visibility:visible;pointer-events:auto;transition:opacity .22s var(--ease),transform .32s var(--ease),visibility 0s}
+#plan>.in{display:flex;flex-direction:column;flex:1;min-height:0;background:rgba(10,9,13,.975)}
+#plan .shead{gap:8px}
+#plNav{margin-left:auto}#plNav .csnav{margin:0;flex-wrap:nowrap}
+#plSum{padding:8px 14px 0;font:700 11px/1.2 var(--hud-font);letter-spacing:.12em;color:var(--hud-text2)}
+.pstrip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;padding:8px 10px 2px}
+.pday{min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:inset 0 0 0 1px var(--hud-hair);font:700 11px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-text2)}
+.pday span{font:700 17px/1 var(--body);font-variant-numeric:tabular-nums;color:var(--hud-text)}
+.pday em{font:9px/1 var(--micro);font-style:normal;color:var(--hud-text3);white-space:nowrap}
+.pday.today b,.pcol.today .pch b{background:var(--hud-yellow);color:var(--hud-ink);padding:2px 4px}
+.pday[aria-pressed=true]{box-shadow:inset 0 0 0 1.5px var(--hud-red);background:var(--hud-red-soft)}
+.pday.lt em{color:var(--hud-yellow)}
+.pbody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:6px 10px calc(var(--sb) + 18px)}
+#plLate .gsec:first-child{margin-top:4px}
+.pcols{display:flex;gap:8px}
+.pcol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;background:var(--hud-s1);box-shadow:inset 0 0 0 1px var(--hud-hair);padding:8px 8px 10px;transition:box-shadow .12s,background .12s}
+.pcol:not(.sel){display:none}
+.pch{display:flex;align-items:baseline;gap:7px;padding:2px 2px 7px;margin-bottom:2px;border-bottom:1px solid var(--hud-red-line);font:700 13px/1 var(--hud-font);letter-spacing:.1em;color:var(--hud-red)}
+.pch span{font:700 15px/1 var(--body);font-variant-numeric:tabular-nums;color:var(--hud-text)}
+.pch em{margin-left:auto;font:10px/1 var(--micro);font-style:normal;color:var(--hud-text2)}
+.pcol .ted{padding-left:4px}
+.pcol.drop{box-shadow:inset 0 0 0 2px var(--hud-cyan);background:var(--hud-cyan-soft)}
+.pcol .trow[draggable=true] .ttl{cursor:grab}
+.trow.drag{opacity:.35}
+.pmv .rbtn{min-width:44px;padding:0 8px}
+.pcol .tm .hin{width:142px}
+@media (min-width:900px){
+  #plan{left:calc(var(--sl) + 18px);right:calc(var(--sr) + 18px);top:calc(var(--st) + 6px);bottom:18px}
+  .pstrip{display:none}
+  .pbody{display:flex;flex-direction:column;overflow:hidden;padding-bottom:12px}
+  #plLate{flex:none;max-height:26vh;overflow-y:auto;overscroll-behavior:contain;margin-bottom:6px}
+  .pcols{flex:1;min-height:0}
+  .pcol:not(.sel){display:flex}
+  .pcol.ed{flex-grow:2.4}
+  .pcol .prows{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+  .pcol .ttl b{font-size:13px}
+  .pcol .hadd .rbtn{padding:0 10px}
+}
 .macts[hidden]{display:none}
 /* Tell Mira: one line, plain words */
 .mtell:not([hidden]){display:flex;gap:6px;margin-top:8px}
@@ -649,6 +689,7 @@ const MARKUP = `
     <button class="frame brand" data-hud="prog" data-m="room" data-r="castle" aria-label="Progress"><div class="in"><i></i><div><b>CASTLE</b><small>SCHOOL</small></div></div></button>
     <div class="frame eqw"><div class="in"><canvas id="eq" aria-hidden="true"></canvas><div class="row"><span class="mi">SIGNAL</span><span class="mi" id="eqv">SYNC OFF</span></div></div></div>
     <div class="frame clk"><div class="in"><b id="clk">00:00</b><span class="mi" id="clkd"></span></div></div>
+    <button class="q" data-hud="plan" aria-label="Plan the week (W)"><span><svg class="gear" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16V20H4zM4 10h16M8.5 3v4.5M15.5 3v4.5M8 14h3M13 14h3M8 17h3"/></svg></span></button>
     <button class="q" data-hud="add" aria-label="Quick add"><span style="font-size:22px;font-weight:400">+</span></button>
     <button class="q" data-hud="sys" aria-label="System settings"><span><svg class="gear" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span></button>
   </div>
@@ -935,6 +976,17 @@ const MARKUP = `
             <form class="hadd" id="wtAdd" data-hadd="" data-hcat="work"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD A WORK TASK, E.G. EMAIL LEN FRI" aria-label="Add a work task"><button class="rbtn" type="submit">ADD</button></form>
           </section>
         </div>
+      </div>
+    </div>
+  </aside>
+  <aside id="plan" class="frame" role="dialog" aria-modal="true" aria-label="Plan: this week's tasks" aria-hidden="true">
+    <div class="in">
+      <div class="shead"><h2>Plan</h2><div id="plNav"></div><button class="back" id="plX" aria-label="Close the plan"><span><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></span></button></div>
+      <div id="plSum" aria-live="polite"></div>
+      <div class="pstrip" id="plStrip" role="group" aria-label="Days"></div>
+      <div class="pbody" id="plBody">
+        <div id="plLate"></div>
+        <div class="pcols" id="plCols">${[0, 1, 2, 3, 4, 5, 6].map(i => `<section class="pcol" id="plC${i}"><div class="pch" id="plH${i}"></div><div class="prows" id="plR${i}"></div><div id="plA${i}"></div></section>`).join('')}</div>
       </div>
     </div>
   </aside>
@@ -6548,7 +6600,7 @@ function tick(now) {
   if (host.hidden) { looping = false; return; }
   if (S.lost) { S.last = now; requestAnimationFrame(tick); return; }
   if (!RIG) {
-    S.idle = (S.mode === 'city' || S.mode === 'room') && now - S.lastInput > 6000;
+    S.idle = PL.on || ((S.mode === 'city' || S.mode === 'room') && now - S.lastInput > 6000);   // the board covers the scene
     const iv = 1000 / (S.idle ? PM.idle : PM.fps), el = now - (S.drawn || 0);
     if (el < iv - 1.5) { requestAnimationFrame(tick); return; }
     S.drawn = el < iv * 2 ? S.drawn + iv : now;
@@ -6577,6 +6629,8 @@ const _pv = new THREE.Vector3();
 function project(p) { _pv.set(p[0], p[1], p[2]).project(CAM); return { x: (_pv.x * .5 + .5) * innerWidth, y: (-_pv.y * .5 + .5) * innerHeight, z: _pv.z, on: _pv.z < 1 && _pv.z > -1 }; }
 
 /* ---------- HUD: everything over the 3D ---------- */
+/* the plan board's state (refreshPlan and friends, further down) */
+const PL = { on: false, wk: null, day: null, week: [], from: null }; let plDrag = null;
 const hudEl = $('#hud');
 function setBoot(t, p) { const a = $('#bootT'), b = $('#bootB'); if (a) a.textContent = t.toUpperCase(); if (b) b.style.width = (p * 100) + '%'; }
 const ICONS = [
@@ -6632,7 +6686,7 @@ function eqStep(dt, t) {
 }
 function glitchHud(force = 1) { kick = 1; if (REDUCED) return; hudEl.classList.remove('gl'); void hudEl.offsetWidth; hudEl.classList.add('gl'); clearTimeout(S.glOff); S.glOff = setTimeout(() => hudEl.classList.remove('gl'), 380); if (force >= 1) S.glitchT = S.t; }
 function scanNow() { S.scanT = S.t; const s = $('#scan'); s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); s.onanimationend = () => s.classList.remove('go'); }
-function setMode(m) { S.mode = m; SKY.next = 0; S.lastInput = S.modeT = performance.now(); hudEl.classList.remove('city', 'fly', 'room'); hudEl.classList.add(m); }
+function setMode(m) { if (m === 'fly' && PL.on) planClose(true); S.mode = m; SKY.next = 0; S.lastInput = S.modeT = performance.now(); hudEl.classList.remove('city', 'fly', 'room'); hudEl.classList.add(m); }
 /* Buttons appear under the finger on arrival, and a touch's click lands after the mode has changed. Nobody means to press what they cannot have seen yet. */
 const justArrived = () => S.mode !== 'fly' && performance.now() - (S.modeT || 0) < 350;
 
@@ -6705,7 +6759,7 @@ function hudInit() {
       const k = d.topen + '|' + d.date;
       /* from the panel: the sheet opens on today, that task's editor open */
       if (b.closest('#aptList')) { aptOpen = k; openSheet('cToday'); return focusIn(`#tdRows [data-tt="${d.topen}"]`); }
-      const cd = b.closest('.card'); aptOpen = aptOpen === k ? null : k; refreshApt(); refreshWtask(); if (aptOpen) focusIn(`${cd ? '#' + cd.id + ' ' : ''}[data-tt="${d.topen}"]`); return;
+      const cd = b.closest('.card,#plan'); aptOpen = aptOpen === k ? null : k; refreshApt(); refreshWtask(); refreshPlan(); if (aptOpen) focusIn(`${cd ? '#' + cd.id + ' ' : ''}[data-tt="${d.topen}"]`); return;
     }
     if (d.tw) { const [id, when] = d.tw.split(':'); aptOpen = null; APP.taskSet(id, { when }); return; }
     if (d.tcat) { const [id, cat] = d.tcat.split(':'); APP.taskSet(id, { cat }); return; }
@@ -6739,7 +6793,7 @@ function hudInit() {
   /* Enter in a one-line box is done with it */
   hudEl.addEventListener('keydown', e => { const el = e.target; if (e.key === 'Enter' && el.dataset && (el.dataset.tt !== undefined || el.dataset.sx)) { e.preventDefault(); el.blur(); } });
   /* leaving a box: the parts of the sheet held still while he typed catch up */
-  hudEl.addEventListener('focusout', e => { if (e.target.matches && e.target.matches('.hin')) setTimeout(() => { if (!typing('#sheet')) { refreshRoom(); refreshWork(); } }, 60); });
+  hudEl.addEventListener('focusout', e => { if (e.target.matches && e.target.matches('.hin')) setTimeout(() => { if (!typing('#sheet') && !typing('#plan')) { refreshRoom(); refreshWork(); } }, 60); });
   hudEl.addEventListener('submit', e => {
     const f = e.target; if (!f.dataset || (f.dataset.hadd === undefined && !f.dataset.nadd)) return; e.preventDefault();
     const inp = f.querySelector('.hin'), ok = f.dataset.nadd ? APP.noteAdd(inp.value) : APP.addTask(inp.value, f.dataset.hadd || null, f.dataset.hcat);
@@ -6751,6 +6805,7 @@ function hudInit() {
     if (d.hgo) { const [r, c] = d.hgo.split('|'); goPlace(r, c); return; }
     if (d.hstop) { APP.schoolDo('stop'); return; }
     if (d.gfx !== undefined) { const p = $('#perf'); p.hidden = !p.hidden; refreshGlobal('sys'); return; }
+    if (d.hud === 'plan') { planOpen(d.pd || null); return; }
     if (d.hud) { if (d.sg) sysOpen.add(d.sg); openGlobal(d.hud); if (d.sg) setTimeout(() => { const g = ROOT.querySelector(`#gSysB [data-sg="${d.sg}"]`); if (g) g.scrollIntoView({ block: 'start' }); }, 80); return; }
     /* turning sync off forgets the code on this device: a second tap to be sure */
     if (d.sact === 'sync-off' && !syncArm) { syncArm = true; refreshGlobal('sys'); clearTimeout(syncArmT); syncArmT = setTimeout(() => { syncArm = false; refreshGlobal('sys'); }, 4000); return; }
@@ -6815,11 +6870,25 @@ function hudInit() {
   });
   $('#hoF').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#hoF').click(); } });
   ROOT.addEventListener('submit', e => { const f = e.target.closest && e.target.closest('[data-tell]'); if (!f) return; e.preventDefault(); tellSend(f); });
+  /* the plan board's own: a day, a week, a move; on a laptop, a task dragged onto another day */
+  hudEl.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-pday],[data-pw],[data-pmove],#plX'); if (!b) return; const d = b.dataset;
+    if (b.id === 'plX') { planClose(); return; }
+    if (d.pday) { if (PL.day !== d.pday) { PL.day = d.pday; aptOpen = null; APP.sfx('tick'); refreshPlan(); } return; }
+    if (d.pw !== undefined) { const v = +d.pw, m = PL.wk ? new Date(PL.wk + 'T12:00') : new Date(); m.setDate(m.getDate() + 7 * v); PL.wk = v === 0 ? null : `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}-${String(m.getDate()).padStart(2, '0')}`; PL.day = null; aptOpen = null; APP.sfx('tick'); refreshPlan(); return; }
+    if (d.pmove) { const [id, to] = d.pmove.split('|'); PL.day = to; planMove(id, to); refreshPlan(); }
+  });
+  const elOf = e => { const t = e.target; return t && t.nodeType === 1 ? t : t && t.parentElement; };
+  const unDrop = keep => ROOT.querySelectorAll('#plan .pcol.drop').forEach(x => { if (x !== keep) x.classList.remove('drop'); });
+  hudEl.addEventListener('dragstart', e => { const el = elOf(e), r = el && el.closest('[data-pdrag]'); if (!r || !PL.on) return; plDrag = r.dataset.pdrag; r.classList.add('drag'); try { e.dataTransfer.setData('text/plain', plDrag.split('|')[0]); e.dataTransfer.effectAllowed = 'move'; } catch (_) {} });
+  hudEl.addEventListener('dragend', () => { plDrag = null; unDrop(null); ROOT.querySelectorAll('#plan .trow.drag').forEach(x => x.classList.remove('drag')); });
+  hudEl.addEventListener('dragover', e => { if (!plDrag) return; const el = elOf(e), c = el && el.closest('#plan .pcol'); unDrop(c); if (!c) return; e.preventDefault(); try { e.dataTransfer.dropEffect = 'move'; } catch (_) {} c.classList.add('drop'); });
+  hudEl.addEventListener('drop', e => { const el = elOf(e), c = el && el.closest('#plan .pcol'); if (!plDrag || !c) return; e.preventDefault(); const [id, from] = plDrag.split('|'), to = c.dataset.pcol; plDrag = null; unDrop(null); if (to && to !== from) { PL.day = to; planMove(id, to); refreshPlan(); } });
   /* the apartment's rows: the tick flips at once, and refreshApt keeps every row where it was until he leaves */
   hudEl.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-tick],[data-task],[data-dec],[data-day]'); if (!b) return;
     const d = b.dataset;
-    if (d.tick) { aptKeep.add(d.tick + '|' + d.date); APP.tick(d.tick, d.date); const r = b.closest('.trow'), on = r.classList.toggle('done'); b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^Mark (not )?done/, 'Mark ' + (on ? 'not done' : 'done'))); kick = 1; for (const id of ['#aptList', '#tdRows', '#wkDay', '#wtRows']) $(id)._h = null; return; }
+    if (d.tick) { aptKeep.add(d.tick + '|' + d.date); APP.tick(d.tick, d.date); const r = b.closest('.trow'), on = r.classList.toggle('done'); b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^Mark (not )?done/, 'Mark ' + (on ? 'not done' : 'done'))); kick = 1; for (const id of ['#aptList', '#tdRows', '#wkDay', '#wtRows', '#plLate']) $(id)._h = null; ROOT.querySelectorAll('#plan .prows').forEach(x => { x._h = null; }); return; }
     if (d.dec) return APP.decide(d.dec, d.id);
     aptDay = d.day; refreshApt();
   });
@@ -6834,7 +6903,12 @@ function hudInit() {
   /* capture: this has to see an open sheet before the app's own Escape closes it */
   addEventListener('keydown', e => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    /* the plan board: Escape closes it, even from one of its boxes; while it's up, no other key of the city's. W opens it
+       anywhere but a flight */
+    if (PL.on && e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); planClose(); return; }
     const tg = e.composedPath()[0]; if (tg && tg.matches && tg.matches('input,textarea,select')) return;
+    if (PL.on) return;
+    if (e.key.toLowerCase() === 'w' && S.mode !== 'fly' && !S.sheet) { e.stopPropagation(); e.preventDefault(); planOpen(); return; }
     if (e.key === 'Escape' && S.mode === 'fly' && S.fly && S.fly.dir > 0) return goBack();
     if (S.mode !== 'room') return;
     if (e.key === 'Escape') { if (S.sheet) closeSheet(); else goBack(); return; }
@@ -7169,6 +7243,7 @@ function showCard(id) {
   const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0;
 }
 function openSheet(id) {
+  if (PL.on) planClose(true);
   const c0 = ROOT.getElementById(id), g = c0 && c0.dataset.g, sh0 = $('#sheet'); sh0.classList.toggle('g', !!g); if (!g) gOpen = null;
   ROOT.querySelectorAll('#sheet .card[data-g]').forEach(c => c.classList.toggle('on', c.dataset.g === g));
   setText('#shName', g ? GCARD[g][1] : room.def.sheet[0]); setText('#shPage', g ? GCARD[g][2] : room.def.sheet[1]); sh0.setAttribute('aria-label', g ? GCARD[g][1] : room.def.sheet[0]);
@@ -7232,7 +7307,7 @@ function refreshWtask() {
   const g = tagEls.find(x => x.h.key === 'wtask'); if (g) { const m = g.el.querySelector('small'); setText2(m, T.left ? String(T.left) : ''); m.hidden = !T.left; }
 }
 /* a room's panels read through the app; a throw here must not stop the app's own render */
-function refreshRoom() { if (gOpen && S.sheet) try { refreshGlobal(gOpen); } catch (e) { APP.log(e); } if (room.def && room.def.refresh) try { room.def.refresh(); } catch (e) { APP.log(e); } }
+function refreshRoom() { if (PL.on) try { refreshPlan(); } catch (e) { APP.log(e); } if (gOpen && S.sheet) try { refreshGlobal(gOpen); } catch (e) { APP.log(e); } if (room.def && room.def.refresh) try { room.def.refresh(); } catch (e) { APP.log(e); } }
 let aptDay = null, shopDay = null, aptWeek = null, shopP = null;
 /* rows ticked on this visit stay in the list, in the order he found them, so nothing moves under his thumb until he leaves */
 const aptKeep = new Set(), aptOrd = new Map();
@@ -7242,16 +7317,55 @@ const aptSort = l => { for (const t of l) if (!aptOrd.has(rowKey(t))) aptOrd.set
 let aptOpen = null, aptNote = null, noteQ = '', noteAll = false;
 /* the editor: rename; move to today, tomorrow, next week or any date; a time; what it's for; whether it repeats; delete */
 const REPS = [['none', 'ONCE'], ['daily', 'DAILY'], ['weekdays', 'WEEKDAYS'], ['weekly', 'WEEKLY']];
-const taskEd = t => { const x = APP.task(t.id); if (!x) return ''; return `<div class="ted"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" data-tt="${t.id}" value="${x.title}" aria-label="Rename the task"><div class="tacts"><button class="rbtn ol" data-tw="${t.id}:today">TODAY</button><button class="rbtn ol" data-tw="${t.id}:tomorrow">TOMORROW</button><button class="rbtn ol" data-tw="${t.id}:nextweek">NEXT WEEK</button><label class="tm">ON<input class="hin" type="date" data-tdate="${t.id}" value="${x.date}" aria-label="Move to a date"></label><label class="tm">AT<input class="hin" type="time" data-trem="${t.id}" value="${x.remind}" aria-label="Remind me at"></label></div>
+const taskEd = (t, ex = '') => { const x = APP.task(t.id); if (!x) return ''; return `<div class="ted">${ex}<input class="hin" type="text" enterkeyhint="done" autocomplete="off" data-tt="${t.id}" value="${x.title}" aria-label="Rename the task"><div class="tacts"><button class="rbtn ol" data-tw="${t.id}:today">TODAY</button><button class="rbtn ol" data-tw="${t.id}:tomorrow">TOMORROW</button><button class="rbtn ol" data-tw="${t.id}:nextweek">NEXT WEEK</button><label class="tm">ON<input class="hin" type="date" data-tdate="${t.id}" value="${x.date}" aria-label="Move to a date"></label><label class="tm">AT<input class="hin" type="time" data-trem="${t.id}" value="${x.remind}" aria-label="Remind me at"></label></div>
   <div class="tacts" role="group" aria-label="What it's for">${x.cats.map(([k, l, c]) => `<button class="rbtn${x.cat === k ? '' : ' ol'} tcat" style="--k:${c}" data-tcat="${t.id}:${k}" aria-pressed="${x.cat === k}">${l.toUpperCase()}</button>`).join('')}</div>
   <div class="tacts" role="group" aria-label="Repeats">${REPS.map(([k, l]) => `<button class="rbtn${x.rep === k ? '' : ' ol'}" data-trep="${t.id}:${k}" aria-pressed="${x.rep === k}">${l}</button>`).join('')}<button class="rbtn ol dng" data-tdel="${t.id}" style="margin-left:auto">DELETE</button></div></div>`; };
-const taskRow = (t, ed) => { const op = ed && aptOpen === rowKey(t); return `<div class="trow${t.done ? ' done' : ''}${op ? ' open' : ''}" style="--c:${t.c}"><button class="tick" data-tick="${t.id}" data-date="${t.d}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-topen="${t.id}" data-date="${t.d}" aria-expanded="${!!op}"><b>${t.title}</b>${t.meta ? `<small>${t.meta}</small>` : ''}</button>${op ? taskEd(t) : ''}</div>`; };
+const taskRow = (t, ed, ex) => { const op = ed && aptOpen === rowKey(t); return `<div class="trow${t.done ? ' done' : ''}${op ? ' open' : ''}" style="--c:${t.c}"><button class="tick" data-tick="${t.id}" data-date="${t.d}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-topen="${t.id}" data-date="${t.d}" aria-expanded="${!!op}"><b>${t.title}</b>${t.meta ? `<small>${t.meta}</small>` : ''}</button>${op ? taskEd(t, ex) : ''}</div>`; };
 /* a shift's editor, the same in the apartment's week and the shop */
 const shiftEd = x => `<div class="sed" data-sdate="${x.d}"><div class="sedh"><b>SHIFT / ${x.long.toUpperCase()}</b><em>${x.on ? x.h + 'H' : 'NONE'}</em></div><div class="sedg"><label>START<input class="hin" type="time" data-sx="start" value="${x.start}"></label><label>END<input class="hin" type="time" data-sx="end" value="${x.end}"></label><label>BREAK MIN<input class="hin" type="number" inputmode="numeric" min="0" step="5" placeholder="0" data-sx="brk" value="${x.brk}"></label><label class="sedn">NOTE<input class="hin" type="text" enterkeyhint="done" autocomplete="off" maxlength="200" placeholder="OPTIONAL" data-sx="note" value="${x.note}"></label></div>${x.presets.length || x.on ? `<div class="tacts">${x.presets.map(p => `<button class="rbtn ol" data-spre="${p.start}|${p.end}|${p.brk}">${p.label}</button>`).join('')}${x.on ? '<button class="rbtn ol dng" data-sclr="1">CLEAR</button>' : ''}</div>` : ''}</div>`;
 /* while he types in a box, leave that box's part of the sheet alone */
 const typing = sel => { const a = ROOT.activeElement; return !!(a && a.matches && a.matches('input,textarea') && a.closest(sel)); };
 /* a shift editor: redrawn, or while he's in one of its boxes only its hours */
 function shiftInto(sel, x) { if (!typing(sel)) return setHTML(sel, shiftEd(x)); const em = ROOT.querySelector(sel + ' .sedh em'); if (em) setText2(em, x.on ? x.h + 'H' : 'NONE'); }
+/* the plan board (p29, his ask: "a lot easier to view and edit the weekly plans"): every day of a week and its tasks on
+   one screen, from the city or any room (the top bar's PLAN button, or W). Phone: a strip of days, the picked day's list
+   under it; laptop: seven columns, and a task drags onto another day. Tasks only (his pick). A row's editor is the
+   apartment's, with the week's days added to move it in one tap */
+function refreshPlan() {
+  if (!PL.on) return;
+  const P = APP.plan(PL.wk), day = P.week.find(d => d.d === PL.day) || P.week.find(d => d.today) || P.week[0]; PL.day = day.d; PL.week = P.week;
+  const open = P.week.reduce((a, d) => a + d.left, 0), late = P.isNow ? P.late : [], lk = new Set(late.map(rowKey));
+  setText('#plSum', [P.weekLabel, open ? `${open} OPEN` : 'NOTHING OPEN', late.length ? `${late.length} LATE` : ''].filter(Boolean).join(' / '));
+  setHTML('#plNav', `<div class="seg2 csnav"><button class="rbtn ol" data-pw="-1" aria-label="The week before">‹</button><button class="rbtn${P.isNow ? '' : ' ol'}" data-pw="0">${P.isNow ? 'THIS WEEK' : 'TO NOW'}</button><button class="rbtn ol" data-pw="1" aria-label="The week after">›</button></div>`);
+  /* what slipped: here once, with its editor; its day's column shows it without one */
+  if (!typing('#plLate')) setRows('#plLate', late.length ? `<div class="gsec">LATE / ${late.length}</div>${late.map(planRow).join('')}<div class="tacts" style="margin:6px 0 10px"><button class="rbtn" data-late="1">MOVE ${late.length} TO TODAY</button></div>` : '');
+  setHTML('#plStrip', P.week.map(d => { const lt = d.left && d.d < (P.week.find(x => x.today) || {}).d; return `<button class="pday${d.today ? ' today' : ''}${lt ? ' lt' : ''}" data-pday="${d.d}" aria-pressed="${d === day}" aria-label="${d.long}: ${d.left} open"><b>${d.dow}</b><span>${d.day}</span><em>${d.total ? d.left ? d.left + ' OPEN' : 'DONE' : '-'}</em></button>`; }).join(''));
+  P.week.forEach((d, i) => {
+    const c = $('#plC' + i); if (!c) return;
+    c.dataset.pcol = d.d; c.setAttribute('aria-label', d.long); c.classList.toggle('sel', d === day); c.classList.toggle('today', d.today);
+    c.classList.toggle('ed', d.tasks.some(t => aptOpen === rowKey(t) && !lk.has(rowKey(t))));
+    setHTML('#plH' + i, `<b>${d.dow}</b><span>${d.day}</span><em>${d.total ? `${d.total - d.left}/${d.total} DONE` : ''}</em>`);
+    if (!typing('#plR' + i)) setRows('#plR' + i, d.tasks.length ? aptSort(d.tasks).map(t => lk.has(rowKey(t)) ? taskRow(t) : planRow(t)).join('') : noneRow('Nothing yet.'));
+    setHTML('#plA' + i, `<form class="hadd" data-hadd="${d.d}"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="NEW TASK" aria-label="Add a task for ${d.long}"><button class="rbtn" type="submit">ADD</button></form>`);
+  });
+}
+/* a row on the board: the apartment's row and editor; a one-off task also drags, and its editor moves it to any day of the
+   week shown. A repeating one moves its whole series, so that stays in the editor's own date box */
+const planMoves = t => `<div class="tacts pmv" role="group" aria-label="Move to a day">${PL.week.map(d => `<button class="rbtn${d.d === t.d ? '' : ' ol'}" data-pmove="${t.id}|${d.d}" aria-pressed="${d.d === t.d}" aria-label="Move to ${d.long}">${d.dow}</button>`).join('')}</div>`;
+const planRow = t => { const x = APP.task(t.id), mv = !!x && !x.repeat, h = taskRow(t, true, mv && aptOpen === rowKey(t) ? planMoves(t) : ''); return mv ? h.replace('<div class="trow', `<div draggable="true" data-pdrag="${t.id}|${t.d}" class="trow`) : h; };
+function planMove(id, to) { const x = APP.task(id); if (!x || x.repeat || x.date === to) return; aptOpen = null; APP.taskSet(id, { date: to }); }
+function planOpen(day) {
+  if (S.mode === 'fly') return; if (S.sheet) closeSheet(true);
+  if (!PL.on) { PL.from = ROOT.activeElement; APP.sfx('open'); }
+  PL.on = true; aptOpen = null; PL.wk = day || null; PL.day = day || null;
+  const el = $('#plan'); el.classList.add('open'); el.setAttribute('aria-hidden', 'false'); const pb = $('#plBody'); if (pb) pb.scrollTop = 0;
+  refreshPlan(); $('#plX').focus({ preventScroll: true });
+}
+function planClose(quiet) {
+  if (!PL.on) return; PL.on = false; aptOpen = null; plDrag = null;
+  const el = $('#plan'); el.classList.remove('open'); el.setAttribute('aria-hidden', 'true'); if (!quiet) APP.sfx('back');
+  const f = PL.from; PL.from = null; if (f && f.isConnected && f.focus) f.focus({ preventScroll: true });
+}
 const noneRow = s => `<div class="none">${s}</div>`;
 function refreshApt() {
   /* rows are rewritten below: note what had focus, to hand it back */
@@ -7264,7 +7378,7 @@ function refreshApt() {
   if (!typing('#tdLate')) setHTML('#tdLate', P.late.length ? `<div class="gsec">LATE / ${P.late.length}</div>${P.late.map(t => taskRow(t, true)).join('')}<div class="tacts" style="margin:6px 0 10px"><button class="rbtn" data-late="1">MOVE ${P.late.length} TO TODAY</button></div><div class="gsec">TODAY</div>` : '');
   const day = P.week.find(d => d.d === aptDay) || P.week.find(d => d.today) || P.week[0];
   setText('#wkL', P.weekLabel);
-  setHTML('#wkNav', `<div class="seg2 csnav"><button class="rbtn ol" data-aw="-1" aria-label="The week before">‹</button><button class="rbtn${P.isNow ? '' : ' ol'}" data-aw="0">${P.isNow ? 'THIS WEEK' : 'TO NOW'}</button><button class="rbtn ol" data-aw="1" aria-label="The week after">›</button></div>`);
+  setHTML('#wkNav', `<div class="seg2 csnav"><button class="rbtn ol" data-aw="-1" aria-label="The week before">‹</button><button class="rbtn${P.isNow ? '' : ' ol'}" data-aw="0">${P.isNow ? 'THIS WEEK' : 'TO NOW'}</button><button class="rbtn ol" data-aw="1" aria-label="The week after">›</button><button class="rbtn ol" data-hud="plan" data-pd="${day.d}">PLAN BOARD</button></div>`);
   setHTML('#wkRows', P.week.map(d => `<button class="wk${d.today ? ' today' : ''}${d === day ? ' sel' : ''}" data-day="${d.d}" aria-pressed="${d === day}" aria-label="${d.long}: ${d.left} open"><b>${d.dow}</b><span>${d.day}</span><div>${d.note}</div><em>${d.total ? `${d.total - d.left}/${d.total}` : '-'}</em></button>`).join(''));
   const ss = day.sess; setHTML('#wkSess', ss.s === 'REST' ? '' : `<button class="wks" style="--c:${ss.c}" data-gogym="${day.d}" aria-label="${ss.name}${ss.done ? ', done' : ''}. Open it in the gym."><b>${ss.s === 'HIIT' ? 'HIIT' : ss.s}</b><div><strong>${ss.name}${ss.done ? ' ✓' : ''}</strong><small>${(ss.prog && P.isNow ? ss.prog + ' / ' : '') + ss.sub.toUpperCase()}</small></div><em>GYM ›</em></button>`);
   if (!typing('#wkDay')) setRows('#wkDay', day.tasks.length ? aptSort(day.tasks).map(t => taskRow(t, true)).join('') : noneRow(`Nothing on ${day.long}.`));
@@ -7655,6 +7769,7 @@ function rig() {
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
     figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
     hour(h) { HOUR = h; return figSpot(); },
+    plan(on, day) { if (on) planOpen(day || null); else if (on === false) planClose(true); return { on: PL.on, day: PL.day, wk: PL.wk, open: aptOpen }; },
     fit(c) { if (c === undefined) return FIG_FIT.value.toArray(); if (c) FIG_FIT.value.set(c[0], c[1], c[2], 1); else FIG_FIT.value.set(0, 0, 0, 0); return 1; },
     holo: () => { holoTick(); const el = $('#holo'); return HO ? { k: HO.k, ctx: HO.ctx, on: el.classList.contains('on'), mini: el.classList.contains('hsm'), say: $('#hoSay').textContent, big: $('#hoBig').textContent, info: $('#hoInfo').textContent, face: !!FACE, r: el.getBoundingClientRect().toJSON() } : null; },
     hv: () => JSON.parse(JSON.stringify(HV)),
