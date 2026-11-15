@@ -36,8 +36,24 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
    - **Where she is** (`figSpot`): on the clock by day, `work` (tablet, or her phone at the glass); 11 pm `late` (in bed
      on her phone); after midnight `sleep` (asleep, no phone). The door is behind the resting camera, so "waiting at the
      door" became waiting with her tablet. Test hook `City._.work(on)`. Test t74.
-3. **M3 Everywhere.** A small holo call of her in the gym (rest countdown), the castle (keeps the study clock), the
-   shop (clock-in). "Tell Mira": plain words become a note or a task.
+3. **M3 Everywhere (built p27, 2026-11-14).**
+   - **Her holo call** (`#holo`, `holoTick` in city.js, every 0.5 s): a small cyan call of her above the room's panel.
+     - **Gym:** a rest starts, she's on the call counting it (+30S, STOP); the first rest of a visit in her voice. It runs
+       out: "Up. Next set." in her voice; stopped early, she hangs up quietly.
+     - **Castle:** once a day, with the clock off, she asks to keep the time (START). Starting it, each whole hour, and
+       stopping it (a minute or more), in her voice; between, small (her face and the clock). Tap small to open it.
+     - **Shop:** by day (6 am to 9 pm), off the clock with nothing logged today, she asks once a day (CLOCK IN).
+       Clocking in: "Have a good shift" with the time. Clocking out is M2's "come home".
+     - × hangs up until the next thing happens. The app owns the timers; the call only watches them.
+   - **Her face** (`faceGrab`): right after a frame, close up and settled, her head and shoulders into a 120x150 JPEG,
+     kept in `localStorage.daybook_mface` (this device only, never synced or uploaded). Before he has seen her close
+     up, the call shows MK.
+   - **Tell Mira** (`APP.tell` in index.html; TELL in her close-up and on the call): plain words become a note when he
+     says so ("note", "remember that", "idea", "write down") or it reads like a thought (over 12 words or several
+     sentences, no day or tag), else a task through the quick-add parser (days, #tags, course codes, shifts, jobs).
+     "Remind me to", "I need to" and the like drop out of the title. She answers (`tell.task`, `tell.note`,
+     `tell.huh`) with what was made as info.
+   - Test hooks `City._.holo()`, `hv()`, `face()`, `faceClear()`, `tell(w, text)`. Test t75.
 4. **M4 Closeness.** LINK only grows (streaks, finished lists, sessions, study). Levels unlock poses, outfits,
    apartment things and evening spots. Outfits need new models (his call on how).
 5. **V Voice (built p25, 2026-11-14).** His picks: an ElevenLabs library voice (`mDxkcO3nsRCNeB4si9qg`; he turned down

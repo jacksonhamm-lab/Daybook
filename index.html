@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="sound.js?v=p19"></script>
-<script src="mira.js?v=p26"></script>
+<script src="mira.js?v=p27"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -27,9 +27,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p26';
+  window.DAYBOOK_BUILD = 'p27';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p26'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p27'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -37,7 +37,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p26').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p27').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -1558,8 +1558,8 @@ window.CityApp = {
   toast: (msg, o) => island.toast(msg, o),
   clockIn() { haptic(15); sfx('in'); withUndo('Clocked in', clockInNow); },
   clock() {
-    const c = S.clock; if (!c) { const sh = S.shifts[today()], h = shiftHours(sh); return { on: false, brk: false, ms: 0, status: h ? `Not clocked in. Logged today ${t12(sh.start)} to ${t12(sh.end)}.` : 'Not clocked in.' }; }
-    return { on: true, brk: !!c.breakTs, ms: clockElapsed(), status: c.breakTs ? 'On break.' : `In since ${t12(hm(new Date(c.startTs)))}.` };
+    const c = S.clock; if (!c) { const sh = S.shifts[today()], h = shiftHours(sh); return { on: false, brk: false, ms: 0, logged: !!h, status: h ? `Not clocked in. Logged today ${t12(sh.start)} to ${t12(sh.end)}.` : 'Not clocked in.' }; }
+    return { on: true, brk: !!c.breakTs, ms: clockElapsed(), since: t12(hm(new Date(c.startTs))), status: c.breakTs ? 'On break.' : `In since ${t12(hm(new Date(c.startTs)))}.` };
   },
   home() {
     const A = attributes(), attrs = {}, plain = h => String(h).replace(/<[^>]+>/g, '').toUpperCase();
@@ -1816,6 +1816,26 @@ window.CityApp = {
   // quick add: what it would do, then do it. A plain task goes to today rather than opening the compose sheet
   quickSay(v) { const r = String(v || '').trim() ? parseQuick(v) : null, d = describe(r); return d ? { kind: r.kind || 'task', title: esc(d.title), chips: d.chips.map(c => esc(c)) } : null; },
   quick(v) { const r = String(v || '').trim() ? parseQuick(v) : null; return r ? !!applyQuick(r) : false; },
+  // Tell Mira (docs/MIRA.md M3): his plain words become a task or a note, and she answers (a voiced line; what was made as
+  // info). A note when he says so ("note", "remember that", "idea", "write down") or when it reads like a thought (long, or
+  // several sentences, with no day or tag); anything else is a task through the quick-add parser (days, #tags, course
+  // codes, shifts, "applied to" jobs all work). "Remind me to", "I need to" and the like are dropped from the title
+  tell(v) {
+    if (!window.Mira) return null;
+    let s = String(v || '').replace(/\s+/g, ' ').trim(), m, note = false;
+    const ans = (k, info) => { const l = Mira.line(k, today() + '|' + Date.now()); return { kind: k.slice(5), id: l.id, say: l.say, info: info || '' }; };
+    const cap = x => x ? x[0].toUpperCase() + x.slice(1) : x;
+    if ((m = s.match(/^(?:note(?: to self)?|remember that|idea|(?:write|jot) (?:this |that |it )?down)\b\s*[:,.-]?\s*(.*)$/i))) { note = true; s = m[1]; }
+    else if ((m = s.match(/^(?:(?:can you |could you |please )*remind me(?: to| about)?|i (?:need|have|got) to|i should|i must|don'?t let me forget(?: to)?|remember to|to ?do\s*:?|add)(?:\s+(.*)|$)/i))) s = m[1] || '';
+    else if (s) { const r = parseQuick(s); note = !(r && (r.dateSet || r.repeat || r.tagged || r.kind !== 'task')) && (s.split(' ').length > 12 || /[.!?]\s+\S/.test(s)); }
+    s = s.trim(); if (!s) return ans('tell.huh');
+    if (note) {
+      const now = Date.now(), n = { id: uid(), text: cap(s), cat: null, pin: false, created: now, edited: now }; S.notes.unshift(n); haptic(); commit();
+      island.toast('Note saved', { icon: I.notes, color: '#bf5af2' }); return ans('tell.note', noteTitle(n).toUpperCase());
+    }
+    const r = parseQuick(cap(s)), d = describe(r); if (!r || !d || !applyQuick(r)) return ans('tell.huh');
+    return ans('tell.task', [d.title, ...d.chips].join(' · ').toUpperCase());
+  },
   jobs() {
     return { statuses: Object.entries(STATUSES), list: [...S.jobs].sort((a, b) => (b.created || 0) - (a.created || 0)).map(j => ({ id: esc(j.id), company: esc(j.company), role: esc(j.role || ''), link: /^https?:\/\//i.test(j.link || '') ? esc(j.link) : '', status: j.status, c: STATUSES[j.status] || '#8e8e93', date: j.date ? short(j.date).toUpperCase() : '' })) };
   },

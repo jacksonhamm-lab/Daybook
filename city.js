@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p26';
+export const BUILD = 'p27';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -524,6 +524,41 @@ label.rbtn{cursor:pointer}
 .mline .mdot{position:absolute;right:9px;bottom:7px;font:10px/1 var(--micro);color:var(--hud-redd)}
 .macts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .macts .rbtn{min-height:40px}
+.macts[hidden]{display:none}
+/* Tell Mira: one line, plain words */
+.mtell:not([hidden]){display:flex;gap:6px;margin-top:8px}
+.mtell input{flex:1;min-width:0;min-height:40px;padding:0 10px;font:16px/1.2 var(--body);color:var(--hud-text);background:rgba(10,9,13,.7);border:1px solid var(--hud-cyan-line);border-radius:0;outline:none}
+.mtell input:focus{border-color:var(--hud-cyan);box-shadow:0 0 0 1px var(--hud-cyan) inset}
+.mtell .rbtn{min-height:40px}
+/* her holo call: a small call of her above the room's panel (placed by holoPos), cyan like a projection; mini is just
+   her face and the clock she's keeping */
+#holo{position:absolute;left:10px;bottom:200px;width:calc(100% - 20px);max-width:320px;z-index:4;display:flex;gap:10px;align-items:flex-start;padding:9px 10px 10px 9px;background:rgba(5,14,19,.86);box-shadow:inset 0 0 0 1px var(--hud-cyan-line),0 0 22px rgba(90,228,236,.12);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s,transform .25s,visibility 0s .25s}
+#holo.on{opacity:1;visibility:visible;transform:none;transition:opacity .3s,transform .3s}
+#holo::before{content:'';position:absolute;left:-1px;top:-1px;width:9px;height:9px;border-left:2px solid var(--hud-cyan);border-top:2px solid var(--hud-cyan)}
+.hof{position:relative;flex:none;width:60px;height:75px;overflow:hidden;background:radial-gradient(circle at 50% 38%,rgba(90,228,236,.3),rgba(90,228,236,.05) 70%);box-shadow:inset 0 0 0 1px var(--hud-cyan-line);cursor:pointer}
+.hof img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) sepia(1) hue-rotate(140deg) saturate(2.6) brightness(1.08) contrast(1.1);opacity:.92}
+#holo.on .hof img{animation:hofl 5s steps(1) infinite}
+.hof::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.34) 0 1px,transparent 1px 3px);pointer-events:none}
+#holo.nof .hof::before{content:'MK';position:absolute;inset:0;display:grid;place-items:center;font:800 20px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-cyan);text-shadow:0 0 8px var(--hud-cyan)}
+.hov{position:absolute;left:6px;right:6px;bottom:4px;height:11px;z-index:1;background:repeating-linear-gradient(90deg,var(--hud-cyan) 0 2px,transparent 2px 4px);transform-origin:bottom;transform:scaleY(.18);opacity:.85}
+#holo.talk .hov{animation:hov .16s steps(3) 16 alternate}
+@keyframes hov{to{transform:scaleY(1)}}
+@keyframes hofl{0%{opacity:.92}46%{opacity:.62}47%{opacity:.92}81%{opacity:.8}82%{opacity:.92}}
+.hob{flex:1;min-width:0}
+.hoh{display:flex;align-items:center;min-height:18px}
+.hoh .mwho{color:var(--hud-cyan)}
+.hoh .hon{margin-left:8px;font-size:10px}
+.hox{margin-left:auto;width:36px;height:30px;margin-top:-6px;margin-right:-6px;font:400 22px/1 var(--hud-font);color:var(--hud-text3);background:none;border:0}
+#hoSay{margin:5px 0 0;font:600 15px/1.36 var(--body);color:var(--hud-text)}
+.hobig{margin-top:4px;font:700 26px/1 var(--micro);letter-spacing:.04em;color:var(--hud-cyan);text-shadow:0 0 10px rgba(90,228,236,.45)}
+.hobig:empty{display:none}
+#hoInfo{display:block;margin-top:5px;font:12px/1.4 var(--micro);color:var(--hud-cyan);letter-spacing:.04em;overflow-wrap:anywhere}
+#hoInfo:empty,#hoActs:empty{display:none}
+#holo.hsm{width:auto;padding:6px 10px 6px 6px;align-items:center;cursor:pointer}
+#holo.hsm .hof{width:40px;height:50px}
+#holo.hsm #hoSay,#holo.hsm #hoInfo,#holo.hsm #hoActs,#holo.hsm .mtell,#holo.hsm .hox{display:none}
+#holo.hsm .hobig{margin-top:3px;font-size:20px}
+@media (prefers-reduced-motion:reduce){#holo.on .hof img,#holo.talk .hov{animation:none}}
 .mtask{margin-top:6px;max-height:34vh;overflow:auto}
 .mrow{padding:7px 0;border-top:1px solid var(--hud-hair)}
 .mcall{margin:4px 0 10px;padding:8px 10px 9px;border-left:2px solid var(--hud-red);background:rgba(255,70,70,.07)}
@@ -690,7 +725,7 @@ const MARKUP = `
     <div class="in">
       <div class="dhead"><b>MIRA KADE</b><span class="hon"><i></i>ONLINE</span><div class="sq" id="sqH"></div></div>
       <div class="tickr"></div>
-      <div class="mtalk" id="mTalk"><div class="mline" id="mLine" role="button" tabindex="0" aria-label="Next"><b class="mwho">MIRA</b><p id="mSay" aria-live="polite"></p><small id="mInfo"></small><span class="mdot" id="mDot"></span></div><div class="mtask" id="mTasks"></div><div class="macts" id="mActs"></div></div>
+      <div class="mtalk" id="mTalk"><div class="mline" id="mLine" role="button" tabindex="0" aria-label="Next"><b class="mwho">MIRA</b><p id="mSay" aria-live="polite"></p><small id="mInfo"></small><span class="mdot" id="mDot"></span></div><div class="mtask" id="mTasks"></div><div class="macts" id="mActs"></div><form class="mtell" id="mTell" data-tell="m" hidden><input name="t" type="text" enterkeyhint="send" autocomplete="off" maxlength="300" placeholder="Remind me to call the bank tomorrow" aria-label="Tell Mira"><button class="rbtn">TELL</button></form></div>
       <div class="hbody">
         <div class="mi">RESIDENT // FL 88 // AGE 27</div>
         <div class="hrow"><div class="pl" id="hPose">HELLO</div><div class="conn" aria-hidden="true"><i></i><b></b></div><span class="mi" id="hPoseN">POSE 01/05</span></div>
@@ -698,6 +733,15 @@ const MARKUP = `
         <div class="rw"><span>LINK</span><div class="bar c" id="bH2"></div><em id="vH2">0</em></div>
         <div class="mi hlike">LIKES // RAIN ON GLASS / LATE RAMEN / A FINISHED LIST</div>
       </div>
+    </div>
+  </section>
+  <section class="pe" id="holo" aria-label="Mira on a holo call" aria-hidden="true" inert>
+    <div class="hof" id="hoF" role="button" tabindex="0" aria-label="Mira"><img id="hoImg" alt="" hidden><i class="hov" aria-hidden="true"></i></div>
+    <div class="hob">
+      <div class="hoh"><b class="mwho">MIRA // HOLO</b><span class="hon"><i></i>LIVE</span><button class="hox" data-hox="1" aria-label="Hang up">×</button></div>
+      <p id="hoSay" aria-live="polite"></p><div class="hobig" id="hoBig"></div><small id="hoInfo"></small>
+      <div class="macts" id="hoActs"></div>
+      <form class="mtell" id="hoTell" data-tell="h" hidden><input name="t" type="text" enterkeyhint="send" autocomplete="off" maxlength="300" placeholder="Remind me to call the bank tomorrow" aria-label="Tell Mira"><button class="rbtn">TELL</button></form>
     </div>
   </section>
   <section class="dbox frame" id="gymBox" data-m="room" data-r="gym" aria-label="Today's session">
@@ -6384,6 +6428,7 @@ function drawScene(t) {
   u.uGlitch.value = Math.max(0, 1 - (t - S.glitchT) / .42); u.uScan.value = clamp((t - S.scanT) / 1.1, 0, 1);
   renderer.setRenderTarget(RT.ldr); renderer.render(MAT.post.s, fsCam);
   const a = MAT.aa.m.uniforms; a.t.value = RT.ldr.texture; a.uGrain.value = Q.grain; renderer.setRenderTarget(null); renderer.render(MAT.aa.s, fsCam);
+  faceGrab();
 }
 const _wr = new THREE.Vector3(), _rm = new THREE.Matrix4(), _mc = new THREE.PerspectiveCamera(); _mc.matrixWorldAutoUpdate = false;
 /* a room can show the street from somewhere better than where it stands: the same camera, carried rigidly from his resting place to def.view.eye */
@@ -6657,7 +6702,8 @@ function hudInit() {
   $('#btnClock').addEventListener('click', tapClock);
   $('#btnAptSheet').addEventListener('click', () => openSheet('cToday'));
   $('#mTalk').addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-mnext],[data-mbye],[data-mgo],[data-mk],[data-mdo],#mLine'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-mnext],[data-mbye],[data-mgo],[data-mk],[data-mdo],[data-mtell],#mLine'); if (!b) return; const d = b.dataset;
+    if (d.mtell) { tellOpen('m'); return; }
     if (d.mdo) { if (!MT || MT.acted[d.id]) return; if (APP.miraDo(d.mdo, d.id, d.d)) { MT.acted[d.id] = d.mdo; if (d.mdo === 'done') MT.res.done++; else if (d.mdo === 'tomorrow') MT.res.moved++; miraTasks(MT.steps[MT.i]); const n = ROOT.querySelector('#mTasks [data-mdo]'); if (n) n.focus({ preventScroll: true }); } return; }
     if (d.mnext !== undefined || b.id === 'mLine') { if (MT) miraNext(); else miraStart('brief'); return; }
     if (d.mbye) { miraIdle(); APP.sfx('back'); return; }
@@ -6665,6 +6711,17 @@ function hudInit() {
     if (d.mk) miraStart(d.mk);
   });
   $('#mLine').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#mLine').click(); } });
+  $('#holo').addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-hox],[data-ho],[data-hotell],#hoF'); if (!b) return; const d = b.dataset;
+    if (d.hox) { HV.hung = true; if (APP.sayStop) APP.sayStop(); holoHide(); APP.sfx('hangup'); return; }
+    if (d.hotell) { tellOpen('h'); return; }
+    if (d.ho === 'in') { APP.clockIn(); return; }
+    if (d.ho === 'study') { APP.schoolDo('start', csCourse); return; }
+    if (d.ho === 'stop') { APP.schoolDo('stop'); return; }
+    if (b.id === 'hoF' && HO && $('#holo').classList.contains('hsm')) { $('#holo').classList.remove('hsm'); HO.until = Date.now() + 8000; HO.then = 'mini'; APP.sfx('press'); }
+  });
+  $('#hoF').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#hoF').click(); } });
+  ROOT.addEventListener('submit', e => { const f = e.target.closest && e.target.closest('[data-tell]'); if (!f) return; e.preventDefault(); tellSend(f); });
   /* the apartment's rows: the tick flips at once, and refreshApt keeps every row where it was until he leaves */
   hudEl.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-tick],[data-task],[data-dec],[data-day]'); if (!b) return;
@@ -6758,7 +6815,7 @@ function herPose() {
 }
 /* ---------- Mira talks (docs/MIRA.md). mira.js writes the lines from APP.mira(); one step at a time, typed out ---------- */
 let MT = null, miraLast = 0, MIRA_AT = {};
-const mOut = h => setHTML('#mActs', h);
+const mOut = h => { setHTML('#mActs', h); $('#mActs').hidden = false; $('#mTell').hidden = true; };
 function miraStart(kind) {
   if (!window.Mira || !APP.mira) return;
   let c; try { c = APP.mira(MIRA_AT); } catch (e) { APP.log(e); return; }
@@ -6769,14 +6826,14 @@ function miraStart(kind) {
   MT = { kind: k, c, steps: Mira.talk(k, c, again), i: 0, res: { done: 0, moved: 0, left: 0 }, acted: {}, tt: 0 };
   hudEl.classList.add('talk'); if (APP.sayPre) APP.sayPre(MT.steps.map(x => x.say ? x.id : '')); miraShow();
 }
-function miraStop() { if (MT) clearInterval(MT.tt); MT = null; hudEl.classList.remove('talk'); if (APP.sayStop) APP.sayStop(); }
+function miraStop() { if (MT) clearInterval(MT.tt); MT = null; $('#mTell').hidden = true; $('#mActs').hidden = false; hudEl.classList.remove('talk'); if (APP.sayStop) APP.sayStop(); }
 /* the moment's other talks, at the end of one */
 function miraMore() {
   const c = MT ? MT.c : APP.mira(MIRA_AT), b = [];
   if (!MT || MT.kind !== 'brief') b.push(['brief', 'MY DAY']);
   if ((c.hour >= 17 || c.hour < 5) && (!MT || MT.kind === 'brief')) b.push(['checkin', 'CHECK IN']);
   if (c.dow === 6 && (!MT || MT.kind !== 'review')) b.push(['review', 'MY WEEK']);
-  return b.map(([k, l]) => `<button class="rbtn ol" data-mk="${k}">${l}</button>`).join('');
+  return b.map(([k, l]) => `<button class="rbtn ol" data-mk="${k}">${l}</button>`).join('') + '<button class="rbtn ol" data-mtell="1">TELL</button>';
 }
 function miraType(text) {
   const p = $('#mSay'); clearInterval(MT.tt);
@@ -6815,6 +6872,109 @@ function miraCall() {
   const info = n === 1 ? `${P.decide[0].title} · WAS ${P.decide[0].was}`.toUpperCase() : n ? `${n} WAITING` : '';
   setHTML('#dcCall', `<div class="mcall"><b class="mwho">MIRA // ON THE LINE</b><p>${ln.say}</p>${info ? `<small>${info}</small>` : ''}</div>`);
   setTimeout(() => { if (S.sheet && curCard === 'cDecide' && APP.say) APP.say(ln.id); }, 650);   // after the pickup sound
+}
+/* ---------- her holo call (docs/MIRA.md M3): a small call of her in the gym (she counts the rest), the castle (she keeps
+   the study clock) and the shop (clocking in), above the room's panel. Her face is a still caught from her close-up in the
+   apartment, kept on this device only. The app owns the timers; she watches them here ---------- */
+let FACE = null; try { FACE = localStorage.getItem('daybook_mface'); } catch (e) {}
+let faceAt = 0, faceDone = false; const _fv = new THREE.Vector3();
+/* right after a frame is drawn: close up, settled, once per close-up, her head and shoulders into a small JPEG */
+function faceGrab() {
+  if (!S.close) { faceAt = 0; faceDone = false; return; }
+  if (faceDone || !FIG || !FIG.root.visible || FIG.go || (S.closeK || 0) < .98) return;
+  if (!faceAt) { faceAt = S.t; return; } if (S.t - faceAt < 1.6) return; faceDone = true;
+  try {
+    const hb = FIG.headB || (FIG.headB = FIG.bones.find(b => /^c?head$/.test(b.name.toLowerCase().replace(/mixamorig\d*:?|j_bip_|[\s._:-]/g, '')))); if (!hb) return;
+    hb.getWorldPosition(_fv); const q = project([_fv.x, _fv.y + .035, _fv.z]), u = project([_fv.x, _fv.y + .135, _fv.z]), m = Math.hypot(u.x - q.x, u.y - q.y) / .1;
+    const cv = renderer.domElement, k = cv.width / innerWidth, w = .32 * m * k, h = .4 * m * k, x = q.x * k - w / 2, y = (q.y - .24 * m) * k;   // head and shoulders, 4:5
+    if (!q.on || w < 40 || x < 0 || y < 0 || x + w > cv.width || y + h > cv.height) return;
+    const c = document.createElement('canvas'); c.width = 120; c.height = 150; c.getContext('2d').drawImage(cv, x, y, w, h, 0, 0, 120, 150);
+    FACE = c.toDataURL('image/jpeg', .82); try { localStorage.setItem('daybook_mface', FACE); } catch (e) {}
+    holoFace();
+  } catch (e) { APP.log(e); }
+}
+let HO = null;   // what the call shows: { k, ctx: rest|study|shop|tell, until, then: hide|mini }
+const HV = { room: '', day: '', at: 0, entered: false, asked: {}, hung: false, restSaid: false, rest: 0, study: null, studyH: 0, clock: null };
+const HO_TELL = '<button class="rbtn ol" data-hotell="1">TELL</button>';
+const mmss = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+function holoFace() { const i = $('#hoImg'); if (FACE) { if (i.getAttribute('src') !== FACE) i.src = FACE; i.hidden = false; } else i.hidden = true; $('#holo').classList.toggle('nof', !FACE); }
+function holoPos() {
+  const el = $('#holo'), p = room.def && $(room.def.panel); if (!p) return; const r = p.getBoundingClientRect(); if (!r.height) return;
+  const L = Math.round(r.left) + 'px', B = Math.round(innerHeight - r.top + 8) + 'px', W = Math.min(320, Math.round(r.width)) + 'px';
+  if (el.style.left !== L) el.style.left = L; if (el.style.bottom !== B) el.style.bottom = B; if (el.style.maxWidth !== W) el.style.maxWidth = W;
+}
+/* her on the call: a line (say, voiced; no data in it), what it's about (info, big), buttons. ms: then she hangs up, or goes small */
+function holoLine(ln, o = {}) {
+  HO = { k: ln.id.replace(/\.\d+$/, ''), ctx: o.ctx || '', until: o.ms ? Date.now() + o.ms : 0, then: o.then || 'hide' };
+  HV.log = [...(HV.log || []), HO.k].slice(-12);   // what she said on the call, for tests
+  const el = $('#holo'); holoFace(); holoPos();
+  setText('#hoSay', ln.say); setText('#hoInfo', o.info || ''); setText('#hoBig', o.big || ''); setHTML('#hoActs', (o.acts || '') + HO_TELL);
+  $('#hoTell').hidden = true; $('#hoActs').hidden = false; el.classList.toggle('hsm', !!o.mini); el.classList.add('on'); el.setAttribute('aria-hidden', 'false'); el.inert = false;
+  if (o.voice !== false) { el.classList.remove('talk'); void el.offsetWidth; el.classList.add('talk'); if (!(APP.say && APP.say(ln.id))) APP.sfx('tick'); }
+  return ln;
+}
+const holoSay = (k, o = {}) => window.Mira && holoLine(Mira.line(k, new Date().toDateString() + '|' + (o.seed != null ? o.seed : '')), o);
+function holoHide() { HO = null; const el = $('#holo'); el.classList.remove('on', 'hsm', 'talk'); el.setAttribute('aria-hidden', 'true'); el.inert = true; $('#hoTell').hidden = true; }
+function holoMini() { if (!HO) return; HO.until = 0; if ($('#hoBig').textContent) $('#holo').classList.add('hsm'); else holoHide(); }
+function holoTick() {
+  const el = $('#holo'); if (!el) return;
+  if (!(S.mode === 'room' && !S.close && ['gym', 'castle', 'shop'].includes(room.id))) { if (HO) holoHide(); HV.room = ''; return; }
+  const now = Date.now(), day = new Date().toDateString(); if (HV.day !== day) { HV.day = day; HV.asked = {}; }
+  const id = room.id, sc = id === 'castle' ? APP.school() : null, ck = id === 'shop' ? APP.clock() : null;
+  /* a new visit: what's running now is where she starts from */
+  if (HV.room !== id) {
+    if (HO) holoHide(); Object.assign(HV, { room: id, at: now, entered: false, hung: false, restSaid: false, rest: 0, study: null, studyH: 0, clock: ck ? ck.on : null });
+    if (sc && sc.clock.on) { HV.study = sc.clock.ms; HV.studyH = Math.floor(sc.clock.ms / 36e5); }
+  }
+  if (HO && HO.until && now > HO.until) { if (HO.then === 'mini') holoMini(); else holoHide(); }
+  if (HO) holoPos();
+  const typing = !$('#hoTell').hidden;
+  if (id === 'gym') {
+    /* the rest timer: she counts it with him; it runs out and she says go. The first rest of a visit in her voice */
+    const ms = APP.restLeft(), was = HV.rest; HV.rest = ms;
+    if (ms > 0) {
+      if (!was) HV.hung = false;
+      if ((!HO || HO.ctx === 'rest-up') && !HV.hung) { holoSay('holo.rest', { ctx: 'rest', big: mmss(ms), acts: '<button class="rbtn ol" data-act="rest-add">+30S</button><button class="rbtn ol" data-act="rest-skip">STOP</button>', voice: !HV.restSaid, seed: now }); HV.restSaid = true; }
+      if (HO && HO.ctx === 'rest') setText('#hoBig', mmss(ms));
+    } else if (was > 0) {
+      if (was <= 1600 && !HV.hung && !typing) holoSay('holo.rest.up', { ctx: 'rest-up', ms: 4500, seed: now });   // ran out: her, after the chime
+      else if (HO && HO.ctx === 'rest') holoHide();                                                                 // stopped early: she hangs up
+    }
+  } else if (id === 'castle') {
+    /* the study clock: she keeps it. Starting it, each hour, and stopping it, in her voice; between, small with the time */
+    const on = sc.clock.on, ms = sc.clock.ms, was = HV.study; HV.study = on ? ms : null;
+    const acts = '<button class="rbtn ol" data-ho="stop">STOP</button>', info = sc.clock.label ? sc.clock.label.toUpperCase() : '';
+    if (!HV.entered) {
+      if (now - HV.at > 1400) {
+        HV.entered = true;
+        if (on) holoSay('holo.study.on', { ctx: 'study', big: hms(ms), info, acts, ms: 6000, then: 'mini' });
+        else if (sc.set && !HV.asked.study && !typing) { HV.asked.study = 1; holoSay('holo.study.ask', { ctx: 'ask', ms: 12000, acts: '<button class="rbtn" data-ho="study">START</button><button class="rbtn ol" data-hox="1">LATER</button>' }); }
+      }
+    } else if (on && was == null) { HV.hung = false; HV.studyH = 0; holoSay('holo.study.start', { ctx: 'study', big: hms(ms), info, acts, ms: 6000, then: 'mini' }); }
+    else if (on && Math.floor(ms / 36e5) > HV.studyH) { HV.studyH = Math.floor(ms / 36e5); if (!typing) holoSay('holo.study.hour', { ctx: 'study', big: hms(ms), info, acts, ms: 6000, then: 'mini', seed: HV.studyH }); }
+    else if (!on && was != null) { if (was >= 60e3 && !typing) holoSay('holo.study.done', { ctx: 'study-done', info: hms(was) + ' STUDIED', ms: 5000 }); else if (HO && HO.ctx === 'study') holoHide(); }
+    if (on && !HO && !HV.hung && HV.entered) holoSay('holo.study.on', { ctx: 'study', big: hms(ms), info, acts, mini: true, voice: false });
+    if (on && HO && HO.ctx === 'study') setText('#hoBig', hms(ms));
+  } else if (id === 'shop') {
+    /* clocking in: by day, nothing logged yet, she asks once; when he clocks in, she says have a good one */
+    const was = HV.clock; HV.clock = ck.on; const h = HOUR != null ? HOUR : new Date().getHours();
+    if (!HV.entered) {
+      if (now - HV.at > 1400) { HV.entered = true; if (!ck.on && !ck.logged && h >= 6 && h < 21 && !HV.asked.shop && !typing) { HV.asked.shop = 1; holoSay('holo.shop.ask', { ctx: 'ask', ms: 12000, acts: '<button class="rbtn" data-ho="in">CLOCK IN</button><button class="rbtn ol" data-hox="1">LATER</button>' }); } }
+    } else if (ck.on && !was) holoSay('holo.shop.in', { ctx: 'shop', info: ck.since ? 'IN ' + ck.since.toUpperCase() : '', ms: 6000 });
+  }
+}
+/* Tell Mira: in her close-up (m) and on the call (h). Plain words; index.html decides task or note and does it */
+function tellOpen(w) {
+  const f = $(w === 'm' ? '#mTell' : '#hoTell'); f.hidden = false; $(w === 'm' ? '#mActs' : '#hoActs').hidden = true; /* the input in place of the buttons */ const i = f.querySelector('input'); i.value = '';
+  if (w === 'h' && HO) { HO.until = 0; $('#holo').classList.remove('hsm'); }
+  try { i.focus({ preventScroll: true }); } catch (e) { i.focus(); } APP.sfx('press');
+}
+function tellSend(f) {
+  const i = f.querySelector('input'), v = i.value.trim(); if (!v) { i.focus(); return null; }
+  const r = APP.tell ? APP.tell(v) : null; i.value = ''; i.blur(); f.hidden = true; if (!r) return null;
+  if (f.dataset.tell === 'm') { miraIdle(r.say); setText('#mInfo', r.info); if (!(APP.say && APP.say(r.id))) APP.sfx('tick'); }
+  else holoLine(r, { ctx: 'tell', info: r.info, ms: 6000 });
+  return r;
 }
 function miraGo(to) {
   const [id, card] = to.split('|'); miraStop();
@@ -7180,6 +7340,7 @@ function ambTick() {
   APP.ambWant(place, w.snow > .3 ? 'snow' : w.rain >= .75 ? 'downpour' : w.rain > .2 ? 'rain' : 'clear', SKY.wind);
 }
 setInterval(() => { try { ambTick(); } catch (e) { APP.log(e); } }, 1000);
+setInterval(() => { try { holoTick(); } catch (e) { APP.log(e); } }, 500);
 setInterval(() => { if (room.id !== 'castle' || S.mode === 'city') return; const T = APP.school(); if (!T.clock.on) return; setText('#csClk', hms(T.clock.ms)); setText('#vS3', hms(T.clock.ms)); if (room.sand && (S.sandT = (S.sandT || 0) + 1) % 3 === 0) room.sand(T); }, 1000);
 function castleInit() {
   $('#btnScSheet').addEventListener('click', () => openSheet('cDue'));
@@ -7378,6 +7539,10 @@ function rig() {
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
     figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
     hour(h) { HOUR = h; return figSpot(); },
+    holo: () => { holoTick(); const el = $('#holo'); return HO ? { k: HO.k, ctx: HO.ctx, on: el.classList.contains('on'), mini: el.classList.contains('hsm'), say: $('#hoSay').textContent, big: $('#hoBig').textContent, info: $('#hoInfo').textContent, face: !!FACE, r: el.getBoundingClientRect().toJSON() } : null; },
+    hv: () => JSON.parse(JSON.stringify(HV)),
+    face: () => !!FACE, faceClear() { FACE = null; faceDone = false; try { localStorage.removeItem('daybook_mface'); } catch (e) {} },
+    tell(w, v) { tellOpen(w); const f = $(w === 'm' ? '#mTell' : '#hoTell'); f.querySelector('input').value = v; return tellSend(f); },
     work(on) { FIG_WORK = on == null ? null : !!on; return figSpot(); },
     /* the sky by name ('dusk,snow') or as numbers; null goes back to the real one (in the rig: the painted night) */
     umb: () => city.umb ? city.umb.map(p => p.wet.visible && !p.dry.visible) : null, lampK: () => room.lampK, pq: () => ({ ...PM, weakGpu: WEAK, bloom: Q.bloom, refl: Q.refl, scale: Q.scale, w: renderer.domElement.width }),
