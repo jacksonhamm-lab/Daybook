@@ -421,16 +421,20 @@ return { N, NEON, CUES, SIG, S, cfg, LEAD, OAC, db, todb, kq, filt, loud, play, 
 })();
 /* === end neon-sound === */
 
-/* === ambience v1 === */
-// Arcadia's background ambience: one quiet bed per place, shaped by the weather. All synthesised; nothing sampled or copied.
+/* === ambience v2 === */
+// Arcadia's background ambience: each place has a low, dark bed shaped by the weather, and over it the things that make
+// it that place, far off and now and then: horns, a siren, a train, air traffic, voices, a door chime, hangers, plates, a
+// a bell, wood creaking, birds by day, an owl at night. All synthesised; nothing sampled or copied.
 // It plays through the cue engine's master (volume and ceiling), keeps the engine awake while it plays, ducks 6 dB under
-// every cue, and stops when the page is hidden or sound is turned off. Each place and weather is measured offline and
-// set to one quiet level (LOW -42 LUFS, MEDIUM -36; rain +1, downpour +2.5), so switching never jumps.
+// every cue, and stops when the page is hidden or sound is turned off. Each place and weather is measured offline (the bed
+// and its steady sounds; the now-and-then ones sit over it, each checked on its own) and set to one quiet level
+// (LOW -42 LUFS, MEDIUM -36; rain +1, downpour +2.5), so switching never jumps.
 const AmbSound = (() => {
 const NS = NeonSound, SR = 48000, db = d => Math.pow(10, d / 20), todb = v => v > 0 ? 20 * Math.log10(v) : -200;
 function rng(s) { let a = (s * 2654435761) >>> 0 || 1; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const G = (c, v) => { const g = c.createGain(); g.gain.value = v; return g; };
 const F = (c, type, f, q) => { const b = c.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q != null) b.Q.value = q; return b; };
+const T = (c, type, f) => { const o = c.createOscillator(); o.type = type; o.frequency.value = f; return o; };
 const chain = (...n) => { for (let i = 0; i < n.length - 1; i++) n[i].connect(n[i + 1]); return n[n.length - 1]; };
 function kq(type, f, q, g, sr) {
   const A = Math.pow(10, (g || 0) / 40), w = 2 * Math.PI * f / sr, cs = Math.cos(w), al = Math.sin(w) / (2 * q); let b0, b1, b2, a0, a1, a2;
@@ -442,6 +446,10 @@ function kq(type, f, q, g, sr) {
 function filt(x, k) { const [b0, b1, b2, a1, a2] = k, y = new Float64Array(x.length); let x1 = 0, x2 = 0, y1 = 0, y2 = 0; for (let i = 0; i < x.length; i++) { const v = b0 * x[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2; x2 = x1; x1 = x[i]; y2 = y1; y1 = v; y[i] = v; } return y; }
 const KW = [kq('hs', 1681.97, .7072, 4, SR), kq('hp', 38.135, .5003, 0, SR)];
 function lufs(chs, t0) { const s = Math.round(t0 * SR); let sum = 0; for (const d of chs) { const y = filt(filt(d.subarray(s), KW[0]), KW[1]); let m = 0; for (let i = 0; i < y.length; i++) m += y[i] * y[i]; sum += m / y.length; } return sum > 0 ? -.691 + 10 * Math.log10(sum) : -200; }
+// the loudest stretch of win seconds (K-weighted: 3 s is short-term loudness, 0.4 s momentary), in tenth-second steps
+function stMax(chs, win = 3) { const y = chs.map(d => filt(filt(d, KW[0]), KW[1])), n = y[0].length, W = Math.round(win * SR), H = SR / 10, cs = new Float64Array(n + 1); let best = -200;
+  for (let i = 0; i < n; i++) { let e = 0; for (const ch of y) e += ch[i] * ch[i]; cs[i + 1] = cs[i] + e; }
+  for (let a = 0; a + W <= n; a += H) { const m = (cs[a + W] - cs[a]) / W; if (m > 0) best = Math.max(best, -.691 + 10 * Math.log10(m)); } return best; }
 const peakOf = chs => { let p = 0; for (const d of chs) for (let i = 0; i < d.length; i++) { const v = Math.abs(d[i]); if (v > p) p = v; } return p; };
 
 /* looping noise beds: white, pink and brown, stereo with uncorrelated sides, the loop seam crossfaded, all at one RMS */
@@ -492,60 +500,194 @@ function irBuf() {
   return IR = b;
 }
 
-/* ---- what each place sounds like, given the weather ----
-   layer: { n: noise | tone: [hz], g: dB, hp, lp, bp: [f, q], gust: [r1, r2, depth], sweep: [rate, hz], am: [rate, depth], pan, cycle: [on s, off s] }
-   stream: { ev: drop|tick|drip|crackle|pop|car, rate /s, g dB, jit dB, pan, lp, cluster, wet } */
+/* ---- the sounds that come and go: each draws into o (its level, distance filter and side already set) ---- */
+// a struck partial: a sine at f, up in att, then dying away with time constant tau
+function ping(c, o, t, f, a, tau, att = .002, type = 'sine') { const x = T(c, type, f), g = G(c, 0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(a, t + att); g.gain.setTargetAtTime(0, t + att, tau); chain(x, g, o); x.start(t); x.stop(t + att + tau * 7 + .02); }
+function strike(c, o, t, f, a, P) { P.forEach(([q, k, tau]) => ping(c, o, t, f * q, a * k, tau, .004)); }
+function grainAt(c, o, t, kind, r, g) { const set = grains(kind), s = c.createBufferSource(); s.buffer = set[Math.floor(r() * set.length)]; s.playbackRate.value = .85 + .35 * r(); chain(s, G(c, db(g)), o); s.start(t); }
+const CHIME = [[1, 1, .5], [2, .2, .25], [2.76, .3, .18], [5.4, .1, .08]];
+const TOLL = [[.5, .45, 3.5], [.503, .3, 3.2], [1, 1, 2.6], [1.2, .55, 2], [1.5, .35, 1.6], [2, .45, 1.3], [2.5, .2, .9], [2.67, .18, .8], [3, .12, .6]];
+const VOW = [[730, 1090], [270, 2290], [530, 1840], [570, 840], [440, 1020], [300, 870], [660, 1720], [400, 1900]];
+const SYN = {
+  horn(c, o, t, r) { // a car horn far off, now and then a double
+    const f = 330 + 190 * r(), two = r() < .35, len = .16 + .38 * r(), bp = F(c, 'bandpass', f * 2.1, .8); bp.connect(o);
+    for (let k = 0; k < (two ? 2 : 1); k++) {
+      const t1 = t + k * (len + .09), l = k ? len * .6 : len, g = G(c, 0); g.connect(bp);
+      g.gain.setValueAtTime(0, t1); g.gain.linearRampToValueAtTime(.45, t1 + .012); g.gain.setValueAtTime(.45, t1 + l); g.gain.linearRampToValueAtTime(0, t1 + l + .05);
+      [f, f * 1.26].forEach(x => { const s = T(c, 'sawtooth', x); s.connect(g); s.start(t1); s.stop(t1 + l + .08); });
+    }
+  },
+  siren(c, o, t, r) { // a siren across the city: comes closer, then goes, wailing (mostly) or yelping
+    const d = 9 + 6 * r(), x = T(c, 'triangle', 760 + 120 * r()), l = T(c, 'sine', r() < .7 ? .3 + .1 * r() : 2.6 + .6 * r()), lg = G(c, 230), lp = F(c, 'lowpass', 700, .7), g = G(c, 0);
+    chain(l, lg, x.frequency); chain(x, lp, g, o);
+    lp.frequency.setValueAtTime(600, t); lp.frequency.linearRampToValueAtTime(2000, t + d * .45); lp.frequency.linearRampToValueAtTime(500, t + d);
+    x.detune.setValueAtTime(30, t); x.detune.linearRampToValueAtTime(-50, t + d);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.5, t + d * .45); g.gain.linearRampToValueAtTime(.3, t + d * .7); g.gain.linearRampToValueAtTime(0, t + d);
+    l.start(t); x.start(t); l.stop(t + d + .05); x.stop(t + d + .05);
+  },
+  flyby(c, o, t, r, s, p) { // something flying past: a low engine with a whine, its pitch dropping as it goes by
+    const d = 5 + 4 * r(), f = 62 + 40 * r(), dir = r() < .5 ? -1 : 1, lp = F(c, 'lowpass', 300, 1.2), g = G(c, 0), w = G(c, .12), oo = [T(c, 'sawtooth', f), T(c, 'sawtooth', f * 1.006), T(c, 'sine', f * 13.1)];
+    oo[0].connect(lp); oo[1].connect(lp); chain(oo[2], w, lp); chain(lp, g, o);
+    oo.forEach(x => { x.detune.setValueAtTime(70, t); x.detune.linearRampToValueAtTime(70, t + d * .42); x.detune.linearRampToValueAtTime(-110, t + d * .58); x.start(t); x.stop(t + d + .05); });
+    lp.frequency.setValueAtTime(250, t); lp.frequency.linearRampToValueAtTime(1500, t + d * .5); lp.frequency.linearRampToValueAtTime(260, t + d);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.35, t + d * .5); g.gain.linearRampToValueAtTime(0, t + d);
+    p.pan.setValueAtTime(-.85 * dir, t); p.pan.linearRampToValueAtTime(.85 * dir, t + d);
+  },
+  train(c, o, t, r) { // a train across the valley: its rumble and the wheels' clack-clack
+    const d = 13 + 7 * r(), env = G(c, 0), n = c.createBufferSource(), sp = .9 + .3 * r(); n.buffer = noiseBuf('brown', 2); n.loop = true;
+    env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(1, t + d * .4); env.gain.setValueAtTime(1, t + d * .65); env.gain.linearRampToValueAtTime(0, t + d);
+    chain(env, F(c, 'lowpass', 900, .7), o); chain(n, F(c, 'bandpass', 130, .9), G(c, .9), env); n.start(t, r() * 6); n.stop(t + d + .05);
+    for (let k = t + .5; k < t + d - .3; k += sp) [0, .13].forEach(dt => { ping(c, env, k + dt, 92, .5, .03); ping(c, env, k + dt, 640 + 60 * r(), .12, .012); });
+  },
+  thump(c, o, t, r, s) { // music somewhere else: only its beat and bass come through
+    const b = 60 / (116 + 8 * r()), bars = 6 + Math.floor(5 * r()), d = bars * 4 * b, bus = G(c, 0), roots = [[55, 55, 65.41, 49], [55, 43.65, 49, 65.41]][Math.floor(r() * 2)];
+    bus.gain.setValueAtTime(0, t); bus.gain.linearRampToValueAtTime(1, t + 3); bus.gain.setValueAtTime(1, t + d - 3); bus.gain.linearRampToValueAtTime(0, t + d);
+    chain(bus, F(c, 'lowpass', s.mlp || 180, .7), o);
+    for (let k = 0; k < bars * 4; k++) {
+      const tk = t + k * b, kick = T(c, 'sine', 120), kg = G(c, 0);
+      kick.frequency.setValueAtTime(120, tk); kick.frequency.exponentialRampToValueAtTime(46, tk + .09);
+      kg.gain.setValueAtTime(0, tk); kg.gain.linearRampToValueAtTime(.8, tk + .004); kg.gain.setTargetAtTime(0, tk + .004, .07);
+      chain(kick, kg, bus); kick.start(tk); kick.stop(tk + .55);
+      ping(c, bus, tk + b / 2, roots[Math.floor(k / 4) % 4], .35, .09, .01, 'sawtooth');
+    }
+  },
+  voice(c, o, t, r, s, p, to) { // someone talking out of earshot: a voice's rhythm and vowels, never words
+    const d = 1 + 2.4 * r(), f0 = (to ? !to.hi : r() < .5) ? 190 + 40 * r() : 102 + 28 * r(), x = T(c, 'sawtooth', f0), f1 = F(c, 'bandpass', 500, 5), f2 = F(c, 'bandpass', 1500, 7), vg = G(c, 0);
+    x.connect(f1); x.connect(f2); f1.connect(vg); chain(f2, G(c, .6), vg); vg.connect(o); vg.gain.setValueAtTime(0, t);
+    let tt = t;
+    while (tt < t + d) { const sl = .1 + .17 * r(), v = VOW[Math.floor(r() * VOW.length)];
+      f1.frequency.setTargetAtTime(v[0], tt, .025); f2.frequency.setTargetAtTime(v[1], tt, .025); x.frequency.setTargetAtTime(f0 * (.88 + .3 * r()), tt, .05);
+      vg.gain.setTargetAtTime(.5 + .4 * r(), tt, .02); vg.gain.setTargetAtTime(0, tt + sl * .75, .03);
+      tt += sl + (r() < .18 ? .18 + .25 * r() : .015); }
+    x.start(t); x.stop(tt + .3); return { end: tt, hi: f0 > 160 };
+  },
+  chime(c, o, t) { [1318.5, 1046.5].forEach((f, i) => strike(c, o, t + i * .3, f, .45, CHIME)); },   // the shop door's two-note chime
+  ding(c, o, t) { strike(c, o, t, 880, .5, CHIME); },                                                 // the lift arriving down the hall
+  toll(c, o, t, r) { const n = 3 + Math.floor(3 * r()); for (let i = 0; i < n; i++) strike(c, o, t + i * 3, 220, .5, TOLL); },   // a bell in the tower
+  clink(c, o, t, r) { const n = 2 + Math.floor(3 * r()); let tt = t; for (let i = 0; i < n; i++) { const f = 2300 + 1300 * r(); ping(c, o, tt, f, .3, .04); ping(c, o, tt, f * 1.52, .18, .028); ping(c, o, tt, f * 2.31, .1, .018); tt += .04 + .1 * r(); } },   // hangers on a rail
+  clank(c, o, t, r) { // plates knocking together
+    const hit = (tt, f, k) => { [[1, 1, .3], [2.32, .7, .22], [4.25, .45, .15], [6.63, .3, .1], [9.4, .15, .06]].forEach(([q, a, tau]) => ping(c, o, tt, f * q, a * .35 * k, tau * (1 + .5 * r()))); ping(c, o, tt, 68, .6 * k, .06); };
+    const f = 170 + 140 * r(); hit(t, f, 1); if (r() < .35) hit(t + .18 + .2 * r(), f * (1.02 + .05 * r()), .6);
+  },
+  weight(c, o, t, r) { ping(c, o, t, 52 + 10 * r(), .9, .08); ping(c, o, t, 118, .3, .035); grainAt(c, o, t, 'pop', r, -8); },   // a weight set down on the mat
+  creak(c, o, t, r) { // old wood giving a little
+    const d = .45 + .9 * r(), f = 24 + 26 * r(), x = T(c, 'sawtooth', f), b1 = F(c, 'bandpass', 380 + 320 * r(), 9), b2 = F(c, 'bandpass', 1050 + 600 * r(), 12), g = G(c, 0);
+    x.frequency.setValueAtTime(f, t); x.frequency.linearRampToValueAtTime(f * (.55 + .9 * r()), t + d);
+    x.connect(b1); x.connect(b2); b1.connect(g); chain(b2, G(c, .5), g); g.connect(o);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + d * .2); g.gain.linearRampToValueAtTime(.6, t + d * .7); g.gain.linearRampToValueAtTime(0, t + d);
+    x.start(t); x.stop(t + d + .05);
+  },
+  settle(c, o, t, r) { ping(c, o, t, 70, .7, .09); for (let i = 0, n = 6 + 6 * r(); i < n; i++) grainAt(c, o, t + .04 + .7 * r() * r(), 'crackle', r, -4 - 8 * r()); },   // the fire's logs shifting
+  clock(c, o, t, r, s) { const k = (s.k = (s.k || 0) + 1) & 1 ? 1 : .84; ping(c, o, t, 2500 * k, .45, .005); ping(c, o, t, 1180 * k, .35, .01); ping(c, o, t, 420 * k, .2, .015); },   // tick, tock
+  page(c, o, t, r) { // a page turned
+    const n = c.createBufferSource(), b = F(c, 'bandpass', 2400 + 900 * r(), .8), g = G(c, 0), d = .3 + .15 * r(); n.buffer = noiseBuf('white', 6);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.5, t + d * .2); g.gain.linearRampToValueAtTime(.12, t + d * .45); g.gain.linearRampToValueAtTime(.4, t + d * .7); g.gain.linearRampToValueAtTime(0, t + d);
+    chain(n, b, g, o); n.start(t, r() * 6); n.stop(t + d + .05);
+  },
+  bird(c, o, t, r, s) { // chirps, a two-note whistle, or a trill
+    const tw = (tt, f0, f1, d, a = .4) => { const x = T(c, 'sine', f0), g = G(c, 0); x.frequency.setValueAtTime(f0, tt); x.frequency.exponentialRampToValueAtTime(f1, tt + d); g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(a, tt + Math.min(.012, d / 4)); g.gain.setValueAtTime(a, tt + d * .7); g.gain.linearRampToValueAtTime(0, tt + d); chain(x, g, o); x.start(tt); x.stop(tt + d + .02); };
+    const k = s.kind || (r() < .5 ? 'chirp' : r() < .5 ? 'fee' : 'trill');
+    if (k === 'fee') { const f = 3500 + 400 * r(); tw(t, f, f * .98, .32); tw(t + .4, f * .84, f * .8, .36); if (r() < .4) { tw(t + 1.6, f, f * .98, .3); tw(t + 1.98, f * .84, f * .8, .34); } }
+    else if (k === 'trill') { const f = 4200 + 1200 * r(), n = 8 + Math.floor(8 * r()); for (let i = 0; i < n; i++) tw(t + i * .065, f * 1.1, f * .85, .045, .3); }
+    else { const b = 2800 + 1600 * r(); let tt = t; for (let i = 0, n = 3 + Math.floor(5 * r()); i < n; i++) { tw(tt, b * (.85 + .25 * r()), b * (1.1 + .4 * r()), .04 + .03 * r()); tt += .09 + .14 * r(); } }
+  },
+  owl(c, o, t, r) { // hoo, hoo-hoo, hoo
+    const f = 300 + 50 * r(), hoot = (tt, d, a) => { const x = T(c, 'sine', f), x2 = T(c, 'sine', f * 2), g = G(c, 0);
+      x.frequency.setValueAtTime(f * 1.03, tt); x.frequency.linearRampToValueAtTime(f * .96, tt + d); x2.frequency.setValueAtTime(f * 2.06, tt); x2.frequency.linearRampToValueAtTime(f * 1.92, tt + d);
+      g.gain.setValueAtTime(0, tt); g.gain.linearRampToValueAtTime(a, tt + d * .3); g.gain.linearRampToValueAtTime(0, tt + d); x.connect(g); chain(x2, G(c, .08), g); g.connect(o);
+      x.start(tt); x2.start(tt); x.stop(tt + d + .02); x2.stop(tt + d + .02); };
+    hoot(t, .45, .45); hoot(t + .75, .22, .35); hoot(t + 1.02, .35, .4); hoot(t + 1.6, .5, .42);
+  },
+  relay(c, o, t) { ping(c, o, t, 1900, .25, .004); ping(c, o, t, 260, .3, .02); },   // the fridge switching
+};
+
+/* ---- what each place sounds like, given the weather and the time of day ----
+   layer: { n: noise | tone: [hz] (wave), g: dB, hp, lp, bp: [f, q], gust: [r1, r2, depth], sweep: [rate, hz], am: [rate, depth], pan, cycle: [on s, off s], click: dB }
+   stream: { ev: a grain (drop|tick|drip|crackle|pop) | car | one of SYN, rate /s or period s, g dB, jit dB, pan, lp, cluster, wet, echo,
+             rare: comes and goes, so it is left out of the level and checked on its own; first: [s, s] when it first comes; min: s between } */
 const WX = { clear: { rain: 0, snow: 0, add: 0, wind: .25 }, rain: { rain: .5, snow: 0, add: 1, wind: .35 }, downpour: { rain: 1, snow: 0, add: 2.5, wind: .55 }, snow: { rain: 0, snow: 1, add: 0, wind: .75 } };
 const PLACES = [
-  ['city', 'City', 'Flying over the island: traffic far below, the city\'s murmur, air, a car going by. Rain, or a snow wind.'],
-  ['apartment', 'Apartment', 'High up behind glass: the city below, a fridge that cycles, a car far down. Rain on the glass and its drops.'],
-  ['shop', 'Shop', 'Street level, door open: the street, people far off, the air con, cars passing. Rain on the awning and drips off it.'],
-  ['gym', 'Gym', 'Ventilation, a fan, the city muffled. Rain on the roof.'],
-  ['chalet', 'Chalet', 'A fire: its roar, hiss, crackles and the odd knot popping. The mountain wind outside, a whistle in snow.'],
-  ['castle', 'Castle', 'The study hall: a softer hearth in a stone room, wind at the glass. Rain on the stained glass.'],
+  ['city', 'City', 'Flying over the island: traffic far below, horns, now and then a siren or a train across the water, something flying past. Club bass far off at night. Rain, or a snow wind.'],
+  ['apartment', 'Apartment', 'High up behind glass: the city far below, a fridge that clicks on and off, traffic flying past the window, a horn or a siren way down, the lift down the hall, a neighbour\'s music. Rain on the glass.'],
+  ['shop', 'Shop', 'Street level, door open: people talking out of earshot, hangers on the rail, the door chime, cars and horns outside, sparrows by day. Rain on the awning and drips off it.'],
+  ['gym', 'Gym', 'Ventilation, a fan, a light\'s hum, the city muffled, now and then plates knocking or a weight set down. Rain on the roof.'],
+  ['chalet', 'Chalet', 'A fire: its roar, hiss and crackles, the logs settling. The wood creaks in the wind; birds by day, an owl at night; a whistle in snow.'],
+  ['castle', 'Castle', 'The study hall: a softer hearth in a stone room, a page turned, the tower bell now and then, birds at the glass by day, an owl at night. Rain on the stained glass.'],
 ];
-function scene(place, w, wind) {
+function scene(place, w, wind, day) {
   const L = [], St = [], R = w.rain, S = w.snow, wet = R > 0, gust = 10 * Math.log10(.15 + wind);
-  const fire = (k = 0) => { L.push({ n: 'brown', g: -9 + k, hp: 45, lp: 340, gust: [.63, 1.71, .35] }, { n: 'pink', g: -27 + k, bp: [2600, .7], gust: [.91, 2.3, .55] });
+  const fire = (k = 0) => { L.push({ n: 'brown', g: -9 + k, hp: 45, lp: 340, gust: [.63, 1.71, .35] }, { n: 'pink', g: -29 + k, bp: [2600, .7], gust: [.91, 2.3, .55] });
     St.push({ ev: 'crackle', rate: 5, g: -15 + k, jit: 7, pan: .35, cluster: .35, wet: place === 'castle' }, { ev: 'pop', rate: .22, g: -12 + k, jit: 5, pan: .3, wet: place === 'castle' }); };
-  const windOut = (g, lp) => { L.push({ n: 'pink', g: g + gust, bp: [460, .8], lp, gust: [.051, .113, .8], sweep: [.037, 140] }); if (wind > .45 || S) L.push({ n: 'white', g: g - 13 + gust * 1.5, bp: [880, 13], gust: [.043, .097, .9], sweep: [.029, 160] }); };
+  const windOut = (g, lp) => { L.push({ n: 'pink', g: g + gust, bp: [460, .8], lp, gust: [.051, .113, .8], sweep: [.037, 140] }); if (wind > .45 || S) L.push({ n: 'white', g: g - 15 + gust * 1.5, bp: [880, 13], gust: [.043, .097, .9], sweep: [.029, 160] }); };
+  const birds = (g, lp) => { if (day && R < .75) St.push({ ev: 'bird', rate: S ? .02 : wet ? .015 : .04, g: S ? g - 6 : g, lp, pan: .7, rare: true, first: [5, 12], min: 4, kind: S ? 'fee' : undefined }); };
+  const owl = (g, wet) => { if (!day && R < .75) St.push({ ev: 'owl', rate: .012, g, lp: 1400, pan: .6, rare: true, first: [12, 25], min: 25, wet }); };
   if (place === 'city') {
-    L.push({ n: 'brown', g: S ? -12 : -6, hp: 70, lp: S ? 300 : 420, gust: [.041, .093, .25] }, { n: 'pink', g: S ? -22 : -17, bp: [700, .5], gust: [.053, .11, .3] }, { n: 'pink', g: -14 + gust, bp: [950, .7], gust: [.071, .131, .6], sweep: [.047, 300] });
-    St.push({ ev: 'car', rate: S ? .1 : .22, g: -10, lp: 2400, pan: .9, hiss: wet });
-    if (wet) L.push({ n: 'pink', g: -16 + R * 7, hp: 1500, lp: 8000, gust: [.06, .14, .25] });
-    if (S) L.push({ n: 'white', g: -26 + gust * 1.5, bp: [1100, 14], gust: [.043, .097, .9], sweep: [.031, 220] });
+    L.push({ n: 'brown', g: S ? -12 : -6, hp: 60, lp: S ? 300 : 380, gust: [.041, .093, .25] }, { n: 'pink', g: S ? -24 : -21, bp: [600, .6], lp: 1500, gust: [.053, .11, .3] },
+      { n: 'pink', g: -17 + gust, bp: [950, .7], lp: 2200, gust: [.071, .131, .6], sweep: [.047, 300] }, { tone: [110, 110.7, 165.2], wave: 'sawtooth', g: -44, bp: [900, 1.5] });
+    St.push({ ev: 'car', rate: S ? .1 : .22, g: -10, lp: 2400, pan: .9, hiss: wet },
+      { ev: 'flyby', rate: .045, g: -6, lp: 4000, rare: true, first: [5, 12], min: 8 },
+      { ev: 'horn', rate: S ? .02 : .05, g: -7, lp: 1800, pan: .8, echo: true, rare: true, first: [3, 9], min: 3 },
+      { ev: 'siren', rate: .008, g: -11, pan: .8, echo: true, rare: true, first: [18, 35], min: 40 },
+      { ev: 'train', rate: .01, g: -6.5, pan: .7, rare: true, first: [35, 60], min: 40 });
+    if (!day) St.push({ ev: 'thump', rate: .006, g: -5.5, mlp: 200, pan: .5, rare: true, first: [25, 50], min: 60 });
+    if (wet) L.push({ n: 'pink', g: -18 + R * 7, hp: 1500, lp: 6000, gust: [.06, .14, .25] });
+    if (S) L.push({ n: 'white', g: -28 + gust * 1.5, bp: [1100, 14], gust: [.043, .097, .9], sweep: [.031, 220] });
   } else if (place === 'apartment') {
-    L.push({ n: 'brown', g: -22, lp: 180 }, { n: 'brown', g: S ? -16 : -11, hp: 60, lp: 300, gust: [.031, .083, .3] }, { tone: [118, 236, 354.5], g: -31, lp: 600, cycle: [45, 30] });
-    St.push({ ev: 'car', rate: .1, g: -20, lp: 600, pan: .6 });
-    if (wet) { L.push({ n: 'pink', g: -17 + R * 6, bp: [2400, .6], lp: 4500, gust: [.07, .15, .3] }); St.push({ ev: 'tick', rate: 6 + R * 22, g: -21, jit: 6, pan: .8, lp: 7000 }); }
+    L.push({ n: 'brown', g: -22, lp: 180 }, { n: 'brown', g: S ? -16 : -11, hp: 60, lp: 300, gust: [.031, .083, .3] }, { tone: [118, 236, 354.5], g: -31, lp: 600, cycle: [45, 30], click: -24 });
+    St.push({ ev: 'car', rate: .1, g: -20, lp: 600, pan: .6 },
+      { ev: 'flyby', rate: .03, g: -13, lp: 1200, rare: true, first: [8, 18], min: 10 },
+      { ev: 'horn', rate: .025, g: -13.5, lp: 800, pan: .6, rare: true, first: [10, 22], min: 6 },
+      { ev: 'siren', rate: .006, g: -18.5, lp: 1200, pan: .7, rare: true, first: [30, 55], min: 50 },
+      { ev: 'thump', rate: .006, g: -11, mlp: 130, pan: .4, rare: true, first: [40, 75], min: 60 },
+      { ev: 'ding', rate: .005, g: -17, lp: 2500, pan: .5, rare: true, first: [50, 90], min: 60 });
+    if (wet) { L.push({ n: 'pink', g: -19 + R * 6, bp: [2400, .6], lp: 4500, gust: [.07, .15, .3] }); St.push({ ev: 'tick', rate: 6 + R * 22, g: -21, jit: 6, pan: .8, lp: 7000 }); }
     if (S || wind > .5) windOut(-20, 900);
   } else if (place === 'shop') {
-    L.push({ n: 'brown', g: S ? -12 : -8, hp: 80, lp: S ? 600 : 900, gust: [.05, .1, .3] }, { n: 'pink', g: -19, bp: [820, .6], gust: [.067, .17, .35] }, { n: 'pink', g: -21, hp: 120, lp: 650 }, { tone: [240, 241.3], g: -38, lp: 500 });
-    St.push({ ev: 'car', rate: S ? .14 : .3, g: -12, lp: 2500, pan: 1, hiss: wet });
-    if (wet) { L.push({ n: 'white', g: -15 + R * 6, bp: [3000, .5], gust: [.08, .17, .25] }); St.push({ ev: 'drip', rate: 1.5 + R * 4, g: -17, jit: 5, pan: .7 }); }
+    L.push({ n: 'brown', g: S ? -12 : -9, hp: 80, lp: S ? 550 : 750, gust: [.05, .1, .3] }, { n: 'pink', g: -23, bp: [820, .6], lp: 2000, gust: [.067, .17, .35] }, { n: 'pink', g: -24, hp: 120, lp: 650 },
+      { tone: [120, 120.4], wave: 'sawtooth', g: -40, bp: [2200, 1.4] });
+    St.push({ ev: 'car', rate: S ? .14 : .3, g: -12, lp: 2500, pan: 1, hiss: wet },
+      { ev: 'voice', rate: .14, g: -5.5, lp: 2200, pan: .8, echo: true, talk: .45, min: 1 },
+      { ev: 'clink', rate: .05, g: -8.5, pan: .5, rare: true, first: [4, 9], min: 4 },
+      { ev: 'chime', rate: .012, g: -12.5, lp: 6000, pan: .3, rare: true, first: [10, 22], min: 30 },
+      { ev: 'horn', rate: .025, g: -8.5, lp: 1600, pan: .9, echo: true, rare: true, first: [14, 30], min: 6 },
+      { ev: 'siren', rate: .005, g: -13.5, pan: .9, echo: true, rare: true, first: [40, 80], min: 60 });
+    birds(-11.5, 5000);
+    if (wet) { L.push({ n: 'pink', g: -15 + R * 6, bp: [2600, .5], gust: [.08, .17, .25] }); St.push({ ev: 'drip', rate: 1.5 + R * 4, g: -17, jit: 5, pan: .7 }); }
   } else if (place === 'gym') {
-    L.push({ n: 'pink', g: -10, hp: 100, lp: 600 }, { n: 'pink', g: -22, bp: [420, 3], am: [5.5, .22] }, { tone: [180, 360], g: -36, lp: 450 }, { n: 'brown', g: -19, lp: 250, gust: [.04, .09, .3] });
+    L.push({ n: 'pink', g: -14, hp: 100, lp: 450 }, { n: 'pink', g: -22, bp: [420, 3], am: [5.5, .22] }, { tone: [180, 360], g: -36, lp: 450 }, { tone: [120, 120.3], wave: 'sawtooth', g: -44, bp: [3000, 2] },
+      { n: 'brown', g: -19, lp: 250, gust: [.04, .09, .3] });
+    St.push({ ev: 'clank', rate: .045, g: -14, lp: 3500, pan: .6, rare: true, first: [3, 8], min: 5 },
+      { ev: 'weight', rate: .02, g: -12, pan: .5, rare: true, first: [12, 25], min: 10 });
     if (wet) { L.push({ n: 'pink', g: -16 + R * 6, hp: 200, lp: 1100, gust: [.06, .13, .25] }); St.push({ ev: 'drop', rate: 10 + R * 30, g: -25, jit: 6, pan: .9, lp: 2000 }); }
     if (S) windOut(-24, 700);
   } else if (place === 'chalet') {
     fire(); windOut(-21, 900);
+    St.push({ ev: 'creak', rate: .025 + wind * .05, g: 4, pan: .7, rare: true, first: [6, 14], min: 6 },
+      { ev: 'settle', rate: .025, g: -5, pan: .25, rare: true, first: [15, 30], min: 15 });
+    birds(-12, 3500); owl(-9.5);
     if (wet) L.push({ n: 'pink', g: -18 + R * 6, hp: 180, lp: 900, gust: [.06, .13, .25] });
   } else if (place === 'castle') {
     fire(-4); L.push({ n: 'brown', g: -24, lp: 160 }, { n: 'pink', g: -22 + gust, bp: [700, 1.2], gust: [.051, .117, .8], sweep: [.033, 150] });
-    if (wind > .3 || S) L.push({ n: 'white', g: -31 + gust * 1.5, bp: [1000, 16], gust: [.043, .1, .9], sweep: [.027, 180] });
+    if (wind > .3 || S) L.push({ n: 'white', g: -33 + gust * 1.5, bp: [1000, 16], gust: [.043, .1, .9], sweep: [.027, 180] });
+    St.push({ ev: 'page', rate: .03, g: -6, pan: .5, rare: true, first: [8, 16], min: 8 },
+      { ev: 'toll', rate: .004, g: -18, lp: 2600, pan: .4, wet: true, rare: true, first: [20, 35], min: 90 },
+      { ev: 'creak', rate: .008, g: -2, pan: .8, wet: true, rare: true, first: [40, 70], min: 30 });
+    birds(-10, 3000); owl(-12.5, true);
     if (wet) { L.push({ n: 'pink', g: -18 + R * 6, bp: [2200, .6], gust: [.07, .15, .3] }); St.push({ ev: 'tick', rate: 4 + R * 14, g: -22, jit: 6, pan: .8, wet: true }); }
   }
-  return { L, St, room: place === 'castle' };
+  return { L, St, room: place === 'castle', echo: place === 'city' || place === 'shop' };
 }
-function buildScene(c, dest, place, w, wind, seed) {
-  const def = scene(place, w, wind), out = G(c, 1), nodes = [], r = rng(seed || 1), t0 = c.currentTime;
+// opts.bed: the bed and its steady sounds only (what the level is set from); opts.only: one stream alone, once, at 0.5 s
+function buildScene(c, dest, place, w, wind, seed, day = true, opts = {}) {
+  const def = scene(place, w, wind, day), out = G(c, 1), nodes = [], r = rng(seed || 1), t0 = c.currentTime;
   out.connect(dest);
   let verb = null; if (def.room) { verb = c.createConvolver(); verb.buffer = irBuf(); chain(verb, G(c, .5), out); }
+  let echo = null; if (def.echo) { echo = c.createDelay(1); echo.delayTime.value = .19; const el = F(c, 'lowpass', 1400, .7); chain(echo, el, G(c, .28), echo); chain(el, G(c, .45), out); }
   const lfo = (rate, amp, param) => { const o = c.createOscillator(); o.frequency.value = rate * (.9 + .2 * r()); chain(o, G(c, amp), param); o.start(t0 + r() * 2); nodes.push(o); };
   const cycles = [];
-  def.L.forEach((L, i) => {
+  if (opts.only == null) def.L.forEach((L, i) => {
     let src;
-    if (L.tone) { src = G(c, 1); L.tone.forEach(f => { const o = c.createOscillator(); o.frequency.value = f; o.connect(src); o.start(t0); nodes.push(o); }); }
+    if (L.tone) { src = G(c, 1); L.tone.forEach(f => { const o = T(c, L.wave || 'sine', f); o.connect(src); o.start(t0); nodes.push(o); }); }
     else { src = c.createBufferSource(); src.buffer = noiseBuf(L.n, 1 + (i * 7 + (seed || 0)) % 5); src.loop = true; src.start(t0, r() * 6.5); nodes.push(src); }
     let n = src;
     if (L.hp) n = chain(n, F(c, 'highpass', L.hp, .7));
@@ -557,21 +699,28 @@ function buildScene(c, dest, place, w, wind, seed) {
     n = chain(n, g);
     if (L.pan) { const p = c.createStereoPanner(); p.pan.value = L.pan; n = chain(n, p); }
     n.connect(out);
-    if (L.cycle) cycles.push({ g: g.gain, base, on: L.cycle[0], off: L.cycle[1], next: t0 + r() * L.cycle[1], up: false });
+    if (L.cycle) cycles.push({ g: g.gain, base, on: L.cycle[0], off: L.cycle[1], click: L.click, next: t0 + r() * L.cycle[1], up: false });
   });
-  const streams = def.St.map(s => ({ ...s, next: t0 + r() * 1.5 }));
+  const pick = opts.only != null ? [def.St[opts.only]].filter(Boolean) : def.St.filter(s => !(opts.bed && s.rare));
+  const streams = pick.map(s => ({ ...s, next: opts.only != null ? t0 + .5 : t0 + (s.first ? s.first[0] + (s.first[1] - s.first[0]) * r() : s.period ? r() * s.period : r() * 1.5) }));
+  // where a sound goes: its level, distance, side; the hall's reverb or the street's echo when it has one
+  const evOut = s => { const g = G(c, db(s.g - (s.jit || 0) * r())); let n = g; if (s.lp) n = chain(n, F(c, 'lowpass', s.lp, .7));
+    const p = c.createStereoPanner(); p.pan.value = (r() * 2 - 1) * (s.pan || 0); chain(n, p, out); if (s.wet && verb) p.connect(verb); if (s.echo && echo) p.connect(echo); return { o: g, p }; };
   const fire = (s, t) => {
     if (s.ev === 'car') return car(c, out, t, s, r);
-    const set = grains(s.ev), src = c.createBufferSource(); src.buffer = set[Math.floor(r() * set.length)]; src.playbackRate.value = .85 + .35 * r();
-    let n = chain(src, G(c, db(s.g - (s.jit || 0) * r())));
-    if (s.lp) n = chain(n, F(c, 'lowpass', s.lp, .7));
-    const p = c.createStereoPanner(); p.pan.value = (r() * 2 - 1) * (s.pan || 0); n = chain(n, p); n.connect(out);
-    if (s.wet && verb) n.connect(verb);
-    src.start(t);
+    const { o, p } = evOut(s);
+    if (SYN[s.ev]) { const v = SYN[s.ev](c, o, t, r, s, p); if (s.talk && v && r() < s.talk) { const q = evOut(s); SYN.voice(c, q.o, v.end + .2 + .3 * r(), r, s, q.p, v); } return; }
+    const set = grains(s.ev), src = c.createBufferSource(); src.buffer = set[Math.floor(r() * set.length)]; src.playbackRate.value = .85 + .35 * r(); src.connect(o); src.start(t);
   };
   function schedule(until) {
-    for (const s of streams) while (s.next < until) { fire(s, s.next); s.next += s.cluster && r() < s.cluster ? .012 + .05 * r() : -Math.log(1 - r()) / s.rate; }
-    for (const y of cycles) while (y.next < until) { y.up = !y.up; y.g.setTargetAtTime(y.up ? y.base : 0, y.next, 1.2); y.next += (y.up ? y.on : y.off) * (.8 + .4 * r()); }
+    for (const s of streams) while (s.next < until) {
+      fire(s, s.next);
+      s.next = opts.only != null ? Infinity : s.next + (s.period || (s.cluster && r() < s.cluster ? .012 + .05 * r() : Math.max(s.min || 0, -Math.log(1 - r()) / s.rate)));
+    }
+    for (const y of cycles) while (y.next < until) {
+      y.up = !y.up; y.g.setTargetAtTime(y.up ? y.base : 0, y.next, 1.2); if (y.click != null) SYN.relay(c, evOut({ g: y.click, pan: .3 }).o, y.next);
+      y.next += (y.up ? y.on : y.off) * (.8 + .4 * r());
+    }
   }
   return { out, schedule, stop(t) { nodes.forEach(n => { try { n.stop(t); } catch (e) {} }); setTimeout(() => { try { out.disconnect(); } catch (e) {} }, Math.max(0, (t - c.currentTime) * 1000) + 200); } };
 }
@@ -589,18 +738,26 @@ function car(c, dest, t, s, r) {
 /* ---- levels ---- */
 // CAL: each place, weather and wind (to 0.1) measured once by tools/amb-cal.html, so a phone never renders one to level it.
 // A key not in the table is measured on first use. Re-run the tool after any change to scene() or the layers.
-const LEVEL = { low: -42, medium: -36 }, CAL = {'city|clear|0':-15.87,'city|clear|1':-15.85,'city|clear|2':-15.82,'city|clear|3':-15.8,'city|clear|4':-15.78,'city|clear|5':-15.76,'city|clear|6':-15.73,'city|clear|7':-15.71,'city|clear|8':-15.69,'city|clear|9':-15.66,'city|clear|10':-15.64,'city|rain|0':-14.98,'city|rain|1':-14.96,'city|rain|2':-14.94,'city|rain|3':-14.93,'city|rain|4':-14.91,'city|rain|5':-14.89,'city|rain|6':-14.87,'city|rain|7':-14.85,'city|rain|8':-14.83,'city|rain|9':-14.81,'city|rain|10':-14.8,'city|downpour|0':-14.21,'city|downpour|1':-14.19,'city|downpour|2':-14.17,'city|downpour|3':-14.16,'city|downpour|4':-14.14,'city|downpour|5':-14.13,'city|downpour|6':-14.11,'city|downpour|7':-14.1,'city|downpour|8':-14.08,'city|downpour|9':-14.07,'city|downpour|10':-14.05,'city|snow|0':-21.47,'city|snow|1':-21.39,'city|snow|2':-21.3,'city|snow|3':-21.22,'city|snow|4':-21.14,'city|snow|5':-21.06,'city|snow|6':-20.98,'city|snow|7':-20.91,'city|snow|8':-20.83,'city|snow|9':-20.76,'city|snow|10':-20.69,'apartment|clear|0':-21.16,'apartment|clear|1':-21.16,'apartment|clear|2':-21.16,'apartment|clear|3':-21.16,'apartment|clear|4':-21.16,'apartment|clear|5':-21.16,'apartment|clear|6':-21.05,'apartment|clear|7':-21.04,'apartment|clear|8':-21.02,'apartment|clear|9':-21.01,'apartment|clear|10':-20.99,'apartment|rain|0':-20.26,'apartment|rain|1':-20.26,'apartment|rain|2':-20.26,'apartment|rain|3':-20.26,'apartment|rain|4':-20.26,'apartment|rain|5':-20.26,'apartment|rain|6':-20.15,'apartment|rain|7':-20.14,'apartment|rain|8':-20.12,'apartment|rain|9':-20.11,'apartment|rain|10':-20.09,'apartment|downpour|0':-19.52,'apartment|downpour|1':-19.52,'apartment|downpour|2':-19.52,'apartment|downpour|3':-19.52,'apartment|downpour|4':-19.52,'apartment|downpour|5':-19.52,'apartment|downpour|6':-19.42,'apartment|downpour|7':-19.41,'apartment|downpour|8':-19.39,'apartment|downpour|9':-19.38,'apartment|downpour|10':-19.37,'apartment|snow|0':-25.7,'apartment|snow|1':-25.65,'apartment|snow|2':-25.61,'apartment|snow|3':-25.56,'apartment|snow|4':-25.51,'apartment|snow|5':-25.47,'apartment|snow|6':-25.42,'apartment|snow|7':-25.38,'apartment|snow|8':-25.33,'apartment|snow|9':-25.29,'apartment|snow|10':-25.24,'shop|clear|0':-17.46,'shop|clear|1':-17.46,'shop|clear|2':-17.46,'shop|clear|3':-17.46,'shop|clear|4':-17.46,'shop|clear|5':-17.46,'shop|clear|6':-17.46,'shop|clear|7':-17.46,'shop|clear|8':-17.46,'shop|clear|9':-17.46,'shop|clear|10':-17.46,'shop|rain|0':-16.31,'shop|rain|1':-16.31,'shop|rain|2':-16.31,'shop|rain|3':-16.31,'shop|rain|4':-16.31,'shop|rain|5':-16.31,'shop|rain|6':-16.31,'shop|rain|7':-16.31,'shop|rain|8':-16.31,'shop|rain|9':-16.31,'shop|rain|10':-16.31,'shop|downpour|0':-15.5,'shop|downpour|1':-15.5,'shop|downpour|2':-15.5,'shop|downpour|3':-15.5,'shop|downpour|4':-15.5,'shop|downpour|5':-15.5,'shop|downpour|6':-15.5,'shop|downpour|7':-15.5,'shop|downpour|8':-15.5,'shop|downpour|9':-15.5,'shop|downpour|10':-15.5,'shop|snow|0':-21.18,'shop|snow|1':-21.18,'shop|snow|2':-21.18,'shop|snow|3':-21.18,'shop|snow|4':-21.18,'shop|snow|5':-21.18,'shop|snow|6':-21.18,'shop|snow|7':-21.18,'shop|snow|8':-21.18,'shop|snow|9':-21.18,'shop|snow|10':-21.18,'gym|clear|0':-22.89,'gym|clear|1':-22.89,'gym|clear|2':-22.89,'gym|clear|3':-22.89,'gym|clear|4':-22.89,'gym|clear|5':-22.89,'gym|clear|6':-22.89,'gym|clear|7':-22.89,'gym|clear|8':-22.89,'gym|clear|9':-22.89,'gym|clear|10':-22.89,'gym|rain|0':-21.33,'gym|rain|1':-21.33,'gym|rain|2':-21.33,'gym|rain|3':-21.33,'gym|rain|4':-21.33,'gym|rain|5':-21.33,'gym|rain|6':-21.33,'gym|rain|7':-21.33,'gym|rain|8':-21.33,'gym|rain|9':-21.33,'gym|rain|10':-21.33,'gym|downpour|0':-20.19,'gym|downpour|1':-20.19,'gym|downpour|2':-20.19,'gym|downpour|3':-20.19,'gym|downpour|4':-20.19,'gym|downpour|5':-20.19,'gym|downpour|6':-20.19,'gym|downpour|7':-20.19,'gym|downpour|8':-20.19,'gym|downpour|9':-20.19,'gym|downpour|10':-20.19,'gym|snow|0':-22.88,'gym|snow|1':-22.87,'gym|snow|2':-22.86,'gym|snow|3':-22.85,'gym|snow|4':-22.84,'gym|snow|5':-22.83,'gym|snow|6':-22.82,'gym|snow|7':-22.81,'gym|snow|8':-22.8,'gym|snow|9':-22.79,'gym|snow|10':-22.78,'chalet|clear|0':-20.06,'chalet|clear|1':-20.05,'chalet|clear|2':-20.04,'chalet|clear|3':-20.03,'chalet|clear|4':-20.02,'chalet|clear|5':-20.01,'chalet|clear|6':-19.99,'chalet|clear|7':-19.98,'chalet|clear|8':-19.97,'chalet|clear|9':-19.96,'chalet|clear|10':-19.95,'chalet|rain|0':-19.53,'chalet|rain|1':-19.52,'chalet|rain|2':-19.51,'chalet|rain|3':-19.5,'chalet|rain|4':-19.49,'chalet|rain|5':-19.48,'chalet|rain|6':-19.47,'chalet|rain|7':-19.46,'chalet|rain|8':-19.45,'chalet|rain|9':-19.44,'chalet|rain|10':-19.43,'chalet|downpour|0':-19.05,'chalet|downpour|1':-19.05,'chalet|downpour|2':-19.04,'chalet|downpour|3':-19.03,'chalet|downpour|4':-19.02,'chalet|downpour|5':-19.01,'chalet|downpour|6':-19,'chalet|downpour|7':-18.99,'chalet|downpour|8':-18.98,'chalet|downpour|9':-18.97,'chalet|downpour|10':-18.96,'chalet|snow|0':-20.06,'chalet|snow|1':-20.05,'chalet|snow|2':-20.04,'chalet|snow|3':-20.03,'chalet|snow|4':-20.02,'chalet|snow|5':-20.01,'chalet|snow|6':-19.99,'chalet|snow|7':-19.98,'chalet|snow|8':-19.97,'chalet|snow|9':-19.96,'chalet|snow|10':-19.95,'castle|clear|0':-23.84,'castle|clear|1':-23.83,'castle|clear|2':-23.81,'castle|clear|3':-23.8,'castle|clear|4':-23.78,'castle|clear|5':-23.76,'castle|clear|6':-23.75,'castle|clear|7':-23.73,'castle|clear|8':-23.71,'castle|clear|9':-23.7,'castle|clear|10':-23.68,'castle|rain|0':-22.64,'castle|rain|1':-22.63,'castle|rain|2':-22.62,'castle|rain|3':-22.6,'castle|rain|4':-22.56,'castle|rain|5':-22.55,'castle|rain|6':-22.54,'castle|rain|7':-22.53,'castle|rain|8':-22.52,'castle|rain|9':-22.5,'castle|rain|10':-22.49,'castle|downpour|0':-21.7,'castle|downpour|1':-21.69,'castle|downpour|2':-21.68,'castle|downpour|3':-21.67,'castle|downpour|4':-21.62,'castle|downpour|5':-21.61,'castle|downpour|6':-21.61,'castle|downpour|7':-21.6,'castle|downpour|8':-21.59,'castle|downpour|9':-21.58,'castle|downpour|10':-21.57,'castle|snow|0':-23.84,'castle|snow|1':-23.83,'castle|snow|2':-23.81,'castle|snow|3':-23.79,'castle|snow|4':-23.78,'castle|snow|5':-23.76,'castle|snow|6':-23.75,'castle|snow|7':-23.73,'castle|snow|8':-23.71,'castle|snow|9':-23.7,'castle|snow|10':-23.68};
+const LEVEL = { low: -42, medium: -36 }, CAL = {'city|clear|0':-16.02,'city|clear|1':-16.01,'city|clear|2':-15.99,'city|clear|3':-15.98,'city|clear|4':-15.97,'city|clear|5':-15.96,'city|clear|6':-15.94,'city|clear|7':-15.93,'city|clear|8':-15.92,'city|clear|9':-15.91,'city|clear|10':-15.89,'city|rain|0':-15.42,'city|rain|1':-15.41,'city|rain|2':-15.4,'city|rain|3':-15.39,'city|rain|4':-15.38,'city|rain|5':-15.37,'city|rain|6':-15.36,'city|rain|7':-15.34,'city|rain|8':-15.33,'city|rain|9':-15.32,'city|rain|10':-15.31,'city|downpour|0':-14.92,'city|downpour|1':-14.91,'city|downpour|2':-14.9,'city|downpour|3':-14.89,'city|downpour|4':-14.88,'city|downpour|5':-14.87,'city|downpour|6':-14.86,'city|downpour|7':-14.85,'city|downpour|8':-14.84,'city|downpour|9':-14.83,'city|downpour|10':-14.82,'city|snow|0':-21.58,'city|snow|1':-21.53,'city|snow|2':-21.49,'city|snow|3':-21.44,'city|snow|4':-21.4,'city|snow|5':-21.35,'city|snow|6':-21.31,'city|snow|7':-21.27,'city|snow|8':-21.22,'city|snow|9':-21.18,'city|snow|10':-21.14,'apartment|clear|0':-21.16,'apartment|clear|1':-21.16,'apartment|clear|2':-21.16,'apartment|clear|3':-21.16,'apartment|clear|4':-21.16,'apartment|clear|5':-21.16,'apartment|clear|6':-21.05,'apartment|clear|7':-21.04,'apartment|clear|8':-21.02,'apartment|clear|9':-21.01,'apartment|clear|10':-20.99,'apartment|rain|0':-20.58,'apartment|rain|1':-20.58,'apartment|rain|2':-20.58,'apartment|rain|3':-20.58,'apartment|rain|4':-20.58,'apartment|rain|5':-20.58,'apartment|rain|6':-20.45,'apartment|rain|7':-20.44,'apartment|rain|8':-20.42,'apartment|rain|9':-20.41,'apartment|rain|10':-20.39,'apartment|downpour|0':-20.05,'apartment|downpour|1':-20.05,'apartment|downpour|2':-20.05,'apartment|downpour|3':-20.05,'apartment|downpour|4':-20.05,'apartment|downpour|5':-20.05,'apartment|downpour|6':-19.94,'apartment|downpour|7':-19.93,'apartment|downpour|8':-19.92,'apartment|downpour|9':-19.9,'apartment|downpour|10':-19.89,'apartment|snow|0':-25.7,'apartment|snow|1':-25.65,'apartment|snow|2':-25.61,'apartment|snow|3':-25.56,'apartment|snow|4':-25.51,'apartment|snow|5':-25.47,'apartment|snow|6':-25.42,'apartment|snow|7':-25.38,'apartment|snow|8':-25.33,'apartment|snow|9':-25.29,'apartment|snow|10':-25.24,'shop|clear|0':-18.44,'shop|clear|1':-18.44,'shop|clear|2':-18.44,'shop|clear|3':-18.44,'shop|clear|4':-18.44,'shop|clear|5':-18.44,'shop|clear|6':-18.44,'shop|clear|7':-18.44,'shop|clear|8':-18.44,'shop|clear|9':-18.44,'shop|clear|10':-18.44,'shop|rain|0':-17.5,'shop|rain|1':-17.5,'shop|rain|2':-17.5,'shop|rain|3':-17.5,'shop|rain|4':-17.5,'shop|rain|5':-17.5,'shop|rain|6':-17.5,'shop|rain|7':-17.5,'shop|rain|8':-17.5,'shop|rain|9':-17.5,'shop|rain|10':-17.5,'shop|downpour|0':-16.85,'shop|downpour|1':-16.85,'shop|downpour|2':-16.85,'shop|downpour|3':-16.85,'shop|downpour|4':-16.85,'shop|downpour|5':-16.85,'shop|downpour|6':-16.85,'shop|downpour|7':-16.85,'shop|downpour|8':-16.85,'shop|downpour|9':-16.85,'shop|downpour|10':-16.85,'shop|snow|0':-21.24,'shop|snow|1':-21.24,'shop|snow|2':-21.24,'shop|snow|3':-21.24,'shop|snow|4':-21.24,'shop|snow|5':-21.24,'shop|snow|6':-21.24,'shop|snow|7':-21.24,'shop|snow|8':-21.24,'shop|snow|9':-21.24,'shop|snow|10':-21.24,'gym|clear|0':-25.47,'gym|clear|1':-25.47,'gym|clear|2':-25.47,'gym|clear|3':-25.47,'gym|clear|4':-25.47,'gym|clear|5':-25.47,'gym|clear|6':-25.47,'gym|clear|7':-25.47,'gym|clear|8':-25.47,'gym|clear|9':-25.47,'gym|clear|10':-25.47,'gym|rain|0':-22.92,'gym|rain|1':-22.92,'gym|rain|2':-22.92,'gym|rain|3':-22.92,'gym|rain|4':-22.92,'gym|rain|5':-22.92,'gym|rain|6':-22.92,'gym|rain|7':-22.92,'gym|rain|8':-22.92,'gym|rain|9':-22.92,'gym|rain|10':-22.92,'gym|downpour|0':-21.33,'gym|downpour|1':-21.33,'gym|downpour|2':-21.33,'gym|downpour|3':-21.33,'gym|downpour|4':-21.33,'gym|downpour|5':-21.33,'gym|downpour|6':-21.33,'gym|downpour|7':-21.33,'gym|downpour|8':-21.33,'gym|downpour|9':-21.33,'gym|downpour|10':-21.33,'gym|snow|0':-25.44,'gym|snow|1':-25.42,'gym|snow|2':-25.41,'gym|snow|3':-25.39,'gym|snow|4':-25.37,'gym|snow|5':-25.35,'gym|snow|6':-25.34,'gym|snow|7':-25.32,'gym|snow|8':-25.3,'gym|snow|9':-25.29,'gym|snow|10':-25.27,'chalet|clear|0':-20.07,'chalet|clear|1':-20.06,'chalet|clear|2':-20.05,'chalet|clear|3':-20.04,'chalet|clear|4':-20.03,'chalet|clear|5':-20.02,'chalet|clear|6':-20.01,'chalet|clear|7':-20,'chalet|clear|8':-19.98,'chalet|clear|9':-19.97,'chalet|clear|10':-19.96,'chalet|rain|0':-19.55,'chalet|rain|1':-19.54,'chalet|rain|2':-19.53,'chalet|rain|3':-19.52,'chalet|rain|4':-19.51,'chalet|rain|5':-19.49,'chalet|rain|6':-19.48,'chalet|rain|7':-19.47,'chalet|rain|8':-19.46,'chalet|rain|9':-19.45,'chalet|rain|10':-19.44,'chalet|downpour|0':-19.07,'chalet|downpour|1':-19.06,'chalet|downpour|2':-19.05,'chalet|downpour|3':-19.04,'chalet|downpour|4':-19.03,'chalet|downpour|5':-19.02,'chalet|downpour|6':-19.01,'chalet|downpour|7':-19,'chalet|downpour|8':-18.99,'chalet|downpour|9':-18.98,'chalet|downpour|10':-18.97,'chalet|snow|0':-20.07,'chalet|snow|1':-20.06,'chalet|snow|2':-20.05,'chalet|snow|3':-20.04,'chalet|snow|4':-20.03,'chalet|snow|5':-20.02,'chalet|snow|6':-20.01,'chalet|snow|7':-20,'chalet|snow|8':-19.98,'chalet|snow|9':-19.97,'chalet|snow|10':-19.96,'castle|clear|0':-23.86,'castle|clear|1':-23.84,'castle|clear|2':-23.82,'castle|clear|3':-23.81,'castle|clear|4':-23.79,'castle|clear|5':-23.77,'castle|clear|6':-23.76,'castle|clear|7':-23.74,'castle|clear|8':-23.73,'castle|clear|9':-23.71,'castle|clear|10':-23.69,'castle|rain|0':-22.65,'castle|rain|1':-22.64,'castle|rain|2':-22.62,'castle|rain|3':-22.61,'castle|rain|4':-22.57,'castle|rain|5':-22.56,'castle|rain|6':-22.55,'castle|rain|7':-22.54,'castle|rain|8':-22.53,'castle|rain|9':-22.51,'castle|rain|10':-22.5,'castle|downpour|0':-21.71,'castle|downpour|1':-21.7,'castle|downpour|2':-21.69,'castle|downpour|3':-21.68,'castle|downpour|4':-21.63,'castle|downpour|5':-21.62,'castle|downpour|6':-21.61,'castle|downpour|7':-21.6,'castle|downpour|8':-21.59,'castle|downpour|9':-21.58,'castle|downpour|10':-21.58,'castle|snow|0':-23.85,'castle|snow|1':-23.84,'castle|snow|2':-23.82,'castle|snow|3':-23.81,'castle|snow|4':-23.79,'castle|snow|5':-23.77,'castle|snow|6':-23.76,'castle|snow|7':-23.74,'castle|snow|8':-23.73,'castle|snow|9':-23.71,'castle|snow|10':-23.69};
 const keyOf = (p, wx, wind) => `${p}|${wx}|${Math.round(wind * 10)}`;
 async function measure(place, wx, wind, gain = 1) {
   const secs = 10, oc = new OfflineAudioContext(2, SR * secs, SR), g = G(oc, gain); g.connect(oc.destination);
-  buildScene(oc, g, place, WX[wx], wind, 11).schedule(secs);
+  buildScene(oc, g, place, WX[wx], wind, 11, true, { bed: true }).schedule(secs);
   const t = performance.now(), rb = await oc.startRendering(), ms = performance.now() - t, chs = [rb.getChannelData(0), rb.getChannelData(1)];
   return { lufs: lufs(chs, 2), peak: todb(peakOf(chs.map(d => d.subarray(2 * SR)))), ms };
+}
+// one of the now-and-then sounds alone: its loudest 3 s and its peak, raw (the bed's own gain applies on top)
+async function accent(place, wx, wind, day, i, gain = 1) {
+  const secs = 24, oc = new OfflineAudioContext(2, SR * secs, SR), g = G(oc, gain); g.connect(oc.destination);
+  buildScene(oc, g, place, WX[wx], wind, 13 + i, day, { only: i }).schedule(secs);
+  const rb = await oc.startRendering(), chs = [rb.getChannelData(0), rb.getChannelData(1)];
+  return { st: stMax(chs), mo: stMax(chs, .4), peak: todb(peakOf(chs)) };
 }
 async function calib(place, wx, wind) { const k = keyOf(place, wx, wind); if (!(k in CAL)) CAL[k] = (await measure(place, wx, wind)).lufs; return CAL[k]; }
 
 /* ---- playback, on the cue engine's context ---- */
-const A = { place: null, wx: 'rain', wind: WX.rain.wind, level: 'low', ctx: null, bus: null, duck: null, cur: null, timer: 0, gen: 0, seen: 0, onchange: null };
+const hr = new Date().getHours();
+const A = { place: null, wx: 'rain', wind: WX.rain.wind, day: hr >= 7 && hr < 18, level: 'low', ctx: null, bus: null, duck: null, cur: null, timer: 0, gen: 0, seen: 0, onchange: null };
 const gainFor = m => db(LEVEL[A.level] + WX[A.wx].add - m);
 function ensureBus(c) {
   if (A.ctx === c && A.bus) return; A.ctx = c; A.duck = G(c, 1); A.bus = G(c, 0); chain(A.bus, A.duck, NS.S.bus.master);
@@ -611,7 +768,7 @@ async function start(place, fade = 2.5) {
   const m = await calib(place, A.wx, A.wind); if (gen !== A.gen || NS.S.ctx !== c) return false;
   for (let i = 0; i < 40 && c.state !== 'running'; i++) await new Promise(r => setTimeout(r, 25));
   if (gen !== A.gen || NS.S.ctx !== c) return false;
-  const t = c.currentTime + .05, sc = buildScene(c, A.bus, place, WX[A.wx], A.wind, 1 + Math.floor(Math.random() * 1000)); sc.m = m;
+  const t = c.currentTime + .05, sc = buildScene(c, A.bus, place, WX[A.wx], A.wind, 1 + Math.floor(Math.random() * 1000), A.day); sc.m = m;
   sc.out.gain.setValueAtTime(0, t); sc.out.gain.linearRampToValueAtTime(gainFor(m), t + fade);
   const old = A.cur; A.cur = sc;
   if (old) { old.out.gain.cancelScheduledValues(t); old.out.gain.setValueAtTime(old.out.gain.value, t); old.out.gain.linearRampToValueAtTime(0, t + fade); old.stop(t + fade + .1); }
@@ -633,20 +790,28 @@ function stop(fade = 1.2) {
 }
 function setLevel(l) { A.level = l; const c = A.ctx; if (c && A.cur) { const t = c.currentTime, g = A.cur.out.gain; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(gainFor(A.cur.m), t + 1); } }
 function setWeather(wx, wind) { A.wx = wx; A.wind = wind ?? WX[wx].wind; if (A.place) start(A.place, 2); }
+function setDay(d) { d = !!d; if (d === A.day) return; A.day = d; if (A.place) start(A.place, 3); }
 document.addEventListener('visibilitychange', () => { if (document.hidden && A.place) stop(.2); });
 addEventListener('pagehide', () => { if (A.place) stop(0); });
 
-/* ---- self-test: every place and weather, measured raw, then at its set gain ---- */
+/* ---- self-test: every place and weather, measured raw, then at its set gain; then each now-and-then sound on its own,
+   by day and by night, over that bed: heard (its loudest moment no more than 12 LU under the bed) but never loud (that
+   moment at most 5 LU over it, its loudest 3 s at most 4 over) ---- */
 async function selftest() {
-  const rows = []; let ok = true;
+  const rows = [], acc = []; let ok = true;
   for (const [p] of PLACES) for (const wx of Object.keys(WX)) {
     const w = WX[wx].wind, m = await measure(p, wx, w), want = LEVEL.medium + WX[wx].add, again = await measure(p, wx, w, db(want - m.lufs));
     const pass = isFinite(m.lufs) && Math.abs(again.lufs - want) < 1 && again.peak < -18 && m.ms < 4000; ok = ok && pass;
     rows.push({ p, wx, raw: Math.round(m.lufs * 10) / 10, set: Math.round(again.lufs * 10) / 10, want, peak: Math.round(again.peak * 10) / 10, ms: Math.round(m.ms), pass });
+    if (wx !== 'clear' && wx !== 'snow') continue;
+    for (const day of [true, false]) { const St = scene(p, WX[wx], w, day).St;
+      for (let i = 0; i < St.length; i++) { if (!St[i].rare || acc.some(a => a.p === p && a.ev === St[i].ev && a.kind === St[i].kind)) continue;
+        const a = await accent(p, wx, w, day, i), rel = Math.round((a.st - m.lufs) * 10) / 10, mo = Math.round((a.mo - m.lufs) * 10) / 10, peak = Math.round((a.peak + want - m.lufs) * 10) / 10, pass = rel <= 4 && mo <= 5 && mo >= -12 && peak < -18;
+        ok = ok && pass; acc.push({ p, wx, day, ev: St[i].ev, kind: St[i].kind, g: St[i].g, rel, mo, peak, pass }); } }
   }
-  return { ok, rows };
+  return { ok, rows, acc };
 }
-return { PLACES, WX, LEVEL, A, CAL, keyOf, start, stop, setLevel, setWeather, calib, measure, selftest };
+return { PLACES, WX, LEVEL, A, CAL, keyOf, start, stop, setLevel, setWeather, setDay, calib, measure, accent, scene, selftest };
 })();
 /* === end ambience === */
 

@@ -373,6 +373,22 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p29, 2026-11-15): the plan board and Mira's calls.** His asks: "a lot easier to view and edit the weekly
+  plans" and "the phone ring to actually have a phone ring functionality". His picks: the board holds tasks only; every
+  call kind below; the 9 pm check-in rings too.
+  - **Plan board** (`#plan`, `refreshPlan`, `planOpen/planClose`, state `PL`): PLAN in the top bar, W, or PLAN BOARD on
+    the apartment's WEEK card (opens on that day). Phone: a strip of seven days, the picked day's list under it; laptop:
+    seven columns, a one-off task drags onto another day (native drag; repeats don't, they'd move the series). A row's
+    editor is the apartment's (`taskEd(t, ex)`) with the week's seven days on top to move it in one tap. LATE once at
+    the top with MOVE TO TODAY; its own day shows it without a second editor. ‹ › weeks. Escape closes (even from a
+    box); while it's up the city's keys are off and the scene draws at the idle rate. Test t78.
+  - **Mira's calls**: see [MIRA.md](MIRA.md) phase 5. Test t79.
+  - **Tell above the keyboard**: an iPhone keyboard covers the page without moving it, so while he types in her card or
+    the holo call it lifts by the keyboard's height (`kbFit`, from `visualViewport`). Test t80.
+  - **Ambience v2** (his Sound Lab notes: keep everything, the castle without the clock): each place's bed plus the things
+    that make it that place, now and then; birds by day, an owl at night. Day or night follows the sun (`SKY.L` over .3
+    is day, under .2 night; `AMB_DAY` in city.js into `ambWant`). CAL re-measured by tools/amb-cal.html (264 keys). Test
+    t66 now compares the app with the current lab.
 - **Built (p28, 2026-11-14): Mira M4.** LINK levels from his data, nine unlocks (three close poses, four things in the
   apartment, two evening spots), a level-up moment, five outfit colours he picks on her card; [MIRA.md](MIRA.md)
   phase 4. 9 new lines. Tests t76, t77.
@@ -706,6 +722,5 @@ Technical state only. Updated 2026-11-06.
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
   1. p22 is live (he checked it on his iPhone, Nov 11). p23 to p25 live (Nov 14, he checked them). p26 (Mira M2) live (Nov 14).
-     p27 (Mira M3) live (Nov 14). p28 (Mira M4) on city-m4, not pushed: new clips, KV upload, push each need his go. Ambience v2 is in the Sound Lab only, waiting on his listen; then into sound.js (CAL, day from
-     the sun, t66).
+     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) on city-p29, not pushed: 27 call clips made (his yes, Nov 15); KV upload and push each need his go.
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

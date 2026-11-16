@@ -75,7 +75,27 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
      `APP.fit/fitSet/fitOk`) and she answers (`fit.pick`, 3 lines).
    - Test hooks `CityApp.link()`, `linkTest(pts)` (raises only), `City._.stats().lv/closeN`, `City._.fit()`. Tests
      t76, t77.
-5. **V Voice (built p25, 2026-11-14).** His picks: an ElevenLabs library voice (`mDxkcO3nsRCNeB4si9qg`; he turned down
+5. **M5 Calls (built p29, 2026-11-15).** She rings wherever he is (city or any room), he picks up, she says what it's
+   about (her voice, no data in it; the thing on screen) and his answer does it. `#call`, `callTick` (every second;
+   asks `APP.calls(at)` every 5 s), `callRing/callAnswer/callStep/callDo/callBye`.
+   - **What rings, most pressing first** (`APP.calls` in index.html): a reminder come due (`slipped()`, every due one in
+     the same call: DONE / +2H / TOMORROW through `APP.decide`); still clocked in 30 min past today's logged shift end or
+     10 h in (CLOCK OUT / STILL HERE); hours for Len, 10 am to 8 pm in the submit window until sent (COPY HOURS /
+     LATER); the check-in, 9 to 11 pm with tasks open (the close-up's list, DONE / TOMORROW / LET GO, then
+     `checkinEnd`); school due today or tomorrow, 5 to 9 pm (CASTLE / LATER); the gym, 7 to 9 pm on a session day not done
+     (GYM / SKIP TODAY; it replaces the island nudge); Sunday 5 to 10 pm, next week (PLAN IT opens the board there).
+   - **Manners:** one at a time, 90 s between calls; never in a flight, while he types, close up with her, or while she
+     counts his rest; reminders not while DECIDE is open. Rings 25 s (his own ring or the built-in, again every 6.5 s),
+     then missed. Declined or missed: again after `CALL_AGAIN` (reminder 60 min, max 3 rings, then DECIDE holds it;
+     clock-out 60; Len 180; week 120), the rest not today. A check-in done in person counts. Kept per device per day in
+     `localStorage.daybook_calls`. A reminder call marks `daybook_rung`, so the apartment phone doesn't ring for it too;
+     with calls on, index.html's reminder chime and evening nudge stay quiet (`City.calls()`).
+   - **Switch:** System > Sound > Mira's calls (per device, `daybook_mcalls`, on by default).
+   - **Lines:** 13 new keys, 27 variants (`call.remind`, `.next`, `call.ok.done/later/tomorrow`, `call.clockout`, `.still`,
+     `call.len`, `.done`, `call.later`, `call.study`, `call.skip`, `call.week`); the gym call says `nudge.gym`, the
+     check-in its own lines.
+   - Test hooks `City._.call(at)`, `callState()`, `callMem()`, `callReset()`, `ringFor(ms)`. Test t79.
+6. **V Voice (built p25, 2026-11-14).** His picks: an ElevenLabs library voice (`mDxkcO3nsRCNeB4si9qg`; he turned down
    "Kano"), and **Japanese with English subtitles** ("way better"). `Mira.JA` holds the Japanese for every variant id
    (written by me, not a native speaker; worth a native read). `tools/mira-voice.mjs`:
    - `sample|all <voice> --lang ja` makes clips into `models/voice/ja/` (gitignored); skips ones already made with the

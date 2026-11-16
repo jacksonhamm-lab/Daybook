@@ -530,6 +530,29 @@ label.rbtn{cursor:pointer}
 .mfit.on{border-color:var(--hud-red);box-shadow:0 0 0 1px var(--hud-red),0 0 10px rgba(255,70,70,.45)}
 .mfit.lk{opacity:.4;cursor:default}.mfit.lk i{filter:grayscale(.7) brightness(.6)}
 .mfit:focus-visible{outline:2px solid var(--hud-cyan);outline-offset:1px}
+/* her phone call (p29): rings wherever he is, over everything */
+#call{position:absolute;left:calc(var(--sl) + 8px);right:calc(var(--sr) + 8px);top:calc(var(--st) + 66px);z-index:9;display:flex;gap:10px;align-items:flex-start;padding:10px 11px 11px 10px;background:rgba(5,14,19,.96);box-shadow:inset 0 0 0 1px var(--hud-cyan-line),0 0 26px rgba(90,228,236,.16);opacity:0;visibility:hidden;transform:translateY(-10px);transition:opacity .25s,transform .3s,visibility 0s .3s}
+#hud #call.on{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .25s,transform .3s,visibility 0s}
+#call::before{content:'';position:absolute;left:-1px;top:-1px;width:9px;height:9px;border-left:2px solid var(--hud-cyan);border-top:2px solid var(--hud-cyan)}
+#call.ring{animation:clring 1.1s ease-in-out infinite}
+@keyframes clring{50%{box-shadow:inset 0 0 0 1px var(--hud-cyan),0 0 34px rgba(90,228,236,.42)}}
+#call.ring .hof{animation:clbuzz .9s steps(2) infinite}
+@keyframes clbuzz{0%,55%{transform:none}65%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}85%{transform:translateX(-1px)}}
+#call.on .hof img{animation:hofl 5s steps(1) infinite}
+#call.nof .hof::before{content:'MK';position:absolute;inset:0;display:grid;place-items:center;font:800 20px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-cyan);text-shadow:0 0 8px var(--hud-cyan)}
+#call.talk .hov{animation:hov .16s steps(3) 16 alternate}
+#call.ring .hox{display:none}
+#call .hon em{font-style:normal}
+#call.ring .hon{color:var(--hud-yellow)}#call.ring .hon i{background:var(--hud-yellow)}
+#clSay{margin:5px 0 0;font:600 15px/1.36 var(--body);color:var(--hud-text)}
+#clTitle{margin-top:7px;font:700 17px/1.28 var(--body);color:var(--hud-cyan);overflow-wrap:anywhere}
+#clInfo{display:block;margin-top:4px;font:12px/1.4 var(--micro);color:var(--hud-cyan);letter-spacing:.04em;overflow-wrap:anywhere}
+#clTitle:empty,#clInfo:empty,#clActs:empty,#clList:empty{display:none}
+#clList{margin-top:6px;max-height:min(46vh,340px);overflow-y:auto;overscroll-behavior:contain}
+#call .macts{margin-top:10px}
+#call .macts .rbtn{min-height:44px}
+@media (min-width:900px){#call{left:auto;right:calc(var(--sr) + 18px);top:calc(var(--st) + 76px);width:400px}}
+@media (prefers-reduced-motion:reduce){#call.ring,#call.ring .hof,#call.on .hof img,#call.talk .hov{animation:none}}
 /* the plan board (p29): the week's tasks on one screen, from the city or any room */
 #plan{position:absolute;left:calc(var(--sl) + 6px);right:calc(var(--sr) + 6px);top:calc(var(--st) + 6px);bottom:calc(var(--sb) + 6px);z-index:7;--ct:18px;display:flex;flex-direction:column;opacity:0;transform:translateY(14px);visibility:hidden;transition:opacity .22s var(--ease),transform .32s var(--ease),visibility 0s .32s}
 #hud #plan.open{opacity:1;transform:none;visibility:visible;pointer-events:auto;transition:opacity .22s var(--ease),transform .32s var(--ease),visibility 0s}
@@ -617,6 +640,9 @@ label.rbtn{cursor:pointer}
 .mrow.mv em{color:var(--hud-yellow)}.mrow.gone em{color:var(--hud-redd)}.mrow.gone b{text-decoration:line-through;opacity:.6}
 @media (max-width:899px){#hud.talk #herBox .hbody{display:none}}
 @media (min-width:900px){#herBox{width:340px}}
+/* the iPhone keyboard covers the bottom of the screen without moving it: the box he types in sits above it (kbFit) */
+#hud.kb #herBox:focus-within{bottom:calc(var(--kb) + 8px);transition:bottom .18s}
+#hud.kb #holo:focus-within{bottom:calc(var(--kb) + 8px)!important}
 @media (prefers-reduced-motion:reduce){.hon i{animation:none}}
 
 /* moments */
@@ -781,6 +807,15 @@ const MARKUP = `
         <div class="mi hnext" id="hNext"></div>
         <div class="mi hlike">LIKES // RAIN ON GLASS / LATE RAMEN / A FINISHED LIST</div>
       </div>
+    </div>
+  </section>
+  <section class="pe" id="call" role="dialog" aria-labelledby="clWho" aria-describedby="clSay" aria-hidden="true" inert>
+    <div class="hof"><img id="clImg" alt="" hidden><i class="hov" aria-hidden="true"></i></div>
+    <div class="hob">
+      <div class="hoh"><b class="mwho" id="clWho">MIRA // CALLING</b><span class="hon"><i></i><em id="clT"></em></span><button class="hox" data-cl="hang" aria-label="Hang up">×</button></div>
+      <p id="clSay" aria-live="polite"></p><div class="hobig" id="clBig"></div><div id="clTitle"></div><small id="clInfo"></small>
+      <div id="clList"></div>
+      <div class="macts" id="clActs"></div>
     </div>
   </section>
   <section class="pe" id="holo" aria-label="Mira on a holo call" aria-hidden="true" inert>
@@ -6859,6 +6894,7 @@ function hudInit() {
     if (d.mk) miraStart(d.mk);
   });
   $('#mLine').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#mLine').click(); } });
+  $('#call').addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-cl]'); if (b) callDo(b); });
   $('#holo').addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-hox],[data-ho],[data-hotell],#hoF'); if (!b) return; const d = b.dataset;
     if (d.hox) { HV.hung = true; if (APP.sayStop) APP.sayStop(); holoHide(); APP.sfx('hangup'); return; }
@@ -6992,6 +7028,7 @@ function miraStart(kind) {
   const news = !kind && APP.linkNews ? APP.linkNews() : null;
   if (again && !news) { MT = null; const g = Mira.line('greet.again', c.date + miraLast); miraIdle(g.say); if (!(APP.say && APP.say(g.id))) APP.sfx('tick'); return; }
   const k = kind || Mira.which(c);
+  if (k === 'checkin' || k === 'review') { const m = clMem(); m.done['k:' + c.date] = 1; clSave(m); }   // p29: done in person, no 9 pm call
   MT = { kind: k, c, steps: Mira.talk(k, c, again), i: 0, res: { done: 0, moved: 0, left: 0 }, acted: {}, tt: 0 };
   if (news) { MT.steps.splice(1, 0, Mira.line('link.new', c.date, news)); APP.linkTold(); }   // M4: after a level up, what's new
   hudEl.classList.add('talk'); if (APP.sayPre) APP.sayPre(MT.steps.map(x => x.say ? x.id : '')); miraShow();
@@ -7152,6 +7189,126 @@ function holoTick() {
     } else if (ck.on && !was) holoSay('holo.shop.in', { ctx: 'shop', info: ck.since ? 'IN ' + ck.since.toUpperCase() : '', ms: 6000 });
   }
 }
+/* ---------- her phone calls (p29, his ask: "the phone ring to actually have a phone ring functionality"): she rings
+   wherever he is in the app, he picks up, she says what it's about (her voice, no data in it; the thing itself on screen)
+   and his answer does it, like a game's dialogue. What rings (APP.calls, most pressing first): a reminder come due (DONE /
+   +2H / TOMORROW, each one due in the same call), still clocked in long after the shift, hours for Len, the 9 pm check-in
+   (the close-up's own list), school due tomorrow, the evening gym (was the island nudge) and Sunday's plan for the week
+   (the plan board). One call at a time, a gap between calls; never during a flight, while he types, or while she's in
+   front of him. Declined or missed: it rings again after CALL_AGAIN minutes, or not today. This device's switch in
+   System > Sound ---------- */
+const CALL_AGAIN = { remind: 60, clockout: 60, len: 180, week: 120 };   // minutes; the others: not again today
+const CALL_TRIES = 3, CALL_GAP = 90e3, CALL_RING = 25e3, CALL_SAY = { remind: 'REMINDER', clockout: 'STILL ON THE CLOCK', len: 'HOURS FOR LEN', checkin: 'CHECK-IN', study: 'SCHOOL', gym: 'THE GYM', week: 'NEXT WEEK' };
+let CL = null, CL_AT = null, clLast = 0, clNext = 0, clRingT = 0, clRingMs = CALL_RING;
+const callsOn = () => { try { return localStorage.getItem('daybook_mcalls') !== '0'; } catch (e) { return true; } };
+function clMem() { let m = {}; try { m = JSON.parse(localStorage.getItem('daybook_calls') || '{}') || {}; } catch (e) {} const d = new Date().toDateString(); if (m.day !== d) m = { day: d, done: {}, snooze: {}, tries: {} }; return m; }
+const clSave = m => { try { localStorage.setItem('daybook_calls', JSON.stringify(m)); } catch (e) {} };
+/* what he didn't get to: again later, or not today */
+function clDefer(items) { const m = clMem(), now = Date.now(); items.forEach(x => { if (CALL_AGAIN[x.k] && !m.done[x.key]) m.snooze[x.key] = now + CALL_AGAIN[x.k] * 60e3; else m.done[x.key] = 1; }); clSave(m); }
+function clDone(x) { const m = clMem(); m.done[x.key] = 1; clSave(m); }
+function callTick(force) {
+  if (!ready || !window.Mira || !APP.calls) return null;
+  const now = Date.now();
+  if (CL) {
+    if (CL.st === 'ring') { if (now - CL.t0 > clRingMs) { callDrop(false); return null; } if (now - clRingT > 6500) { clRingT = now; if (APP.ringOnce) APP.ringOnce(); } }
+    else if (CL.st === 'live') setText('#clT', mmss(now - CL.t1));
+    return null;
+  }
+  if (!callsOn() || document.hidden || S.mode === 'fly' || S.mode === 'cam' || S.close || MT) return null;
+  if (!force && (now - clLast < CALL_GAP || now < clNext)) return null; clNext = now + 5000;
+  const a = ROOT.activeElement; if (a && a.matches && a.matches('input,textarea,select')) return null;   // never mid-typing
+  if (HO && HO.ctx === 'rest') return null;                                                             // she's counting his rest
+  let L; try { L = APP.calls(CL_AT || {}); } catch (e) { APP.log(e); return null; }
+  const m = clMem(), dec = S.sheet && curCard === 'cDecide';
+  const free = x => !m.done[x.key] && !(m.snooze[x.key] > now) && !(x.k === 'remind' && (dec || (m.tries[x.key] || 0) >= CALL_TRIES));
+  const c = L.find(free); if (!c) return null;
+  callRing(c.k, c.k === 'remind' ? L.filter(x => x.k === 'remind' && free(x)) : [c]); return c.k;
+}
+function callFace() { const i = $('#clImg'); if (FACE) { if (i.getAttribute('src') !== FACE) i.src = FACE; i.hidden = false; } else i.hidden = true; $('#call').classList.toggle('nof', !FACE); }
+function callRing(k, items) {
+  const m = clMem(); items.forEach(x => { if (x.k === 'remind') m.tries[x.key] = (m.tries[x.key] || 0) + 1; }); clSave(m);
+  if (k === 'remind' && APP.rung) APP.rung(items.map(x => x.id));
+  CL = { st: 'ring', k, items, i: 0, t0: Date.now(), t1: 0, acted: {}, res: { done: 0, moved: 0, left: 0 } }; HV.log = [...(HV.log || []), 'ring.' + k].slice(-12);
+  const el = $('#call'); callFace();
+  setText('#clWho', 'MIRA // INCOMING CALL'); setText('#clT', 'RINGING'); setText('#clSay', 'Mira is calling.'); setText('#clBig', ''); setText('#clTitle', '');
+  setText('#clInfo', CALL_SAY[k] + (items.length > 1 ? ` · ${items.length}` : '')); setHTML('#clList', '');
+  setHTML('#clActs', '<button class="rbtn" data-cl="answer">ANSWER</button><button class="rbtn ol dng" data-cl="decline">DECLINE</button>');
+  el.classList.remove('live', 'talk'); el.classList.add('on', 'ring'); el.setAttribute('aria-hidden', 'false'); el.inert = false;
+  clRingT = Date.now(); if (APP.ringOnce) APP.ringOnce();
+}
+function callAnswer() {
+  if (!CL || CL.st !== 'ring') return; if (APP.ringStop) APP.ringStop(); APP.sfx('pickup');
+  CL.st = 'live'; CL.t1 = Date.now(); const el = $('#call'); el.classList.remove('ring'); el.classList.add('live');
+  setText('#clWho', 'MIRA // ON THE LINE'); setText('#clT', '0:00'); setText('#clSay', ''); setText('#clInfo', ''); setHTML('#clActs', '');
+  const c = CL; setTimeout(() => { if (CL === c) callStep(); }, 450);   // after the pickup sound
+}
+const clBtn = (a, l, solid) => `<button class="rbtn${solid ? '' : ' ol'}" data-cl="${a}">${l}</button>`;
+/* her line, then what it's about and his answers */
+function callSay(ln, o = {}) {
+  const el = $('#call'); setText('#clSay', ln.say); setText('#clBig', o.big || ''); setText('#clTitle', o.title || ''); setText('#clInfo', o.info || ''); setHTML('#clList', o.list || ''); setHTML('#clActs', o.acts || '');
+  el.classList.remove('talk'); void el.offsetWidth; el.classList.add('talk'); HV.log = [...(HV.log || []), ln.id.replace(/\.\d+$/, '')].slice(-12);
+  if (!(APP.say && APP.say(ln.id))) APP.sfx('tick');
+  const f = ROOT.querySelector('#clActs .rbtn, #clList .rbtn'); if (f && ROOT.activeElement && ROOT.activeElement.closest && ROOT.activeElement.closest('#call')) f.focus({ preventScroll: true });
+}
+function callStep() {
+  if (!CL || CL.st !== 'live') return; const k = CL.k, x = CL.items[CL.i], s = new Date().toDateString() + '|' + CL.i;
+  if (k === 'remind') return callSay(Mira.line(CL.i ? 'call.remind.next' : 'call.remind', s), { title: unesc(x.title), info: 'DUE ' + x.was + (CL.items.length > 1 ? ` · ${CL.i + 1} OF ${CL.items.length}` : ''), acts: clBtn('done', 'DONE', 1) + clBtn('later', '+2H') + clBtn('tomorrow', 'TOMORROW') });
+  if (k === 'clockout') return callSay(Mira.line('call.clockout', s), { big: hms(x.ms), info: 'IN SINCE ' + x.since, acts: clBtn('out', 'CLOCK OUT', 1) + clBtn('still', 'STILL HERE') });
+  if (k === 'len') return callSay(Mira.line('call.len', s), { big: x.hours + ' H', info: x.when, acts: clBtn('copy', 'COPY HOURS', 1) + clBtn('later', 'LATER') });
+  if (k === 'study') return callSay(Mira.line('call.study', s), { title: unesc(x.title), info: x.when, acts: clBtn('go', 'CASTLE', 1) + clBtn('later', 'LATER') });
+  if (k === 'gym') return callSay(Mira.line('nudge.gym', s), { title: unesc(x.label), acts: clBtn('go', 'GYM', 1) + clBtn('skip', 'SKIP TODAY') });
+  if (k === 'week') return callSay(Mira.line('call.week', s), { title: 'Next week', info: x.n ? `${x.n} TASK${x.n === 1 ? '' : 'S'} SO FAR` : 'NOTHING PLANNED YET', acts: clBtn('plan', 'PLAN IT', 1) + clBtn('later', 'LATER') });
+  if (k === 'checkin') return callSay(Mira.line('checkin.open', s), { info: `${x.tasks.length} STILL OPEN`, list: callList(), acts: clBtn('finish', 'THAT\'S ALL') });
+}
+/* the check-in on the phone: the close-up's list, one tap each */
+function callList() {
+  const x = CL.items[0]; return x.tasks.map(t => { const a = CL.acted[t.id]; return `<div class="mrow${a === 'tomorrow' ? ' mv' : a === 'drop' ? ' gone' : ''}"><b>${t.title}</b>${a ? `<em>${a === 'done' ? 'DONE' : a === 'tomorrow' ? 'TOMORROW' : 'LET GO'}</em>` : `<div class="seg2"><button class="rbtn" data-cl="ck" data-do="done" data-id="${t.id}" data-d="${t.d}">DONE</button><button class="rbtn ol" data-cl="ck" data-do="tomorrow" data-id="${t.id}" data-d="${t.d}">TOMORROW</button><button class="rbtn ol" data-cl="ck" data-do="drop" data-id="${t.id}" data-d="${t.d}">LET GO</button></div>`}</div>`; }).join('');
+}
+/* his answer */
+function callDo(b) {
+  if (!CL) return; const d = b.dataset, a = d.cl, k = CL.k, x = CL.items[CL.i];
+  if (a === 'answer') return callAnswer();
+  if (a === 'decline') { APP.sfx('hangup'); return callDrop(true); }
+  if (a === 'hang') { if (APP.sayStop) APP.sayStop(); APP.sfx('hangup'); if (k === 'checkin') clDone(x); else clDefer(CL.items.slice(CL.i)); return callClose(); }
+  if (CL.st !== 'live') return;
+  if (k === 'remind') {
+    APP.decide('rm-' + a, x.id); clDone(x); CL.i++;
+    if (CL.i < CL.items.length) return callStep();
+    return callBye('call.ok.' + a);
+  }
+  if (k === 'checkin') {
+    if (a === 'ck') { if (CL.acted[d.id] || !APP.miraDo(d.do, d.id, d.d)) return; CL.acted[d.id] = d.do; if (d.do === 'done') CL.res.done++; else if (d.do === 'tomorrow') CL.res.moved++; setHTML('#clList', callList()); const n = ROOT.querySelector('#clList [data-cl]'); if (n) n.focus({ preventScroll: true }); if (Object.keys(CL.acted).length < x.tasks.length) return; }
+    CL.res.left = x.tasks.filter(t => !CL.acted[t.id]).length; clDone(x); return callBye(null, Mira.checkinEnd({ date: x.key.slice(2) }, CL.res));
+  }
+  clDone(x);
+  if (k === 'clockout') { if (a === 'out') { callClose(); APP.act('clock-out'); return; } const m = clMem(); delete m.done[x.key]; m.snooze[x.key] = Date.now() + 60 * 60e3; clSave(m); return callBye('call.clockout.still'); }
+  if (k === 'len') { if (a === 'copy') { APP.act('copy-submit'); return callBye('call.len.done'); } const m = clMem(); delete m.done[x.key]; m.snooze[x.key] = Date.now() + CALL_AGAIN.len * 60e3; clSave(m); return callBye('call.later'); }
+  if (k === 'study') { if (a === 'go') return callGo('castle|cDue'); return callBye('call.later'); }
+  if (k === 'gym') { try { localStorage.setItem('daybook_nudge', x.key.slice(2)); } catch (e) {} if (a === 'go') return callGo('gym|cSess'); return callBye('call.skip'); }
+  if (k === 'week') { if (a === 'plan') { callClose(); planOpen(x.mon); return; } const m = clMem(); delete m.done[x.key]; m.snooze[x.key] = Date.now() + CALL_AGAIN.week * 60e3; clSave(m); return callBye('call.later'); }
+}
+/* her last word, then she hangs up */
+function callBye(k, ln) {
+  if (!CL) return; ln = ln || Mira.line(k, new Date().toDateString() + '|' + Date.now()); CL.st = 'bye'; callSay(ln, {});
+  const c = CL; setTimeout(() => { if (CL === c) { APP.sfx('hangup'); callClose(); } }, 3400);
+}
+function callGo(to) { const [id, card] = to.split('|'); callClose(); if (S.mode === 'room' && room.id === id) { if (S.close) stepBack(); setTimeout(() => { if (S.mode === 'room' && !S.close) openSheet(card); }, 160); return; } goPlace(id, card); }
+/* declined (he said no) or missed (it rang out): again later, or not today */
+function callDrop(said) { if (!CL) return; clDefer(CL.items); HV.log = [...(HV.log || []), (said ? 'declined.' : 'missed.') + CL.k].slice(-12); callClose(); }
+function callClose() {
+  if (APP.ringStop) APP.ringStop(); CL = null; clLast = Date.now();
+  const el = $('#call'); el.classList.remove('on', 'ring', 'live', 'talk'); el.setAttribute('aria-hidden', 'true'); el.inert = true;
+}
+setInterval(() => { try { callTick(); } catch (e) { APP.log(e); } }, 1000);
+/* the on-screen keyboard: how much of the bottom it covers (iPhone keeps the page the same size under it), for the CSS
+   above. A desktop or a hardware keyboard: 0 */
+function kbFit(px) {
+  const v = window.visualViewport, kb = px != null ? px : v ? Math.max(0, Math.round(innerHeight - v.height - v.offsetTop)) : 0;
+  hudEl.style.setProperty('--kb', kb + 'px'); hudEl.classList.toggle('kb', kb > 60);
+  if (kb > 60) { const a = ROOT.activeElement; if (a && a.closest && a.closest('#herBox,#holo') && v) try { scrollTo(0, 0); } catch (e) {} }   // lifted instead: no scroll needed
+  return kb;
+}
+if (window.visualViewport) { visualViewport.addEventListener('resize', () => kbFit()); visualViewport.addEventListener('scroll', () => kbFit()); }
 /* Tell Mira: in her close-up (m) and on the call (h). Plain words; index.html decides task or note and does it */
 function tellOpen(w) {
   const f = $(w === 'm' ? '#mTell' : '#hoTell'); f.hidden = false; $(w === 'm' ? '#mActs' : '#hoActs').hidden = true; /* the input in place of the buttons */ const i = f.querySelector('input'); i.value = '';
@@ -7437,6 +7594,7 @@ function refreshGlobal(k) {
       <details class="sgp" data-sg="sound"${sysOpen.has('sound') ? ' open' : ''}><summary>SOUND</summary><div class="seg2">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.sound ? '1' : '0', v)}" data-sact="set-sound" data-v="${v}" aria-pressed="${(X.sound ? '1' : '0') === v}">${l}</button>`).join('')}</div><p>This device only. An iPhone's silent switch mutes it.</p>
         <p style="margin-top:12px">Ambience: quiet background for each place, shaped by the weather where you are.</p><div class="seg2" style="margin-top:6px">${[['off', 'OFF'], ['low', 'LOW'], ['medium', 'MEDIUM']].map(([v, l]) => `<button class="rbtn${on(X.amb, v)}" data-sact="set-amb" data-v="${v}" aria-pressed="${X.amb === v}">${l}</button>`).join('')}</div><p>${!X.sound ? 'Plays once Sound is on.' : X.amb !== 'off' && X.perf === 'saver' ? 'Paused while Performance is on Saver.' : 'Dips under every sound and stops when you leave the app.'}</p>
         <p style="margin-top:12px">Mira's voice: she speaks Japanese, the English is on screen.</p><div class="seg2" style="margin-top:6px">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.mvoice ? '1' : '0', v)}" data-sact="set-mvoice" data-v="${v}" aria-pressed="${(X.mvoice ? '1' : '0') === v}">${l}</button>`).join('')}</div>
+        <p style="margin-top:12px">Mira's calls: she rings wherever you are in the app. Reminders, clocking out, hours for Len, the check-in, school, the gym and Sunday's plan.</p><div class="seg2" style="margin-top:6px">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.mcalls ? '1' : '0', v)}" data-sact="set-mcalls" data-v="${v}" aria-pressed="${(X.mcalls ? '1' : '0') === v}">${l}</button>`).join('')}</div>
         ${X.own ? `<p style="margin-top:12px">Ring: ${X.own.has ? `your sound, ${X.own.name} (${X.own.secs} s)${X.own.kept ? '' : ', until you reload'}.` : 'the built-in ring. You can use a sound of your own: it stays on this device and is never uploaded.'} It rings when a decision is waiting.</p><div class="seg2" style="margin-top:6px"><input class="vh" id="gRingF" type="file" accept="audio/*,video/*,.mov,.m4a,.mp3,.wav"><label class="rbtn ol" for="gRingF">${X.own.has ? 'CHANGE' : 'USE MY OWN'}</label><button class="rbtn ol" data-sact="ring-test">PLAY</button><button class="rbtn ol" data-sact="ring-stop">STOP</button>${X.own.has ? '<button class="rbtn ol" data-sact="ring-clear">REMOVE</button>' : ''}</div>` : ''}</details>
       <details class="sgp" data-sg="perf"${sysOpen.has('perf') ? ' open' : ''}><summary>PERFORMANCE</summary><div class="seg2">${[['auto', 'AUTO'], ['smooth', 'SMOOTH'], ['balanced', 'BALANCED'], ['saver', 'SAVER']].map(([v, l]) => `<button class="rbtn${on(X.perf, v)}" data-sact="set-perf" data-v="${v}" aria-pressed="${X.perf === v}">${l}</button>`).join('')}</div><p>${X.perfSay}</p><div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn ol" data-sact="copy-log">COPY PROBLEM LOG</button><span class="mi">${X.probs} LOGGED</span></div><div class="seg2 sgsw"><button class="rbtn${$('#perf').hidden ? ' ol' : ''}" data-gfx="1" aria-pressed="${!$('#perf').hidden}">QUALITY READOUT</button></div></details>
       <details class="sgp" data-sg="sync"${sysOpen.has('sync') ? ' open' : ''}><summary>SYNC</summary>${X.sync ? `<div class="seg2"><button class="rbtn" data-sact="sync-now">SYNC NOW</button><button class="rbtn ol${syncArm ? ' dng' : ''}" data-sact="sync-off">${syncArm ? 'TAP AGAIN: TURN OFF' : 'TURN OFF'}</button></div>` : '<form class="hadd" id="gSyncF" style="margin-top:0"><input class="hin" id="gSyncI" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="SYNC CODE" aria-label="Sync code"><button class="rbtn" type="submit">CONNECT</button></form>'}<p>${X.syncSay}</p></details>
@@ -7566,8 +7724,11 @@ function refreshCastle() {
 function ambTick() {
   if (!APP.ambWant) return;
   const inRoom = S.mode === 'room' || (S.mode === 'fly' && S.fly && S.fly.dir > 0), place = inRoom && room.id ? room.id : 'city', w = inRoom ? skyW() : SKY.w;
-  APP.ambWant(place, w.snow > .3 ? 'snow' : w.rain >= .75 ? 'downpour' : w.rain > .2 ? 'rain' : 'clear', SKY.wind);
+  /* day once the light is up past .3, night once it falls under .2 (no flip-flop at dusk); unknown sky: the clock */
+  AMB_DAY = SKY.L < 0 ? null : SKY.L > .3 ? true : SKY.L < .2 ? false : AMB_DAY;
+  APP.ambWant(place, w.snow > .3 ? 'snow' : w.rain >= .75 ? 'downpour' : w.rain > .2 ? 'rain' : 'clear', SKY.wind, AMB_DAY);
 }
+let AMB_DAY = null;
 setInterval(() => { try { ambTick(); } catch (e) { APP.log(e); } }, 1000);
 setInterval(() => { try { holoTick(); } catch (e) { APP.log(e); } }, 500);
 setInterval(() => { if (room.id !== 'castle' || S.mode === 'city') return; const T = APP.school(); if (!T.clock.on) return; setText('#csClk', hms(T.clock.ms)); setText('#vS3', hms(T.clock.ms)); if (room.sand && (S.sandT = (S.sandT || 0) + 1) % 3 === 0) room.sand(T); }, 1000);
@@ -7769,6 +7930,11 @@ function rig() {
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
     figure() { return (figP || Promise.resolve()).then(() => !!FIG); },
     hour(h) { HOUR = h; return figSpot(); },
+    call(at, force = true) { CL_AT = at || null; return callTick(force); },
+    callState: () => CL ? { st: CL.st, k: CL.k, n: CL.items.length, i: CL.i, who: $('#clWho').textContent, say: $('#clSay').textContent, title: $('#clTitle').textContent, info: $('#clInfo').textContent, big: $('#clBig').textContent, acts: [...ROOT.querySelectorAll('#clActs [data-cl]')].map(b => b.textContent), rows: ROOT.querySelectorAll('#clList .mrow').length } : null,
+    kb: px => kbFit(px),   // tests: pretend a keyboard covers px at the bottom (null: measure)
+    ringFor(ms) { clRingMs = ms || CALL_RING; return clRingMs; },   // tests: how long it rings before it's missed
+    callMem: () => clMem(), callReset() { try { localStorage.removeItem('daybook_calls'); } catch (e) {} if (CL) callClose(); clLast = 0; clNext = 0; CL_AT = null; return 1; },
     plan(on, day) { if (on) planOpen(day || null); else if (on === false) planClose(true); return { on: PL.on, day: PL.day, wk: PL.wk, open: aptOpen }; },
     fit(c) { if (c === undefined) return FIG_FIT.value.toArray(); if (c) FIG_FIT.value.set(c[0], c[1], c[2], 1); else FIG_FIT.value.set(0, 0, 0, 0); return 1; },
     holo: () => { holoTick(); const el = $('#holo'); return HO ? { k: HO.k, ctx: HO.ctx, on: el.classList.contains('on'), mini: el.classList.contains('hsm'), say: $('#hoSay').textContent, big: $('#hoBig').textContent, info: $('#hoInfo').textContent, face: !!FACE, r: el.getBoundingClientRect().toJSON() } : null; },
@@ -7797,6 +7963,8 @@ function rig() {
 }
 window.City = {
   update,
+  /* p29: her calls ring here (index.html leaves its evening nudge and reminder chime to them) */
+  calls: () => ready && callsOn(),
   /* Ctrl K and / open the HUD's quick add, from the city or any room */
   quickAdd: () => { if (S.mode === 'fly') return; openGlobal('add'); },
   go: (id, card) => { if (S.mode === 'fly' || !ROOM_DEF[id]) return; if (S.close) closeReset(); if (S.sheet) closeSheet(true); goPlace(id, card); },

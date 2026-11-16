@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
-<script src="sound.js?v=p19"></script>
+<script src="sound.js?v=p29"></script>
 <script src="mira.js?v=p29"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
@@ -577,6 +577,7 @@ function miraReact(kind, delay = 2400, act) {
 }
 // the evening nudge: between 7 and 9 pm, a lifting or HIIT day not done yet, once a day, while the app is open
 function miraNudge() {
+  if (window.City && City.calls && City.calls()) return;   // p29: she calls instead (city.js, the gym call)
   const d = today(), h = new Date().getHours(), w = wo(d);
   if (document.hidden || h < 19 || h >= 21 || w.s === 'REST' || w.done) return;
   let last = ''; try { last = localStorage.getItem('daybook_nudge') || ''; } catch (e) {}
@@ -594,14 +595,15 @@ function soundOn(on) {
 // the ambience: the city asks for its place and weather about once a second; it plays only with Sound on, its own
 // switch on (Low or Medium), the Performance setting not on Saver, and an audio context a tap has woken
 const AMB_AT = new Set(['city', 'apartment', 'shop', 'gym', 'chalet', 'castle']);
-function ambWant(place, wx, wind) {
+function ambWant(place, wx, wind, day) {
   const A = window.AmbSound; if (!A || !NS) return;
   const want = SND.on && SND.amb !== 'off' && perfNow().pick !== 'saver' && !document.hidden && AMB_AT.has(place) ? place : null;
   if (!want) { if (A.A.place) A.stop(); return; }
   const c = NS.S.ctx; if (!c || c.state !== 'running') return;
   if (A.A.level !== SND.amb) A.setLevel(SND.amb);
   wx = A.WX[wx] ? wx : 'clear'; const w = wind == null ? A.WX[wx].wind : Math.max(0, Math.min(1, wind));
-  if (wx !== A.A.wx || Math.round(w * 10) !== Math.round(A.A.wind * 10)) { A.A.wx = wx; A.A.wind = w; if (A.A.place) { A.start(want, 2); return; } }
+  const dd = day != null && !!day !== A.A.day; if (dd) A.A.day = !!day;   // day or night, from the sun: birds or the owl
+  if (dd || wx !== A.A.wx || Math.round(w * 10) !== Math.round(A.A.wind * 10)) { A.A.wx = wx; A.A.wind = w; if (A.A.place) { A.start(want, dd ? 3 : 2); return; } }
   if (A.A.place !== want) A.start(want, A.A.place ? 2.5 : 3);
 }
 // the apartment phone rings for a decision that arrived since the last ring, at most once per 30 minutes: his own
@@ -623,7 +625,7 @@ function nextRemind() { const d = today(), now = Date.now(); let best = 0; for (
 setInterval(() => {
   if (!SND.on || !NS || !NS.S.ctx) return; let at = 0; try { at = nextRemind(); } catch (e) {} const left = at ? at - Date.now() : Infinity;
   NS.hold('message', left < 75e3 && left > -30e3);
-  if (at && left <= 0 && SND.msgAt !== at) { SND.msgAt = at; const ringing = NS.S.voices.some(v => v.nm === 'neon|ring') || (window.OwnRing && OwnRing.playing()); if (!ringing) sfx('message'); }
+  if (at && left <= 0 && SND.msgAt !== at) { SND.msgAt = at; const ringing = NS.S.voices.some(v => v.nm === 'neon|ring') || (window.OwnRing && OwnRing.playing()); if (!ringing && !(window.City && City.calls && City.calls())) sfx('message'); }   // p29: with her calls on, she rings instead
 }, 5000);
 // a new level plays the level-up the first time this device sees it (after the moment's own toasts); the first look
 // only remembers where he is
@@ -1296,6 +1298,7 @@ function link() {
 }
 const lsNum = k => { try { return +localStorage.getItem(k) || 0; } catch (e) { return 0; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch (e) {} };
+const lsGetCalls = () => { try { return localStorage.getItem('daybook_mcalls') !== '0'; } catch (e) { return true; } };   // her calls: on unless switched off here
 /* a level up: once per device, a celebration and her words. The first time on a device counts from level 1, so the
    levels he already has get their moment */
 function linkCheck() {
@@ -1465,6 +1468,7 @@ document.addEventListener('click', e => {
     }
     case 'set-nag': S.settings.nag = +v; return commit();
     case 'set-sound': { haptic(6); return soundOn(v === '1'); }
+    case 'set-mcalls': { lsSet('daybook_mcalls', v === '1' ? '1' : '0'); haptic(6); render(); return sfx('tick'); }
     case 'set-mvoice': { MV.on = v === '1'; try { localStorage.setItem('daybook_mvoice', MV.on ? '1' : '0'); } catch (x) {} haptic(6); if (!MV.on) mvStop(); render(); return MV.on ? mvSay('greet.again.3') || sfx('tick') : sfx('tick'); }
     case 'set-amb': { SND.amb = ['low', 'medium'].includes(v) ? v : 'off'; try { localStorage.setItem('daybook_amb', SND.amb); } catch (x) {} haptic(6); if (SND.amb === 'off' && window.AmbSound) AmbSound.stop(); return sfx('tick'); }
     case 'ring-clear': { haptic(6); return window.OwnRing && OwnRing.clear().then(() => { island.toast('Your ring is removed from this device'); window.City && City.update(); }); }
@@ -1764,6 +1768,31 @@ window.CityApp = {
       week: { hours: fh(days.reduce((a, d) => a + shiftHours(S.shifts[d]), 0)), sessDone, sessPlan: plan.length, study: fh(Math.round(st * 10) / 10), studyGoal: stG, done, slipped: slip, good: sessDone >= plan.length - 1 && slip <= 2 } };
   },
   // her check-in's buttons: done, tomorrow, let go (a delete, with Undo)
+  // p29 her phone calls (city.js callTick): what could ring now, most pressing first. key: one call per thing (city.js
+  // remembers which it rang, which he put off and till when). Escaped like plan()'s rows; at.hour / at.dow for tests
+  calls(at = {}) {
+    const n = new Date(), td = today(), hour = at.hour ?? n.getHours(), dow = at.dow ?? dowIdx(td), now = nowHM(), mm = t => +t.slice(0, 2) * 60 + +t.slice(3, 5), out = [];
+    slipped().forEach(t => out.push({ k: 'remind', key: `r:${t.id}|${td}|${remAt(t, td)}`, id: esc(t.id), title: esc(t.title), was: t12(remAt(t, td)).toUpperCase() }));
+    if (S.clock) {   // still on the clock: half an hour past the shift he logged for today, or ten hours in
+      const sh = S.shifts[td], st = hm(new Date(S.clock.startTs)), end = sh && shiftHours(sh) > 0 && sh.end > st ? sh.end : '', el = clockElapsed();
+      if ((end && mm(now) - mm(end) >= 30) || el > 10 * 36e5) out.push({ k: 'clockout', key: 'c:' + S.clock.startTs, since: t12(st).toUpperCase(), ms: el });
+    }
+    { const p = periodFor(td); if (inSubmitWindow(p) && !(S.submitted && S.submitted[p.payday]) && hour >= 10 && hour < 20) out.push({ k: 'len', key: `l:${p.payday}|${td}`, hours: fh(periodHours(p) + estimateHours(p) + extraHours(p)), when: `TO LEN · PAID ${DOW_LONG[dowIdx(p.payday)]} ${short(p.payday)}`.toUpperCase() }); }
+    { const open = tasksOn(td).filter(t => !isDone(t, td)); if (hour >= 21 && hour < 23 && open.length) out.push({ k: 'checkin', key: 'k:' + td, tasks: open.map(t => ({ id: esc(t.id), d: td, title: esc(t.title) })) }); }
+    if (schoolShown() && hour >= 17 && hour < 21) { const tm = iso(addDays(parse(td), 1)), t = schoolTasks().filter(x => !x.done && (x.date === td || x.date === tm)).sort((a, b) => a.date.localeCompare(b.date))[0]; if (t) out.push({ k: 'study', key: `s:${t.id}|${td}`, title: esc(t.title), when: dueSay(t.date).toUpperCase() }); }
+    { const w = wo(td); if (hour >= 19 && hour < 21 && w.s !== 'REST' && !w.done) out.push({ k: 'gym', key: 'g:' + td, label: esc((w.s === 'HIIT' ? 'HIIT' : w.s + ' ' + sessName(w.s)).toUpperCase()) }); }
+    if (dow === 6 && hour >= 17 && hour < 22) { const nm = addDays(mondayOf(parse(td)), 7), left = datesOf(nm).reduce((a, d) => a + tasksOn(d).filter(t => !isDone(t, d)).length, 0); out.push({ k: 'week', key: 'w:' + td, mon: iso(nm), n: left }); }
+    return out;
+  },
+  // her call's ring: his own sound when this device has one, the built-in ring otherwise; again while it rings
+  ringOnce() {
+    if (!SND.on || !NS || !NS.S.ctx) return false;
+    const built = () => { if (!NS.S.voices.some(v => v.nm === 'neon|ring')) sfx('ring', { force: true, wait: 3000 }); };
+    if (window.OwnRing && OwnRing.O.has) { if (!OwnRing.playing()) OwnRing.play().then(ok => { if (!ok) built(); }); } else built();
+    return true;
+  },
+  // a reminder her call rang for: the apartment phone doesn't ring for it again
+  rung(ids) { let r = {}; try { r = JSON.parse(localStorage.getItem('daybook_rung') || '{}') || {}; } catch (e) {} lsSet('daybook_rung', JSON.stringify({ ids: [...new Set([...(r.ids || []), ...ids])], at: Date.now() })); },
   // M4: LINK, and what's new since she last told him (her first talk after a level up says so)
   link: () => link(),
   linkNews() {
@@ -1848,7 +1877,7 @@ window.CityApp = {
   sys() {
     const st = S.settings;
     return { name: esc(st.name || ''), rate: st.rate || '', payCycle: +st.payCycle === 7 ? 7 : 14, payAnchor: esc(st.payAnchor || '2026-09-25'), payCutoff: st.payCutoff ?? 1, paySubmitDays: st.paySubmitDays ?? 4, extraHours: st.extraHours || '', hoursGoal: st.hoursGoal || '', appGoal: st.appGoal || '',
-      push: PUSH.on, pushSay: esc(pushLabel()), brief: !!st.remindDaily, remindAt: esc(st.remindAt || '08:00'), nag: st.nag == null ? 240 : +st.nag, sound: SND.on, amb: SND.amb, mvoice: MV.on, own: window.OwnRing ? { has: OwnRing.O.has, name: esc(OwnRing.O.name), secs: OwnRing.O.secs, kept: OwnRing.O.kept } : null, perf: perfNow().pick, perfSay: esc(perfLabel()), probs: probCount(), sync: !!SYNC.code, syncSay: esc(syncLabel()), build: BUILD };
+      push: PUSH.on, pushSay: esc(pushLabel()), brief: !!st.remindDaily, remindAt: esc(st.remindAt || '08:00'), nag: st.nag == null ? 240 : +st.nag, sound: SND.on, amb: SND.amb, mvoice: MV.on, mcalls: lsGetCalls(), own: window.OwnRing ? { has: OwnRing.O.has, name: esc(OwnRing.O.name), secs: OwnRing.O.secs, kept: OwnRing.O.kept } : null, perf: perfNow().pick, perfSay: esc(perfLabel()), probs: probCount(), sync: !!SYNC.code, syncSay: esc(syncLabel()), build: BUILD };
   },
   setting(k, v) {
     const num = ['rate', 'hoursGoal', 'appGoal', 'payCycle', 'extraHours', 'payCutoff', 'paySubmitDays'];
