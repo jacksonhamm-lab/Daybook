@@ -9,10 +9,10 @@
         { "name": "Wall angels · 10", "sets": 2 }
       ]},
       { "label": "Chest (Heavy)", "accent": "push", "exercises": [
-        { "name": "Dumbbell floor press · 8–10", "detail": "5 sec down, 1 sec up. Last set to failure. Rest 90 sec.", "sets": 4 },
-        { "name": "Incline floor press · 10–12", "detail": "Torso propped on the ottoman at 30–45°. Upper chest. 3 sec down.", "sets": 4 },
-        { "name": "Dumbbell floor fly · 12–15", "detail": "Slow. Pause 2 sec in the stretch.", "sets": 3 },
-        { "name": "Slow push-ups · near failure", "detail": "3 sec down, pause at the bottom. Grip the dumbbell handles to keep wrists neutral.", "sets": 3 }
+        { "name": "Ottoman bridge press · 8–12", "detail": "Ottoman against a wall so it can't slide. Upper back across it, hips up level with your knees, feet flat. Lower until the dumbbells sink below your chest: 3 sec down, 1 sec pause in the stretch, drive up. The floor press stopped your elbows short; this is the stretch that grows the chest. Last set: rest 15 sec and get more reps, twice.", "sets": 4 },
+        { "name": "Incline press · 10 one-and-a-half reps", "detail": "Torso propped on the ottoman at 30–45°. Down, half way up, back down, then all the way up: that's one rep. Upper chest.", "sets": 3 },
+        { "name": "Ottoman fly into squeeze press · 12 + max", "detail": "Superset. Upper back on the ottoman, fly with a 2 sec hold at the bottom of the stretch, then go straight into squeeze presses (dumbbells pressed together) until you can't. Makes 10 kg feel heavy.", "sets": 3 },
+        { "name": "Push-up drop set · each to failure", "detail": "No rest between: feet on the ottoman, then feet on the floor, then hands on the ottoman. Grip the dumbbell handles and let your chest sink below them.", "sets": 2 }
       ]},
       { "label": "Shoulders", "accent": "push", "exercises": [
         { "name": "Dumbbell overhead press · 10–12", "detail": "Seated on the ottoman. Slow down, full lockout.", "sets": 4 },
@@ -26,10 +26,11 @@
       { "label": "Abs", "accent": "abs", "exercises": [
         { "name": "Weighted crunches · 15", "detail": "Dumbbell on chest. Slow.", "sets": 3 },
         { "name": "Lying leg raises · 15", "detail": "Legs straight. Lower slow, don't let your back arch.", "sets": 3 },
-        { "name": "Plank · 60 sec", "sets": 2 }
+        { "name": "Plank · 60 sec", "sets": 2 },
+        { "name": "Weighted rope · 45 sec", "detail": "Between the ab sets: 45 sec of rope, then straight into the next ab set. Brace your core, small bounces.", "sets": 3 }
       ]}
     ],
-    "cardio": "Optional 15–20 min hill climb later in the day."
+    "cardio": "Optional later: 10 min of rope, 1 min on, 1 min off."
   },
 
   "d2": {
@@ -59,10 +60,11 @@
       ]},
       { "label": "Abs", "accent": "abs", "exercises": [
         { "name": "Russian twist with dumbbell · 20 total", "detail": "Lean back, feet up if you can. Obliques.", "sets": 3 },
-        { "name": "Side plank reach-through · 10 each side", "sets": 2 }
+        { "name": "Side plank reach-through · 10 each side", "sets": 2 },
+        { "name": "Weighted rope · 45 sec", "detail": "Between the ab sets: 45 sec of rope, then straight into the next ab set.", "sets": 3 }
       ]}
     ],
-    "cardio": "Optional 15–20 min hill climb later in the day."
+    "cardio": "Optional later: 10 min of rope, 1 min on, 1 min off."
   },
 
   "d3": {
@@ -102,9 +104,9 @@
         { "name": "Walkout to plank · 5 reps", "sets": 1 }
       ]},
       { "label": "Chest (second hit)", "accent": "push", "exercises": [
-        { "name": "Incline floor press · 10–12", "detail": "Upper chest first today. 3 sec down.", "sets": 3 },
-        { "name": "Dumbbell floor press · 10–12", "detail": "Pause 2 sec with elbows on the floor, then drive up.", "sets": 3 },
-        { "name": "Dumbbell squeeze press · 12", "detail": "Dumbbells pressed together the whole rep. Constant tension.", "sets": 3 }
+        { "name": "Incline press · 10–12", "detail": "Upper chest first today. Torso on the ottoman at 30–45°. 3 sec down, 1 sec pause at the bottom.", "sets": 3 },
+        { "name": "Ottoman fly · 15", "detail": "Upper back across the ottoman. Slow, and hold 3 sec in the deepest stretch. Light is fine: the stretch does the work.", "sets": 3 },
+        { "name": "Deficit push-ups · to failure", "detail": "Hands on the dumbbell handles, chest below them. At failure rest 15 sec and go again, until you get fewer than 3 reps.", "sets": 3 }
       ]},
       { "label": "Back (second hit)", "accent": "pull", "exercises": [
         { "name": "Single-arm dumbbell row · 12–15 each side", "sets": 3 },
@@ -123,7 +125,8 @@
       ]},
       { "label": "Abs", "accent": "abs", "exercises": [
         { "name": "Lying leg raises · 15", "sets": 3 },
-        { "name": "Russian twist with dumbbell · 20 total", "sets": 3 }
+        { "name": "Russian twist with dumbbell · 20 total", "sets": 3 },
+        { "name": "Weighted rope · 45 sec", "detail": "Between the ab sets: 45 sec of rope, then straight into the next ab set.", "sets": 3 }
       ]}
     ],
     "cardio": "Max Day tomorrow. Skip extra cardio so you test fresh."
@@ -155,9 +158,37 @@
       { "label": "Abs", "accent": "abs", "exercises": [
         { "name": "Weighted crunches · 12", "detail": "Heavier and slower than Day 1.", "sets": 3 },
         { "name": "Side plank reach-through · 10 each side", "sets": 2 },
-        { "name": "Hollow body hold · 30 sec", "sets": 2 }
+        { "name": "Hollow body hold · 30 sec", "sets": 2 },
+        { "name": "Weighted rope · 45 sec", "detail": "Between the ab sets: 45 sec of rope, then straight into the next ab set.", "sets": 2 }
       ]}
     ],
     "cardio": "No extra cardio needed today. Rest day tomorrow."
+  },
+
+  "hiit": {
+    "badge": "Conditioning · Rope",
+    "title": "Weighted Rope · Full Body · Abs",
+    "sections": [
+      { "label": "Warm Up", "accent": "warmup", "exercises": [
+        { "name": "Easy rope · 2 min", "detail": "Slow, small bounces on the balls of your feet. Wakes up the calves and ankles.", "sets": 1 },
+        { "name": "Arm circles · 30 sec each direction", "sets": 1 },
+        { "name": "Bodyweight squats · 15", "sets": 1 }
+      ]},
+      { "label": "Rope Intervals", "accent": "legs", "exercises": [
+        { "name": "Rope intervals · 30 sec hard, 30 sec easy", "detail": "Hard: as fast as you can with clean form. Easy: a slow bounce, the rope never stops. The weighted rope works your shoulders, arms and core too. New to the rope? Start with 6 and build to 8.", "sets": 8 }
+      ]},
+      { "label": "Full Body Circuit · 3 rounds", "accent": "push", "exercises": [
+        { "name": "Rope · 60 sec", "detail": "Circuit: one set of each, top to bottom, then rest 90 sec. Three rounds.", "sets": 3 },
+        { "name": "Kettlebell swings · 15", "detail": "Hip hinge, explosive.", "sets": 3 },
+        { "name": "Deficit push-ups · 12", "detail": "Your third chest hit of the week. Stop 2 reps short of failure: Upper is tomorrow.", "sets": 3 },
+        { "name": "Bent-over two-arm row · 12", "detail": "Flat back, pull to the ribs.", "sets": 3 }
+      ]},
+      { "label": "Rope Abs", "accent": "abs", "exercises": [
+        { "name": "Rope · 45 sec", "detail": "Straight into each ab set below.", "sets": 3 },
+        { "name": "Hollow body hold · 30 sec", "sets": 3 },
+        { "name": "Russian twist with dumbbell · 20 total", "sets": 3 }
+      ]}
+    ],
+    "cardio": "This is your conditioning day. Ticking every set finishes it, or log a cardio session."
   }
 }

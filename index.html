@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="sound.js?v=p29"></script>
-<script src="mira.js?v=p33"></script>
+<script src="mira.js?v=p34"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -27,9 +27,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p33';
+  window.DAYBOOK_BUILD = 'p34';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p33'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p34'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -37,7 +37,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p33').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p34').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -205,7 +205,7 @@ const SESS = {
 };
 const SESS_KEYS = Object.keys(SESS);
 const STATUSES = { Wishlist: '#8e8e93', Applied: '#0a84ff', Interview: '#ff9f0a', Offer: '#30d158', Rejected: '#ff453a' };
-const CARDIO_TYPES = ['HIIT', 'Hill', 'Run', 'Range', 'Walk', 'Bike'];
+const CARDIO_TYPES = ['Rope', 'HIIT', 'Hill', 'Run', 'Range', 'Walk', 'Bike'];
 const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const DOW_LONG = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -702,21 +702,23 @@ function flatEx(id) {
   const out = []; p.sections.forEach(sec => sec.exercises.forEach(ex => out.push({ ...ex, accent: sec.accent, section: sec.label })));
   return out;
 }
+// sessions with a listed program: D1-D5, and since p34 the conditioning day (program.json "hiit", the weighted rope)
+const listed = s => /^D\d$/.test(s) || (s === 'HIIT' && !!(PROGRAM && PROGRAM.hiit));
 function sessProgress(s) {
-  if (!/^D\d$/.test(s)) return null;
+  if (!listed(s)) return null;
   const id = s.toLowerCase(), ex = flatEx(id); if (!ex.length) return null;
   const st = wState()[id] || {}; let done = 0, total = 0;
   ex.forEach((e, i) => { if (e.accent === 'warmup') return; total += e.sets; const a = st[i] || []; for (let j = 0; j < e.sets; j++) if (a[j]) done++; });
   return { done, total, p: total ? done / total : 0 };
 }
 function sessName(s) {
-  if (s === 'HIIT') return 'Conditioning';
+  if (s === 'HIIT') return PROGRAM && PROGRAM.hiit ? (PROGRAM.hiit.badge.split('·')[1] || 'Conditioning').trim() : 'Conditioning';
   if (s === 'REST') return 'Rest day';
   const p = PROGRAM && PROGRAM[s.toLowerCase()];
   return p ? (p.badge.split('·')[1] || p.badge).trim() : `Day ${s.slice(1)}`;
 }
 function sessSub(s) {
-  if (s === 'HIIT') return 'HIIT or hill climb';
+  if (s === 'HIIT') return PROGRAM && PROGRAM.hiit ? PROGRAM.hiit.title : 'HIIT or hill climb';
   if (s === 'REST') return 'Recover';
   const p = PROGRAM && PROGRAM[s.toLowerCase()];
   return p ? p.title : '';
@@ -735,10 +737,11 @@ function syncAuto() {
   curWeek().forEach(d => {
     const o = S.workouts[d] || {}, s = o.s || S.template[dowIdx(d)];
     let auto = false;
-    if (/^D\d$/.test(s)) { const p = sessProgress(s); auto = !!(p && p.total && p.done >= p.total); }
-    else if (s === 'HIIT') auto = cardioOn(d).length > 0;
+    const p = listed(s) ? sessProgress(s) : null, full = !!(p && p.total && p.done >= p.total);
+    if (/^D\d$/.test(s)) auto = full;
+    else if (s === 'HIIT') auto = full || cardioOn(d).length > 0;   // the rope session ticked through, or any cardio logged
     if (auto && !o.done) { S.workouts[d] = { ...o, done: true, auto: true }; changed = true; }
-    else if (!auto && o.done && o.auto && /^D\d$/.test(s) && wState()[s.toLowerCase()]) { S.workouts[d] = { ...o, done: false, auto: false }; changed = true; }
+    else if (!auto && o.done && o.auto && listed(s) && wState()[s.toLowerCase()]) { S.workouts[d] = { ...o, done: false, auto: false }; changed = true; }
   });
   if (changed) save();
 }
@@ -1386,7 +1389,7 @@ function payWhen(p) {
     : `Hours to Len ${DOW_LONG[dowIdx(sd)]} · ${left} days`;
 }
 
-let cardioType = 'HIIT';
+let cardioType = 'Rope';
 
 /* ---------- render ---------- */
 function render() {
@@ -1673,7 +1676,7 @@ window.CityApp = {
   // the gym's panels: today's session and its sets, this week's split, the benchmarks, the rest timer. Names are escaped here too.
   // sel: another day of this week, for the gym's sheet; the panel always asks for today
   train(sel) {
-    const t = today(), mon = mondayOf(new Date()), week0 = datesOf(mon), d = sel && week0.includes(sel) ? sel : t, w = wo(d), lift = /^D\d$/.test(w.s);
+    const t = today(), mon = mondayOf(new Date()), week0 = datesOf(mon), d = sel && week0.includes(sel) ? sel : t, w = wo(d), lift = listed(w.s);
     const st = lift ? wState()[w.s.toLowerCase()] || {} : {};
     const ex = lift ? flatEx(w.s.toLowerCase()).map((e, i) => { const a = st[i] || []; return { i, name: esc(e.name.split(' · ')[0]), reps: esc(e.name.split(' · ').slice(1).join(' · ')), sets: e.sets, on: [...Array(e.sets)].map((_, j) => !!a[j]), done: a.filter(Boolean).length, warm: e.accent === 'warmup', sec: esc(e.section || ''), det: e.detail ? esc(e.detail) : '' }; }) : [];
     const pg = lift && PROGRAM && PROGRAM[w.s.toLowerCase()], cardio = pg && pg.cardio ? esc(pg.cardio) : '';
@@ -1686,7 +1689,7 @@ window.CityApp = {
   },
   // the gym does the Training page's own things in place: a set, a whole session, a benchmark
   set(s, i, j) {
-    if (!/^D\d$/.test(s) || !flatEx(s.toLowerCase())[i]) return;
+    if (!listed(s) || !flatEx(s.toLowerCase())[i]) return;
     toggleSet(s, +i, +j); render();
   },
   sessDone(d) {
