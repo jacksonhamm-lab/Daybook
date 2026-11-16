@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p30';
+export const BUILD = 'p31';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -508,6 +508,13 @@ label.rbtn{cursor:pointer}
 /* close up on her: the tags and the room's panel step aside */
 #tags,#aptBox,#roomBox,#gymBox,#chBox,#scBox{transition:opacity .3s}
 #hud.close #tags,#hud.close #aptBox,#hud.close #roomBox{opacity:0;pointer-events:none}
+/* HIDE in her close-up: everything but her (a call still shows); a faint SHOW in the corner, a tap, H or Escape bring it back */
+#hud.bare>*:not(#call):not(#holo):not(#bareX){opacity:0!important;pointer-events:none!important;transition:opacity .35s!important}
+.hhide{margin-left:auto;width:44px;height:36px;display:grid;place-items:center;color:var(--hud-cyan)}
+.hhide svg,.bareX svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bareX{position:absolute;top:calc(var(--st) + 10px);right:calc(var(--sr) + 10px);min-width:44px;height:44px;padding:0 12px;display:flex;align-items:center;gap:6px;font:700 11px/1 var(--hud-font);letter-spacing:.1em;color:var(--hud-text);background:rgba(0,0,0,.28);opacity:.45;transition:opacity .2s;z-index:8}
+.bareX:hover,.bareX:focus-visible{opacity:1}
+.bareX[hidden]{display:none}
 /* and her card comes in: who she is, her pose, her mood (his day) and their link (his progress) */
 #herBox{left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px);opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .3s,transform .3s}
 #hud.close #herBox{opacity:1;transform:none;transition:opacity .4s .35s,transform .4s .35s}
@@ -805,7 +812,7 @@ const MARKUP = `
   </section>
   <section class="dbox frame" id="herBox" data-m="room" data-r="apartment" aria-label="Mira Kade" aria-hidden="true">
     <div class="in">
-      <div class="dhead"><b>MIRA KADE</b><span class="hon"><i></i>ONLINE</span><div class="sq" id="sqH"></div></div>
+      <div class="dhead"><b>MIRA KADE</b><span class="hon"><i></i>ONLINE</span><div class="sq" id="sqH"></div><button class="hhide" data-mhide="1" aria-label="Hide the screen, just her (H)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 9 6 9 6a16 16 0 0 1-3.1 3.6M6.4 7.6C4.2 9.2 3 12 3 12s4 6 9 6a8.6 8.6 0 0 0 3.9-.9M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div>
       <div class="tickr"></div>
       <div class="mtalk" id="mTalk"><div class="mline" id="mLine" role="button" tabindex="0" aria-label="Next"><b class="mwho">MIRA</b><p id="mSay" aria-live="polite"></p><small id="mInfo"></small><span class="mdot" id="mDot"></span></div><div class="mtask" id="mTasks"></div><div class="macts" id="mActs"></div><form class="mtell" id="mTell" data-tell="m" hidden><input name="t" type="text" enterkeyhint="send" autocomplete="off" maxlength="300" placeholder="Remind me to call the bank tomorrow" aria-label="Tell Mira"><button class="rbtn">TELL</button></form></div>
       <div class="hbody">
@@ -818,6 +825,7 @@ const MARKUP = `
       </div>
     </div>
   </section>
+  <button class="bareX" id="bareX" data-mshow="1" aria-label="Show the screen (H)" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12s4-6 9-6 9 6 9 6-4 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="3"/></svg>SHOW</button>
   <section class="pe" id="call" role="dialog" aria-labelledby="clWho" aria-describedby="clSay" aria-hidden="true" inert>
     <div class="hof"><img id="clImg" alt="" hidden><i class="hov" aria-hidden="true"></i></div>
     <div class="hob">
@@ -6826,6 +6834,7 @@ function hudInit() {
   let noteT = 0;
   hudEl.addEventListener('input', e => { const el = e.target; if (!el.dataset || el.dataset.nt === undefined) return; clearTimeout(noteT); noteT = setTimeout(() => APP.noteSet(el.dataset.nt, el.value), 400); });
   /* Enter in a one-line box is done with it */
+  hudEl.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-mhide],[data-mshow]'); if (!b) return; e.stopPropagation(); bareSet(b.dataset.mhide !== undefined); });
   hudEl.addEventListener('keydown', e => { const el = e.target; if (e.key === 'Enter' && el.dataset && (el.dataset.tt !== undefined || el.dataset.sx)) { e.preventDefault(); el.blur(); } });
   /* leaving a box: the parts of the sheet held still while he typed catch up */
   hudEl.addEventListener('focusout', e => { if (e.target.matches && e.target.matches('.hin')) setTimeout(() => { if (!typing('#sheet') && !typing('#plan')) { refreshRoom(); refreshWork(); } }, 60); });
@@ -6947,7 +6956,8 @@ function hudInit() {
     if (e.key.toLowerCase() === 'w' && S.mode !== 'fly' && !S.sheet) { e.stopPropagation(); e.preventDefault(); planOpen(); return; }
     if (e.key === 'Escape' && S.mode === 'fly' && S.fly && S.fly.dir > 0) return goBack();
     if (S.mode !== 'room') return;
-    if (e.key === 'Escape') { if (S.sheet) closeSheet(); else goBack(); return; }
+    if (e.key === 'Escape') { if (S.bare) bareSet(false); else if (S.sheet) closeSheet(); else goBack(); return; }
+    if (e.key.toLowerCase() === 'h' && S.close && !S.sheet) { e.stopPropagation(); e.preventDefault(); bareSet(!S.bare); return; }
     /* V: in on her and back out */
     if (e.key.toLowerCase() === 'v' && !S.sheet && room.def.figure && room.def.figure.close) { e.stopPropagation(); e.preventDefault(); if (S.close) stepBack(); else closeUp(true); return; }
     if (S.close && !S.sheet && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.stopPropagation(); e.preventDefault(); S.spinGoal += (e.key === 'ArrowRight' ? 1 : -1) * Math.PI / 4; return; }
@@ -6981,7 +6991,7 @@ function tapWorld(x, y) {
   if (S.mode === 'city') { let best = null, bd = 56; for (const o of iconEls) { const p = project(o.a); const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = o; } } if (best) tapIcon(best.k); return; }
   if (S.mode === 'room' && !S.sheet) {
     /* close up, a tap anywhere steps back */
-    if (S.close) { stepBack(); return; }
+    if (S.close) { if (S.bare) bareSet(false); else stepBack(); return; }
     let best = null, bd = 44; for (const o of room.hot) { const p = project(o.p); const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = o; } } if (best) { tapHot(best.key); return; }
     if (onHer(x, y)) closeUp(true);
   }
@@ -6994,8 +7004,15 @@ function onHer(x, y) {
   return x > x0 - 8 && x < x1 + 8 && y > y0 - 8 && y < y1 + 8;
 }
 /* the close-up: the view moves in on her and she turns to him. It has its own history entry, so back steps out of it first */
+/* bare: her close-up with nothing else on screen */
+function bareSet(on) {
+  on = !!on && S.close; if (on === !!S.bare) return; S.bare = on;
+  hudEl.classList.toggle('bare', on); const x = $('#bareX'); x.hidden = !on;
+  if (on) { const a = ROOT.activeElement; if (a && a.blur) a.blur(); x.focus({ preventScroll: true }); } else { const h = ROOT.querySelector('[data-mhide]'); if (h && S.close) h.focus({ preventScroll: true }); }
+  APP.sfx(on ? 'press' : 'back');
+}
 function closeUp(on, pop) {
-  if (on === S.close) return;
+  if (on === S.close) return; if (!on) bareSet(false);
   if (on) { if (S.mode !== 'room' || S.sheet || !FIG || !room.def.figure || !room.def.figure.close) return; if (!pop) history.pushState({ city: room.id, close: 1 }, ''); }
   if (!on) { const T = Math.PI * 2; S.spin = ((S.spin % T) + T + Math.PI) % T - Math.PI; }
   S.close = on; figClose(on); hudEl.classList.toggle('close', on); $(room.def.panel).inert = on; $('#herBox').setAttribute('aria-hidden', String(!on)); if (on) { herCard(); miraStart(); } else miraStop();

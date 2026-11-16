@@ -373,6 +373,9 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p31, 2026-11-16): HIDE in her close-up.** His ask: "hide all the text boxes and stuff so when we view her we
+  can just see her fully". An eye button in her card's header (or H) hides the whole HUD (`#hud.bare`) but a call; a
+  faint SHOW top right, a tap, H or Escape bring it back; drag still turns her; leaving the close-up clears it. Test t82.
 - **Built (p30, 2026-11-16): one week view, the gainer skip, boxes that save.** His notes: "week and plan board are
   basically the same thing", "an option to not do the mass gainer on some days", the school hours goal "doesn't seem to
   be changing and saving". His picks: one board; a SKIP TODAY button.
@@ -732,5 +735,5 @@ Technical state only. Updated 2026-11-06.
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
   1. p22 is live (he checked it on his iPhone, Nov 11). p23 to p25 live (Nov 14, he checked them). p26 (Mira M2) live (Nov 14).
-     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) live (Nov 15, main e89db3d). p30 (one week view, gainer skip, boxes save) on city-p30, not pushed: push needs his go.
+     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) live (Nov 15, main e89db3d). p30 (one week view, gainer skip, boxes save) live (Nov 16, main 51fb94a). p31 (HIDE in her close-up) on city-p31, not pushed: push needs his go.
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.
