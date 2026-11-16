@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p32';
+export const BUILD = 'p33';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -2893,7 +2893,7 @@ function deck(M, pts, w, o = {}) {
       /* edge line */
       for (const e of [-w * .46, w * .46]) { M.set({ kind: K.PLAIN, c: hex(0x8a7a2a), em: 0, layer: 0, id: 3 }); const ex = s[0] * .07, ez = s[1] * .07, a = [A[0] + s[0] * e, A[1] + .05, A[2] + s[1] * e], b = [B[0] + s[0] * e, B[1] + .05, B[2] + s[1] * e]; M.quad([a[0] - ex, a[1], a[2] - ez], [a[0] + ex, a[1], a[2] + ez], [b[0] + ex, b[1], b[2] + ez], [b[0] - ex, b[1], b[2] - ez]); }
       /* lamp every other span, red and amber reflectors on the barrier */
-      if (i % 2 === 0) { const lat = (i % 4 ? 1 : -1) * w * .5, lx = A[0] + s[0] * lat, lz = A[2] + s[1] * lat; setPlain(M, 0x262432); M.cyl(lx, A[1], lz, .12, .08, 8, 4, { c: 0x262432, top: false }); const hx = A[0] + s[0] * lat * .55, hz = A[2] + s[1] * lat * .55; M.beam([lx, A[1] + 8, lz], [hx, A[1] + 8.2, hz], .1, { c: 0x262432 }); M.set({ kind: K.PLAIN, c: hex(0xffd090), em: 255, layer: 0 }); M.box(hx, A[1] + 8, hz, .5, .06, .5, {}); M.set({ em: 0 }); glow(hx, A[1] + 7.8, hz, 0xffb060, 5); pool(hx, hz, 16, 0xffa860, .55); }
+      if (i % 2 === 0 || Math.hypot(A[0], A[2] - 270) < 200) { const lat = (i % 4 > 1 ? 1 : -1) * w * .5, lx = A[0] + s[0] * lat, lz = A[2] + s[1] * lat; setPlain(M, 0x262432); M.cyl(lx, A[1], lz, .12, .08, 8, 4, { c: 0x262432, top: false }); const hx = A[0] + s[0] * lat * .55, hz = A[2] + s[1] * lat * .55; M.beam([lx, A[1] + 8, lz], [hx, A[1] + 8.2, hz], .1, { c: 0x262432 }); M.set({ kind: K.PLAIN, c: hex(0xffd090), em: 255, layer: 0 }); M.box(hx, A[1] + 8, hz, .5, .06, .5, {}); M.set({ em: 0 }); glow(hx, A[1] + 7.8, hz, 0xffb060, 5); pool(hx, hz, 16, 0xffa860, .55); }
       M.set({ kind: K.NEON, c: hex(i % 3 ? 0xff2a2a : 0xffb030), seed: 0 }); for (const e of [-w * .5, w * .5]) { const lx = A[0] + s[0] * e, lz = A[2] + s[1] * e; M.box(lx, A[1] + 1.1, lz, .25, .1, .25, {}); }
       setPlain(M, o.c || 0x332f42);
     } }
@@ -2916,8 +2916,23 @@ function bridge(M, R) {
   for (let i = 3; i < n; i += 4) { const p = BRIDGE[i]; glow(p[0], p[1] + 5, p[2], PAL.orange, 12); }
 }
 /* boats, a working barge and a pier so the water has near layers */
+/* a small boat, built at the origin facing +z: pointed hull, deck, a cabin set back with its own windows, a raked screen, a mast */
+function smallBoat(M, L0, c, lc) {
+  const w = L0 * .2, cab = mixC(c, 0xd8d2c8, .55);
+  const a = [[-w * .62, 0, -L0 / 2], [w * .62, 0, -L0 / 2], [w * .5, 0, L0 * .18], [0, 0, L0 * .5]], b = [[-w, 1.8, -L0 / 2], [w, 1.8, -L0 / 2], [w * .82, 1.95, L0 * .2], [0, 2.3, L0 * .6]];
+  setPlain(M, c); M.loft([a, b], { c }); setPlain(M, mixC(c, 0x000000, .45)); M.loft([b.map(p => [p[0] * 1.01, p[1] - .35, p[2]]), b.map(p => [p[0] * 1.03, p[1] - .1, p[2]])], {});
+  setPlain(M, 0x4a463e); M.loft([b, b.map(p => [p[0] * .1, 1.85, p[2] * .1])], {});
+  const cz = -L0 * .1, cl = L0 * .36, cw = w * 1.3, ch = 2.1;
+  setPlain(M, cab); M.box(0, 1.8, cz, cw, ch, cl, { topc: mixC(cab, 0x000000, .3) });
+  setPlain(M, mixC(cab, 0x000000, .2)); M.box(0, 1.8 + ch, cz - .2, cw + .3, .14, cl + .6, {});
+  setPlain(M, 0x101420); M.box(0, 2.6, cz + cl / 2 + .05, cw * .86, .9, .06, {});
+  M.set({ kind: K.PLAIN, em: 230, c: hex(lc) }); const n = Math.max(2, Math.round(cl / 1.4));
+  for (let i = 0; i < n; i++) { const z = cz - cl / 2 + (i + .5) * cl / n; for (const sx of [-1, 1]) M.box(sx * (cw / 2 + .02), 2.55, z, .03, .7, cl / n * .66, {}); }
+  M.set({ em: 0 }); setPlain(M, 0x25283a); M.cyl(0, 1.8 + ch, cz - cl * .3, .07, .04, 3.4, 4, { top: false });
+  for (const sx of [-1, 1]) M.box(sx * w * .78, 1.95, L0 * .1, .05, .6, L0 * .3, { c: 0x8a8680 });
+}
 function harbour(M, R) {
-  const boat = (x, z, ry, L0, c) => { M.at(x, -2, z, ry, () => { const w = L0 * .24; setPlain(M, c); const a = [[-w * .7, 0, -L0 / 2], [w * .7, 0, -L0 / 2], [w * .25, 0, L0 / 2], [-w * .25, 0, L0 / 2]], b = [[-w, 1.6, -L0 / 2], [w, 1.6, -L0 / 2], [w * .1, 2.2, L0 * .62], [-w * .1, 2.2, L0 * .62]]; M.loft([a, b], { c }); M.loft([b, b.map(() => [0, 1.6, 0])], { c: mixC(c, 0xffffff, .2) }); M.box(0, 1.6, -L0 * .12, w * 1.1, 2.6, L0 * .34, { c: 0x6a6670 }); M.set({ kind: K.PLAIN, em: 230, c: hex(0xffd08a) }); M.box(0, 2.9, -L0 * .12, w * 1.16, .7, L0 * .3, {}); M.set({ em: 0 }); }); glow(x, 1, z, R.pick([0xffd08a, PAL.cyan, PAL.magenta]), 12); };
+  const boat = (x, z, ry, L0, c) => { M.at(x, -.7, z, ry, () => smallBoat(M, L0, c, 0xffd08a)); glow(x, 1, z, R.pick([0xffd08a, PAL.cyan, PAL.magenta]), 12); };
   for (let i = 0; i < 16; i++) { const bx = R.range(-120, 380), bz = R.range(325, 440), by = R.range(-1, 1) + (i % 2 ? Math.PI : 0), bl = R.range(12, 26), bc = R.pick([0x7a2a3a, 0x24384a, 0xb09a78, 0x2a4a44, 0x3a2a4a]); if (Math.abs(bx - 30) > 130) boat(bx, bz, by, bl, bc); }
   /* container barge */
   { const x = 170, z = 470; M.at(x, -2, z, .25, () => { setPlain(M, 0x2a2838); M.box(0, 0, 0, 130, 5, 26, { c: 0x2a2838 }); for (let i = 0; i < 11; i++) for (let j = 0; j < 3; j++) { let y = 5; const n = R.int(1, 3); for (let k = 0; k < n; k++) { M.box(-52 + i * 10.4, y, -8 + j * 8, 9.8, 3, 7, { c: R.pick([0xb03a3a, 0x2a6a7a, 0xc99a3a, 0x7a7684, 0x3a5a3a, 0xa04a8a]) }); y += 3; } } M.box(58, 5, 0, 12, 12, 20, { c: 0xd8cfc0 }); M.set({ kind: K.PLAIN, em: 230, c: hex(0xffe0a0) }); M.box(52, 14, 0, .3, 2, 16, {}); M.set({ em: 0 }); }); glow(x + 62, 22, z - 12, PAL.red, 14, 1); glow(x - 60, 10, z + 14, 0xffd08a, 18); }
@@ -2925,6 +2940,28 @@ function harbour(M, R) {
   setPlain(M, 0x3a3548); M.box(-38, -2, 335, 11, 3.4, 110, { c: 0x4a4656 }); for (let z = 290; z < 392; z += 12) { M.cyl(-43, 0, z, .2, .16, 8, 4, { c: 0x201e2a, top: false }); M.cyl(-33, 0, z, .2, .16, 8, 4, { c: 0x201e2a, top: false }); glow(-43, 8, z, 0xffc47a, 7); glow(-33, 8, z, 0xffc47a, 7); }
   /* waterfront neon on the quay */
   for (let i = 0; i < 5; i++) blade(M, 110 + i * 32, 12, 301, 0, 16, 3 + i * 7, R);
+}
+/* a portal crane on the quay: four legs on rails, a machinery house, the boom out over the water, stays from an A-frame */
+function quayCrane(M, x, z) {
+  const leg = 0x6a2e26, dk = 0x2a2026, yB = 36, sx = 7, sz = 8;
+  setPlain(M, dk); for (const dx of [-sx, sx]) M.box(x + dx, 0, z, .6, .5, sz * 2 + 6, {});
+  setPlain(M, leg);
+  for (const dx of [-sx, sx]) for (const dz of [-sz, sz]) M.beam([x + dx, 0, z + dz], [x + dx * .8, yB, z + dz * .8], .9, { c: leg });
+  for (const dx of [-sx, sx]) { M.beam([x + dx, 12, z - sz * .95], [x + dx, 12, z + sz * .95], .7, {}); M.beam([x + dx * .9, 24, z - sz * .9], [x + dx * .9, 24, z + sz * .9], .6, {}); M.beam([x + dx, 2, z - sz], [x + dx * .85, 30, z + sz * .85], .4, {}); }
+  for (const dz of [-sz, sz]) M.beam([x - sx * .8, yB - 1, z + dz * .8], [x + sx * .8, yB - 1, z + dz * .8], .9, {});
+  /* the boom: a box truss from behind the legs to far over the water */
+  const z0 = z - 26, z1 = z + 58;
+  for (const dx of [-1.6, 1.6]) { M.beam([x + dx, yB, z0], [x + dx, yB, z1], .5, { c: leg }); M.beam([x + dx, yB + 2.6, z0], [x + dx, yB + 2.6, z1 - 6], .4, {}); }
+  for (let zz = z0; zz < z1 - 6; zz += 5) for (const dx of [-1.6, 1.6]) M.beam([x + dx, yB, zz], [x + dx, yB + 2.6, zz + 5], .18, {});
+  /* machinery house and the operator's cab under the boom */
+  setPlain(M, 0x8a8478); M.box(x, yB + 2.6, z - 14, 6, 4, 10, { topc: 0x4a4650 });
+  setPlain(M, 0x3a3640); M.box(x, yB - 3.2, z + 9, 2.6, 2.6, 3, {}); M.set({ kind: K.PLAIN, c: hex(0xffd8a0), em: 220, layer: 0 }); M.box(x, yB - 2.2, z + 10.52, 2.2, 1.2, .05, {}); M.set({ em: 0 });
+  /* the A-frame and its stays */
+  setPlain(M, leg); for (const dx of [-1.6, 1.6]) { M.beam([x + dx, yB + 2.6, z - 6], [x, yB + 18, z - 2], .5, {}); M.beam([x + dx, yB + 2.6, z + 4], [x, yB + 18, z - 2], .5, {}); }
+  setPlain(M, 0x1a1418); for (const t of [[z1 - 6, .14], [z + 26, .12], [z - 24, .16]]) M.beam([x, yB + 18, z - 2], [x, yB + 2.6, t[0]], t[1], {});
+  /* the hook block, lights */
+  M.beam([x, yB, z + 40], [x, yB - 16, z + 40], .05, { c: 0x111014 }); setPlain(M, 0xc9a020); M.box(x, yB - 17.4, z + 40, .9, 1.4, .9, {});
+  glow(x, yB + 18.6, z - 2, PAL.red, 6, 1); glow(x, yB + 2.8, z1 - 2, PAL.red, 5, 1); glow(x, yB - 2.5, z + 11, 0xffd8a0, 5); glow(x, yB - .6, z + 30, 0xffe8c0, 8); pool(x, z + 30, 22, 0xffe0b0, .35);
 }
 function megatower(M) {
   const R = rng(1984); const cx = 0, cz = -235; const seed = 88;
@@ -3011,12 +3048,21 @@ function megablock(M) {
   M.set({ kind: K.FACADE, em: 180, seed: 12, a: 1 }); M.box(-280, 131, 20.6, 40, 4, .2, { c: 0x1a2030, top: false, bot: false });
 }
 
+/* a broadleaf tree: a trunk that forks, a crown of four or five clumps, lighter on top */
+function tree(M, x, y, z, h, R) {
+  const tc = 0x2e241e, g = R.pick([[0x1c4630, 0x2a5e3c], [0x173d2c, 0x24543a], [0x224a2a, 0x356a3a]]);
+  M.set({ kind: K.PLAIN, em: 0, layer: 0 }); const lx = R.range(-.4, .4), lz = R.range(-.4, .4);
+  M.tube([[x, y - .3, z], [x + lx * .5, y + h * .3, z + lz * .5], [x + lx, y + h * .52, z + lz]], t => lerp(.42, .2, t) * h / 11, 4, 5, { c: tc });
+  for (const s of [-1, 1]) M.beam([x + lx * .5, y + h * .36, z + lz * .5], [x + lx + s * h * .16, y + h * .6, z + lz + R.range(-1, 1)], h * .022, { c: tc });
+  const n = R.int(4, 5); for (let i = 0; i < n; i++) { const a = i / n * TAU + R.range(-.3, .3), r = h * R.range(.12, .2); M.blob(x + lx + Math.cos(a) * r, y + h * R.range(.56, .7), z + lz + Math.sin(a) * r, h * R.range(.17, .22), { c: g[0], r: R, sy: .82 }); }
+  M.blob(x + lx, y + h * .78, z + lz, h * .2, { c: g[1], r: R, sy: .8 });
+}
 function castle(M) {
   const R = rng(55); const cx = -212, cz = 296;
   setPlain(M, 0x22402f);
   /* the point, gardens and forest */
   M.lathe(cx, -6, cz, [[108, 0], [100, 6], [92, 9], [40, 12], [0, 13]], 14, { c: 0x22402f, sq: .85, grad: .55 });
-  for (let i = 0; i < 44; i++) { const a = R() * TAU, r = R.range(50, 96), x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r * .85; if (z > cz + 40 && Math.abs(x - cx) < 24) continue; if (x > cx + 30 && Math.abs(z - (cz - 4)) < 16) continue;   /* the flight into the study hall comes in low here */ M.blob(x, 10, z, R.range(3.5, 7.5), { c: R.pick([0x133528, 0x173d30, 0x0f2c24]), r: R, sy: 1.25 }); }
+  for (let i = 0; i < 44; i++) { const a = R() * TAU, r = R.range(50, 96), x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r * .85; if (z > cz + 40 && Math.abs(x - cx) < 24) continue; if (x > cx + 30 && Math.abs(z - (cz - 4)) < 16) continue;   /* the flight into the study hall comes in low here */ const rr = Math.hypot(x - cx, (z - cz) / .85), gy = rr < 40 ? 12.6 : rr < 92 ? lerp(12, 9, (rr - 40) / 52) : 8; tree(M, x, gy, z, R.range(10, 15), R); }
   const st = 0x6a6578;
   const seed = 20;
   M.set({ kind: K.FACADE, em: 90, seed, a: 6 }); M.extrude(rectPoly(cx, cz, 68, 26), 7, 30, { c: st, topc: 0x2e3040 });
@@ -3028,6 +3074,9 @@ function castle(M) {
   for (let i = 0; i < 16; i++) { setPlain(M, 0x5e5a6c); M.box(cx - 32 + i * 4.2, 30, cz + 13.4, 2, 2, 1, {}); }
   M.cyl(cx - 38, 70, cz + 6, 8, .3, 12, 8, { c: 0x41685c });
   glow(cx + 2, 18, cz + 16, 0x5be38a, 28); pool(cx + 2, cz + 34, 38, 0x5be38a, .35);
+  /* a gravel walk round the hall, lamps along it */
+  { const pr = 52; M.set({ kind: K.PLAIN, c: hex(0x6a645a), em: 0, layer: 0, id: 3 }); for (let i = 0; i < 40; i++) { const a0 = i / 40 * TAU, a1 = (i + 1) / 40 * TAU, y0 = 12.08; const P = (a, r) => [cx + Math.cos(a) * r, y0, cz + Math.sin(a) * r * .85]; M.quad(P(a0, pr - 1.3), P(a1, pr - 1.3), P(a1, pr + 1.3), P(a0, pr + 1.3)); }
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU + .13, lx = cx + Math.cos(a) * (pr + 2), lz = cz + Math.sin(a) * (pr + 2) * .85; setPlain(M, 0x1e1c24); M.cyl(lx, 12, lz, .1, .07, 3.6, 4, { top: false }); M.set({ kind: K.PLAIN, c: hex(0xffd8a0), em: 230, layer: 0 }); M.box(lx, 15.5, lz, .34, .4, .34, {}); M.set({ em: 0 }); glow(lx, 15.7, lz, 0xffc880, 3.4); pool(lx, lz, 9, 0xffc880, .5); } }
 }
 
 /* the room's chalet (CH) as the city sees it: a stone base down the slope, timber walls, a steep snowy roof with its ridge along x,
@@ -3298,7 +3347,7 @@ function buildCityWorld() {
   deck(M, RAIL_CLOSED.concat([RAIL_CLOSED[0]]), 6.5, { c: 0x4a4656, every: 7, neon: PAL.cyan });
   bridge(M, R); harbour(M, R);
   shopFront(M, R);
-  megatower(M); towerMark(M); megablock(M); castle(M); mountain(M); market(M, R); gymDistrict(M, R); streetLife(M, R); shopKerb(M, rng(3131)); nearTower(M); quayDress(M, rng(7171)); nearBoats(M, rng(8181));
+  megatower(M); towerMark(M); megablock(M); castle(M); mountain(M); market(M, R); gymDistrict(M, R); streetLife(M, R); shopKerb(M, rng(3131)); nearTower(M); quayDress(M, rng(7171)); nearBoats(M, rng(8181)); nightStalls(M, rng(7373));
   /* downtown lots */
   const lots = (x0, x1, z0, z1, gen) => { let x = x0; while (x < x1 - 10) { const w = Math.min(x1 - x, R.range(26, 46)); let z = z0; const ww = (x1 - x - w < 16) ? x1 - x : w; while (z < z1 - 10) { const d0 = R.range(26, 48); const d = (z1 - z - d0 < 16) ? z1 - z : d0; gen(x + ww / 2, z + d / 2, ww - R.range(1, 4), d - R.range(1, 4)); z += d; } x += ww; } };
   const downtownH = (x, z) => { const r = Math.hypot(x, z + 170); return 54 + 240 * Math.exp(-r * r / (190 * 190)) * R.range(.5, 1.12); };
@@ -3342,7 +3391,9 @@ function buildCityWorld() {
   for (let z = -300; z < 300; z += 30) palm(M, -430 + 18 + Math.abs(z) * .02, z, R.range(11, 17), R);
   setPlain(M, 0x45404f); M.box(100, 0, 279, 660, .5, 3, {});
   /* quay cranes on the west of downtown for silhouette */
-  for (const [x, z] of [[-120, 300], [-160, 298]]) { setPlain(M, 0x2c2838); M.box(x, 0, z, 1.6, 42, 1.6, {}); M.beam([x - 26, 40, z], [x + 34, 46, z], 1.4, { c: 0x34303e }); glow(x + 34, 46, z, PAL.red, 7, 1); }
+  for (const [x, z] of [[236, 292], [274, 292]]) quayCrane(M, x, z);
+  /* boxes waiting under them */
+  { const CR = rng(4747), cc = [0xb03a3a, 0x2a6a7a, 0xc99a3a, 0x7a7684, 0x3a5a3a, 0xa04a8a]; for (let i = 0; i < 7; i++) for (let k = 0, n = CR.int(1, 3); k < n; k++) { const c = CR.pick(cc), x = 300 + i * 6.6, z = 286 + (i % 2) * 3.4; setPlain(M, c); M.box(x, k * 2.6, z, 6.1, 2.5, 2.5, { topc: mixC(c, 0x000000, .3) }); setPlain(M, mixC(c, 0x000000, .45)); for (let r = 0; r < 5; r++) M.box(x - 2.4 + r * 1.2, k * 2.6 + .2, z + 1.26, .08, 2.1, .02, {}); } }
   /* light pools along the cross streets */
   for (const [z] of ROADS.ew) for (let x = -400; x < 400; x += 26) pool(x + 5, z + (x % 52 ? 8 : -8), 13, R.chance(.3) ? 0x70c8e0 : 0xffa860, .26);
   for (const [x] of ROADS.ns) if (x) for (let z = -440; z < 250; z += 26) pool(x + (z % 52 ? 7 : -7), z, 13, R.chance(.3) ? 0x70c8e0 : 0xffa860, .26);
@@ -3495,7 +3546,9 @@ function faceDress(M, cx, cz, w, y0, y1, ry, R, o = {}) {
         const bw = Math.min(R.range(5, 11), hw - bx), mid = bx + bw / 2;
         if (R.chance(.64)) {
           setPlain(M, dk); M.box(mid, y, .9, bw, .3, 1.8, { crease: false });
-          setPlain(M, 0x26242c); M.box(mid, y + .3, 1.78, bw, .95, .05, { crease: false, bot: false }); M.box(mid - bw / 2, y + .3, .9, .05, .95, 1.8, { bot: false }); M.box(mid + bw / 2, y + .3, .9, .05, .95, 1.8, { bot: false });
+          /* p33: the door behind it, lit in most, so the slab reads as someone's balcony and not a bar */
+          if (R.chance(.7)) { M.set({ kind: K.PLAIN, c: hex(R.pick([0xffd8a0, 0xffc890, 0xe8e0ff, 0xffb8a0])), em: 150, layer: 0 }); M.box(mid + R.range(-bw * .25, bw * .25), y + .3, .03, Math.min(bw * .5, 2.2), 2.2, .04, {}); M.set({ em: 0 }); }
+          setPlain(M, 0x3a3842); M.box(mid, y + 1.18, 1.78, bw, .07, .07, { crease: false }); for (let k = 0, nk = Math.max(2, Math.round(bw / 1.6)); k <= nk; k++) M.box(mid - bw / 2 + k * bw / nk, y + .3, 1.78, .05, .88, .05, {}); M.box(mid - bw / 2, y + 1.18, .9, .05, .07, 1.8, {}); M.box(mid + bw / 2, y + 1.18, .9, .05, .07, 1.8, {});
           const t = R();
           if (t < .3) { M.set({ kind: K.PLAIN, c: hex(R.pick([0xb9b2c4, 0xc05a8a, 0x5aa2b0, 0xd0a040, 0xe0dcd0])), id: M.nid() }); const a = mid - 1, b = mid + 1.2, q = [[a, y + 3.2, 1.6], [b, y + 3.2, 1.6], [b, y + 1.8, 1.6], [a, y + 1.8, 1.6]]; M.quad(q[0], q[1], q[2], q[3]); M.quad(q[3], q[2], q[1], q[0]); }
           else if (t < .55) { setPlain(M, 0x4c4a58); M.box(mid + .6, y + .3, .9, 1, .8, .7, {}); setPlain(M, 0x1a1a20); M.box(mid + .6, y + .4, 1.26, .8, .58, .02, {}); }
@@ -3508,8 +3561,6 @@ function faceDress(M, cx, cz, w, y0, y1, ry, R, o = {}) {
       }
     }
     for (let i = 0; i < Math.round(w / 8); i++) { const px = -hw + R() * 2 * hw, r = R.range(.1, .22); M.cyl(px, y0 - 4, .3, r, r, y1 - y0 + 4, 6, { c: 0x34323e, top: false }); for (let y = y0; y < y1; y += 4.6) M.cyl(px, y, .3, r + .05, r + .05, .12, 6, { c: 0x1a1a20 }); }
-    /* gantry and bracing */
-    for (let y = y0 + 22; y < y1 - 6; y += 38) { setPlain(M, 0x2c2c34); M.box(0, y, 1.3, w - 2, .22, 2.4, {}); M.box(0, y + 1.1, 2.45, w - 2, .08, .08, {}); for (let i = 0; i < Math.round(w / 4); i++) { const px = -hw + i * 4; M.box(px, y, 2.45, .08, 1.1, .08, {}); M.beam([px, y, 2.3], [px + 1.6, y - 2.6, .1], .12, {}); } }
     M.tube([[-hw * .4, y1 * .9, .36], [-hw * .3, (y0 + y1) * .5, .5], [-hw * .45, y0, .34]], .08, 7, 3, { c: 0x07060c });
   });
 }
@@ -3603,13 +3654,41 @@ function pontoon(M, x, z, ry, R) {
   });
   const cs = Math.cos(ry), sn = Math.sin(ry); for (const [lx, lz] of [[-28, 28], [-28, 0], [0, 28], [14, 28]]) { const wx = x + lx * cs + lz * sn, wz = z - lx * sn + lz * cs; glow(wx, 14.6, wz, 0xffc880, 6.5); pool(wx, wz, 22, 0xffc880, .7); }
 }
+/* p33: stalls along the sidewalk where the avenue meets the waterfront, food carts on the quay, strings of bulbs between */
+function nightStalls(M, R) {
+  const cols = [0xb8323a, 0x2a7a8a, 0xd09a2a, 0x7a3a8a, 0x3a8a5a, 0xc8562a], lit = [0xffd08a, 0xffe0b0, 0xffb878];
+  const stall = (x, z, w) => {
+    const c = R.pick(cols), d = 2.4, lc = R.pick(lit);
+    setPlain(M, 0x2a2228); for (const sx of [-1, 1]) for (const sz of [-1, 1]) M.box(x + sx * (w / 2 - .1), 0, z + sz * (d / 2 - .1), .12, sz < 0 ? 2.9 : 2.45, .12, {});
+    setPlain(M, 0x5a4434); M.box(x, 0, z + .5, w - .3, 1, .9, { topc: 0x3a2a20 }); setPlain(M, 0x3a3236); M.box(x, 0, z - .6, w - .3, 1.5, .8, {});
+    /* the awning, striped, sloping toward the street */
+    for (let i = 0; i < 6; i++) { const x0 = x - w / 2 - .1 + i * (w + .2) / 6, x1 = x0 + (w + .2) / 6; M.set({ kind: K.PLAIN, c: hex(i % 2 ? c : 0xe8e0d0), em: 0, layer: 0, id: 3 }); M.quad([x0, 2.95, z - d / 2 - .1], [x1, 2.95, z - d / 2 - .1], [x1, 2.4, z + d / 2 + .7], [x0, 2.4, z + d / 2 + .7]); M.quad([x1, 2.4, z + d / 2 + .7], [x0, 2.4, z + d / 2 + .7], [x0, 2.95, z - d / 2 - .1], [x1, 2.95, z - d / 2 - .1]); }
+    setPlain(M, mixC(c, 0x000000, .3)); M.box(x, 2.1, z + d / 2 + .7, w + .2, .3, .05, {});
+    /* goods on the counter, a lit sign, a bulb under the awning */
+    for (let i = 0; i < 4; i++) { setPlain(M, R.pick([0xc84a2a, 0xe0c060, 0x6aa04a, 0xd8d0c0, 0x8a4a6a])); M.box(x - w / 2 + .5 + i * (w - 1) / 3, 1, z + .5 + R.range(-.2, .2), .5, .26, .4, {}); }
+    M.set({ kind: K.NEON, c: hex(R.pick([PAL.cyan, PAL.magenta, PAL.yellow, PAL.orange])), seed: R() * 200 }); M.box(x, 2.18, z + d / 2 + .73, w * .5, .16, .03, {});
+    M.set({ kind: K.PLAIN, c: hex(lc), em: 255, layer: 0 }); M.box(x, 2.3, z + .3, .22, .22, .22, {}); M.set({ em: 0 });
+    glow(x, 2.2, z + .6, lc, 5.5); pool(x, z + 1.6, 7, lc, .8);
+    /* stools and a crate */
+    setPlain(M, 0x2a2228); for (let i = 0; i < 2; i++) M.cyl(x - .8 + i * 1.6, 0, z + 1.6, .2, .2, .7, 6, {}); setPlain(M, 0x6a5a3a); M.box(x + w / 2 + .5, 0, z - .4, .7, .55, .6, {});
+  };
+  const bulbs = (a, b, sag) => { const n = Math.max(4, Math.round(Math.hypot(b[0] - a[0], b[2] - a[2]) / 1.6)); const pts = []; for (let i = 0; i <= n; i++) { const t = i / n; pts.push([lerp(a[0], b[0], t), lerp(a[1], b[1], t) - Math.sin(t * Math.PI) * sag, lerp(a[2], b[2], t)]); } M.tube(pts, .025, n, 3, { c: 0x0a0a0e }); M.set({ kind: K.PLAIN, c: hex(0xffd8a0), em: 255, layer: 0 }); for (let i = 1; i < n; i++) M.box(pts[i][0], pts[i][1] - .16, pts[i][2], .12, .14, .12, {}); M.set({ em: 0 }); for (let i = 2; i < n; i += 3) glow(pts[i][0], pts[i][1] - .2, pts[i][2], 0xffc880, 1.6); };
+  /* the sidewalk in front of the shops, either side of the avenue; the east end keeps clear of the ramen tables */
+  for (const [x0, x1] of [[-96, -24], [22, 54]]) { let x = x0; while (x < x1 - 3) { const w = R.range(3.4, 4.6); stall(x + w / 2, 236.6, w); x += w + R.range(.8, 2.4); } bulbs([x0, 4.6, 238.6], [x1, 4.6, 238.4], .8); bulbs([x0 + 4, 4.4, 234.8], [x1 - 4, 4.4, 235], .6); }
+  /* food carts along the quay between the lamps, umbrellas, a lit hatch */
+  for (const x of [-64, -38, 30, 56, 84]) { const c = R.pick(cols), z = 290 + R.range(-1, 1);
+    setPlain(M, 0x3a3640); M.box(x, .5, z, 2.4, 1.3, 1.2, { topc: 0x2a2630 }); setPlain(M, 0x111114); for (const sx of [-.8, .8]) M.cyl(x + sx, .3, z + .62, .3, .3, .12, 8, {});
+    M.set({ kind: K.PLAIN, c: hex(0xffd8a0), em: 220, layer: 0 }); M.box(x, 1.05, z + .61, 1.6, .5, .03, {}); M.set({ em: 0 });
+    setPlain(M, 0x222026); M.cyl(x - .6, 1.8, z, .04, .04, 1.6, 4, { top: false }); M.set({ kind: K.PLAIN, c: hex(c), em: 0, layer: 0 }); M.cyl(x - .6, 3.2, z, 1.7, .05, .55, 8, {});
+    glow(x, 1.4, z + 1, 0xffc880, 4.5); pool(x, z + 2, 8, 0xffc880, .7); }
+}
 /* boats moored close in, their lights lie on the water */
 function nearBoats(M, R) {
   /* the water taxi: long low hull, a strip of warm windows, a red tail */
   M.at(-6, -2, 330, 1.48, () => { setPlain(M, 0x1c2230); M.loft([[[-3.2, 0, -19], [3.2, 0, -19], [1.6, 0, 19], [-1.6, 0, 19]], [[-3.8, 2.2, -20], [3.8, 2.2, -20], [.3, 2.8, 25], [-.3, 2.8, 25]]], { c: 0x1c2230 }); setPlain(M, 0x2a3244); M.loft([[[-3.8, 2.2, -20], [3.8, 2.2, -20], [.3, 2.8, 25], [-.3, 2.8, 25]], [[-2.6, 2.4, -16], [2.6, 2.4, -16], [1.4, 2.6, 14], [-1.4, 2.6, 14]]], { c: 0x2a3244 }); setPlain(M, 0x3a4256); M.box(0, 2.4, -2, 4.6, 2.6, 26, { topc: 0x1a2030 }); M.set({ kind: K.PLAIN, em: 240, c: hex(0xffd8a0) }); for (let i = 0; i < 13; i++) { M.box(2.32, 3.1, -13.5 + i * 1.9, .03, 1.1, 1.5, {}); M.box(-2.32, 3.1, -13.5 + i * 1.9, .03, 1.1, 1.5, {}); } M.set({ em: 0 }); setPlain(M, 0x1a2030); M.box(0, 5, -2, 4.9, .12, 26.4, {}); M.set({ kind: K.NEON, c: hex(PAL.cyan), seed: 0 }); for (const sx of [-2.46, 2.46]) M.box(sx, 4.98, -2, .06, .06, 26, {}); setPlain(M, 0x25283a); M.cyl(0, 5, 6, .1, .05, 6, 4, { top: false }); });
   glow(-6, 3.2, 330, 0xffc880, 32); glow(-29, 3, 332, PAL.red, 5, 1); glow(16, 3, 329, 0xffffff, 5);
   for (const [x, z, ry, L0, c, lc] of [[-70, 348, -.5, 18, 0x24384a, PAL.cyan], [34, 334, 1.2, 15, 0x2a4a44, 0xff8a5a], [-96, 340, .9, 24, 0xb09a78, PAL.magenta]]) {
-    M.at(x, -2, z, ry, () => { const w = L0 * .24; setPlain(M, c); const a = [[-w * .7, 0, -L0 / 2], [w * .7, 0, -L0 / 2], [w * .25, 0, L0 / 2], [-w * .25, 0, L0 / 2]], b = [[-w, 1.8, -L0 / 2], [w, 1.8, -L0 / 2], [w * .1, 2.4, L0 * .62], [-w * .1, 2.4, L0 * .62]]; M.loft([a, b], { c }); M.loft([b, b.map(() => [0, 1.8, 0])], { c: mixC(c, 0xffffff, .2) }); M.box(0, 1.8, -L0 * .12, w * 1.1, 2.8, L0 * .34, { c: 0x6a6670 }); M.set({ kind: K.PLAIN, em: 235, c: hex(lc) }); M.box(0, 3.1, -L0 * .12, w * 1.16, .8, L0 * .3, {}); M.set({ em: 0 }); setPlain(M, 0x25283a); M.cyl(0, 4.6, -L0 * .12, .08, .05, 5, 4, { top: false }); });
+    M.at(x, -.7, z, ry, () => smallBoat(M, L0, c, lc));
     glow(x, 2.8, z, lc, 14); glow(x, 9, z, PAL.red, 3, 1);
   }
 }
@@ -3694,6 +3773,26 @@ function flyerModel() {
   q([W, .46, 2.6], [-W, .46, 2.6], [-W, .46, -2.6], [W, .46, -2.6], dk, 0);
   q([W * .9, .7, 2.62], [-W * .9, .7, 2.62], [-W * .9, .76, 2.62], [W * .9, .76, 2.62], hd, 3); q([-W * .9, .8, -2.62], [W * .9, .8, -2.62], [W * .9, .88, -2.62], [-W * .9, .88, -2.62], tl, 3);
   for (const sx of [1, -1]) for (const sz of [1.7, -1.7]) { box(sx * 1.04, .62, sz, .44, .1, .16, tr, 0); ringY(sx * 1.45, .3, sz, .36, .32, .72, 8, tr, 0, false); ringY(sx * 1.45, .28, sz, .34, .34, .3, 8, [.2, .8, 1], 3); }
+  return B.geom();
+}
+/* a hauler: freight up high (x7) or an air bus lower down (x2.6 to 3.2). A cab, a ribbed cargo spine, six lift pods, running lights */
+function haulerModel() {
+  const B = propBuilder(); const { q, box, ringY } = B;
+  const dk = [.02, .02, .03], tr = [.07, .075, .09], pt = [.5, .5, .5], hd = [1, .98, .9], tl = [1, .07, .05], cy = [.2, .95, 1], am = [1, .55, .1];
+  /* the cab: a slab nose with a glass band, raked */
+  box(0, .3, 2.05, 1.3, .55, .9, pt, 1); q([.62, .85, 2.5], [-.62, .85, 2.5], [-.55, 1.02, 1.95], [.55, 1.02, 1.95], [0, 0, 0], 2); box(0, .85, 1.75, 1.1, .2, .4, pt, 1);
+  for (const s of [1, -1]) q([s * .651, .66, 2.4], [s * .651, .66, 1.7], [s * .651, .8, 1.7], [s * .651, .8, 2.4], [0, 0, 0], 2);
+  /* the spine and the cargo: four boxes with gaps, alternately painted and dark */
+  box(0, .2, -.4, .5, .18, 4.2, tr, 0);
+  for (let i = 0; i < 4; i++) { const z = 1.2 - i * .95; box(0, .36, z - .42, 1.24, .66, .84, i % 2 ? [.11, .11, .13] : pt, i % 2 ? 0 : 1); for (let r = 0; r < 4; r++) for (const s of [1, -1]) box(s * .625, .4, z - .12 - r * .2, .012, .58, .04, dk, 0); box(0, 1.02, z - .42, 1.26, .03, .86, dk, 0); }
+  /* the tail: a fin block, a lit band */
+  box(0, .3, -2.35, 1.2, .5, .3, tr, 0); q([-.6, .62, -2.501], [.6, .62, -2.501], [.6, .7, -2.501], [-.6, .7, -2.501], tl, 3);
+  q([.55, .55, 2.501], [-.55, .55, 2.501], [-.55, .62, 2.501], [.55, .62, 2.501], hd, 3);
+  /* pods on short arms, a lit ring under each */
+  for (const sx of [1, -1]) for (const sz of [1.5, 0, -1.6]) { box(sx * .78, .44, sz, .32, .08, .14, tr, 0); ringY(sx * 1.02, .26, sz, .24, .21, .5, 8, tr, 0, false); ringY(sx * 1.02, .24, sz, .22, .22, .27, 8, cy, 3); }
+  /* amber markers along the top, a cyan line under the belly */
+  for (const s of [1, -1]) for (let i = 0; i < 5; i++) box(s * .6, 1.05, 1.5 - i * .95, .05, .04, .05, am, 3);
+  q([.12, .109, 1.8], [-.12, .109, 1.8], [-.12, .109, -2.2], [.12, .109, -2.2], cy, 3);
   return B.geom();
 }
 /* far cars stay cheap */
@@ -5701,19 +5800,19 @@ function trafficSetup() {
   const street = [[.5, .4, .06], [.05, .055, .07], [.3, .04, .05], [.05, .17, .2], [.42, .42, .44], [.09, .09, .12], [.46, .2, .04]];
   const flyer = [[.07, .08, .11], [.42, .05, .06], [.5, .42, .06], [.05, .24, .28], [.36, .36, .4]];
   const anyCar = () => R.pick([1, 1, 3, 3, 2]);
-  add(rows.hwyE, 54, .018, 0, 0, 1, street, 10); add(rows.hwyW, 54, .018, 0, 0, 1, street, 10);
-  inst.slice(0, 108).forEach(c => { c.side = R.chance(.5) ? R.range(-1, 1) * .8 + 1.9 : R.range(-1, 1) * .6 - 1.8; c.y = 0; });
+  add(rows.hwyE, 84, .018, 0, 0, 1, street, 10); add(rows.hwyW, 84, .018, 0, 0, 1, street, 10);
+  inst.slice(0, 168).forEach(c => { c.side = R.chance(.5) ? R.range(-1, 1) * .8 + 1.9 : R.range(-1, 1) * .6 - 1.8; c.y = 0; });
   add(aveN, 10, .024, 1.6, 0, 1, street, 1, anyCar); add(aveN, 8, .021, -1.2, 0, 1, street, 1, anyCar); add(aveS, 10, .024, 1.6, 0, 1, street, 1, anyCar); add(aveS, 8, .021, -1.2, 0, 1, street, 1, anyCar);
   for (const r of ew) add(r, 8, .013, 0, 0, 1, street); for (const r of ns) add(r, 7, .015, 0, 0, 1, street);
   add(brA, 22, .017, 0, 0, 1, street, 6); add(brB, 22, .017, 0, 0, 1, street, 6);
-  add(aveAir, 3, .03, 0, 0, 1.6, flyer, 3, 4);
-  add(streetFlyer, 1, .022, 0, 0, 1.5, [[.5, .06, .06]], 0, 4); inst[inst.length - 1].ph = .5;
+  add(aveAir, 5, .03, 0, 0, 1.15, flyer, 3, 4);
+  add(streetFlyer, 1, .022, 0, 0, 1.15, [[.5, .06, .06]], 0, 4); inst[inst.length - 1].ph = .5;
   /* parked along the shop's kerb: lanes that do not move */
   const kerbW = lane([[-8.1, .1, 90], [-8.1, .1, 40]]), kerbE = lane([[8.1, .1, 30], [8.1, .1, 110]]);
   [.2, .34, .62, .8].forEach((ph, i) => inst.push({ row: kerbW, ph, sp: 0, side: 0, y: 0, sc: 1, col: street[i * 2 % 7], mdl: [2, 3, 1, 2][i] }));
   [.25, .5, .72].forEach((ph, i) => inst.push({ row: kerbE, ph, sp: 0, side: 0, y: 0, sc: 1, col: street[(i * 3 + 1) % 7], mdl: [1, 3, 2][i] }));
   /* barges up high */
-  const barge = lane(loop(0, -120, 520, 560, 330, 1.2, 8)); add(barge, 2, .0028, 0, 0, 6.5, [[.05, .05, .07]], 0, 4);
+  const barge = lane(loop(0, -120, 520, 560, 330, 1.2, 8)); add(barge, 2, .0028, 0, 0, 7, [[.16, .16, .18], [.3, .2, .08]], 0, 5);
 
   /* people on the avenue, a crowd waiting at the crossing, everyone small and dark */
   const coat = [[.04, .045, .06], [.07, .06, .05], [.03, .03, .035], [.09, .03, .035], [.03, .07, .08], [.11, .11, .12]];
@@ -5723,11 +5822,14 @@ function trafficSetup() {
   /* passes right in front of the shop window */
   P(walk(-15.6, 92, 36), 5, .018, 0);
   const crowd = (x, z, n) => { const r = lane([[x, .05, z - 3.2], [x, .05, z + 3.2]]); for (let i = 0; i < n; i++) peds.push({ row: r, ph: (i + R() * .7) / n, sp: 0, side: R.range(-1.1, 1.1), y: 0, sc: R.range(.92, 1.06), col: R.pick(coat), mdl: R.int(0, 2) }); };
+  { const R2 = rng(3373), ew = (x0, x1, z) => lane([[x0, .05, z], [x1, .05, z]]); const Pe = (row, n, sp) => { for (let i = 0; i < n; i++) peds.push({ row, ph: (i + R2() * .8) / n, sp: sp * R2.range(.85, 1.15), side: R2.range(-.5, .5), y: 0, sc: R2.range(.92, 1.06), col: coat[0], mdl: 0 }); };
+    Pe(ew(-100, 60, 240.6), 14, .006); Pe(ew(60, -100, 241.8), 12, .006); Pe(ew(-120, 120, 286), 12, .0045); Pe(ew(120, -120, 293.5), 10, .0045);
+    for (const x of [-88, -76, -62, -48, -34, 28, 40, 50]) { const r = lane([[x - 1.6, .05, 239.4], [x + 1.6, .05, 239.4]]); const n = R2.int(1, 3); for (let i = 0; i < n; i++) peds.push({ row: r, ph: R2(), sp: 0, side: R2.range(-.4, .4), y: 0, sc: R2.range(.92, 1.06), col: coat[0], mdl: 0 }); } }
   crowd(13.6, 56, 5); crowd(14.6, 70, 4); P(walk(13.2, 88, 34), 7, .02, 0); crowd(-10.2, 135.5, 11); crowd(10.2, 135.5, 11); crowd(-10.6, 115, 4); crowd(10.6, 158, 4);
 
   /* air lanes curve around the towers: groups of real cars with short tail-light pairs, thin beads only far away */
   const streams = []; const warm = [.85, .76, .58], cold = [.68, .78, .88], red = [.82, .1, .07], amber = [.85, .46, .12];
-  const air = (pts, groups, per, speed, sc, palette, c0, c1, beads) => { const a = lane(pts), b = lane(offsetPts(pts, 8).reverse()); for (const [row, col] of [[a, c0], [b, c1]]) { for (let g = 0; g < groups; g++) { const base = (g + R() * .5) / groups; const n = R.int(1, per); for (let i = 0; i < n; i++) inst.push({ row, ph: (base + i * .004 + 1) % 1, sp: speed, side: R.range(-1.2, 1.2), y: R.range(-1, 1), sc: sc * R.range(.92, 1.08), col: R.pick(palette), mdl: 0 }); } for (let g = 0; g < beads; g++) { const base = (g + R() * .6) / beads, n = R.int(2, 5); for (let i = 0; i < n; i++) streams.push({ row, ph: (base + i * .0035 + 1) % 1, sp: speed, side: R.range(-1.4, 1.4), y: R.range(-1.2, 1.2), sc: 3.2, col }); } } };
+  const air = (pts, groups, per, speed, sc0, palette, c0, c1, beads) => { const sc = 1.15;  { const a = lane(pts), b = lane(offsetPts(pts, 8).reverse()); for (const [row, col] of [[a, c0], [b, c1]]) { for (let g = 0; g < groups; g++) { const base = (g + R() * .5) / groups; const n = R.int(1, per); for (let i = 0; i < n; i++) inst.push({ row, ph: (base + i * .004 + 1) % 1, sp: speed, side: R.range(-1.2, 1.2), y: R.range(-1, 1), sc: sc * R.range(.92, 1.08), col: R.pick(palette), mdl: 0 }); } for (let g = 0; g < beads; g++) { const base = (g + R() * .6) / beads, n = R.int(2, 5); for (let i = 0; i < n; i++) streams.push({ row, ph: (base + i * .0035 + 1) % 1, sp: speed, side: R.range(-1.4, 1.4), y: R.range(-1.2, 1.2), sc: 3.2, col }); } } }; };
   const pal = flyer;
   air(curvePts([[-760, 118, 300], [-330, 104, 236], [-162, 118, 90], [-150, 146, -110], [-230, 168, -300], [-640, 196, -560]], 40), 5, 3, .02, 2.2, pal, warm, red, 16);
   air(curvePts([[760, 96, 262], [300, 104, 214], [156, 128, 60], [150, 158, -130], [70, 188, -318], [-70, 206, -420], [-540, 232, -660]], 40), 5, 3, .02, 2.2, pal, cold, red, 16);
@@ -5739,7 +5841,11 @@ function trafficSetup() {
   air(loop(0, -235, 74, 80, 420, 2, 10), 2, 2, .012, 1.8, pal, cold, red, 8);
   /* close to the opening camera: silhouettes you can read */
   const nearA = lane(loop(26, 286, 270, 26, 84, 0, 6)), nearB = lane(loop(44, 262, 300, 22, 122, 2, 8));
-  add(nearA, 8, .019, 0, 0, 2.2, flyer, 0, 4); add(nearB, 8, .016, 0, 0, 1.9, flyer, 0, 4);
+  add(nearA, 10, .019, 0, 0, 1.15, flyer, 0, 4); add(nearB, 10, .016, 0, 0, 1.15, flyer, 0, 4);
+  /* air buses and freight: their own long bodies, so big reads as big, not as a giant car */
+  const bus = (pts, n, sp, sc, col) => { const r = lane(pts); for (let i = 0; i < n; i++) inst.push({ row: r, ph: (i + R() * .5) / n, sp, side: 0, y: 0, sc, col: R.pick(col), mdl: 5 }); };
+  bus(curvePts([[-900, 132, 330], [-300, 140, 250], [140, 136, 236], [900, 160, 330]], 30), 2, .009, 2.6, [[.42, .4, .38], [.12, .3, .34]]);
+  bus(curvePts([[820, 210, 120], [200, 220, -60], [-200, 236, -260], [-820, 250, -520]], 30), 2, .008, 3.2, [[.3, .2, .08], [.16, .16, .18]]);
   return { inst, peds, streams };
 }
 function buildTraffic({ inst, peds, streams }) {
@@ -5748,7 +5854,7 @@ function buildTraffic({ inst, peds, streams }) {
   const fsU = () => ({ uLanes: { value: lanes }, uTime: TIME, uMY: { value: .2 }, uMoon: shared.uMoon, uAmbHi: shared.uAmbHi, uAmbLo: shared.uAmbLo, uFogHi: shared.uFogHi, uFogLo: shared.uFogLo, uFogD: shared.uFogD, uFogH: shared.uFogH, uPoolR: shared.uPoolR, uPoolK: shared.uPoolK, uPool: shared.uPool, uSky: shared.uSky, uMoonC: shared.uMoonC, uSkyH: shared.uSkyH, uSkyZ: shared.uSkyZ });
   const wire = (g, list) => { const iLane = new Float32Array(list.length * 4), iLook = new Float32Array(list.length * 4), iH = new Float32Array(list.length); list.forEach((c, i) => { iLane.set([c.row, c.ph, c.sp, c.side], i * 4); iLook.set([c.col[0], c.col[1], c.col[2], c.sc], i * 4); iH[i] = c.y; }); g.setAttribute('iLane', new THREE.InstancedBufferAttribute(iLane, 4)); g.setAttribute('iLook', new THREE.InstancedBufferAttribute(iLook, 4)); g.setAttribute('iH', new THREE.InstancedBufferAttribute(iH, 1)); g.instanceCount = list.length; return g; };
   const meshFor = (base, list, defs = {}) => { const ig = new THREE.InstancedBufferGeometry(); for (const k of ['position', 'normal', 'aCol']) ig.setAttribute(k, base.getAttribute(k)); wire(ig, list); const m = new THREE.Mesh(ig, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: CAR_VS, fragmentShader: CAR_FS, uniforms: fsU(), defines: defs, blending: THREE.NoBlending, side: THREE.DoubleSide })); m.frustumCulled = false; return m; };
-  const models = [carLow(), carModel('muscle'), carModel('cab'), carModel('sedan'), flyerModel()];
+  const models = [carLow(), carModel('muscle'), carModel('cab'), carModel('sedan'), flyerModel(), haulerModel()];
   inst.forEach(c => { if (c.mdl === 2) c.col = [.62, .5, .05]; });
   const bodies = models.map((g, k) => meshFor(g, inst.filter(c => c.mdl === k)));
   /* people: eight cuts, dealt from their own random stream so the rest of the traffic stays where it was */
@@ -6355,8 +6461,8 @@ function resize() {
 
 /* ---------- state ---------- */
 const S = { spin: 0, spinGoal: 0, mode: 'city', t: 0, az: 0, azGoal: 0, el: 0, elGoal: 0, yaw: 0, yawGoal: 0, pitch: 0, fly: null, last: 0, frames: 0, acc: 0, fps: 0, scanT: -9, glitchT: -9, needsPlace: true, sheet: false, drag: null, close: false, closeK: 0 };
-/* low over the harbour, a third of the way up the tower, one near tower cropping the frame */
-const POSE = () => CAM.aspect < .8 ? { p: [-8, 22, 408], l: [-8, 112, -200], fov: 84 } : CAM.aspect < 1.3 ? { p: [66, 50, 505], l: [-10, 220, -180], fov: 66 } : { p: [66, 52, 505], l: [-10, 196, -160], fov: 58 };
+/* p33: on a rooftop over the waterfront highway, looking straight up the avenue: its signs either side, the corp tower at the end */
+const POSE = () => CAM.aspect < .8 ? { p: [6, 40, 330], l: [-6, 112, -160], fov: 84 } : CAM.aspect < 1.3 ? { p: [10, 44, 322], l: [-6, 104, -160], fov: 66 } : { p: [10, 44, 322], l: [-6, 110, -160], fov: 58 };
 /* how far in on her the view is, eased (0 at rest) */
 const closeE = () => { const u = S.closeK || 0; return u * u * (3 - 2 * u); };
 function applyFov() { const a = CAM.aspect; const cf = POSE().fov; const rf = (a < .8 ? 74 : a < 1.3 ? 66 : 56) * (1 - .22 * closeE()); const k = S.mode === 'city' ? 0 : S.mode === 'room' ? 1 : (S.fly ? S.flyK : 0); const mid = S.mode === 'fly' && a < .8 ? S.flyMid || 0 : 0; CAM.fov = lerp(lerp(cf, rf, k), lerp(58, 49, S.flyIn || 0), mid); CAM.updateProjectionMatrix(); }
@@ -6365,7 +6471,7 @@ const local = (x, y, z) => [room.box.x + x, room.box.y + y, room.box.z + z];
 function cityPose(out = {}) {
   const P = POSE(); const dx = P.p[0] - P.l[0], dz = P.p[2] - P.l[2]; const a = S.az + (REDUCED || RIG ? 0 : Math.sin(S.t * .07) * .03); const r = Math.hypot(dx, dz);
   const b = Math.atan2(dx, dz) + a;
-  const yy = P.p[1] + S.el * 120 + (REDUCED || RIG ? 0 : Math.sin(S.t * .11) * 5);
+  const yy = P.p[1] + S.el * (S.el < 0 ? 40 : 120) + (REDUCED || RIG ? 0 : Math.sin(S.t * .11) * 5);
   out.p = [P.l[0] + Math.sin(b) * r, yy, P.l[2] + Math.cos(b) * r]; out.l = [P.l[0], P.l[1] + Math.sin(S.t * .05) * 2, P.l[2]]; return out;
 }
 const ROOM_REST = () => room.def.rest(CAM.aspect);
@@ -6381,7 +6487,7 @@ const ROOM_DEF = {
     flight(c, r, a) {
       const up = a < .8 ? .2 : 0;
       return {
-        P: [c.p, a < .8 ? [4, 92, 372] : [30, 128, 440], [12, 72, 292], [5, 14, 200], [3, 6.4, 142], [-2, 3.6, 96], [-10, 2.1, 72], [-15.2, 1.62, 63.6], [-18.6, 1.42, 63.6], local(1.6, 1.3, 2.75), local(-1.8, 1.36, 2.7), local(-3.9, 1.5, 1.9), r.p],
+        P: [c.p, [8, 40, 296], [7, 27, 252], [5, 14, 200], [3, 6.4, 142], [-2, 3.6, 96], [-10, 2.1, 72], [-15.2, 1.62, 63.6], [-18.6, 1.42, 63.6], local(1.6, 1.3, 2.75), local(-1.8, 1.36, 2.7), local(-3.9, 1.5, 1.9), r.p],
         L: [c.l, [4, 80, 150], [0, 16, 150], [2, a < .8 ? 15 : 8, 90], [0, a < .8 ? 12.5 : 5, 80], [-12, a < .8 ? 3.4 : 2.4, 66], [-17.4, 1.9, 63.6], [-23, 1.5, 63.2], local(-2.85, 1.22, .95), local(-2.85, 1.2, .2), local(-2.85, 1.2 + up * .7, -.8), local(-2.7, 1.2 + up * .5, -.9), r.l],
         /* weights: how long each hop lasts */
         W: [1.15, 1, .95, .6, .55, .62, .62, .42, .46, .44, .4, .5],
@@ -6437,7 +6543,7 @@ const ROOM_DEF = {
       const y = APT.y, z = APT.z;
       return {
         /* down past the front of the block, over the pink roof, into the gap between the two, in through the window clear of her, then round by the lit kitchen to face it */
-        P: [c.p, a < .8 ? [-14, 74, 372] : [14, 118, 436], [-22, 92, 330], [-40, 82, 276], [-52, y + 18, z + 16], [-60, y + 7, z + 3], [-65.4, y + 2.1, z - .5], local(5.2, 1.72, -.75), local(2.4, 1.76, -.1), local(-.5, 1.76, .45), local(-2.6, 1.68, .4), r.p],
+        P: [c.p, [-4, 66, 326], [-22, 92, 330], [-40, 82, 276], [-52, y + 18, z + 16], [-60, y + 7, z + 3], [-65.4, y + 2.1, z - .5], local(5.2, 1.72, -.75), local(2.4, 1.76, -.1), local(-.5, 1.76, .45), local(-2.6, 1.68, .4), r.p],
         L: [c.l, [-30, 90, 230], [-60, 62, z + 4], [-68, y + 6, z], [-69, y + 4, z], [-69, y + 2, z], [-70, y + 1.7, z - .5], local(-4.3, 1.45, -.3), local(-2.2, 1.45, -3.8), local(.4, 1.25, -3.8), local(2.8, 1.15, -2.6), r.l],
         W: [1.15, 1, .9, .7, .55, .55, .5, .4, .32, .3, .42],
       };
@@ -6455,7 +6561,7 @@ const ROOM_DEF = {
       const x = GR.x + GR.w / 2, z = GR.z;
       return {
         /* over the island to the gym's east side, down onto the lot, in under the door, then round by the dumbbells to face it */
-        P: [c.p, a < .8 ? [40, 110, 300] : [60, 140, 380], [150, 88, 40], [x + 40, 52, z + 60], [x + 32, 14, z + 16], [x + 16, 3.4, z + 2], [x + 6, 1.9, z + .2], local(4.4, 1.72, .3), local(1.4, 1.7, .6), local(-1.8, 1.66, .7), local(-3.9, 1.64, .35), r.p],
+        P: [c.p, [46, 96, 290], [150, 88, 40], [x + 40, 52, z + 60], [x + 32, 14, z + 16], [x + 16, 3.4, z + 2], [x + 6, 1.9, z + .2], local(4.4, 1.72, .3), local(1.4, 1.7, .6), local(-1.8, 1.66, .7), local(-3.9, 1.64, .35), r.p],
         L: [c.l, [120, 30, -60], [x, 14, z], [x - 4, 6, z], [x - 2, 2.6, z], [x - 4, 1.8, z], local(-2, 1.6, 0), local(-6, 1.5, .3), local(-6, 1.45, -2.6), local(-3, 1.4, -4.8), local(1.5, 1.35, -3.6), r.l],
         W: [1.15, 1, .9, .7, .6, .5, .42, .4, .34, .32, .42],
       };
@@ -6475,7 +6581,7 @@ const ROOM_DEF = {
       const { x, y, z } = CH;
       return {
         /* up over the island toward the mountain, down past the lift station, onto the deck, in through the glass, then round by the stove to face it */
-        P: [c.p, a < .8 ? [60, 200, 200] : [90, 230, 260], [150, 300, -300], [x + 70, y + 40, z + 40], [x + 26, y + 9, z + 8], [x + 11, y + 2.4, z + 1.2], local(6.2, 1.75, .4), local(3.2, 1.72, .7), local(.8, 1.78, .95), local(-1.8, 1.66, .6), local(-2.9, 1.64, .2), r.p],
+        P: [c.p, [50, 170, 240], [150, 300, -300], [x + 70, y + 40, z + 40], [x + 26, y + 9, z + 8], [x + 11, y + 2.4, z + 1.2], local(6.2, 1.75, .4), local(3.2, 1.72, .7), local(.8, 1.78, .95), local(-1.8, 1.66, .6), local(-2.9, 1.64, .2), r.p],
         L: [c.l, [150, 260, -600], [x, y + 10, z], [x + 4, y + 3, z], [x + 4, y + 1.8, z], local(-2, 1.5, 0), local(-6, 1.45, .3), local(-6, 1.45, -2.6), local(-3, 1.4, -4.8), local(1.5, 1.35, -3.6), local(3, 1.3, -1.5), r.l],
         W: [1.15, 1, .95, .7, .55, .45, .42, .4, .34, .32, .42],
       };
@@ -6493,7 +6599,7 @@ const ROOM_DEF = {
       const { x, y, z } = CS, ex = x + CS.w / 2;
       return {
         /* out over the harbour, low across the water to the castle's east face, in through the big window, then round by the library to face it */
-        P: [c.p, a < .8 ? [-40, 96, 380] : [-30, 116, 430], [-100, 78, 345], [ex + 42, y + 15, z + 10], [ex + 16, y + 3.6, z + 2], [ex + 4, y + 2.1, z + .2], local(4.2, 1.95, 0), local(1.4, 1.8, .6), local(-1.2, 1.72, .7), local(-2.6, 1.66, .4), r.p],
+        P: [c.p, [-40, 80, 340], [-100, 78, 345], [ex + 42, y + 15, z + 10], [ex + 16, y + 3.6, z + 2], [ex + 4, y + 2.1, z + .2], local(4.2, 1.95, 0), local(1.4, 1.8, .6), local(-1.2, 1.72, .7), local(-2.6, 1.66, .4), r.p],
         L: [c.l, [-200, 40, 300], [x, y + 4, z], [x, y + 2.4, z], [x - 4, y + 2, z], local(-6, 1.7, .2), local(-6, 1.55, -2.6), local(-3, 1.45, -4.8), local(1.5, 1.4, -3.6), local(3, 1.32, -1.5), r.l],
         W: [1.15, 1, .95, .7, .5, .44, .42, .36, .34, .42],
       };

@@ -373,6 +373,25 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p33, 2026-11-16): the city view, in the city.** His note: "tiny cars, big cars and bigger flying cars all in
+  the same perspective... buildings that aren't even really buildings... I'd like to feel like I'm in the city more". He
+  picked the lower camera.
+  - **One car size.** Street cars 1x, every flyer 1.15x (they were 1.6 to 2.2x), so a flying car is a car. Big things
+    get their own long body (`haulerModel`, mdl 5): air buses at 2.6 to 3.2x on two lanes, freight at 7x up high (the
+    old barges were the flyer at 6.5x). More flyers on the near lanes to keep the sky busy at true size.
+  - **The camera.** `POSE` is a rooftop over the waterfront highway at (10, 44, 322) looking up the avenue (phone at
+    (6, 40, 330)), CALMA, PAWN and RAMEN framing it, the corp tower and koi at the end. Looking down drops 40 m, not 120.
+    Each flight's first hop now goes forward from there (it used to climb back out over the water).
+  - **Fake spots rebuilt.** The castle point's dark blobs are trees (`tree`) with a lit gravel walk. The two quay
+    "gallows" (a post and a beam on the castle lawn) are portal cranes (`quayCrane`) on the east quay with boxes under
+    them. Boats share `smallBoat` and float (they sat at y -2 with the water at .2, so only the cabin showed). Facade
+    balconies (`faceDress`) lost the full-width gantries and braces that read as scaffolding, got open rails and lit
+    doors.
+  - **Life.** A night market (`nightStalls`): striped stalls and bulb strings on the sidewalk where the avenue meets
+    the waterfront, food carts on the quay, people browsing and walking both (own random stream). The highway in front
+    carries 84 cars a side (54) and has a lamp every span near the camera.
+  - Cost: about +11% triangles city-wide, under 2% in view; the new view itself costs about the same as the old code
+    drawn from the same spot.
 - **Fixed (p32, 2026-11-16): her calls while ringing.** His note: "she only calls me when I'm in the apartment". She rang
   everywhere, but the ringing card carried class `ring`, which is the shop's 74px round dial, so it drew as a garbled
   bubble in the corner. Now `clr`. Test t83 (every place, the full card on top while ringing).
@@ -738,5 +757,5 @@ Technical state only. Updated 2026-11-06.
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
   1. p22 is live (he checked it on his iPhone, Nov 11). p23 to p25 live (Nov 14, he checked them). p26 (Mira M2) live (Nov 14).
-     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) live (Nov 15, main e89db3d). p30 (one week view, gainer skip, boxes save) live (Nov 16, main 51fb94a). p31 (HIDE in her close-up) live (Nov 16). p32 (the ringing call card) live (Nov 16).
+     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) live (Nov 15, main e89db3d). p30 (one week view, gainer skip, boxes save) live (Nov 16, main 51fb94a). p31 (HIDE in her close-up) live (Nov 16). p32 (the ringing call card) live (Nov 16). p33 (the city view, in the city) built on city-p33, waiting for his go.
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.
