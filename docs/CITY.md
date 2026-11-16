@@ -373,6 +373,16 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p30, 2026-11-16): one week view, the gainer skip, boxes that save.** His notes: "week and plan board are
+  basically the same thing", "an option to not do the mass gainer on some days", the school hours goal "doesn't seem to
+  be changing and saving". His picks: one board; a SKIP TODAY button.
+  - **One week view**: the apartment's WEEK tab is gone; the WEEK hotspot and R open the plan board. Each day on the board
+    also carries its gym session (tap: the gym), school due (tick there, title: the castle) and the shift (edited there).
+  - **Gainer skip**: SKIP TODAY under the mass gainer (`S.shakes[day].gx`); that day Fuel asks for the protein shake only
+    (1/1). UNDO SKIP; taking it after all clears the skip.
+  - **Boxes save when a panel closes**: on an iPhone, tapping X leaves the focus in a box, so its change never fired and
+    the value was lost (the school goal). `blurIn` sends a changed box's change, then blurs, on sheet close, tab switch and
+    board close. Test t81.
 - **Built (p29, 2026-11-15): the plan board and Mira's calls.** His asks: "a lot easier to view and edit the weekly
   plans" and "the phone ring to actually have a phone ring functionality". His picks: the board holds tasks only; every
   call kind below; the 9 pm check-in rings too.
@@ -722,5 +732,5 @@ Technical state only. Updated 2026-11-06.
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
   1. p22 is live (he checked it on his iPhone, Nov 11). p23 to p25 live (Nov 14, he checked them). p26 (Mira M2) live (Nov 14).
-     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) on city-p29, not pushed: 27 call clips made (his yes, Nov 15); KV upload and push each need his go.
+     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) live (Nov 15, main e89db3d). p30 (one week view, gainer skip, boxes save) on city-p30, not pushed: push needs his go.
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

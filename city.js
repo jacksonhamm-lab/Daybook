@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p29';
+export const BUILD = 'p30';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -276,6 +276,9 @@ details.sgp[open]>summary::after{content:'\\2212'}
 .shk button{min-height:68px;display:grid;place-content:center;gap:6px;text-align:center;font:700 15px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-cyan);box-shadow:inset 0 0 0 1.5px var(--hud-cyan-line)}
 .shk button.on{background:var(--hud-cyan);color:var(--hud-ink);box-shadow:none}
 .shk small{font:9px/1 var(--micro);letter-spacing:.06em;opacity:.85}
+.shc{display:grid;gap:6px;align-content:start}
+.shk button.skip{opacity:.5;box-shadow:inset 0 0 0 1.5px var(--hud-cyan-line);border-style:dashed}
+.shk .shs{min-height:34px;font-size:11px;place-content:center}
 .cdf{display:grid;gap:7px}
 .cdf .cdn{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px}
 .clg{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;min-height:40px;border-top:1px solid var(--hud-hair);font:13px/1.2 var(--body);color:var(--hud-text)}
@@ -581,6 +584,8 @@ label.rbtn{cursor:pointer}
 .trow.drag{opacity:.35}
 .pmv .rbtn{min-width:44px;padding:0 8px}
 .pcol .tm .hin{width:142px}
+.pcol .pxs:not(:empty),.pcol .pxw:not(:empty){margin-top:8px}
+.pcol .pxw .sed{margin:0}
 @media (min-width:900px){
   #plan{left:calc(var(--sl) + 18px);right:calc(var(--sr) + 18px);top:calc(var(--st) + 6px);bottom:18px}
   .pstrip{display:none}
@@ -590,6 +595,10 @@ label.rbtn{cursor:pointer}
   .pcol:not(.sel){display:flex}
   .pcol.ed{flex-grow:2.4}
   .pcol .prows{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+  .pcol .wks{grid-template-columns:auto minmax(0,1fr);gap:6px;padding:5px 6px}
+  .pcol .wks em{display:none}
+  .pcol .wks strong{font-size:12px}
+  .pcol .sedg{grid-template-columns:minmax(0,1fr)}
   .pcol .ttl b{font-size:13px}
   .pcol .hadd .rbtn{padding:0 10px}
 }
@@ -894,16 +903,6 @@ const MARKUP = `
             <div id="tdSch"></div>
             <form class="hadd" id="tdAdd" data-hadd=""><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD A TASK, E.G. CALL LEN 3PM" aria-label="Add a task for today"><button class="rbtn" type="submit">ADD</button></form>
           </section>
-          <section class="card" id="cWeek" data-r="apartment">
-            <div class="kick">This week<span class="mi" id="wkL"></span></div>
-            <div id="wkNav"></div>
-            <div id="wkRows"></div>
-            <div id="wkSess" style="margin-top:8px"></div>
-            <div id="wkDay"></div>
-            <div id="wkSch"></div>
-            <div id="wkAdd"></div>
-            <div id="wkShift"></div>
-          </section>
           <section class="card" id="cNotes" data-r="apartment">
             <div class="kick">Notes<span class="mi" id="ntN"></span></div>
             <form class="hadd nadd" data-nadd="1"><textarea class="hin" rows="2" placeholder="WRITE ONE" aria-label="Write a note"></textarea><button class="rbtn" type="submit">SAVE</button></form>
@@ -1021,7 +1020,7 @@ const MARKUP = `
       <div class="pstrip" id="plStrip" role="group" aria-label="Days"></div>
       <div class="pbody" id="plBody">
         <div id="plLate"></div>
-        <div class="pcols" id="plCols">${[0, 1, 2, 3, 4, 5, 6].map(i => `<section class="pcol" id="plC${i}"><div class="pch" id="plH${i}"></div><div class="prows" id="plR${i}"></div><div id="plA${i}"></div></section>`).join('')}</div>
+        <div class="pcols" id="plCols">${[0, 1, 2, 3, 4, 5, 6].map(i => `<section class="pcol" id="plC${i}"><div class="pch" id="plH${i}"></div><div class="prows" id="plR${i}"></div><div id="plA${i}"></div><div class="pxs" id="plG${i}"></div><div id="plS${i}"></div><div class="pxw" id="plW${i}"></div></section>`).join('')}</div>
       </div>
     </div>
   </aside>
@@ -4706,7 +4705,7 @@ function buildApartment(spot = figSpot()) {
   ];
   const hot = [
     { key: 'today', label: 'TODAY', hotkey: 'E', line: 16, sheet: 'cToday', p: w(1.05, 2.16, -1.2) },
-    { key: 'week', label: 'WEEK', hotkey: 'R', line: 14, sheet: 'cWeek', p: w(W - .5, 2.98, 1.7) },
+    { key: 'week', label: 'WEEK', hotkey: 'R', line: 14, run: () => { APP.sfx('press'); planOpen(); }, p: w(W - .5, 2.98, 1.7) },
     { key: 'notes', label: 'NOTES', hotkey: 'F', line: 26, sheet: 'cNotes', p: w(tx - .25, .76, tz + .32) },
     { key: 'decide', label: 'DECIDE', hotkey: 'G', line: 14, sheet: 'cDecide', p: w(tx - .25, 1.15, tz - .3) },
     { key: 'career', label: 'CAREER', hotkey: 'T', line: 20, sheet: 'cCareer', p: w(1.85, 1.15, 1.35) },
@@ -4936,7 +4935,7 @@ function cushion(M, x, y, z, r, c) {
 /* Its +X gable end is the city chalet's glass (x = CH.x + 4.5): the lift station, the gondola line and the village lights through it */
 const CR = { x: CH.x, y: CH.y, z: CH.z, w: 9, d: 6.4, h: 2.7 };
 /* what the fridge list, the cookbook and the ticket show, so they're only repainted when it changes */
-const chaletSig = F => JSON.stringify([F.book, F.list.map(s => s.items.map(i => i.n + (i.on ? 1 : 0))), F.picked.map(p => p.n), F.cardio.min, F.cardio.n, F.shakes.map(s => s.on)]);
+const chaletSig = F => JSON.stringify([F.book, F.list.map(s => s.items.map(i => i.n + (i.on ? 1 : 0))), F.picked.map(p => p.n), F.cardio.min, F.cardio.n, F.shakes.map(s => s.on), F.shakes.map(s => s.skip)]);
 let CH_SIG = '';
 function chaletAtlas(F) {
   const S = 1024, cv = document.createElement('canvas'); cv.width = cv.height = S; const x = cv.getContext('2d'), C = {}, cells = {};
@@ -6759,8 +6758,9 @@ function hudInit() {
   castleInit();
   /* the chalet does the Fuel and Cardio pages' own things in place: a shake, a tick on the list, a snack, a meal picked, a recipe read, cardio logged */
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-fshake],[data-fgroc],[data-fclear],[data-fsnack],[data-fpick],[data-fopen],[data-fcat],[data-fback],[data-ftype]'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-fshake],[data-fskip],[data-fgroc],[data-fclear],[data-fsnack],[data-fpick],[data-fopen],[data-fcat],[data-fback],[data-ftype]'); if (!b) return; const d = b.dataset;
     if (d.fshake) { APP.shake(d.fshake); return; }
+    if (d.fskip) { APP.shakeSkip(d.fskip); return; }
     if (d.fgroc) { const on = b.classList.toggle('on'); b.setAttribute('aria-pressed', String(on)); $('#flRows')._h = null; APP.groc(d.fgroc); return; }
     if (d.fclear !== undefined) { APP.grocClear(); return; }
     if (d.fsnack) { APP.snack(d.fsnack); return; }
@@ -6924,7 +6924,7 @@ function hudInit() {
   hudEl.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-tick],[data-task],[data-dec],[data-day]'); if (!b) return;
     const d = b.dataset;
-    if (d.tick) { aptKeep.add(d.tick + '|' + d.date); APP.tick(d.tick, d.date); const r = b.closest('.trow'), on = r.classList.toggle('done'); b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^Mark (not )?done/, 'Mark ' + (on ? 'not done' : 'done'))); kick = 1; for (const id of ['#aptList', '#tdRows', '#wkDay', '#wtRows', '#plLate']) $(id)._h = null; ROOT.querySelectorAll('#plan .prows').forEach(x => { x._h = null; }); return; }
+    if (d.tick) { aptKeep.add(d.tick + '|' + d.date); APP.tick(d.tick, d.date); const r = b.closest('.trow'), on = r.classList.toggle('done'); b.setAttribute('aria-label', b.getAttribute('aria-label').replace(/^Mark (not )?done/, 'Mark ' + (on ? 'not done' : 'done'))); kick = 1; for (const id of ['#aptList', '#tdRows', '#wtRows', '#plLate']) { const x = $(id); if (x) x._h = null; } ROOT.querySelectorAll('#plan .prows').forEach(x => { x._h = null; }); return; }
     if (d.dec) return APP.decide(d.dec, d.id);
     aptDay = d.day; refreshApt();
   });
@@ -7386,13 +7386,14 @@ const GCARD = { add: ['gAdd', 'Quick add', 'SYS.INPUT'], prog: ['gProg', 'Progre
 let gOpen = null;
 function openGlobal(k) { if (!GCARD[k]) return; if (!S.sheet || gOpen !== k) APP.sfx('open'); gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
 /* a room's sheet shows one card at a time; tabs switch between them */
-const TABS = { apartment: [['cToday', 'TODAY'], ['cWeek', 'WEEK'], ['cNotes', 'NOTES'], ['cDecide', 'DECIDE'], ['cCareer', 'CAREER']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'TESTS'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY'], ['cWtask', 'TASKS']], chalet: [['cList', 'LIST'], ['cMeals', 'MEALS'], ['cShakes', 'SHAKES'], ['cCardio', 'CARDIO']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'CURRENT'], ['cShelf', 'ALL COURSES']] };
+const TABS = { apartment: [['cToday', 'TODAY'], ['cNotes', 'NOTES'], ['cDecide', 'DECIDE'], ['cCareer', 'CAREER']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'TESTS'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY'], ['cWtask', 'TASKS']], chalet: [['cList', 'LIST'], ['cMeals', 'MEALS'], ['cShakes', 'SHAKES'], ['cCardio', 'CARDIO']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'CURRENT'], ['cShelf', 'ALL COURSES']] };
 /* a tab can carry a count (what's left, what's waiting) */
 const tabN = {};
 function tabCount(id, n) { if (tabN[id] === n) return; tabN[id] = n; if (S.sheet && curCard) paintTabs(curCard); }
 const paintTabs = id => { const T = TABS[room.id] || []; setHTML('#shTabs', T.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === id}" aria-controls="${k}">${l}${tabN[k] ? `<i class="tn">${tabN[k]}</i>` : ''}</button>`).join('')); };
 let curCard = null;
 function showCard(id) {
+  if (id !== curCard) blurIn('#sheet');
   const T = TABS[room.id] || []; if (!T.some(t => t[0] === id)) id = T.length ? T[0][0] : null; curCard = id;
   ROOT.querySelectorAll('#sheet .card[data-r]').forEach(c => c.classList.toggle('cur', c.id === id));
   paintTabs(id);
@@ -7406,7 +7407,12 @@ function openSheet(id) {
   setText('#shName', g ? GCARD[g][1] : room.def.sheet[0]); setText('#shPage', g ? GCARD[g][2] : room.def.sheet[1]); sh0.setAttribute('aria-label', g ? GCARD[g][1] : room.def.sheet[0]);
   if (!g) showCard(id);
   refreshRoom(); if (!S.sheet) S.sheetFrom = ROOT.activeElement; S.sheet = true; if (innerWidth < 900) { $('#aptBox').inert = true; $('#gymBox').inert = true; $('#chBox').inert = true; $('#scBox').inert = true; } const s = $('#sheet'); s.classList.add('open'); s.setAttribute('aria-hidden', 'false'); const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0; scanNow(); $('#btnClose').focus({ preventScroll: true }); }
-function closeSheet(quiet) { if (curCard === 'cDecide' && APP.sayStop) APP.sayStop(); setHTML('#dcCall', ''); if (S.sheet && !quiet) APP.sfx(!gOpen && curCard === 'cDecide' ? 'hangup' : 'back'); S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; $('#chBox').inert = false; $('#scBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
+/* a box still focused when its panel closes saves first: on an iPhone, tapping X doesn't take the focus off a box, so
+   its change (what saves it) would never fire */
+const blurIn = sel => { const a = ROOT.activeElement; if (!a || !a.closest || !a.closest(sel)) return;
+  if (a.matches('input,textarea') && a.value !== a.defaultValue) { a.defaultValue = a.value; a.dispatchEvent(new Event('change', { bubbles: true })); }   // a blur alone may not fire it
+  if (a.blur) a.blur(); };
+function closeSheet(quiet) { blurIn('#sheet'); if (curCard === 'cDecide' && APP.sayStop) APP.sayStop(); setHTML('#dcCall', ''); if (S.sheet && !quiet) APP.sfx(!gOpen && curCard === 'cDecide' ? 'hangup' : 'back'); S.sheet = false; gOpen = null; const s = $('#sheet'); s.classList.remove('open'); s.setAttribute('aria-hidden', 'true'); $('#aptBox').inert = false; $('#gymBox').inert = false; $('#chBox').inert = false; $('#scBox').inert = false; if (!quiet && S.sheetFrom) (S.sheetFrom.isConnected ? S.sheetFrom : $(room.def.panel + ' button')).focus({ preventScroll: true }); S.sheetFrom = null; }
 function updateSel() {
   if (!HOME) return;
   const o = ICONS[sel], a = HOME.attrs[o.attr], v = Math.round(pct01(a.bar) * 100);
@@ -7488,6 +7494,9 @@ function shiftInto(sel, x) { if (!typing(sel)) return setHTML(sel, shiftEd(x)); 
    one screen, from the city or any room (the top bar's PLAN button, or W). Phone: a strip of days, the picked day's list
    under it; laptop: seven columns, and a task drags onto another day. Tasks only (his pick). A row's editor is the
    apartment's, with the week's days added to move it in one tap */
+/* a day's school work and its gym session, shared by the board and the apartment */
+const schRow = t => `<div class="trow${t.done ? ' done' : ''}" style="--c:var(--hud-green)"><button class="tick" data-stick="${t.id}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-sgo="1"><b>${t.title}</b><small>${t.meta ? t.meta + ' / ' : ''}CASTLE ›</small></button></div>`;
+const sessChip = (d, ss) => ss.s === 'REST' ? '' : `<button class="wks" style="--c:${ss.c}" data-gogym="${d}" aria-label="${ss.name}${ss.done ? ', done' : ''}. Open it in the gym."><b>${ss.s === 'HIIT' ? 'HIIT' : ss.s}</b><div><strong>${ss.name}${ss.done ? ' ✓' : ''}</strong><small>${ss.sub.toUpperCase()}</small></div><em>GYM ›</em></button>`;
 function refreshPlan() {
   if (!PL.on) return;
   const P = APP.plan(PL.wk), day = P.week.find(d => d.d === PL.day) || P.week.find(d => d.today) || P.week[0]; PL.day = day.d; PL.week = P.week;
@@ -7496,7 +7505,9 @@ function refreshPlan() {
   setHTML('#plNav', `<div class="seg2 csnav"><button class="rbtn ol" data-pw="-1" aria-label="The week before">‹</button><button class="rbtn${P.isNow ? '' : ' ol'}" data-pw="0">${P.isNow ? 'THIS WEEK' : 'TO NOW'}</button><button class="rbtn ol" data-pw="1" aria-label="The week after">›</button></div>`);
   /* what slipped: here once, with its editor; its day's column shows it without one */
   if (!typing('#plLate')) setRows('#plLate', late.length ? `<div class="gsec">LATE / ${late.length}</div>${late.map(planRow).join('')}<div class="tacts" style="margin:6px 0 10px"><button class="rbtn" data-late="1">MOVE ${late.length} TO TODAY</button></div>` : '');
+  const pf = ROOT.activeElement, pfd = pf && pf.dataset && pf.dataset.pday;   /* the strip redraws: keep his focus on the day he picked */
   setHTML('#plStrip', P.week.map(d => { const lt = d.left && d.d < (P.week.find(x => x.today) || {}).d; return `<button class="pday${d.today ? ' today' : ''}${lt ? ' lt' : ''}" data-pday="${d.d}" aria-pressed="${d === day}" aria-label="${d.long}: ${d.left} open"><b>${d.dow}</b><span>${d.day}</span><em>${d.total ? d.left ? d.left + ' OPEN' : 'DONE' : '-'}</em></button>`; }).join(''));
+  if (pfd && !pf.isConnected) { const to = ROOT.querySelector(`#plStrip [data-pday="${pfd}"]`); if (to) to.focus({ preventScroll: true }); }
   P.week.forEach((d, i) => {
     const c = $('#plC' + i); if (!c) return;
     c.dataset.pcol = d.d; c.setAttribute('aria-label', d.long); c.classList.toggle('sel', d === day); c.classList.toggle('today', d.today);
@@ -7504,6 +7515,10 @@ function refreshPlan() {
     setHTML('#plH' + i, `<b>${d.dow}</b><span>${d.day}</span><em>${d.total ? `${d.total - d.left}/${d.total} DONE` : ''}</em>`);
     if (!typing('#plR' + i)) setRows('#plR' + i, d.tasks.length ? aptSort(d.tasks).map(t => lk.has(rowKey(t)) ? taskRow(t) : planRow(t)).join('') : noneRow('Nothing yet.'));
     setHTML('#plA' + i, `<form class="hadd" data-hadd="${d.d}"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="NEW TASK" aria-label="Add a task for ${d.long}"><button class="rbtn" type="submit">ADD</button></form>`);
+    /* the rest of the day, from where it lives: the gym session, school due, the shift (edited here too) */
+    setHTML('#plG' + i, d.sess ? sessChip(d.d, d.sess) : '');
+    { const L = P.schoolDays[d.d] || []; setHTML('#plS' + i, L.length ? `<div class="gsec">SCHOOL</div>${L.map(schRow).join('')}` : ''); }
+    shiftInto('#plW' + i, APP.shift(d.d));
   });
 }
 /* a row on the board: the apartment's row and editor; a one-off task also drags, and its editor moves it to any day of the
@@ -7519,7 +7534,7 @@ function planOpen(day) {
   refreshPlan(); $('#plX').focus({ preventScroll: true });
 }
 function planClose(quiet) {
-  if (!PL.on) return; PL.on = false; aptOpen = null; plDrag = null;
+  if (!PL.on) return; blurIn('#plan'); PL.on = false; aptOpen = null; plDrag = null;
   const el = $('#plan'); el.classList.remove('open'); el.setAttribute('aria-hidden', 'true'); if (!quiet) APP.sfx('back');
   const f = PL.from; PL.from = null; if (f && f.isConnected && f.focus) f.focus({ preventScroll: true });
 }
@@ -7533,14 +7548,6 @@ function refreshApt() {
   if (!typing('#tdRows')) setRows('#tdRows', list.length ? list.map(t => taskRow(t, true)).join('') : noneRow('Nothing due today.'));
   /* what slipped past its day: listed, tickable, and all of it onto today in one tap */
   if (!typing('#tdLate')) setHTML('#tdLate', P.late.length ? `<div class="gsec">LATE / ${P.late.length}</div>${P.late.map(t => taskRow(t, true)).join('')}<div class="tacts" style="margin:6px 0 10px"><button class="rbtn" data-late="1">MOVE ${P.late.length} TO TODAY</button></div><div class="gsec">TODAY</div>` : '');
-  const day = P.week.find(d => d.d === aptDay) || P.week.find(d => d.today) || P.week[0];
-  setText('#wkL', P.weekLabel);
-  setHTML('#wkNav', `<div class="seg2 csnav"><button class="rbtn ol" data-aw="-1" aria-label="The week before">‹</button><button class="rbtn${P.isNow ? '' : ' ol'}" data-aw="0">${P.isNow ? 'THIS WEEK' : 'TO NOW'}</button><button class="rbtn ol" data-aw="1" aria-label="The week after">›</button><button class="rbtn ol" data-hud="plan" data-pd="${day.d}">PLAN BOARD</button></div>`);
-  setHTML('#wkRows', P.week.map(d => `<button class="wk${d.today ? ' today' : ''}${d === day ? ' sel' : ''}" data-day="${d.d}" aria-pressed="${d === day}" aria-label="${d.long}: ${d.left} open"><b>${d.dow}</b><span>${d.day}</span><div>${d.note}</div><em>${d.total ? `${d.total - d.left}/${d.total}` : '-'}</em></button>`).join(''));
-  const ss = day.sess; setHTML('#wkSess', ss.s === 'REST' ? '' : `<button class="wks" style="--c:${ss.c}" data-gogym="${day.d}" aria-label="${ss.name}${ss.done ? ', done' : ''}. Open it in the gym."><b>${ss.s === 'HIIT' ? 'HIIT' : ss.s}</b><div><strong>${ss.name}${ss.done ? ' ✓' : ''}</strong><small>${(ss.prog && P.isNow ? ss.prog + ' / ' : '') + ss.sub.toUpperCase()}</small></div><em>GYM ›</em></button>`);
-  if (!typing('#wkDay')) setRows('#wkDay', day.tasks.length ? aptSort(day.tasks).map(t => taskRow(t, true)).join('') : noneRow(`Nothing on ${day.long}.`));
-  setHTML('#wkAdd', `<form class="hadd" data-hadd="${day.d}"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD TO ${day.dow}" aria-label="Add a task for ${day.long}"><button class="rbtn" type="submit">ADD</button></form>`);
-  shiftInto('#wkShift', APP.shift(day.d));
   setText('#ntN', String(P.noteCount));
   if (aptNote && !P.notes.some(o => o.id === aptNote)) aptNote = null;
   const nq = $('#ntQ'); nq.hidden = P.noteCount <= 5 && !noteQ;
@@ -7556,9 +7563,7 @@ function refreshApt() {
   setHTML('#tdDec', P.decide.length ? `<div class="gsec">NEEDS A DECISION / ${P.decide.length}</div>` + P.decide.map(t => `<div class="dcd"><b>${t.title}</b><small>Was due ${t.was}</small><div class="acts"><button class="rbtn" data-dec="rm-done" data-id="${t.id}">DONE</button><button class="rbtn ol" data-dec="rm-later" data-id="${t.id}">+2H</button><button class="rbtn ol" data-dec="rm-tomorrow" data-id="${t.id}">TOMORROW</button></div></div>`).join('') + (P.late.length ? '' : '<div class="gsec">TODAY</div>') : '');
   tabCount('cDecide', P.decide.length); tabCount('cToday', P.today.length - P.done);
   /* school work: today's and the selected day's, ticked here, opened in the castle */
-  const schRow = t => `<div class="trow${t.done ? ' done' : ''}" style="--c:var(--hud-green)"><button class="tick" data-stick="${t.id}" aria-label="Mark ${t.done ? 'not done' : 'done'}: ${t.title}"><i></i></button><button class="ttl" data-sgo="1"><b>${t.title}</b><small>${t.meta ? t.meta + ' / ' : ''}CASTLE ›</small></button></div>`;
   setHTML('#tdSch', P.school.length ? `<div class="gsec">SCHOOL / ${P.school.filter(t => !t.done).length}</div>${P.school.map(schRow).join('')}` : '');
-  { const L = P.schoolDays[day.d] || []; setHTML('#wkSch', L.length ? `<div class="gsec">SCHOOL</div>${L.map(schRow).join('')}` : ''); }
   setHTML('#dcRows', P.decide.length ? P.decide.map(t => `<div class="dcd"><b>${t.title}</b><small>Was due ${t.was}</small><div class="acts"><button class="rbtn" data-dec="rm-done" data-id="${t.id}">DONE</button><button class="rbtn ol" data-dec="rm-later" data-id="${t.id}">+2H</button><button class="rbtn ol" data-dec="rm-tomorrow" data-id="${t.id}">TOMORROW</button></div></div>`).join('') : noneRow('Nothing waiting on you.'));
   const tag = k => tagEls.find(g => g.h.key === k), say = (g, s) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, s); m.hidden = !s; };
   say(tag('today'), P.today.length ? `${P.done}/${P.today.length}` : ''); say(tag('decide'), P.decide.length ? String(P.decide.length) : '');
@@ -7615,10 +7620,10 @@ let gymDay = null, gymSwap = false;
 /* the chalet: the meals card shows this week's picks, the book by category, or one recipe in full */
 let chCat = 'This week', chRecipe = null;
 function refreshChalet() {
-  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['fgroc', 'fpick', 'fopen', 'fshake', 'fcat', 'fsnack'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
-  const F = APP.fuel(), sk = F.shakes.filter(x => x.on).length;
+  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['fgroc', 'fpick', 'fopen', 'fshake', 'fskip', 'fcat', 'fsnack'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
+  const F = APP.fuel(), sk = F.shakes.filter(x => x.on).length, skD = F.shakes.filter(x => !x.skip).length;   /* a skipped gainer isn't due */
   /* the panel: three bars */
-  setText('#chN', F.date); setBar($('#bK1'), sk / F.shakes.length); setText('#vK1', `${sk}/${F.shakes.length}`);
+  setText('#chN', F.date); setBar($('#bK1'), skD ? sk / skD : 1); setText('#vK1', `${sk}/${skD}`);
   setBar($('#bK2'), F.all ? F.done / F.all : 0); setText('#vK2', F.all ? `${F.done}/${F.all}` : '-');
   setBar($('#bK3'), Math.min(1, F.cardio.min / F.cardio.goal)); setText('#vK3', String(F.cardio.min));
   /* the list, by aisle, ticked here exactly as on the List tab */
@@ -7643,8 +7648,8 @@ function refreshChalet() {
   else setHTML('#fmBody', !F.book ? noneRow('Opening the book.') : `<div class="seg2 fcats">${cats.map(c => `<button class="rbtn${c === chCat ? '' : ' ol'}" data-fcat="${c}" aria-pressed="${c === chCat}">${c.toUpperCase()}</button>`).join('')}</div>`
     + (list.length ? list.map(r => `<div class="rcr${r.on ? ' on' : ''}"><button class="pk" data-fpick="${r.n}" aria-pressed="${r.on}" aria-label="${r.on ? 'Picked' : 'Pick'} ${r.n} for this week"><i>✓</i></button><button class="op" data-fopen="${r.n}"><div><b>${r.n}</b><small>${r.t}</small></div><em>${r.p}G</em></button></div>`).join('') : noneRow(chCat === 'This week' ? 'Nothing picked yet. Tick meals under ALL.' : 'None here.')));
   /* shakes: today's two, the week as cells */
-  setText('#fsN', `${sk}/${F.shakes.length} TODAY`);
-  setHTML('#fsBtns', F.shakes.map(x => `<button class="${x.on ? 'on' : ''}" data-fshake="${x.k}" aria-pressed="${x.on}">${x.label.toUpperCase()}<small>${x.on ? 'DONE ✓' : 'TAP WHEN DONE'}</small></button>`).join(''));
+  setText('#fsN', `${sk}/${skD} TODAY`);
+  setHTML('#fsBtns', F.shakes.map(x => `<div class="shc"><button class="${x.on ? 'on' : x.skip ? 'skip' : ''}" data-fshake="${x.k}" aria-pressed="${x.on}">${x.label.toUpperCase()}<small>${x.on ? 'DONE ✓' : x.skip ? 'SKIPPED TODAY' : 'TAP WHEN DONE'}</small></button>${x.canSkip && !x.on ? `<button class="rbtn ol shs" data-fskip="${x.k}" aria-pressed="${x.skip}">${x.skip ? 'UNDO SKIP' : 'SKIP TODAY'}</button>` : ''}</div>`).join(''));
   setHTML('#fsWk', F.shakeWeek.map(d => `<i class="${d.n ? 'on' : ''}${d.today ? ' td' : ''}" style="--c:var(--hud-yellow)"><b>${d.dow.slice(0, 2)}</b><span>${d.n || (d.past ? '0' : '-')}</span></i>`).join(''));
   $('#fsWk').setAttribute('aria-label', `This week: ${F.shakeWeek.reduce((a, d) => a + d.n, 0)} shakes`);
   /* cardio: the week against the goal, a log box, the last few */
@@ -7655,7 +7660,7 @@ function refreshChalet() {
   setRows('#fcRows', F.cardio.recent.map(l => `<div class="clg"><b>${l.type} · ${l.min} MIN${l.dist ? ` · ${l.dist} KM` : ''}</b><em>${l.when.toUpperCase()}</em></div>`).join(''));
   /* the tags in the room */
   const tag = k => tagEls.find(g => g.h.key === k), say = (g, t) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, t); m.hidden = !t; };
-  say(tag('fridge'), F.all ? `${F.done}/${F.all}` : ''); say(tag('blender'), `${sk}/${F.shakes.length}`); say(tag('ticket'), `${F.cardio.min} MIN`); say(tag('book'), F.picked.length ? String(F.picked.length) : '');
+  say(tag('fridge'), F.all ? `${F.done}/${F.all}` : ''); say(tag('blender'), `${sk}/${skD}`); say(tag('ticket'), `${F.cardio.min} MIN`); say(tag('book'), F.picked.length ? String(F.picked.length) : '');
   /* the fridge list, the cookbook and the ticket in the room follow, repainted only when what they show has changed */
   const sig = chaletSig(F); if (room.id === 'chalet' && room.paint && sig !== CH_SIG) { CH_SIG = sig; room.paint(F); }
   if (fk && !fo.isConnected) { const to = [...ROOT.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv) || $('#btnClose'); if (to) to.focus({ preventScroll: true }); }

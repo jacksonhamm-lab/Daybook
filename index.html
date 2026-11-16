@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="sound.js?v=p29"></script>
-<script src="mira.js?v=p29"></script>
+<script src="mira.js?v=p30"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -27,9 +27,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p29';
+  window.DAYBOOK_BUILD = 'p30';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p29'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p30'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -37,7 +37,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p29').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p30').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -1226,13 +1226,22 @@ function togglePick(name) {
 }
 const SHAKES = [['p', 'Protein shake'], ['g', 'Mass gainer']];
 const shakesToday = () => (S.shakes || {})[today()] || {};
+// the mass gainer can be skipped for a day ('gx'): that day asks for the protein shake only, so Fuel reads 1/1, not 1/2
+const SHAKE_SKIP = ['g'];
+const shakesDue = x => SHAKES.filter(([k]) => !(x || {})[k + 'x']);
 function toggleShake(k) {
   S.shakes = S.shakes || {};
   const d = today(), cur = { ...shakesToday() };
-  cur[k] = !cur[k];
+  cur[k] = !cur[k]; if (cur[k]) delete cur[k + 'x'];   // taking it after all undoes the skip
   S.shakes[d] = cur;
   commit();
   haptic(); if (cur[k]) sfx('tick');
+}
+function skipShake(k) {
+  if (!SHAKE_SKIP.includes(k)) return;
+  S.shakes = S.shakes || {}; const d = today(), cur = { ...shakesToday() };
+  if (cur[k + 'x']) delete cur[k + 'x']; else { cur[k + 'x'] = true; delete cur[k]; }
+  S.shakes[d] = cur; commit(); haptic(6);
 }
 
 /* ---------- the game layer ----------
@@ -1355,7 +1364,7 @@ function attributes() {
   const plan = wk.filter(x => wo(x).s !== 'REST'), sDone = plan.filter(x => wo(x).done).length;
   const pk = periodFor(d), pH = periodHours(pk) + extraHours(pk), pTarget = (+S.settings.hoursGoal || 20) * (pk.cyc || 14) / 7;
   const wkStart = mondayOf(new Date()).getTime(), cl = cardioLogs(), cMin = cl.filter(l => l.ts >= wkStart).reduce((a, l) => a + l.min, 0);
-  const sk = shakesToday(), skN = SHAKES.filter(([k]) => sk[k]).length, stH = weekStudy(mondayOf(new Date())), stG = +school().goal || 15;
+  const sk = shakesToday(), skDue = shakesDue(sk), skN = skDue.filter(([k]) => sk[k]).length, stH = weekStudy(mondayOf(new Date())), stG = +school().goal || 15;
   const shakeTicks = Object.values(S.shakes || {}).reduce((a, x) => a + SHAKES.filter(([k]) => x[k]).length, 0);
   return [
     { k: 'focus', name: 'Focus', c: '#64d2ff', icon: IC.tasks, lvl: attrLvl(doneTaskCount(), 3), val: `${done}<small>/${list.length}</small>`, bar: list.length ? done / list.length : 0, go: 'week:' },
@@ -1363,7 +1372,7 @@ function attributes() {
     { k: 'strength', name: 'Strength', c: '#ff9f0a', icon: IC.train, lvl: attrLvl(Object.values(S.workouts).filter(w => w.done).length, 1), val: `${sDone}<small>/${plan.length}</small>`, bar: plan.length ? sDone / plan.length : 0, go: 'training:' },
     { k: 'stamina', name: 'Stamina', c: '#ff375f', icon: IC.heart, lvl: attrLvl(cl.reduce((a, l) => a + l.min, 0), 30), val: `${cMin}<small>min</small>`, bar: cMin / 90, go: 'training:cardio' },
     { k: 'hustle', name: 'School', c: '#30d158', icon: I.school, lvl: attrLvl(totalStudy(), 5), val: `${fh(Math.round(stH * 10) / 10)}<small>/${stG}h</small>`, bar: stH / stG, go: 'week:' },   // School lives in the city's castle
-    { k: 'fuel', name: 'Fuel', c: '#ffd60a', icon: IC.fuel, lvl: attrLvl(shakeTicks, 2), val: `${skN}<small>/${SHAKES.length}</small>`, bar: skN / SHAKES.length, go: 'training:fuel' },
+    { k: 'fuel', name: 'Fuel', c: '#ffd60a', icon: IC.fuel, lvl: attrLvl(shakeTicks, 2), val: `${skN}<small>/${skDue.length}</small>`, bar: skDue.length ? skN / skDue.length : 1, go: 'training:fuel' },
   ];
 }
 
@@ -1709,7 +1718,7 @@ window.CityApp = {
     const counts = groceryCount();
     return {
       book: !!BOOK, title: BOOK ? esc(BOOK.title) : '', date: short(t).toUpperCase(),
-      shakes: SHAKES.map(([k, label]) => ({ k, label, on: !!sk[k] })),
+      shakes: SHAKES.map(([k, label]) => ({ k, label, on: !!sk[k], skip: !!sk[k + 'x'], canSkip: SHAKE_SKIP.includes(k) })),
       shakeWeek: week0.map((d, i) => { const x = (S.shakes || {})[d] || {}; return { d, dow: DOW[i].toUpperCase(), n: SHAKES.filter(([k]) => x[k]).length, today: d === t, past: d < t }; }),
       cats: BOOK ? BOOK.cats.map(esc) : [],
       picked: pkm.filter(n => recipeFor(n)).map(n => { const r = recipeFor(n); return { n: esc(n), t: esc(r.t), p: r.m[1] }; }),
@@ -1730,6 +1739,7 @@ window.CityApp = {
       steps: r.s.map(x => { const p = x.split('|'); return { h: esc(p[0]), b: esc(p[1] || '') }; }), rh: esc(r.rh), x: r.x ? esc(r.x) : '', on: picks().m.includes(r.n) };
   },
   shake(k) { if (!SHAKES.some(([x]) => x === k)) return; toggleShake(k); },
+  shakeSkip(k) { skipShake(k); },
   groc(id) { if (typeof id !== 'string' || !id.includes('|')) return; toggleGrocery(id); haptic(6); if (groceryOn(id)) sfx('tick'); render(); },
   grocClear() { if (!Object.keys(S.grocery || {}).length) return; withUndo('Ticks cleared', () => { S.grocery = {}; }); },
   snack(n) { if (!BOOK || !BOOK.snacks.some(x => x.n === n)) return; toggleSnack(n); haptic(6); render(); },
