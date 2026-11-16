@@ -542,7 +542,7 @@ function sndBoot() {
 /* Mira's voice (docs/MIRA.md): her clips are Japanese, the English stays on screen. Through the cue engine like his ring
    (its volume, the silent switch, the ambience dips under her); one line at a time. This device's switch, on by default.
    The clips live in KV (models/voice/<lang>/<line id>.mp3 through the Worker), never in the repo; bump v when they change. */
-const MV = { on: true, lang: 'ja', v: 1, buf: new Map(), src: null, want: '' };
+const MV = { on: true, lang: 'ja', v: 2, buf: new Map(), src: null, want: '' };
 try { MV.on = localStorage.getItem('daybook_mvoice') !== '0'; } catch (e) {}
 function mvGet(id, c) {
   let p = MV.buf.get(id);

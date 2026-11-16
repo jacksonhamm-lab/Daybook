@@ -71,7 +71,7 @@
     // M4: he picked what she wears
     'fit.pick': ["You like it? I'll wear it for you.", "Good choice. I knew you'd pick that one.", "This one? Okay. Just for you."],
     // p29: her phone calls, wherever he is (city.js callStep). The gym call says nudge.gym, the check-in call the check-in's own
-    'call.remind': ["Hey, it's me. You asked me to remind you.", "It's me. This one's due now.", "Hey. Time for this one."],
+    'call.remind': ["Hey, it's me. You asked me to remind you.", "It's me. Isn't it about time for this one?", "Hey. Time for this one."],
     'call.remind.next': ["And this one.", "One more."],
     'call.ok.done': ["Nice. One less thing.", "Good. I knew you would."],
     'call.ok.later': ["Okay. I'll call you back in two hours.", "Two hours. I'm holding you to it."],
@@ -234,7 +234,7 @@
     'fit.pick.2': "いい選択。それを選ぶと思ってた。",
     'fit.pick.3': "これ？いいよ。あなただけのためにね。",
     'call.remind.1': "もしもし、私。リマインドしてって言ってたでしょ。",
-    'call.remind.2': "私だよ。これ、今やる時間だよ。",
+    'call.remind.2': "私だよ。…これ、そろそろやる時間じゃない？",
     'call.remind.3': "ねえ、これの時間だよ。",
     'call.remind.next.1': "あと、これも。",
     'call.remind.next.2': "もうひとつ。",
