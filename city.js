@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p31';
+export const BUILD = 'p32';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -544,16 +544,16 @@ label.rbtn{cursor:pointer}
 #call{position:absolute;left:calc(var(--sl) + 8px);right:calc(var(--sr) + 8px);top:calc(var(--st) + 66px);z-index:9;display:flex;gap:10px;align-items:flex-start;padding:10px 11px 11px 10px;background:rgba(5,14,19,.96);box-shadow:inset 0 0 0 1px var(--hud-cyan-line),0 0 26px rgba(90,228,236,.16);opacity:0;visibility:hidden;transform:translateY(-10px);transition:opacity .25s,transform .3s,visibility 0s .3s}
 #hud #call.on{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .25s,transform .3s,visibility 0s}
 #call::before{content:'';position:absolute;left:-1px;top:-1px;width:9px;height:9px;border-left:2px solid var(--hud-cyan);border-top:2px solid var(--hud-cyan)}
-#call.ring{animation:clring 1.1s ease-in-out infinite}
+#call.clr{animation:clring 1.1s ease-in-out infinite}
 @keyframes clring{50%{box-shadow:inset 0 0 0 1px var(--hud-cyan),0 0 34px rgba(90,228,236,.42)}}
-#call.ring .hof{animation:clbuzz .9s steps(2) infinite}
+#call.clr .hof{animation:clbuzz .9s steps(2) infinite}
 @keyframes clbuzz{0%,55%{transform:none}65%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}85%{transform:translateX(-1px)}}
 #call.on .hof img{animation:hofl 5s steps(1) infinite}
 #call.nof .hof::before{content:'MK';position:absolute;inset:0;display:grid;place-items:center;font:800 20px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-cyan);text-shadow:0 0 8px var(--hud-cyan)}
 #call.talk .hov{animation:hov .16s steps(3) 16 alternate}
-#call.ring .hox{display:none}
+#call.clr .hox{display:none}
 #call .hon em{font-style:normal}
-#call.ring .hon{color:var(--hud-yellow)}#call.ring .hon i{background:var(--hud-yellow)}
+#call.clr .hon{color:var(--hud-yellow)}#call.clr .hon i{background:var(--hud-yellow)}
 #clSay{margin:5px 0 0;font:600 15px/1.36 var(--body);color:var(--hud-text)}
 #clTitle{margin-top:7px;font:700 17px/1.28 var(--body);color:var(--hud-cyan);overflow-wrap:anywhere}
 #clInfo{display:block;margin-top:4px;font:12px/1.4 var(--micro);color:var(--hud-cyan);letter-spacing:.04em;overflow-wrap:anywhere}
@@ -562,7 +562,7 @@ label.rbtn{cursor:pointer}
 #call .macts{margin-top:10px}
 #call .macts .rbtn{min-height:44px}
 @media (min-width:900px){#call{left:auto;right:calc(var(--sr) + 18px);top:calc(var(--st) + 76px);width:400px}}
-@media (prefers-reduced-motion:reduce){#call.ring,#call.ring .hof,#call.on .hof img,#call.talk .hov{animation:none}}
+@media (prefers-reduced-motion:reduce){#call.clr,#call.clr .hof,#call.on .hof img,#call.talk .hov{animation:none}}
 /* the plan board (p29): the week's tasks on one screen, from the city or any room */
 #plan{position:absolute;left:calc(var(--sl) + 6px);right:calc(var(--sr) + 6px);top:calc(var(--st) + 6px);bottom:calc(var(--sb) + 6px);z-index:7;--ct:18px;display:flex;flex-direction:column;opacity:0;transform:translateY(14px);visibility:hidden;transition:opacity .22s var(--ease),transform .32s var(--ease),visibility 0s .32s}
 #hud #plan.open{opacity:1;transform:none;visibility:visible;pointer-events:auto;transition:opacity .22s var(--ease),transform .32s var(--ease),visibility 0s}
@@ -7250,12 +7250,12 @@ function callRing(k, items) {
   setText('#clWho', 'MIRA // INCOMING CALL'); setText('#clT', 'RINGING'); setText('#clSay', 'Mira is calling.'); setText('#clBig', ''); setText('#clTitle', '');
   setText('#clInfo', CALL_SAY[k] + (items.length > 1 ? ` · ${items.length}` : '')); setHTML('#clList', '');
   setHTML('#clActs', '<button class="rbtn" data-cl="answer">ANSWER</button><button class="rbtn ol dng" data-cl="decline">DECLINE</button>');
-  el.classList.remove('live', 'talk'); el.classList.add('on', 'ring'); el.setAttribute('aria-hidden', 'false'); el.inert = false;
+  el.classList.remove('live', 'talk'); el.classList.add('on', 'clr');   /* not 'ring': that's the shop's round dial, 74px wide */ el.setAttribute('aria-hidden', 'false'); el.inert = false;
   clRingT = Date.now(); if (APP.ringOnce) APP.ringOnce();
 }
 function callAnswer() {
   if (!CL || CL.st !== 'ring') return; if (APP.ringStop) APP.ringStop(); APP.sfx('pickup');
-  CL.st = 'live'; CL.t1 = Date.now(); const el = $('#call'); el.classList.remove('ring'); el.classList.add('live');
+  CL.st = 'live'; CL.t1 = Date.now(); const el = $('#call'); el.classList.remove('clr'); el.classList.add('live');
   setText('#clWho', 'MIRA // ON THE LINE'); setText('#clT', '0:00'); setText('#clSay', ''); setText('#clInfo', ''); setHTML('#clActs', '');
   const c = CL; setTimeout(() => { if (CL === c) callStep(); }, 450);   // after the pickup sound
 }
@@ -7314,7 +7314,7 @@ function callGo(to) { const [id, card] = to.split('|'); callClose(); if (S.mode 
 function callDrop(said) { if (!CL) return; clDefer(CL.items); HV.log = [...(HV.log || []), (said ? 'declined.' : 'missed.') + CL.k].slice(-12); callClose(); }
 function callClose() {
   if (APP.ringStop) APP.ringStop(); CL = null; clLast = Date.now();
-  const el = $('#call'); el.classList.remove('on', 'ring', 'live', 'talk'); el.setAttribute('aria-hidden', 'true'); el.inert = true;
+  const el = $('#call'); el.classList.remove('on', 'clr', 'live', 'talk'); el.setAttribute('aria-hidden', 'true'); el.inert = true;
 }
 setInterval(() => { try { callTick(); } catch (e) { APP.log(e); } }, 1000);
 /* the on-screen keyboard: how much of the bottom it covers (iPhone keeps the page the same size under it), for the CSS
