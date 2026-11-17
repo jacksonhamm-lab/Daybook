@@ -373,6 +373,23 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p36, 2026-11-17): rope every lifting day, a street with working lights, roofs with a surface.** His notes:
+  "3 sets of 45 seconds doesn't seem enough" (the rope isn't here for 10+ days); "people are crossing the street with
+  cars running over them"; "spots on top of buildings where textures aren't great". His picks: 10 min every lifting day,
+  a no-rope version until it arrives. The anime look (neon cel-shade, his pick) is the next build, shown as a test first.
+  - **Rope.** Each of D1 to D5 ends in a `Rope · 10 min` block (intervals, Tabata, steady), replacing the 45 sec rows in
+    the abs at the same index. Every rope row in program.json has an `alt` (shadow rope); `flatEx` shows it until
+    `S.gear.rope` (synced, stamped `gearU`). The gym's session card has one bar: NO ROPE YET / ROPE ARRIVED.
+  - **The street.** `streetSim` runs the avenue, the cross streets and the people whose path crosses a road on the CPU:
+    `JUNCS` boxes, a 43 s cycle per junction (avenue 18 s green, cross street 16 s), cars that follow and queue, amber
+    only when they clear the line before red, people who start only in a fresh walk. The crosswalk crowd at 136 crosses
+    back and forth. It writes `iLane` (speed 0, phase from distance) and the walk amplitude; the lamps over the avenue
+    are glows the sim colours. Avenue lanes end at the road's end (272), not on the waterfront promenade.
+  - **Roofs.** The band under a setback had a top exactly on the roof (saw-toothed z-fighting on every flat roof); a
+    facade's lit-window value carried onto its roof as glow. Both gone; flat roofs get membrane sheets, seams, tar and
+    gravel, a little sky light. Shadows: hardware-filtered, plus a finer second map over the avenue (340 across).
+    Raised wet paving reflects the sky, not the street's mirror; street light pools fade with height.
+  - Test t86 (rope switch, 3 min of street with nobody entering on red, crossers, shots); t84 updated.
 - **Built (p35, 2026-11-16): the chalet is a ski lodge; Fuel and Cardio move into the gym.** His note: the chalet "seems
   very useless", everything there "could be incorporated into gym", and he'd like it to be about skiing: "new movie releases,
   new gear, snow reports".
@@ -784,5 +801,5 @@ Technical state only. Updated 2026-11-06.
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
   1. p22 is live (he checked it on his iPhone, Nov 11). p23 to p25 live (Nov 14, he checked them). p26 (Mira M2) live (Nov 14).
-     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) live (Nov 15, main e89db3d). p30 (one week view, gainer skip, boxes save) live (Nov 16, main 51fb94a). p31 (HIDE in her close-up) live (Nov 16). p32 (the ringing call card) live (Nov 16). p33 (the city view, in the city) live (Nov 16, main 21e1f04). p34 (the rope) and p35 (the ski lodge) built, waiting for his go.
+     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) live (Nov 15, main e89db3d). p30 (one week view, gainer skip, boxes save) live (Nov 16, main 51fb94a). p31 (HIDE in her close-up) live (Nov 16). p32 (the ringing call card) live (Nov 16). p33 (the city view, in the city) live (Nov 16, main 21e1f04). p34 (the rope) and p35 (the ski lodge) live (Nov 16, main 853c7c2). p36 (rope every day, street lights, roofs) built.
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

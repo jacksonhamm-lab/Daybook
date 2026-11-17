@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="sound.js?v=p29"></script>
-<script src="mira.js?v=p35"></script>
+<script src="mira.js?v=p36"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -27,9 +27,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p35';
+  window.DAYBOOK_BUILD = 'p36';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p35'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p36'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -37,7 +37,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p35').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p36').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -323,13 +323,14 @@ function stampChanges() {
   if (JSON.stringify(prev.studyClock || null) !== JSON.stringify(S.studyClock || null)) S.studyClockU = now;
   if (JSON.stringify(prev.school || null) !== JSON.stringify(S.school || null)) S.schoolU = now;
   if (JSON.stringify(prev.ski || null) !== JSON.stringify(S.ski || null)) S.skiU = now;
+  if (JSON.stringify(prev.gear || null) !== JSON.stringify(S.gear || null)) S.gearU = now;
   LAST = JSON.parse(JSON.stringify(S));
 }
 // Every top-level key this version reads or writes (defaults(), load() and every S.<key>).
 // A newer version can add keys; mergeState passes them through untouched. Add new keys here.
 const KNOWN = new Set(['tasks', 'shifts', 'workouts', 'jobs', 'notes', 'clock', 'template', 'extra', 'settings', 'ui', 'tomb',
   'shakes', 'meals', 'grocery', 'snacks', 'since', 'seen', 'clearDays', 'submitted', 'settingsU', 'templateU', 'clockU',
-  'study', 'courses', 'studyClock', 'studyClockU', 'school', 'schoolU', 'ski', 'skiU', 'skiDays']);
+  'study', 'courses', 'studyClock', 'studyClockU', 'school', 'schoolU', 'ski', 'skiU', 'skiDays', 'gear', 'gearU']);
 function mergeState(local, remote) {
   if (!remote) return local;
   const out = JSON.parse(JSON.stringify(local));
@@ -358,6 +359,7 @@ function mergeState(local, remote) {
   if ((remote.studyClockU || 0) > (out.studyClockU || 0)) { out.studyClock = remote.studyClock || null; out.studyClockU = remote.studyClockU; }
   if ((remote.schoolU || 0) > (out.schoolU || 0)) { out.school = remote.school || null; out.schoolU = remote.schoolU; }
   if ((remote.skiU || 0) > (out.skiU || 0) && remote.ski && Array.isArray(remote.ski.mts)) { out.ski = remote.ski; out.skiU = remote.skiU; }
+  if ((remote.gearU || 0) > (out.gearU || 0) && remote.gear && typeof remote.gear === 'object') { out.gear = remote.gear; out.gearU = remote.gearU; }
   if (remote.since && (!out.since || remote.since < out.since)) out.since = remote.since;
   const cutoff = Date.now() - 30 * 864e5;
   Object.keys(out.tomb).forEach(k => { if (out.tomb[k] < cutoff) delete out.tomb[k]; });
@@ -701,9 +703,11 @@ function wState() {
     return readLS(W_STATE, {});
   });
 }
+const hasRope = () => !!(S.gear && S.gear.rope);
 function flatEx(id) {
   const p = PROGRAM && PROGRAM[id]; if (!p) return [];
-  const out = []; p.sections.forEach(sec => sec.exercises.forEach(ex => out.push({ ...ex, accent: sec.accent, section: sec.label })));
+  // a row with an "alt" is a rope row: until the rope is in (S.gear.rope), it shows its no-rope version
+  const rope = hasRope(), out = []; p.sections.forEach(sec => sec.exercises.forEach(ex => out.push({ ...ex, ...(ex.alt && !rope ? { name: ex.alt.name, detail: ex.alt.detail } : {}), ropeRow: !!ex.alt, accent: sec.accent, section: sec.label })));
   return out;
 }
 // sessions with a listed program: D1-D5, and since p34 the conditioning day (program.json "hiit", the weighted rope)
@@ -1762,12 +1766,12 @@ window.CityApp = {
   train(sel) {
     const t = today(), mon = mondayOf(new Date()), week0 = datesOf(mon), d = sel && week0.includes(sel) ? sel : t, w = wo(d), lift = listed(w.s);
     const st = lift ? wState()[w.s.toLowerCase()] || {} : {};
-    const ex = lift ? flatEx(w.s.toLowerCase()).map((e, i) => { const a = st[i] || []; return { i, name: esc(e.name.split(' · ')[0]), reps: esc(e.name.split(' · ').slice(1).join(' · ')), sets: e.sets, on: [...Array(e.sets)].map((_, j) => !!a[j]), done: a.filter(Boolean).length, warm: e.accent === 'warmup', sec: esc(e.section || ''), det: e.detail ? esc(e.detail) : '' }; }) : [];
+    const ex = lift ? flatEx(w.s.toLowerCase()).map((e, i) => { const a = st[i] || []; return { i, name: esc(e.name.split(' · ')[0]), reps: esc(e.name.split(' · ').slice(1).join(' · ')), sets: e.sets, on: [...Array(e.sets)].map((_, j) => !!a[j]), done: a.filter(Boolean).length, warm: e.accent === 'warmup', sec: esc(e.section || ''), det: e.detail ? esc(e.detail) : '', rope: e.ropeRow }; }) : [];
     const pg = lift && PROGRAM && PROGRAM[w.s.toLowerCase()], cardio = pg && pg.cardio ? esc(pg.cardio) : '';
     const week = week0.map((x, i) => { const o = wo(x); return { d: x, dow: DOW[i].toUpperCase(), long: DOW_LONG[i], day: parse(x).getDate(), s: o.s, name: esc(sessName(o.s)), done: o.done, today: x === t, sel: x === d, c: SESS[o.s].color }; });
     const plan = week.filter(x => x.s !== 'REST');
     const bench = [['pushups', 'PUSHUPS', 'REPS'], ['plank', 'PLANK', 'SEC'], ['row', '1-ARM ROW 10KG', 'REPS']].map(([k, label, unit]) => { const L = benchLogs(k).map(x => +x.reps || 0); return { k, label, unit, last: L.length ? L[L.length - 1] : null, pb: L.length ? Math.max(...L) : null, n: L.length, recent: L.slice(-12) }; });
-    return { d, isToday: d === t, long: DOW_LONG[dowIdx(d)], date: short(t).toUpperCase(), s: w.s, name: esc(sessName(w.s)), sub: esc(sessSub(w.s)), c: SESS[w.s].color, done: w.done, prog: w.prog ? { done: w.prog.done, total: w.prog.total, p: w.prog.p } : null, ex, cardio,
+    return { d, isToday: d === t, long: DOW_LONG[dowIdx(d)], date: short(t).toUpperCase(), s: w.s, name: esc(sessName(w.s)), sub: esc(sessSub(w.s)), c: SESS[w.s].color, done: w.done, prog: w.prog ? { done: w.prog.done, total: w.prog.total, p: w.prog.p } : null, ex, cardio, hasRope: hasRope(),
       week, sDone: plan.filter(x => x.done).length, plan: plan.length, streak: weekStreak(), bench, rest: this.restLeft(),
       tpl: S.template.map((k, i) => ({ i, dow: DOW[i].toUpperCase(), k })), opts: SESS_KEYS.map(k => ({ k, name: esc(sessName(k)) })) };
   },
@@ -1776,6 +1780,8 @@ window.CityApp = {
     if (!listed(s) || !flatEx(s.toLowerCase())[i]) return;
     toggleSet(s, +i, +j); render();
   },
+  // the weighted rope arrived (or went back): every rope row swaps between the rope and its no-rope version
+  rope(on) { S.gear = { ...(S.gear || {}), rope: !!on }; haptic(6); save(); render(); island.toast(on ? 'Rope rows on: weighted rope' : 'Rope rows on: no-rope version', { icon: I.training, color: '#ff375f' }); },
   sessDone(d) {
     const o = S.workouts[d] || {}, now = !wo(d).done; S.workouts[d] = { ...o, done: now, auto: false }; haptic(10); save(); render();
     if (now) celebrate(`${wo(d).s} done`, SESS[wo(d).s].color); else island.toast('Marked not done', { icon: I.training, color: '#ff9f0a' });

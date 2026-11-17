@@ -26,11 +26,13 @@
       { "label": "Abs", "accent": "abs", "exercises": [
         { "name": "Weighted crunches · 15", "detail": "Dumbbell on chest. Slow.", "sets": 3 },
         { "name": "Lying leg raises · 15", "detail": "Legs straight. Lower slow, don't let your back arch.", "sets": 3 },
-        { "name": "Plank · 60 sec", "sets": 2 },
-        { "name": "Weighted rope · 45 sec", "detail": "Between the ab sets: 45 sec of rope, then straight into the next ab set. Brace your core, small bounces.", "sets": 3 }
+        { "name": "Plank · 60 sec", "sets": 2 }
+      ]},
+      { "label": "Rope · 10 min", "accent": "legs", "exercises": [
+        { "name": "Rope intervals · 5 rounds of 2 min", "detail": "Each round: 1 min fast, 1 min easy bounce. The rope never stops, no rest between rounds. 10 minutes.", "sets": 5, "alt": { "name": "Shadow rope intervals · 5 rounds of 2 min", "detail": "Each round: 1 min fast, 1 min easy bounce. The rope never stops, no rest between rounds. 10 minutes. No rope yet: same timing, no rope. Jump and turn your wrists as if you held one, or swap in jumping jacks or high knees." } }
       ]}
     ],
-    "cardio": "Optional later: 10 min of rope, 1 min on, 1 min off."
+    "cardio": "The rope block is your cardio today. Want more? Another 10 min later is fine."
   },
 
   "d2": {
@@ -60,11 +62,13 @@
       ]},
       { "label": "Abs", "accent": "abs", "exercises": [
         { "name": "Russian twist with dumbbell · 20 total", "detail": "Lean back, feet up if you can. Obliques.", "sets": 3 },
-        { "name": "Side plank reach-through · 10 each side", "sets": 2 },
-        { "name": "Weighted rope · 45 sec", "detail": "Between the ab sets: 45 sec of rope, then straight into the next ab set.", "sets": 3 }
+        { "name": "Side plank reach-through · 10 each side", "sets": 2 }
+      ]},
+      { "label": "Rope · 10 min", "accent": "legs", "exercises": [
+        { "name": "Rope Tabata · 2 blocks of 4 min", "detail": "Each block: 8 rounds of 20 sec all out, 10 sec easy. 1 min of easy rope before each block. 10 minutes.", "sets": 2, "alt": { "name": "Shadow rope Tabata · 2 blocks of 4 min", "detail": "Each block: 8 rounds of 20 sec all out, 10 sec easy. 1 min of easy rope before each block. 10 minutes. No rope yet: same timing, no rope. Jump and turn your wrists as if you held one, or swap in jumping jacks or high knees." } }
       ]}
     ],
-    "cardio": "Optional later: 10 min of rope, 1 min on, 1 min off."
+    "cardio": "The rope block is your cardio today. Want more? Another 10 min later is fine."
   },
 
   "d3": {
@@ -89,9 +93,12 @@
       { "label": "Core", "accent": "abs", "exercises": [
         { "name": "Hollow body hold · 30 sec", "detail": "Lower back pressed into the floor.", "sets": 3 },
         { "name": "Plank · 60 sec", "sets": 2 }
+      ]},
+      { "label": "Rope · 10 min", "accent": "legs", "exercises": [
+        { "name": "Steady rope · 10 min", "detail": "Easy, steady pace on the balls of your feet. Ski calves and ankles. Split it into 2 × 5 min if you need.", "sets": 1, "alt": { "name": "Shadow rope · 10 min steady", "detail": "Easy, steady pace on the balls of your feet. Ski calves and ankles. Split it into 2 × 5 min if you need. No rope yet: same timing, no rope. Jump and turn your wrists as if you held one, or swap in jumping jacks or high knees." } }
       ]}
     ],
-    "cardio": "This session counts as ski conditioning. Log it as cardio too if you want."
+    "cardio": "This session counts as ski conditioning, rope included."
   },
 
   "d4": {
@@ -125,11 +132,13 @@
       ]},
       { "label": "Abs", "accent": "abs", "exercises": [
         { "name": "Lying leg raises · 15", "sets": 3 },
-        { "name": "Russian twist with dumbbell · 20 total", "sets": 3 },
-        { "name": "Weighted rope · 45 sec", "detail": "Between the ab sets: 45 sec of rope, then straight into the next ab set.", "sets": 3 }
+        { "name": "Russian twist with dumbbell · 20 total", "sets": 3 }
+      ]},
+      { "label": "Rope · 10 min", "accent": "legs", "exercises": [
+        { "name": "Rope intervals · 2 sets of 5 rounds", "detail": "Each round: 40 sec fast, 20 sec easy. Fast but smooth, not all out: Max Day is tomorrow. 10 minutes.", "sets": 2, "alt": { "name": "Shadow rope intervals · 2 sets of 5 rounds", "detail": "Each round: 40 sec fast, 20 sec easy. Fast but smooth, not all out: Max Day is tomorrow. 10 minutes. No rope yet: same timing, no rope. Jump and turn your wrists as if you held one, or swap in jumping jacks or high knees." } }
       ]}
     ],
-    "cardio": "Max Day tomorrow. Skip extra cardio so you test fresh."
+    "cardio": "Max Day tomorrow. The rope block is enough; skip extra cardio so you test fresh."
   },
 
   "d5": {
@@ -158,11 +167,13 @@
       { "label": "Abs", "accent": "abs", "exercises": [
         { "name": "Weighted crunches · 12", "detail": "Heavier and slower than Day 1.", "sets": 3 },
         { "name": "Side plank reach-through · 10 each side", "sets": 2 },
-        { "name": "Hollow body hold · 30 sec", "sets": 2 },
-        { "name": "Weighted rope · 45 sec", "detail": "Between the ab sets: 45 sec of rope, then straight into the next ab set.", "sets": 2 }
+        { "name": "Hollow body hold · 30 sec", "sets": 2 }
+      ]},
+      { "label": "Rope · 10 min", "accent": "legs", "exercises": [
+        { "name": "Steady rope · 10 min", "detail": "After the tests. Smooth and steady. Each week, try to trip less and go a little faster.", "sets": 1, "alt": { "name": "Shadow rope · 10 min steady", "detail": "After the tests. Smooth and steady. Each week, try to trip less and go a little faster. No rope yet: same timing, no rope. Jump and turn your wrists as if you held one, or swap in jumping jacks or high knees." } }
       ]}
     ],
-    "cardio": "No extra cardio needed today. Rest day tomorrow."
+    "cardio": "Rope block done means cardio done. Rest day tomorrow."
   },
 
   "hiit": {
@@ -170,21 +181,21 @@
     "title": "Weighted Rope · Full Body · Abs",
     "sections": [
       { "label": "Warm Up", "accent": "warmup", "exercises": [
-        { "name": "Easy rope · 2 min", "detail": "Slow, small bounces on the balls of your feet. Wakes up the calves and ankles.", "sets": 1 },
+        { "name": "Easy rope · 2 min", "detail": "Slow, small bounces on the balls of your feet. Wakes up the calves and ankles.", "sets": 1, "alt": { "name": "Easy shadow rope · 2 min", "detail": "Slow, small bounces on the balls of your feet. Wakes up the calves and ankles. No rope yet: same timing, no rope. Jump and turn your wrists as if you held one, or swap in jumping jacks or high knees." } },
         { "name": "Arm circles · 30 sec each direction", "sets": 1 },
         { "name": "Bodyweight squats · 15", "sets": 1 }
       ]},
       { "label": "Rope Intervals", "accent": "legs", "exercises": [
-        { "name": "Rope intervals · 30 sec hard, 30 sec easy", "detail": "Hard: as fast as you can with clean form. Easy: a slow bounce, the rope never stops. The weighted rope works your shoulders, arms and core too. New to the rope? Start with 6 and build to 8.", "sets": 8 }
+        { "name": "Rope intervals · 30 sec hard, 30 sec easy", "detail": "Hard: as fast as you can with clean form. Easy: a slow bounce, the rope never stops. The weighted rope works your shoulders, arms and core too. New to the rope? Start with 6 and build to 8.", "sets": 8, "alt": { "name": "Shadow rope intervals · 30 sec hard, 30 sec easy", "detail": "Hard: as fast as you can with clean form. Easy: a slow bounce, the rope never stops. The weighted rope works your shoulders, arms and core too. New to the rope? Start with 6 and build to 8. No rope yet: same timing, no rope. Jump and turn your wrists as if you held one, or swap in jumping jacks or high knees." } }
       ]},
       { "label": "Full Body Circuit · 3 rounds", "accent": "push", "exercises": [
-        { "name": "Rope · 60 sec", "detail": "Circuit: one set of each, top to bottom, then rest 90 sec. Three rounds.", "sets": 3 },
+        { "name": "Rope · 60 sec", "detail": "Circuit: one set of each, top to bottom, then rest 90 sec. Three rounds.", "sets": 3, "alt": { "name": "Shadow rope · 60 sec", "detail": "Circuit: one set of each, top to bottom, then rest 90 sec. Three rounds. No rope yet: same timing, no rope. Jump and turn your wrists as if you held one, or swap in jumping jacks or high knees." } },
         { "name": "Kettlebell swings · 15", "detail": "Hip hinge, explosive.", "sets": 3 },
         { "name": "Deficit push-ups · 12", "detail": "Your third chest hit of the week. Stop 2 reps short of failure: Upper is tomorrow.", "sets": 3 },
         { "name": "Bent-over two-arm row · 12", "detail": "Flat back, pull to the ribs.", "sets": 3 }
       ]},
       { "label": "Rope Abs", "accent": "abs", "exercises": [
-        { "name": "Rope · 45 sec", "detail": "Straight into each ab set below.", "sets": 3 },
+        { "name": "Rope · 45 sec", "detail": "Straight into each ab set below.", "sets": 3, "alt": { "name": "Shadow rope · 45 sec", "detail": "Straight into each ab set below. No rope yet: same timing, no rope. Jump and turn your wrists as if you held one, or swap in jumping jacks or high knees." } },
         { "name": "Hollow body hold · 30 sec", "sets": 3 },
         { "name": "Russian twist with dumbbell · 20 total", "sets": 3 }
       ]}
