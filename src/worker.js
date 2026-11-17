@@ -305,6 +305,55 @@ async function skyApi(request, env, ctx) {
   return priv(body);
 }
 
+/* p35: new ski films and gear for the chalet (the ski lodge). Public feeds, fetched here and kept 3 h in the edge
+   cache; a feed that fails is skipped. YouTube: the long-form uploads playlist (UULF) where it exists, Shorts dropped */
+const yt = q => `https://www.youtube.com/feeds/videos.xml?${q}`;
+const SKI_FEEDS = [
+  ['films', 'TGR', yt('playlist_id=UULFziB6WaaUPEFSE2X1TNqUTg'), { drop: /\b(bike|mtb|surf)/i }],
+  ['films', 'Matchstick', yt('playlist_id=UULF_BxhpdU7sH-LEIHJ6V_CoQ')],
+  ['films', 'Warren Miller', yt('playlist_id=UULFWlxX4qotbZPngfcrRDcklg')],
+  ['films', 'Level 1', yt('playlist_id=UULFYK_rnKYOcQ_8X9XTgupUpA')],
+  ['films', 'Red Bull Snow', yt('playlist_id=UULFTtEhdlWz5erVK734-Gn0VQ'), { keep: /\b(ski|skis|skier|skiers|skiing|freeski)/i, drop: /snowboard/i }],
+  ['films', 'Armada', yt('playlist_id=UULFCfIemdHk2ap5KhzigCj8Yw')],
+  ['gear', 'SkiEssentials', yt('playlist_id=UULFgijSqjxEFzRJuQwNBRrTDg')],
+  ['gear', 'Atomic', yt('playlist_id=UULF1CczmIgweCWgmBBj4zGC8g')],
+  ['gear', 'Newschoolers', yt('playlist_id=UULF27MqEZBoxV0Cs7ZbMtBk1g')],
+  ['gear', 'Blister', yt('channel_id=UCtO_XPxffrwSiKzSJboZcBg'), { keep: /\b(ski|skis|boot|boots|binding|bindings|goggle|goggles|helmet|skin|skins|jacket|outerwear)/i, drop: /\b(bike|bikes|mtb|emtb|epic|ripley)\b/i }],
+  ['gear', 'POWDER', 'https://www.powder.com/feed', { cat: /gear|apparel/i }],
+  ['gear', 'SKI Mag', 'https://www.skimag.com/gear/feed/'],
+  ['gear', 'SKI Mag', 'https://www.skimag.com/gear/ski-reviews/feed/'],
+  ['gear', 'Outside', 'https://www.outsideonline.com/outdoor-gear/snow-sports-gear/feed/', { drop: /snowboard/i }],
+];
+const unent = s => String(s || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n)).replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+  .replace(/&quot;/g, '"').replace(/&apos;|&#039;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+function parseFeed(xml) {
+  return (xml.match(/<(entry|item)[\s>][\s\S]*?<\/\1>/g) || []).slice(0, 25).map(it => {
+    const tag = n => { const m = it.match(new RegExp(`<${n}(?:\\s[^>]*)?>([\\s\\S]*?)</${n}>`)); return m ? unent(m[1]).trim() : ''; };
+    const flat = unent(it);
+    const l = (it.match(/<link[^>]*href="([^"]+)"/) || [])[1] || tag('link');
+    const img = (it.match(/<media:thumbnail[^>]*url="([^"]+)"/) || it.match(/<media:content[^>]*url="([^"]+)"[^>]*medium="image"/) || it.match(/<enclosure[^>]*url="([^"]+)"[^>]*type="image/) || flat.match(/<img[^>]*src="([^"]+)"/) || [])[1] || '';
+    const cats = (it.match(/<category[^>]*>[\s\S]*?<\/category>/g) || []).map(c => unent(c.replace(/<\/?category[^>]*>/g, ''))).join(' | ');
+    const d = Date.parse(tag('published') || tag('pubDate') || tag('updated')) || 0;
+    return { t: tag('title').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(), l: unent(l).trim(), img: unent(img), d, cats };
+  });
+}
+async function skiFeedsApi(ctx) {
+  const key = new Request('https://skifeeds.daybook/v1'), cache = caches.default;
+  const priv = body => new Response(body, { headers: { 'content-type': 'application/json', 'cache-control': 'private, max-age=1800' } });
+  const hit = await cache.match(key); if (hit) return priv(hit.body);
+  const got = await Promise.allSettled(SKI_FEEDS.map(async ([kind, src, u, o = {}]) => {
+    const r = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0', accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml' }, signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error(r.status);
+    return parseFeed(await r.text()).filter(x => /^https:\/\//.test(x.l) && x.t && !/\/shorts\//.test(x.l) && (!o.keep || o.keep.test(x.t)) && (!o.drop || !o.drop.test(x.t)) && (!o.cat || o.cat.test(x.cats)))
+      .slice(0, 8).map(x => ({ kind, src, t: x.t, l: x.l, img: /^https:\/\//.test(x.img) ? x.img : '', d: x.d }));
+  }));
+  const all = got.flatMap(g => g.status === 'fulfilled' ? g.value : []), seen = new Set();
+  const pick = k => all.filter(x => x.kind === k && !seen.has(x.l) && seen.add(x.l)).sort((a, b) => b.d - a.d).slice(0, 40).map(({ kind, ...x }) => x);
+  const body = JSON.stringify({ t: Date.now(), films: pick('films'), gear: pick('gear'), failed: got.filter(g => g.status !== 'fulfilled').length });
+  if (all.length) ctx.waitUntil(cache.put(key, new Response(body, { headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=10800' } })));
+  return priv(body);
+}
+
 export default {
   async scheduled(event, env, ctx) {
     const index = (await env.SYNC.get('subs-index', 'json')) || [];
@@ -318,6 +367,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === '/api/state') return syncApi(request, env);
     if (url.pathname === '/api/sky') return skyApi(request, env, ctx);
+    if (url.pathname === '/api/ski-feeds') return skiFeedsApi(ctx);
     if (url.pathname.startsWith('/api/push/')) return pushApi(request, env, url);
     if (url.pathname === '/api/reminder' && request.method === 'POST') return reminderApi(request, env);
     if (url.pathname === '/api/vapid') return json({ key: env.VAPID_PUBLIC || '' });

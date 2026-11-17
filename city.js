@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p34';
+export const BUILD = 'p35';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -284,6 +284,37 @@ details.sgp[open]>summary::after{content:'\\2212'}
 .clg{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;min-height:40px;border-top:1px solid var(--hud-hair);font:13px/1.2 var(--body);color:var(--hud-text)}
 .clg b{font-weight:600}
 .clg em{font:600 10px/1 var(--micro);font-style:normal;letter-spacing:.05em;color:var(--hud-text3)}
+/* p35: food in the gym (MEALS / LIST / SHAKES under one tab), the ski lodge's snow, films, gear and days */
+.fsub{margin:0 0 10px}
+.snw{border-top:1px solid var(--hud-hair);padding:10px 0}
+.snw:first-child{border-top:0;padding-top:2px}
+.snh{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.snh b{font:700 15px/1.1 var(--hud-font);letter-spacing:.06em;color:var(--hud-text)}
+.snh small{font:600 10px/1 var(--micro);letter-spacing:.06em;color:var(--hud-text3)}
+.snh a{margin-left:auto;font:700 11px/1 var(--hud-font);letter-spacing:.08em;color:var(--hud-cyan);text-decoration:none;padding:6px 0}
+.snb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0}
+.snb div{background:var(--hud-s2);padding:7px 8px;box-shadow:inset 2px 0 0 var(--hud-cyan-line)}
+.snb div.hot{box-shadow:inset 2px 0 0 var(--hud-cyan);background:var(--hud-cyan-soft)}
+.snb b{display:block;font:800 22px/1 var(--hud-font);color:var(--hud-text)}
+.snb span{display:block;margin-top:3px;font:600 9.5px/1.1 var(--micro);letter-spacing:.06em;color:var(--hud-text3)}
+.snd{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;align-items:end;height:74px}
+.snd i{font:600 9.5px/1.15 var(--micro);font-style:normal;text-align:center;color:var(--hud-text3)}
+.snd i em{display:block;width:62%;margin:0 auto 3px;min-height:2px;background:var(--hud-cyan)}
+.snd i b{display:block;color:var(--hud-text);font-weight:700}
+.snm{margin-top:7px;font:12px/1.3 var(--body);color:var(--hud-text2)}
+.mtp{display:flex;flex-wrap:wrap;gap:6px}
+.fdr{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;align-items:center;min-height:66px;padding:7px 0;border-top:1px solid var(--hud-hair);color:inherit;text-decoration:none}
+.fdr:first-child{border-top:0}
+.fdr img,.fdr .fdi{width:104px;height:58px;object-fit:cover;background:var(--hud-s2);display:block}
+.fdr b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:600 13px/1.25 var(--body);color:var(--hud-text)}
+.fdr small{display:block;margin-top:4px;font:600 10px/1 var(--micro);letter-spacing:.06em;color:var(--hud-text3)}
+.fdr:focus-visible{outline:2px solid var(--hud-cyan);outline-offset:2px}
+.sdr{display:grid;grid-template-columns:minmax(0,1fr) auto 40px;gap:8px;align-items:center;min-height:44px;border-top:1px solid var(--hud-hair);font:13px/1.2 var(--body);color:var(--hud-text)}
+.sdr b{font-weight:600}
+.sdr em{font:600 10px/1 var(--micro);font-style:normal;letter-spacing:.05em;color:var(--hud-text3)}
+.sdr button{width:40px;height:40px;color:var(--hud-text3);font:700 18px/1 var(--body)}
+.sdc{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
+.sdc span{font:600 10.5px/1 var(--micro);letter-spacing:.06em;color:var(--hud-text2);background:var(--hud-s2);padding:6px 8px}
 #hud[data-room=gym] .cards{grid-template-columns:minmax(0,1fr)}
 #hud.room[data-room=gym] .q,#hud.room[data-room=gym] .back{flex:none}
 #hud.room[data-room=gym] .brand{min-width:0}
@@ -727,7 +758,7 @@ const MARKUP = `
     <button class="frame brand" data-hud="prog" data-m="room" data-r="shop" aria-label="Progress"><div class="in"><i></i><div><b>SHOP</b><small id="shopPer">PERIOD</small></div></div></button>
     <button class="frame brand" data-hud="prog" data-m="room" data-r="apartment" aria-label="Progress"><div class="in"><i></i><div><b>APARTMENT</b><small id="aptDate">TODAY</small></div></div></button>
     <button class="frame brand" data-hud="prog" data-m="room" data-r="gym" aria-label="Progress"><div class="in"><i></i><div><b>GYM</b><small id="gymDate">TODAY</small></div></div></button>
-    <button class="frame brand" data-hud="prog" data-m="room" data-r="chalet" aria-label="Progress"><div class="in"><i></i><div><b>CHALET</b><small>FOOD</small></div></div></button>
+    <button class="frame brand" data-hud="prog" data-m="room" data-r="chalet" aria-label="Progress"><div class="in"><i></i><div><b>CHALET</b><small>SNOW</small></div></div></button>
     <button class="frame brand" data-hud="prog" data-m="room" data-r="castle" aria-label="Progress"><div class="in"><i></i><div><b>CASTLE</b><small>SCHOOL</small></div></div></button>
     <div class="frame eqw"><div class="in"><canvas id="eq" aria-hidden="true"></canvas><div class="row"><span class="mi">SIGNAL</span><span class="mi" id="eqv">SYNC OFF</span></div></div></div>
     <div class="frame clk"><div class="in"><b id="clk">00:00</b><span class="mi" id="clkd"></span></div></div>
@@ -855,14 +886,14 @@ const MARKUP = `
       </div>
     </div>
   </section>
-  <section class="dbox frame" id="chBox" data-m="room" data-r="chalet" aria-label="Food and cardio today">
+  <section class="dbox frame" id="chBox" data-m="room" data-r="chalet" aria-label="Snow and ski days">
     <div class="in">
-      <div class="dhead"><b>TODAY</b><span class="mi" id="chN"></span><button class="rbtn" id="btnChSheet">LIST</button></div>
+      <div class="dhead"><b>SNOW</b><span class="mi" id="chN"></span><button class="rbtn" id="btnChSheet">REPORT</button></div>
       <div class="tickr"></div>
       <div class="gyb">
-        <div class="rw"><span>SHAKES</span><div class="bar y" id="bK1"></div><em id="vK1">0/2</em></div>
-        <div class="rw"><span>LIST</span><div class="bar c" id="bK2"></div><em id="vK2">-</em></div>
-        <div class="rw"><span>CARDIO</span><div class="bar" id="bK3"></div><em id="vK3">0</em></div>
+        <div class="rw"><span>NEW 24H</span><div class="bar c" id="bK1"></div><em id="vK1">-</em></div>
+        <div class="rw"><span>NEXT 48H</span><div class="bar y" id="bK2"></div><em id="vK2">-</em></div>
+        <div class="rw"><span>DAYS</span><div class="bar" id="bK3"></div><em id="vK3">0</em></div>
       </div>
     </div>
   </section>
@@ -944,27 +975,50 @@ const MARKUP = `
             <div class="rst" id="rsC" role="timer" aria-live="off">0:00</div>
             <div class="acts"><button class="rbtn" data-rest="60">60S</button><button class="rbtn" data-rest="90">90S</button><button class="rbtn" data-rest="120">2 MIN</button><button class="rbtn ol" data-act="rest-add">+30S</button><button class="rbtn ol" data-act="rest-skip">STOP</button></div>
           </section>
-          <section class="card" id="cList" data-r="chalet">
+          <section class="card" id="cList" data-r="gym">
+            <div class="seg2 fsub"></div>
             <div class="kick">The list<span class="mi" id="flN"></span></div>
             <div id="flRows"></div>
             <div class="acts" id="flActs"></div>
             <div class="sgp" id="flSnk"></div>
           </section>
-          <section class="card" id="cMeals" data-r="chalet">
+          <section class="card" id="cMeals" data-r="gym">
+            <div class="seg2 fsub"></div>
             <div class="kick"><span id="fmK">This week's meals</span><span class="mi" id="fmN"></span></div>
             <div id="fmBody"></div>
           </section>
-          <section class="card" id="cShakes" data-r="chalet">
+          <section class="card" id="cShakes" data-r="gym">
+            <div class="seg2 fsub"></div>
             <div class="kick">Shakes<span class="mi" id="fsN"></span></div>
             <div class="shk" id="fsBtns"></div>
             <div class="sgp" style="margin-top:10px"><b>THIS WEEK</b><div class="gwk" id="fsWk" role="img"></div></div>
           </section>
-          <section class="card" id="cCardio" data-r="chalet">
+          <section class="card" id="cCardio" data-r="gym">
             <div class="kick">Cardio<span class="mi" id="fcN"></span></div>
             <div class="rw"><span>WEEK</span><div class="bar" id="bK4"></div><em id="vK4">0</em></div>
             <div class="gwk" id="fcWk" role="img" style="margin-top:8px"></div>
             <div class="sgp" id="fcForm" style="margin-top:10px"></div>
             <div id="fcRows"></div>
+          </section>
+          <section class="card" id="cSnow" data-r="chalet">
+            <div class="kick">Snow report<span class="mi" id="snN"></span></div>
+            <div id="snRows"></div>
+            <div class="sgp" id="snPick"></div>
+          </section>
+          <section class="card" id="cFilms" data-r="chalet">
+            <div class="kick">New films<span class="mi" id="fiN"></span></div>
+            <div id="fiRows"></div>
+          </section>
+          <section class="card" id="cGear" data-r="chalet">
+            <div class="kick">New gear<span class="mi" id="geN"></span></div>
+            <div id="geRows"></div>
+          </section>
+          <section class="card" id="cDays" data-r="chalet">
+            <div class="kick">Ski days<span class="mi" id="sdN"></span></div>
+            <div class="big tab" id="sdBig" style="font-family:var(--body);font-size:38px;font-variant-numeric:tabular-nums">0</div><div class="meta" id="sdMeta"></div>
+            <div class="sdc" id="sdPer"></div>
+            <div class="sgp" id="sdForm" style="margin-top:8px"></div>
+            <div id="sdRows"></div>
           </section>
           <section class="card" id="cDue" data-r="castle">
             <div class="kick">What's due<span class="mi" id="cdN"></span></div>
@@ -4991,8 +5045,10 @@ function buildGym() {
     /* lockers on the back wall behind him, a water cooler, a bench */
     { steel(Z, 0x3a4250); for (let i = 0; i < 5; i++) { Z.box(-W + .3, .1, -3.6 + i * .5, .5, 1.9, .48, { id: Z.nid() }); line(Z, -W + .552, 1.6, -3.6 + i * .5, .004, .1, .02, AMB, 120); } piece(); }
     { pl(0xd8dce4); Z.box(-W + .35, .02, 1.3, .36, .95, .36, {}); pl(0x4a8ad8); Z.set({ kind: K.PLAIN, c: hex(0x4a8ad8), em: 40 }); Z.lathe(-W + .35, .97, 1.3, [[.13, 0], [.15, .05], [.15, .32], [.06, .4], [0, .41]], 14, { c: 0x4a8ad8 }); Z.set({ em: 0 }); piece(); }
-    /* the gym bag, a towel on the bench, a shaker on the floor by the board */
-    { pl(0x1c1d24); Z.blob(.0, .17, 2.6, .24, { c: 0x1c1d24, sy: .65, j: .12 }); pl(OR); Z.box(0, .32, 2.6, .5, .012, .03, {}); pl(0xe8e6e0); Z.box(1.0, .5, -1.45, .26, .02, .45, {}); Z.set({ kind: K.PLAIN, c: hex(0x18181e), layer: 0 }); Z.lathe(.1, .02, 1.95, [[.04, 0], [.045, .02], [.045, .2], [.03, .22], [0, .23]], 12, { c: 0x18181e }); pl(OR); Z.cyl(.1, .2, 1.95, .046, .046, .02, 12, { top: false }); piece(); piece(); }
+    /* the gym bag, a towel on the bench, a shaker on the floor in front of the board (FUEL) */
+    { pl(0x1c1d24); Z.blob(.0, .17, 2.6, .24, { c: 0x1c1d24, sy: .65, j: .12 }); pl(OR); Z.box(0, .32, 2.6, .5, .012, .03, {}); pl(0xe8e6e0); Z.box(1.0, .5, -1.45, .26, .02, .45, {}); Z.set({ kind: K.PLAIN, c: hex(0x18181e), layer: 0 }); Z.lathe(-.3, .02, 1.15, [[.04, 0], [.045, .02], [.045, .2], [.03, .22], [0, .23]], 12, { c: 0x18181e }); pl(OR); Z.cyl(-.3, .2, 1.15, .046, .046, .02, 12, { top: false }); piece(); piece(); }
+    /* p35: his weighted rope, coiled on the platform's near corner, the handles out: CARDIO */
+    { pl(0x1a1a20); const p = []; for (let k = 0; k <= 40; k++) { const a = k / 40 * TAU * 1.9, r = .22 - k * .002; p.push([1.3 + Math.cos(a) * r, .085 + k * .0008, -.7 + Math.sin(a) * r]); } Z.tube(p, .012, 80, 5, { c: 0x1a1a20 }); pl(OR); for (const [hx, hz, ry] of [[1.02, -.52, .4], [1.55, -.95, -.6]]) Z.at(hx, .1, hz, ry, () => Z.cyl(0, -.08, 0, .025, .025, .16, 10, {}), Math.PI / 2); piece(); }
     /* plates leant on the wall by the rack, the chalk bowl on its stand */
     for (let i = 0; i < 4; i++) { const c = [0x15151a, 0xb4302a, 0x264fa8, 0x15151a][i]; pl(c); Z.at(2.4, .02 + .225 - i * .02, -D + .28 + i * .07, 0, () => Z.cyl(0, 0, 0, .225 - i * .02, .225 - i * .02, .05, 20, { c, bot: true }), Math.PI / 2 - .12); } piece();
     { pl(0x15161b); Z.cyl(2.6, .02, -.6, .05, .05, .85, 8, {}); pl(0xdcd8d0); Z.lathe(2.6, .87, -.6, [[.0, 0], [.16, .02], [.2, .12], [.19, .13], [0, .1]], 14, { c: 0xdcd8d0 }); piece(); }
@@ -5017,6 +5073,8 @@ function buildGym() {
     { key: 'split', label: 'SPLIT', hotkey: 'R', line: 14, sheet: 'cSplit', p: w(W - .1, 3.9, 3.05) },
     { key: 'rack', label: 'TESTS', hotkey: 'F', line: 22, sheet: 'cBench', p: w(1.0, 2.38, -1.5) },
     { key: 'timer', label: 'REST', hotkey: 'G', line: 12, sheet: 'cRest', p: w(W - .1, dh + 1.3, 0) },
+    { key: 'shaker', label: 'FUEL', hotkey: 'T', line: 22, sheet: 'cMeals', p: w(-.3, .3, 1.15) },
+    { key: 'rope', label: 'CARDIO', hotkey: 'Y', line: 18, sheet: 'cCardio', p: w(1.3, .2, -.7) },
   ];
   return {
     geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(),
@@ -5038,11 +5096,11 @@ function cushion(M, x, y, z, r, c) {
   M.set({ kind: K.BRASS, c: PAL.brass }); M.lathe(x, y + r * 1.7, z, [[.0, .002], [r * .2, 0], [.0, -.002]], 10, {});
 }
 
-/* ---------- the chalet: a timber kitchen high on the slope, Fuel and Cardio in one room ---------- */
+/* ---------- the chalet: a timber ski lodge on the valley floor (p35; it was Fuel and Cardio's kitchen) ---------- */
 /* Its +X gable end is the city chalet's glass (x = CH.x + 4.5): the lift station, the gondola line and the village lights through it */
 const CR = { x: CH.x, y: CH.y, z: CH.z, w: 9, d: 6.4, h: 2.7 };
 /* what the fridge list, the cookbook and the ticket show, so they're only repainted when it changes */
-const chaletSig = F => JSON.stringify([F.book, F.list.map(s => s.items.map(i => i.n + (i.on ? 1 : 0))), F.picked.map(p => p.n), F.cardio.min, F.cardio.n, F.shakes.map(s => s.on), F.shakes.map(s => s.skip)]);
+const chaletSig = K => JSON.stringify([K.mts.map(m => m.id + (m.snow ? [m.snow.f24, m.snow.n48, m.snow.days.map(d => d.sn)].join() : '')), K.films.slice(0, 2).map(f => f.t), K.gear.slice(0, 5).map(g => g.t), K.season]);
 let CH_SIG = '';
 function chaletAtlas(F) {
   const S = 1024, cv = document.createElement('canvas'); cv.width = cv.height = S; const x = cv.getContext('2d'), C = {}, cells = {};
@@ -5051,29 +5109,26 @@ function chaletAtlas(F) {
   const draw = (name, t) => { const c = cells[name]; x.save(); x.beginPath(); x.rect(c.px, c.py, c.w, c.h); x.clip(); x.translate(c.px, c.py); x.clearRect(0, 0, c.w, c.h); c.fn(x, c.w, c.h, t); x.restore(); };
   const fit = (x, s, max) => { if (x.measureText(s).width <= max) return s; while (s.length > 3 && x.measureText(s + '…').width > max) s = s.slice(0, -1); return s + '…'; };
   const INK = '#23324a', PEN = '#b8322a';
-  /* the list on the fridge: a lined pad, what this week's meals need, ticked as it goes in the cart */
-  cell('list', 380, 540, (x, w, h, F) => {
-    x.fillStyle = '#f4efe2'; x.fillRect(0, 0, w, h); x.fillStyle = '#e6a33a'; x.fillRect(0, 0, w, 26);
+  /* the snow sheet on the fridge: each of his mountains, the new snow and what's coming, in pen */
+  cell('list', 380, 540, (x, w, h, K) => {
+    x.fillStyle = '#f4efe2'; x.fillRect(0, 0, w, h); x.fillStyle = '#3a8ad8'; x.fillRect(0, 0, w, 26);
     x.strokeStyle = 'rgba(70,110,170,.25)'; x.lineWidth = 2; for (let y = 104; y < h; y += 38) { x.beginPath(); x.moveTo(0, y + 14); x.lineTo(w, y + 14); x.stroke(); }
     x.strokeStyle = 'rgba(200,60,60,.35)'; x.beginPath(); x.moveTo(52, 26); x.lineTo(52, h); x.stroke();
-    x.textBaseline = 'middle'; x.fillStyle = INK; x.font = `800 46px ${FONT_DISP}`; x.fillText('LIST', 64, 64);
-    x.fillStyle = PEN; x.font = `700 30px ${FONT_EN}`; x.textAlign = 'right'; x.fillText(F.all ? `${F.done}/${F.all}` : '', w - 20, 66); x.textAlign = 'left';
-    const rows = []; F.list.forEach(s => { rows.push({ sec: unesc(s.sec) }); s.items.forEach(i => rows.push(i)); });
-    if (!rows.length) { x.fillStyle = INK; x.font = `600 30px ${FONT_EN}`; x.fillText(F.book ? 'PICK MEALS IN' : '', 64, 140); x.fillText(F.book ? 'THE COOKBOOK' : '', 64, 178); }
-    rows.slice(0, 11).forEach((r, k) => {
-      const y = 116 + k * 38;
-      if (r.sec) { x.fillStyle = PEN; x.font = `800 22px ${FONT_EN}`; x.fillText(r.sec.toUpperCase(), 64, y + 2); return; }
-      x.fillStyle = INK; x.font = `600 27px ${FONT_EN}`; const t = fit(x, unesc(r.n), w - 110); x.fillText(t, 64, y);
-      if (r.on) { const tw = x.measureText(t).width; x.strokeStyle = INK; x.lineWidth = 3; x.beginPath(); x.moveTo(60, y + 1); x.lineTo(68 + tw, y - 2); x.stroke(); x.strokeStyle = PEN; x.lineWidth = 4; x.lineCap = 'round'; x.beginPath(); x.moveTo(18, y); x.lineTo(27, y + 9); x.lineTo(42, y - 12); x.stroke(); }
+    x.textBaseline = 'middle'; x.fillStyle = INK; x.font = `800 46px ${FONT_DISP}`; x.fillText('SNOW', 64, 64);
+    x.fillStyle = PEN; x.font = `700 22px ${FONT_EN}`; x.textAlign = 'right'; x.fillText('24H · 48H', w - 18, 68); x.textAlign = 'left';
+    if (!K.mts.length) { x.fillStyle = INK; x.font = `600 28px ${FONT_EN}`; x.fillText('PICK YOUR', 64, 140); x.fillText('MOUNTAINS', 64, 178); }
+    K.mts.slice(0, 6).forEach((m, k) => {
+      const y = 116 + k * 76; x.fillStyle = INK; x.font = `700 26px ${FONT_EN}`; x.fillText(fit(x, unesc(m.name).toUpperCase(), w - 90), 64, y);
+      x.fillStyle = PEN; x.font = `700 30px ${FONT_EN}`; x.fillText(m.snow ? `${m.snow.f24} cm  ·  ${m.snow.n48} cm` : '…', 64, y + 38);
+      if (m.snow && (m.snow.f24 >= 10 || m.snow.n48 >= 15)) { x.strokeStyle = PEN; x.lineWidth = 3; x.beginPath(); x.ellipse(36, y + 18, 12, 24, 0, 0, TAU); x.stroke(); }
     });
-    if (rows.length > 11) { x.fillStyle = INK; x.font = `600 24px ${FONT_EN}`; x.fillText(`+ ${rows.length - 11} MORE`, 64, h - 22); }
   });
-  /* the lift ticket on the jacket: a made-up resort, the week's minutes in pen, a barcode */
-  cell('ticket', 200, 290, (x, w, h, F) => {
+  /* the lift ticket on the jacket: a made-up resort, his days this season in pen, a barcode */
+  cell('ticket', 200, 290, (x, w, h, K) => {
     x.fillStyle = '#f2f2ee'; x.fillRect(0, 0, w, h); x.fillStyle = '#ff2e88'; x.fillRect(0, 0, w, 64); x.fillStyle = '#16121c'; x.beginPath(); x.arc(w / 2, 14, 8, 0, TAU); x.fill();
     x.textBaseline = 'middle'; x.textAlign = 'center'; x.fillStyle = '#fff'; x.font = `900 30px ${FONT_DISP}`; x.fillText('VELKAR', w / 2, 44);
-    x.fillStyle = '#16121c'; x.font = `700 18px ${FONT_EN}`; x.fillText('ALL LIFTS · WEEK', w / 2, 86);
-    x.font = `800 64px ${FONT_DISP}`; x.fillText(String(F.cardio.min), w / 2, 140); x.font = `700 20px ${FONT_EN}`; x.fillText(`MIN OF ${F.cardio.goal}`, w / 2, 182);
+    x.fillStyle = '#16121c'; x.font = `700 18px ${FONT_EN}`; x.fillText('SEASON PASS', w / 2, 86);
+    x.font = `800 64px ${FONT_DISP}`; x.fillText(String(K.season), w / 2, 140); x.font = `700 20px ${FONT_EN}`; x.fillText(K.season === 1 ? 'DAY ON SNOW' : 'DAYS ON SNOW', w / 2, 182);
     for (let i = 0; i < 34; i++) { const bw = (i * 7) % 3 + 1; x.fillRect(20 + i * 4.8, 214, bw, 50); } x.textAlign = 'left';
   });
   /* a trail poster, made-up words */
@@ -5084,20 +5139,21 @@ function chaletAtlas(F) {
   });
   /* a jar label for the shelf */
   cell('jar', 96, 64, (x, w, h) => { x.fillStyle = '#efe6d0'; x.fillRect(0, 0, w, h); x.strokeStyle = '#3a2a1a'; x.lineWidth = 3; x.strokeRect(5, 5, w - 10, h - 10); x.fillStyle = '#3a2a1a'; x.font = `700 22px ${FONT_EN}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('OATS', w / 2, h / 2); x.textAlign = 'left'; });
-  /* the cookbook, open on its stand: this week's meals on the left page, a sketch and the protein on the right */
-  cell('book', 600, 380, (x, w, h, F) => {
+  /* the gear catalogue, open on its stand: the newest gear on the left page, a ski drawn in ink on the right */
+  cell('book', 600, 380, (x, w, h, K) => {
     x.fillStyle = '#efe6d0'; x.fillRect(0, 0, w, h);
     const g = x.createLinearGradient(w / 2 - 40, 0, w / 2 + 40, 0); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.5, 'rgba(60,40,20,.28)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(w / 2 - 40, 0, 80, h);
-    x.textBaseline = 'middle'; x.fillStyle = '#3a2a1a'; x.font = `800 30px ${FONT_DISP}`; x.fillText('THIS WEEK', 28, 44);
+    x.textBaseline = 'middle'; x.fillStyle = '#3a2a1a'; x.font = `800 30px ${FONT_DISP}`; x.fillText('NEW GEAR', 28, 44);
     x.strokeStyle = '#a8442a'; x.lineWidth = 3; x.beginPath(); x.moveTo(28, 68); x.lineTo(w / 2 - 34, 68); x.stroke();
-    const P = F.picked.slice(0, 6);
-    if (!P.length) { x.fillStyle = '#5a4630'; x.font = `600 24px ${FONT_EN}`; x.fillText(F.book ? 'Nothing picked yet.' : 'Opening the book…', 28, 110); }
-    P.forEach((p, i) => { const y = 104 + i * 50; x.fillStyle = '#3a2a1a'; x.font = `700 25px ${FONT_EN}`; x.fillText(fit(x, unesc(p.n), w / 2 - 120), 28, y); x.fillStyle = '#a8442a'; x.font = `700 21px ${FONT_EN}`; x.textAlign = 'right'; x.fillText(`${p.p}g`, w / 2 - 34, y + 1); x.textAlign = 'left'; });
-    /* the right page: a pot drawn in ink and the week's protein */
-    const rx = w / 2 + 30; x.fillStyle = '#3a2a1a'; x.font = `800 26px ${FONT_DISP}`; x.fillText('KITCHEN', rx, 44);
-    x.strokeStyle = '#3a2a1a'; x.lineWidth = 3; x.beginPath(); x.ellipse(rx + 130, 210, 92, 22, 0, 0, TAU); x.stroke(); x.beginPath(); x.moveTo(rx + 38, 210); x.lineTo(rx + 52, 300); x.quadraticCurveTo(rx + 130, 330, rx + 208, 300); x.lineTo(rx + 222, 210); x.stroke();
-    for (let i = 0; i < 3; i++) { x.beginPath(); x.moveTo(rx + 100 + i * 30, 170); x.bezierCurveTo(rx + 85 + i * 30, 140, rx + 115 + i * 30, 120, rx + 100 + i * 30, 92); x.stroke(); }
-    x.fillStyle = '#a8442a'; x.font = `700 24px ${FONT_EN}`; x.fillText(P.length ? `${P.length} MEAL${P.length === 1 ? '' : 'S'} · 3 PORTIONS EACH` : '', rx, 352);
+    const P = K.gear.slice(0, 5);
+    if (!P.length) { x.fillStyle = '#5a4630'; x.font = `600 24px ${FONT_EN}`; x.fillText('Opening the catalogue…', 28, 110); }
+    P.forEach((p, i) => { const y = 104 + i * 54; x.fillStyle = '#3a2a1a'; x.font = `700 22px ${FONT_EN}`; x.fillText(fit(x, unesc(p.t), w / 2 - 70), 28, y); x.fillStyle = '#a8442a'; x.font = `700 16px ${FONT_EN}`; x.fillText(unesc(p.src).toUpperCase(), 28, y + 24); });
+    /* the right page: a ski and a goggle in ink */
+    const rx = w / 2 + 30; x.fillStyle = '#3a2a1a'; x.font = `800 26px ${FONT_DISP}`; x.fillText('THIS SEASON', rx, 44);
+    x.strokeStyle = '#3a2a1a'; x.lineWidth = 3; x.beginPath(); x.moveTo(rx + 20, 300); x.quadraticCurveTo(rx + 10, 290, rx + 30, 276); x.lineTo(rx + 230, 110); x.quadraticCurveTo(rx + 250, 92, rx + 252, 112); x.lineTo(rx + 44, 304); x.closePath(); x.stroke();
+    x.beginPath(); x.moveTo(rx + 120, 205); x.lineTo(rx + 150, 180); x.stroke();
+    x.beginPath(); x.ellipse(rx + 90, 140, 52, 30, 0, 0, TAU); x.stroke(); x.beginPath(); x.moveTo(rx + 38, 140); x.lineTo(rx + 14, 146); x.moveTo(rx + 142, 140); x.lineTo(rx + 166, 146); x.stroke();
+    x.fillStyle = '#a8442a'; x.font = `700 22px ${FONT_EN}`; x.fillText(P.length ? `${K.gear.length} NEW THIS WEEK` : '', rx, 352);
   });
   /* the stove's glass: embers and flame */
   cell('fire', 160, 120, (x, w, h) => {
@@ -5106,15 +5162,25 @@ function chaletAtlas(F) {
   });
   /* book spines for the shelf over the door */
   cell('spines', 256, 64, (x, w, h) => { const cs = ['#7a2a22', '#24405a', '#c9a23a', '#2f4a3c', '#e8e0d0', '#5a3a6a', '#a8442a', '#16121c']; for (let i = 0; i < 16; i++) { x.fillStyle = cs[(i * 5) % cs.length]; x.fillRect(i * 16, 0, 15, h); x.fillStyle = 'rgba(255,240,200,.5)'; x.fillRect(i * 16 + 3, 12, 9, 3); x.fillRect(i * 16 + 3, h - 16, 9, 2); } });
+  /* the TV on the island: the newest film. The strip left under the book is 100 px tall: drawn at 320 x 180 and scaled in */
+  cell('tv', 176, 99, (x, w0, h0, K) => {
+    const w = 320, h = 180; x.scale(w0 / w, h0 / h);
+    const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#0c1a2c'); g.addColorStop(1, '#1d3a5c'); x.fillStyle = g; x.fillRect(0, 0, w, h);
+    x.fillStyle = 'rgba(233,228,216,.85)'; x.beginPath(); x.moveTo(0, 150); x.lineTo(70, 96); x.lineTo(110, 124); x.lineTo(170, 70); x.lineTo(w, 140); x.lineTo(w, h); x.lineTo(0, h); x.fill();
+    const f = K.films[0]; x.textBaseline = 'middle'; x.fillStyle = '#5ae4ec'; x.font = `800 18px ${FONT_EN}`; x.fillText(f ? 'NEW FILM' : 'FILMS', 16, 22);
+    x.fillStyle = '#fff'; x.font = `800 24px ${FONT_EN}`; const t = f ? unesc(f.t).toUpperCase() : 'LOADING…', words = t.split(' '); let ln = '', y = 54;
+    for (const wd of words) { const tr = ln ? ln + ' ' + wd : wd; if (x.measureText(tr).width > w - 32 && ln) { x.fillText(ln, 16, y); ln = wd; y += 28; if (y > 110) break; } else ln = tr; } if (y <= 110) x.fillText(fit(x, ln, w - 32), 16, y);
+    if (f) { x.fillStyle = 'rgba(255,255,255,.75)'; x.font = `700 15px ${FONT_EN}`; x.fillText(unesc(f.src).toUpperCase(), 16, h - 18); }
+  });
   for (const n of Object.keys(cells)) draw(n, F);
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.NoColorSpace; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter; tex.anisotropy = 8; tex.flipY = true; tex.premultiplyAlpha = false;
-  /* a tick in the app repaints just these three */
-  const paint = f => { draw('list', f); draw('book', f); draw('ticket', f); tex.needsUpdate = true; };
+  /* a change in the app repaints just these four */
+  const paint = f => { draw('list', f); draw('book', f); draw('ticket', f); draw('tv', f); tex.needsUpdate = true; };
   return { tex, C, paint };
 }
 
 function buildChalet() {
-  const A = CR, W = A.w / 2, D = A.d / 2, H = A.h, RH = H + 2.85, F = APP.fuel();
+  const A = CR, W = A.w / 2, D = A.d / 2, H = A.h, RH = H + 2.85, F = APP.ski();
   const { tex, C, paint } = chaletAtlas(F); CH_SIG = chaletSig(F);
   const M = new MB(30000), Z = new MB(24000), FXM = new MB(1200), GL = new MB(64), R = rng(7120);
   const glows = [], zGlows = [], w = (x, y, z) => [A.x + x, A.y + y, A.z + z];
@@ -5204,12 +5270,11 @@ function buildChalet() {
       setPlain(M, BEAM, L.WOOD); M.box(x + .1, y, z, .22, .02, .5, {}); M.beam([x, y, z - .2], [x + .18, y + .32, z - .2], .025, {}); M.beam([x, y, z + .2], [x + .18, y + .32, z + .2], .025, {}); M.box(x - .02, y, z, .05, .04, .5, {});
       M.at(x + .07, y + .19, z, -Math.PI / 2, () => { setPlain(M, 0x7a2a22); M.box(0, -.14, -.03, .62, .3, .018, {}); setPlain(M, 0xf2ead6); M.box(-.152, -.135, -.002, .3, .285, .02, {}); M.box(.152, -.135, -.002, .3, .285, .02, {}); M.plate(0, .007, .0105, .6, .28, 0, C.book, { kind: K.PAPER, em: 30, id: 241, seed: 0 }); }, tilt); piece(); }
 
-    /* BLENDER: on the island, a steel base, a glass jar half full of something pink */
-    { const x = 1.6, z = .15, y = .915;
-      setPlain(M, 0x2a2a30); M.extrude(roundPoly(x, z, .2, .2, .04, 3), y, y + .14, { grad: .8 }); brass(M, 0xc8ccd4); M.box(x - .101, y + .04, z, .004, .06, .14, {}); setPlain(M, 0xff4a2a, 0, 200); M.cyl(x - .104, y + .085, z + .04, .008, .008, .004, 8, {});
-      M.set({ kind: K.PLAIN, c: hex(0xd8e4ec), em: 0, layer: 0 }); M.lathe(x, y + .14, z, [[.06, 0], [.075, .02], [.085, .22], [.08, .26], [0, .262]], 14, { c: 0xd8e4ec });
-      setPlain(M, 0xe86a9a); M.lathe(x, y + .16, z, [[.0, 0], [.068, .005], [.078, .12], [0, .12]], 14, { c: 0xe86a9a });
-      setPlain(M, 0x1a1a1e); M.cyl(x, y + .4, z, .086, .086, .03, 14, {}); M.cyl(x, y + .43, z, .03, .03, .03, 10, {}); M.box(x + .09, y + .2, z, .03, .16, .03, {});
+    /* TV: at the island's far end where the blender was, a small set up on a pole so it shows over the catalogue, turned to him, the newest film on it */
+    { const x = 1.95, z = .12, y = .915, up = .47;
+      setPlain(M, 0x1a1a1e); M.box(x, y, z, .2, .02, .32, {}); M.box(x, y + .02, z, .04, up - .02, .04, {});
+      setPlain(M, 0x141418); M.box(x, y + up, z, .05, .3, .5, { id: M.nid() }); setPlain(M, 0x2a2a30); M.box(x - .026, y + up, z, .004, .012, .5, {});
+      plate(M, x - .027, y + up + .155, z, .46, .26, -Math.PI / 2, 'tv', 0, { kind: K.SIGN, em: 140, id: 244, seed: 0 }); G(x - .3, y + up + .15, z, [.45, .7, 1], .5);
       piece(); }
 
     /* the stools on the near side of the island */
@@ -5297,10 +5362,10 @@ function buildChalet() {
     [...w(-3.6, 1.4, 1.6), 0xffb88a, 5, .3],
   ];
   const hot = [
-    { key: 'fridge', label: 'LIST', hotkey: 'E', line: 18, sheet: 'cList', p: w(3.04, 1.3, D - .74) },
-    { key: 'book', label: 'MEALS', hotkey: 'R', line: 14, sheet: 'cMeals', p: w(.5, 1.22, -.12) },
-    { key: 'blender', label: 'SHAKES', hotkey: 'F', line: 26, sheet: 'cShakes', p: w(1.6, 1.38, .15) },
-    { key: 'ticket', label: 'CARDIO', hotkey: 'G', line: 12, sheet: 'cCardio', p: w(1.69, .5, -1.29) },
+    { key: 'fridge', label: 'SNOW', hotkey: 'E', line: 18, sheet: 'cSnow', p: w(3.04, 1.3, D - .74) },
+    { key: 'tv', label: 'FILMS', hotkey: 'R', line: 20, sheet: 'cFilms', p: w(1.95, 1.72, .12) },
+    { key: 'book', label: 'GEAR', hotkey: 'F', line: 14, sheet: 'cGear', p: w(.5, 1.22, -.12) },
+    { key: 'ticket', label: 'DAYS', hotkey: 'G', line: 12, sheet: 'cDays', p: w(1.69, .5, -1.29) },
   ];
   return {
     geom: M.geom(), clutterGeom: Z.geom(), glassGeom: GL.geom(), fxGeom: FXM.geom(), lights, hot, glows: [...glows, ...zGlows], glowsPlain: glows, clutterLight: 6, fxPlain: fxBase, pieces: PIECES, tris: M.n / 3, clutterTris: Z.n / 3, atlas: tex, day: new Date().toDateString(),
@@ -6568,12 +6633,12 @@ const ROOM_DEF = {
     },
   },
   chalet: {
-    box: CR, name: 'CHALET', build: buildChalet, panel: '#chBox', sheet: ['Fuel', 'PAGE.01/04'], shadow: [134, 10], refresh: refreshChalet,
+    box: CR, name: 'CHALET', build: buildChalet, panel: '#chBox', sheet: ['Ski', 'PAGE.01/04'], shadow: [134, 10], refresh: refreshChalet,
     /* inside the chalet: the flight sees it through its glass end, a hole in the city's depth */
     hole: true,
     amb: [[.34, .26, .2], [.17, .1, .08], [.06, .045, .04], [.7, .85, 1.4]],
     window: { x: CR.x + CR.w / 2 + .05, zs: [CR.z - 3, CR.z + 3], ys: [CR.y + .02, CR.y + 2.6] },
-    /* on a phone the view leans a little right, so the fridge is in it with the island and the ticket */
+    /* on a phone the view leans a little right, so the fridge is in it with the island, the TV and the ticket */
     turn: .1,
     /* at the back by the door, facing the glass and the lift */
     rest: a => a < .8 ? { p: local(-3.4, 1.6, -.1), l: local(4, 1.3, -.1) } : { p: local(-3.3, 1.62, 0), l: local(4, 1.25, 0) },
@@ -6784,8 +6849,8 @@ function setBoot(t, p) { const a = $('#bootT'), b = $('#bootB'); if (a) a.textCo
 const ICONS = [
   { k: 'plan', room: 'apartment', attr: 'focus', word: 'Plan', c: '#16e4f4', d: 'HOME · TASKS', r: 'TASKS ', svg: '<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>' },
   { k: 'work', room: 'shop', attr: 'grind', word: 'Work', c: '#f6ee1c', d: 'SHOP · SHIFTS', r: 'HOURS ', svg: '<path d="M12 8V6a2 2 0 1 1 2 2c-1 0-2 1-2 2M12 10 3 17v2h18v-2z"/>' },
-  { k: 'train', room: 'gym', attr: 'strength', word: 'Train', c: '#ff8a1e', d: 'GYM · LIFTS', r: 'DONE ', svg: '<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>' },
-  { k: 'fuel', room: 'chalet', attr: 'fuel', word: 'Fuel', c: '#f6ee1c', d: 'CHALET · FOOD', r: 'SHAKES ', svg: '<path d="M3 11h18a9 9 0 0 1-18 0zM8 3c-1 2 1 3 0 5M13 3c-1 2 1 3 0 5M18 4 13 11"/>' },
+  { k: 'train', room: 'gym', attr: 'strength', word: 'Train', c: '#ff8a1e', d: 'GYM · LIFTS · FUEL', r: 'DONE ', svg: '<path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"/>' },
+  { k: 'fuel', room: 'chalet', attr: 'fuel', word: 'Ski', c: '#5ae4ec', d: 'CHALET · SNOW', r: 'NEW ', val: () => { const K = APP.ski(); return K.mts.length ? Math.max(0, ...K.mts.map(m => m.snow ? m.snow.f24 : 0)) + ' CM' : '-'; }, svg: '<path d="M2 20 9 7l4 6 3-4 6 11zM7.5 10.5 9 12l1.5-1.5"/>' },
   { k: 'school', room: 'castle', attr: 'hustle', word: 'School', c: '#4cdc8e', d: 'CASTLE · SCHOOL', r: 'STUDY ', svg: '<path d="M4 20V9h3V6h2v3h6V6h2v3h3v11zM10 20v-5h4v5"/>' },
 ];
 
@@ -6867,7 +6932,7 @@ function hudInit() {
   barInto($('#bG'), 18, 0); S.ringIn = 0; for (const id of ['#cellsB']) { const el = $(id); el.innerHTML = '<i class="on"></i>'.repeat(3) + '<i></i>'.repeat(1); }
   barInto($('#bH1'), 18, 0); barInto($('#bH2'), 18, 0); barInto($('#bY1'), 18, 0); for (const k of ['#bK1', '#bK2', '#bK3', '#bK4']) barInto($(k), 18, 0);
   $('#btnGymSheet').addEventListener('click', () => openSheet('cSess'));
-  $('#btnChSheet').addEventListener('click', () => openSheet('cList'));
+  $('#btnChSheet').addEventListener('click', () => openSheet('cSnow'));
   for (const k of ['#bS1', '#bS2', '#bS3', '#bS4']) barInto($(k), 18, 0);
   castleInit();
   /* the chalet does the Fuel and Cardio pages' own things in place: a shake, a tick on the list, a snack, a meal picked, a recipe read, cardio logged */
@@ -6879,10 +6944,24 @@ function hudInit() {
     if (d.fclear !== undefined) { APP.grocClear(); return; }
     if (d.fsnack) { APP.snack(d.fsnack); return; }
     if (d.fpick) { APP.pick(d.fpick); return; }
-    if (d.fopen) { chRecipe = d.fopen; refreshChalet(); const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0; requestAnimationFrame(() => { const t = $('#fmBack'); if (t) t.focus({ preventScroll: true }); }); return; }
-    if (d.fback !== undefined) { const was = chRecipe; chRecipe = null; refreshChalet(); requestAnimationFrame(() => { const t = [...ROOT.querySelectorAll('[data-fopen]')].find(x => x.dataset.fopen === was); if (t) t.focus({ preventScroll: false }); }); return; }
-    if (d.fcat) { chCat = d.fcat; refreshChalet(); return; }
+    if (d.fopen) { chRecipe = d.fopen; refreshFuel(); const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0; requestAnimationFrame(() => { const t = $('#fmBack'); if (t) t.focus({ preventScroll: true }); }); return; }
+    if (d.fback !== undefined) { const was = chRecipe; chRecipe = null; refreshFuel(); requestAnimationFrame(() => { const t = [...ROOT.querySelectorAll('[data-fopen]')].find(x => x.dataset.fopen === was); if (t) t.focus({ preventScroll: false }); }); return; }
+    if (d.fcat) { chCat = d.fcat; refreshFuel(); return; }
     if (d.ftype) { APP.cardioType(d.ftype); ROOT.querySelectorAll('[data-ftype]').forEach(x => { const on = x === b; x.classList.toggle('ol', !on); x.setAttribute('aria-pressed', String(on)); }); const t = $('#fcType'); if (t) t.value = ''; return; }
+  });
+  /* p35: FUEL's three cards; the lodge: picking mountains, the day's mountain, removing a day */
+  hudEl.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-fsub],[data-skpick],[data-skmt],[data-skdel],[data-skchg],[data-skref]'); if (!b) return; const d = b.dataset;
+    if (d.fsub) { showCard(d.fsub); requestAnimationFrame(() => { const t = ROOT.querySelector(`#${d.fsub} [data-fsub="${d.fsub}"]`); if (t) t.focus({ preventScroll: true }); }); return; }
+    if (d.skpick) { APP.skiPick(d.skpick); return; }
+    if (d.skmt) { skMt = d.skmt; ROOT.querySelectorAll('[data-skmt]').forEach(x => { const on = x === b; x.classList.toggle('ol', !on); x.setAttribute('aria-pressed', String(on)); }); return; }
+    if (d.skdel) { APP.skiDayDel(d.skdel); return; }
+    if (d.skchg !== undefined) { skPick = d.skchg === '1'; refreshChalet(); const t = ROOT.querySelector(skPick ? '[data-skpick]' : '[data-skchg]'); if (t) t.focus({ preventScroll: true }); return; }
+    if (d.skref) { APP.skiRefresh(); APP.sfx('tick'); return; }
+  });
+  hudEl.addEventListener('submit', e => {
+    const f = e.target.closest && e.target.closest('[data-skday]'); if (!f) return; e.preventDefault();
+    if (APP.skiDay(skMt || '', f.elements.d.value, f.elements.note.value)) f.elements.note.value = '';
   });
   /* the gym's rest buttons start the app's own rest timer, the one the island counts down between sets */
   hudEl.addEventListener('click', e => {
@@ -7321,7 +7400,7 @@ function holoTick() {
    front of him. Declined or missed: it rings again after CALL_AGAIN minutes, or not today. This device's switch in
    System > Sound ---------- */
 const CALL_AGAIN = { remind: 60, clockout: 60, len: 180, week: 120 };   // minutes; the others: not again today
-const CALL_TRIES = 3, CALL_GAP = 90e3, CALL_RING = 25e3, CALL_SAY = { remind: 'REMINDER', clockout: 'STILL ON THE CLOCK', len: 'HOURS FOR LEN', checkin: 'CHECK-IN', study: 'SCHOOL', gym: 'THE GYM', week: 'NEXT WEEK' };
+const CALL_TRIES = 3, CALL_GAP = 90e3, CALL_RING = 25e3, CALL_SAY = { remind: 'REMINDER', clockout: 'STILL ON THE CLOCK', len: 'HOURS FOR LEN', checkin: 'CHECK-IN', study: 'SCHOOL', gym: 'THE GYM', week: 'NEXT WEEK', pow: 'POWDER' };
 let CL = null, CL_AT = null, clLast = 0, clNext = 0, clRingT = 0, clRingMs = CALL_RING;
 const callsOn = () => { try { return localStorage.getItem('daybook_mcalls') !== '0'; } catch (e) { return true; } };
 function clMem() { let m = {}; try { m = JSON.parse(localStorage.getItem('daybook_calls') || '{}') || {}; } catch (e) {} const d = new Date().toDateString(); if (m.day !== d) m = { day: d, done: {}, snooze: {}, tries: {} }; return m; }
@@ -7379,6 +7458,7 @@ function callStep() {
   if (k === 'clockout') return callSay(Mira.line('call.clockout', s), { big: hms(x.ms), info: 'IN SINCE ' + x.since, acts: clBtn('out', 'CLOCK OUT', 1) + clBtn('still', 'STILL HERE') });
   if (k === 'len') return callSay(Mira.line('call.len', s), { big: x.hours + ' H', info: x.when, acts: clBtn('copy', 'COPY HOURS', 1) + clBtn('later', 'LATER') });
   if (k === 'study') return callSay(Mira.line('call.study', s), { title: unesc(x.title), info: x.when, acts: clBtn('go', 'CASTLE', 1) + clBtn('later', 'LATER') });
+  if (k === 'pow') return callSay(Mira.line('call.pow', s), { big: x.cm + ' CM', title: unesc(x.name), info: x.when, acts: clBtn('go', 'SNOW REPORT', 1) + clBtn('later', 'LATER') });
   if (k === 'gym') return callSay(Mira.line('nudge.gym', s), { title: unesc(x.label), acts: clBtn('go', 'GYM', 1) + clBtn('skip', 'SKIP TODAY') });
   if (k === 'week') return callSay(Mira.line('call.week', s), { title: 'Next week', info: x.n ? `${x.n} TASK${x.n === 1 ? '' : 'S'} SO FAR` : 'NOTHING PLANNED YET', acts: clBtn('plan', 'PLAN IT', 1) + clBtn('later', 'LATER') });
   if (k === 'checkin') return callSay(Mira.line('checkin.open', s), { info: `${x.tasks.length} STILL OPEN`, list: callList(), acts: clBtn('finish', 'THAT\'S ALL') });
@@ -7407,6 +7487,7 @@ function callDo(b) {
   if (k === 'clockout') { if (a === 'out') { callClose(); APP.act('clock-out'); return; } const m = clMem(); delete m.done[x.key]; m.snooze[x.key] = Date.now() + 60 * 60e3; clSave(m); return callBye('call.clockout.still'); }
   if (k === 'len') { if (a === 'copy') { APP.act('copy-submit'); return callBye('call.len.done'); } const m = clMem(); delete m.done[x.key]; m.snooze[x.key] = Date.now() + CALL_AGAIN.len * 60e3; clSave(m); return callBye('call.later'); }
   if (k === 'study') { if (a === 'go') return callGo('castle|cDue'); return callBye('call.later'); }
+  if (k === 'pow') { if (a === 'go') return callGo('chalet|cSnow'); return callBye('call.later'); }
   if (k === 'gym') { try { localStorage.setItem('daybook_nudge', x.key.slice(2)); } catch (e) {} if (a === 'go') return callGo('gym|cSess'); return callBye('call.skip'); }
   if (k === 'week') { if (a === 'plan') { callClose(); planOpen(x.mon); return; } const m = clMem(); delete m.done[x.key]; m.snooze[x.key] = Date.now() + CALL_AGAIN.week * 60e3; clSave(m); return callBye('call.later'); }
 }
@@ -7509,18 +7590,19 @@ const GCARD = { add: ['gAdd', 'Quick add', 'SYS.INPUT'], prog: ['gProg', 'Progre
 let gOpen = null;
 function openGlobal(k) { if (!GCARD[k]) return; if (!S.sheet || gOpen !== k) APP.sfx('open'); gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
 /* a room's sheet shows one card at a time; tabs switch between them */
-const TABS = { apartment: [['cToday', 'TODAY'], ['cNotes', 'NOTES'], ['cDecide', 'DECIDE'], ['cCareer', 'CAREER']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cBench', 'TESTS'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY'], ['cWtask', 'TASKS']], chalet: [['cList', 'LIST'], ['cMeals', 'MEALS'], ['cShakes', 'SHAKES'], ['cCardio', 'CARDIO']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'CURRENT'], ['cShelf', 'ALL COURSES']] };
+const TABS = { apartment: [['cToday', 'TODAY'], ['cNotes', 'NOTES'], ['cDecide', 'DECIDE'], ['cCareer', 'CAREER']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cMeals', 'FUEL', ['cList', 'cShakes']], ['cCardio', 'CARDIO'], ['cBench', 'TESTS'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY'], ['cWtask', 'TASKS']], chalet: [['cSnow', 'SNOW'], ['cFilms', 'FILMS'], ['cGear', 'GEAR'], ['cDays', 'DAYS']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'CURRENT'], ['cShelf', 'ALL COURSES']] };
 /* a tab can carry a count (what's left, what's waiting) */
 const tabN = {};
 function tabCount(id, n) { if (tabN[id] === n) return; tabN[id] = n; if (S.sheet && curCard) paintTabs(curCard); }
-const paintTabs = id => { const T = TABS[room.id] || []; setHTML('#shTabs', T.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === id}" aria-controls="${k}">${l}${tabN[k] ? `<i class="tn">${tabN[k]}</i>` : ''}</button>`).join('')); };
+const tabOf = (T, id) => T.find(t => t[0] === id || (t[2] && t[2].includes(id)));
+const paintTabs = id => { const T = TABS[room.id] || [], top = (tabOf(T, id) || [])[0]; setHTML('#shTabs', T.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === top}" aria-controls="${k}">${l}${tabN[k] ? `<i class="tn">${tabN[k]}</i>` : ''}</button>`).join('')); };
 let curCard = null;
 function showCard(id) {
   if (id !== curCard) blurIn('#sheet');
-  const T = TABS[room.id] || []; if (!T.some(t => t[0] === id)) id = T.length ? T[0][0] : null; curCard = id;
+  const T = TABS[room.id] || []; if (!tabOf(T, id)) id = T.length ? T[0][0] : null; curCard = id;
   ROOT.querySelectorAll('#sheet .card[data-r]').forEach(c => c.classList.toggle('cur', c.id === id));
   paintTabs(id);
-  const i = T.findIndex(t => t[0] === id); setText('#shPage', i < 0 ? '' : `${String(i + 1).padStart(2, '0')}/${String(T.length).padStart(2, '0')}`);
+  const i = T.indexOf(tabOf(T, id)); setText('#shPage', i < 0 ? '' : `${String(i + 1).padStart(2, '0')}/${String(T.length).padStart(2, '0')}`);
   const sc = $('#sheetScroll'); if (sc) sc.scrollTop = 0;
 }
 function openSheet(id) {
@@ -7557,7 +7639,7 @@ function refreshHome() {
   setText('#tSum', [HOME.left ? `${HOME.left} LEFT` : 'TASKS DONE', HOME.slip ? `${HOME.slip} TO DECIDE` : '', HOME.studyAt ? 'STUDYING' : ''].filter(Boolean).join(' / '));
   /* a running study clock shows on the School pin too */
   const lv = $('#icons [data-lk=school]'); if (lv) lv.hidden = !HOME.studyAt;
-  for (const e of iconEls) setText2(e.sm, e.o.r + HOME.attrs[e.o.attr].val);
+  for (const e of iconEls) setText2(e.sm, e.o.r + (e.o.val ? e.o.val() : HOME.attrs[e.o.attr].val));
   updateSel();
 }
 const setText2 = (el, t) => { if (el.textContent !== t) el.textContent = t; };
@@ -7742,13 +7824,12 @@ const spark = v => { if (v.length < 2) return '<svg viewBox="0 0 72 24" aria-hid
 let gymDay = null, gymSwap = false;
 /* the chalet: the meals card shows this week's picks, the book by category, or one recipe in full */
 let chCat = 'This week', chRecipe = null;
-function refreshChalet() {
-  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['fgroc', 'fpick', 'fopen', 'fshake', 'fskip', 'fcat', 'fsnack'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
+/* p35: Fuel and Cardio live in the gym now. refreshGym calls this; it hands focus back itself */
+function refreshFuel() {
   const F = APP.fuel(), sk = F.shakes.filter(x => x.on).length, skD = F.shakes.filter(x => !x.skip).length;   /* a skipped gainer isn't due */
-  /* the panel: three bars */
-  setText('#chN', F.date); setBar($('#bK1'), skD ? sk / skD : 1); setText('#vK1', `${sk}/${skD}`);
-  setBar($('#bK2'), F.all ? F.done / F.all : 0); setText('#vK2', F.all ? `${F.done}/${F.all}` : '-');
-  setBar($('#bK3'), Math.min(1, F.cardio.min / F.cardio.goal)); setText('#vK3', String(F.cardio.min));
+  /* MEALS, LIST and SHAKES share the FUEL tab: each card leads with the three */
+  const subs = [['cMeals', 'MEALS'], ['cList', 'LIST'], ['cShakes', 'SHAKES']];
+  ROOT.querySelectorAll('.fsub').forEach(el => { const me = el.closest('.card').id, h = subs.map(([k, l]) => `<button class="rbtn${k === me ? '' : ' ol'}" data-fsub="${k}" aria-pressed="${k === me}">${l}${k === 'cList' && F.all ? ` ${F.done}/${F.all}` : k === 'cShakes' ? ` ${sk}/${skD}` : ''}</button>`).join(''); if (el._h !== h) { el._h = h; el.innerHTML = h; } });
   /* the list, by aisle, ticked here exactly as on the List tab */
   setText('#flN', F.all ? `${F.done}/${F.all} IN THE CART` : F.book ? 'NOTHING PICKED' : 'OPENING THE BOOK');
   setRows('#flRows', F.list.length ? F.list.map(sec => `<div class="gsec">${sec.sec.toUpperCase()}</div>` + sec.items.map(i => `<button class="git${i.on ? ' on' : ''}" data-fgroc="${i.id}" aria-pressed="${i.on}"><i>✓</i><b>${i.n}</b><em>${i.q}</em></button>`).join('')).join('') : noneRow(F.book ? 'Pick meals in MEALS and what they need shows up here.' : 'Opening the book.'));
@@ -7781,11 +7862,47 @@ function refreshChalet() {
   $('#fcWk').setAttribute('aria-label', `This week: ${F.cardio.min} of ${F.cardio.goal} minutes`);
   if (!typing('#fcForm')) setHTML('#fcForm', `<b>LOG CARDIO</b><form class="cdf" data-fcardio="1"><div class="seg2">${F.cardio.types.map(t => `<button type="button" class="rbtn${t === F.cardio.type ? '' : ' ol'}" data-ftype="${t}" aria-pressed="${t === F.cardio.type}">${t.toUpperCase()}</button>`).join('')}</div><input class="hin" id="fcType" name="type" maxlength="24" autocapitalize="words" placeholder="SOMETHING ELSE" aria-label="Another kind of cardio"><div class="cdn"><input class="hin" name="min" type="number" inputmode="numeric" min="1" max="600" step="1" placeholder="MINUTES" aria-label="Minutes"><input class="hin" name="dist" type="number" inputmode="decimal" min="0" step="0.1" placeholder="KM" aria-label="Distance in km, if any"><button class="rbtn" type="submit">LOG</button></div></form>`);
   setRows('#fcRows', F.cardio.recent.map(l => `<div class="clg"><b>${l.type} · ${l.min} MIN${l.dist ? ` · ${l.dist} KM` : ''}</b><em>${l.when.toUpperCase()}</em></div>`).join(''));
+  const tag = k => tagEls.find(g => g.h.key === k), say = (g, t) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, t); m.hidden = !t; };
+  say(tag('shaker'), `${sk}/${skD}`); say(tag('rope'), `${F.cardio.min} MIN`);
+}
+
+/* p35: the chalet is a ski lodge. The snow sheet on the fridge, the films on the TV, the gear catalogue on the stand, the
+   season on the lift ticket. His mountains are his to pick (synced, never in the code) */
+let skPick = false, skMt = null;
+const DOW2 = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+const snowRow = m => `<div class="snw"><div class="snh"><b>${m.name.toUpperCase()}</b><small>${m.region.toUpperCase()} · ${m.base}-${m.top} M</small><a href="${m.site}" target="_blank" rel="noopener noreferrer">RESORT REPORT ›</a></div>`
+  + (m.snow ? `<div class="snb"><div class="${m.snow.f24 >= 10 ? 'hot' : ''}"><b>${m.snow.f24}</b><span>CM NEW · 24H</span></div><div><b>${m.snow.f72}</b><span>CM · 72H</span></div><div class="${m.snow.n48 >= 15 ? 'hot' : ''}"><b>${m.snow.n48}</b><span>CM COMING · 48H</span></div></div>`
+    + `<div class="snd" role="img" aria-label="Snowfall, the next 7 days: ${m.snow.days.map(d => d.sn + ' cm').join(', ')}">${m.snow.days.map(d => `<i><em style="height:${Math.min(40, d.sn * 2)}px"></em><b>${d.sn}</b>${DOW2[new Date(d.d + 'T12:00').getDay()]}</i>`).join('')}</div>`
+    + `<div class="snm">${m.snow.t}°C mid-mountain now · wind ${m.snow.w} km/h · freezing level ${m.snow.fz} m</div>` : `<div class="snm">Getting the forecast.</div>`) + `</div>`;
+const feedRows = (L, none) => L.length ? L.map(x => `<a class="fdr" href="${x.l}" target="_blank" rel="noopener noreferrer">${x.img ? `<img src="${x.img}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="fdi"></span>'}<div><b>${x.t}</b><small>${x.src.toUpperCase()}${x.when ? ' · ' + x.when : ''}</small></div></a>`).join('') : noneRow(none);
+function refreshChalet() {
+  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['skpick', 'skmt', 'skdel', 'skchg'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
+  const K = APP.ski(), has = K.mts.filter(m => m.snow), top = k => has.slice().sort((a, b) => b.snow[k] - a.snow[k])[0], b24 = top('f24'), b48 = top('n48');
+  if (!K.mts.some(m => m.id === skMt)) skMt = K.mts.length ? K.mts[0].id : '';
+  /* the panel: the most new snow, the most coming, the season */
+  setText('#chN', !K.mts.length ? 'PICK YOUR MOUNTAINS' : b24 ? (b24.snow.f24 ? b24.name.toUpperCase() : 'NO NEW SNOW') : 'GETTING THE SNOW');
+  setBar($('#bK1'), b24 ? Math.min(1, b24.snow.f24 / 30) : 0); setText('#vK1', b24 ? `${b24.snow.f24} CM` : '-');
+  setBar($('#bK2'), b48 ? Math.min(1, b48.snow.n48 / 30) : 0); setText('#vK2', b48 ? `${b48.snow.n48} CM` : '-');
+  setBar($('#bK3'), Math.min(1, K.season / 30)); setText('#vK3', String(K.season));
+  /* SNOW: each mountain, then picking them */
+  setText('#snN', K.snowWhen ? `UPDATED ${K.snowWhen}` : K.mts.length ? 'LOADING' : '');
+  setRows('#snRows', K.mts.length ? K.mts.map(snowRow).join('') : noneRow('Pick your mountains below and their snow shows here.'));
+  const open = skPick || !K.mts.length, regions = [...new Set(K.picker.map(p => p.region))];
+  setHTML('#snPick', open ? `<b>YOUR MOUNTAINS<em class="mi" style="float:right;font-style:normal">${K.mts.length}/${K.max}</em></b>${regions.map(r => `<div class="gsec">${r.toUpperCase()}</div><div class="mtp">${K.picker.filter(p => p.region === r).map(p => `<button class="rbtn${p.on ? '' : ' ol'}" data-skpick="${p.id}" aria-pressed="${p.on}">${p.name.toUpperCase()}</button>`).join('')}</div>`).join('')}${K.mts.length ? '<div class="acts" style="margin-top:10px"><button class="rbtn" data-skchg="0">DONE</button></div>' : ''}`
+    : `<div class="acts"><button class="rbtn ol" data-skchg="1">CHANGE MOUNTAINS</button><button class="rbtn ol" data-skref="1">REFRESH</button></div>`);
+  /* FILMS and GEAR: the newest from the feeds, each opens where it lives */
+  setText('#fiN', K.films.length ? `${K.films.length} NEW` : ''); setRows('#fiRows', feedRows(K.films, K.feedsAt ? 'Nothing new right now.' : 'Getting the latest films.'));
+  setText('#geN', K.gear.length ? `${K.gear.length} NEW` : ''); setRows('#geRows', feedRows(K.gear, K.feedsAt ? 'Nothing new right now.' : 'Getting the latest gear.'));
+  /* DAYS: the season, a log box, the days */
+  setText('#sdN', `SINCE ${K.seasonFrom}`); setText('#sdBig', String(K.season)); setText('#sdMeta', K.season === 1 ? 'DAY ON SNOW THIS SEASON' : 'DAYS ON SNOW THIS SEASON');
+  setHTML('#sdPer', K.mts.filter(m => m.days).map(m => `<span>${m.name.toUpperCase()} ${m.days}</span>`).join(''));
+  if (!typing('#sdForm')) setHTML('#sdForm', `<b>LOG A DAY${K.todayOn ? ' <em class="mi" style="font-style:normal">TODAY ✓</em>' : ''}</b><form class="cdf" data-skday="1">${K.mts.length ? `<div class="seg2">${K.mts.map(m => `<button type="button" class="rbtn${m.id === skMt ? '' : ' ol'}" data-skmt="${m.id}" aria-pressed="${m.id === skMt}">${m.name.toUpperCase()}</button>`).join('')}</div>` : ''}<div class="cdn"><input class="hin" name="d" type="date" value="${K.today}" max="${K.today}" aria-label="The day"><input class="hin" name="note" maxlength="80" autocomplete="off" placeholder="NOTE (OPTIONAL)" aria-label="A note"><button class="rbtn">LOG</button></div></form>`);
+  setRows('#sdRows', K.days.length ? K.days.map(x => `<div class="sdr"><b>${x.mName.toUpperCase()}${x.note ? ` · ${x.note}` : ''}</b><em>${x.when}</em><button data-skdel="${x.id}" aria-label="Remove ${x.mName}, ${x.when}">×</button></div>`).join('') : noneRow('No days yet this season.'));
   /* the tags in the room */
   const tag = k => tagEls.find(g => g.h.key === k), say = (g, t) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, t); m.hidden = !t; };
-  say(tag('fridge'), F.all ? `${F.done}/${F.all}` : ''); say(tag('blender'), `${sk}/${skD}`); say(tag('ticket'), `${F.cardio.min} MIN`); say(tag('book'), F.picked.length ? String(F.picked.length) : '');
-  /* the fridge list, the cookbook and the ticket in the room follow, repainted only when what they show has changed */
-  const sig = chaletSig(F); if (room.id === 'chalet' && room.paint && sig !== CH_SIG) { CH_SIG = sig; room.paint(F); }
+  say(tag('fridge'), b24 ? `${b24.snow.f24} CM` : ''); say(tag('tv'), K.films.length ? String(K.films.length) : ''); say(tag('book'), K.gear.length ? String(K.gear.length) : ''); say(tag('ticket'), `${K.season} DAY${K.season === 1 ? '' : 'S'}`);
+  /* the snow sheet, the TV, the catalogue and the ticket follow, repainted only when what they show has changed */
+  const sig = chaletSig(K); if (room.id === 'chalet' && room.paint && sig !== CH_SIG) { CH_SIG = sig; room.paint(K); }
   if (fk && !fo.isConnected) { const to = [...ROOT.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv) || $('#btnClose'); if (to) to.focus({ preventScroll: true }); }
 }
 /* the castle: School in place. The folder is what's due, the hourglass the study clock and the week's hours, the
@@ -7901,7 +8018,7 @@ function castleInit() {
 const gymOpen = new Set();
 function refreshGym() {
   /* rows are rewritten below: note what had focus, to hand it back */
-  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['gset', 'gday', 'gdone', 'gex'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
+  const fo = ROOT.activeElement, fk = fo && fo.dataset ? ['gset', 'gday', 'gdone', 'gex', 'fgroc', 'fpick', 'fopen', 'fshake', 'fskip', 'fcat', 'fsnack', 'fsub'].find(k => fo.dataset[k] !== undefined) : null, fv = fk && fo.dataset[fk];
   const T = APP.train(), V = gymDay ? APP.train(gymDay) : T;
   const said = X => X.prog ? `${X.prog.done}/${X.prog.total} SETS` : X.s === 'REST' ? 'REST DAY' : X.done ? 'DONE' : 'NOT DONE YET';
   const n = said(T), p = T.prog ? T.prog.p : T.done ? 1 : 0;
@@ -7927,6 +8044,7 @@ function refreshGym() {
   setHTML('#bnRows', T.bench.map(b => `<div class="bn"><div><b>${b.label}</b><small>${b.n ? `PB ${b.pb} ${b.unit} / ${b.n} LOGGED` : 'NO LOGS YET'}</small></div>${spark(b.recent)}<em>${b.last ?? '-'}<small>${b.unit}</small></em><form class="bnf" data-gbench="${b.k}"><input type="number" inputmode="numeric" min="1" step="1" placeholder="NEW ${b.unit}" aria-label="Log ${b.label.toLowerCase()} in ${b.unit.toLowerCase()}"><button class="rbtn" type="submit">LOG</button></form></div>`).join(''));
   const tag = k => tagEls.find(g => g.h.key === k), say = (g, s) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, s); m.hidden = !s; };
   say(tag('board'), T.prog ? `${T.prog.done}/${T.prog.total}` : ''); say(tag('split'), `${T.sDone}/${T.plan}`);
+  refreshFuel();
   /* the whiteboard and the chart in the room follow, repainted only when what they show has changed */
   const sig = gymSig(T); if (room.id === 'gym' && room.paint && sig !== GYM_SIG) { GYM_SIG = sig; room.paint(T); }
   restSeen = -1;

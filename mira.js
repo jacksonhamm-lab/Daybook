@@ -82,6 +82,7 @@
     'call.len.done': ["Copied. Paste it to him and you're done.", "Done. Send it before you forget."],
     'call.later': ["Okay. I'll call back later.", "Later, then. I'll be around."],
     'call.study': ["Something's due for school. Don't leave it to the last minute.", "School thing coming up. Just so you know."],
+    'call.pow': ["Fresh snow up at the mountain. Thought you'd want to know.", "It's dumping up there. Just saying."],
     'call.skip': ["Fine. Rest up. Tomorrow, though.", "A rest day it is. Just this once."],
     'call.week': ["It's Sunday. Let's plan your week.", "New week tomorrow. Want to set it up with me?"],
   };
@@ -256,6 +257,8 @@
     'call.later.2': "じゃあ、あとでね。近くにいるから。",
     'call.study.1': "学校の締め切りがあるよ。ギリギリにしないでね。",
     'call.study.2': "もうすぐ学校の締め切りだよ。一応ね。",
+    'call.pow.1': "山に新雪だよ。知りたいかなと思って。",
+    'call.pow.2': "山、すごい雪だって。一応ね。",
     'call.skip.1': "いいよ、休んで。でも明日はね。",
     'call.skip.2': "今日は休みの日ね。今回だけだよ。",
     'call.week.1': "日曜日だよ。来週の計画を立てよう。",

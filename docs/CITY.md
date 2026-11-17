@@ -373,6 +373,33 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p35, 2026-11-16): the chalet is a ski lodge; Fuel and Cardio move into the gym.** His note: the chalet "seems
+  very useless", everything there "could be incorporated into gym", and he'd like it to be about skiing: "new movie releases,
+  new gear, snow reports".
+  - **Gym:** tabs SESSION, SPLIT, FUEL, CARDIO, TESTS, REST. FUEL is one tab over three cards (MEALS, LIST, SHAKES): a tab's
+    third item lists the cards it also stands for (`tabOf`), and each of the three leads with `.fsub` buttons. Two new tags:
+    the shaker by the board (FUEL, key T) and the rope coiled under the pull-up bar (CARDIO, key Y). `refreshFuel()` is the
+    old card half of refreshChalet, called from refreshGym.
+  - **Lodge:** SNOW (the fridge's sheet), FILMS (a TV on the island where the blender was), GEAR (the stand's catalogue),
+    DAYS (the lift ticket: the season). The atlas's `tv` cell lives in the 100 px strip under the book, drawn at 320 x 180 and
+    scaled in. Panel: NEW 24H, NEXT 48H, DAYS.
+  - **His mountains** are picked in SNOW from `RESORTS` (index.html: 28 across western Canada and the US, id, name, region,
+    lat, lon, base, top, site) and kept in synced `S.ski.mts` (stamped `skiU`), never in the code. Up to 6.
+  - **Snow:** the browser asks Open-Meteo (no key) for every mountain at once, halfway up: new snow 24/72 h, 48 h ahead,
+    7 days, temp, wind, freezing level. Cached 30 min (`daybook_snow`). Resort reports aren't a free feed: each row links
+    to the resort's site.
+  - **Films and gear:** `/api/ski-feeds` in the worker reads 14 public feeds (YouTube long-form playlists, POWDER, SKI Mag,
+    Outside), parses them with regexes, keeps 3 h in the edge cache and skips a feed that fails. The app caches 3 h
+    (`daybook_skifeeds`), escapes every field and takes https links only.
+  - **Ski days:** `S.skiDays` by id, merged like shifts (tomb `skiDays:<id>`). The season runs from October 1.
+  - **Her powder call** (`k: 'pow'`): 15 cm in the last 24 h or 20 in the next 48 at one of his mountains, 07:00 to 21:00,
+    once a day per mountain. SNOW REPORT flies to the lodge. Lines `call.pow` (no voice clips yet: needs his go to make them).
+  - The icon: Ski, CHALET · SNOW, its line the most new snow; Train's is GYM · LIFTS · FUEL.
+  - Tests: t85 (both sizes). t50 is the old chalet's and retired.
+- **Built (p34, 2026-11-16): the weighted rope.** Thursday's HIIT slot is a listed session (`program.json` "hiit", `listed()`
+  in index.html): rope intervals, a full-body circuit, rope abs; ticking it through finishes the day, cardio logged still
+  does. Rope between ab sets on lifting days; chest work with a stretch (ottoman bridge press, fly into squeeze press,
+  push-up drop sets, deficit push-ups). Test t84.
 - **Built (p33, 2026-11-16): the city view, in the city.** His note: "tiny cars, big cars and bigger flying cars all in
   the same perspective... buildings that aren't even really buildings... I'd like to feel like I'm in the city more". He
   picked the lower camera.
@@ -757,5 +784,5 @@ Technical state only. Updated 2026-11-06.
   - `src/worker.js` comments still mention Cloudflare Access and the old `.vrm` upload command.
 - **Next step:**
   1. p22 is live (he checked it on his iPhone, Nov 11). p23 to p25 live (Nov 14, he checked them). p26 (Mira M2) live (Nov 14).
-     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) live (Nov 15, main e89db3d). p30 (one week view, gainer skip, boxes save) live (Nov 16, main 51fb94a). p31 (HIDE in her close-up) live (Nov 16). p32 (the ringing call card) live (Nov 16). p33 (the city view, in the city) built on city-p33, waiting for his go.
+     p27 (Mira M3) live (Nov 14). p28 (Mira M4) live (Nov 15). p29 (plan board, her calls, Tell above the keyboard, ambience v2) live (Nov 15, main e89db3d). p30 (one week view, gainer skip, boxes save) live (Nov 16, main 51fb94a). p31 (HIDE in her close-up) live (Nov 16). p32 (the ringing call card) live (Nov 16). p33 (the city view, in the city) live (Nov 16, main 21e1f04). p34 (the rope) and p35 (the ski lodge) built, waiting for his go.
   2. Tuning from what he hears: levels, a cue, a place's ambience. The lab first, then sound.js and t66.

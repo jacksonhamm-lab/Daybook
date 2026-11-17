@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="sound.js?v=p29"></script>
-<script src="mira.js?v=p34"></script>
+<script src="mira.js?v=p35"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -27,9 +27,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p34';
+  window.DAYBOOK_BUILD = 'p35';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p34'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p35'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -37,7 +37,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p34').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p35').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -247,6 +247,7 @@ const defaults = () => ({
   tasks: [], shifts: {}, workouts: {}, jobs: [], clock: null, study: {}, courses: [], studyClock: null, school: null,
   template: SPLIT.slice(),
   extra: {},
+  ski: { mts: [] }, skiDays: {},
   settings: { name: 'Jackson', rate: 20, extraHours: 0, payCutoff: 1, paySubmitDays: 4, remindSubmit: true, nag: 240, dex: {}, hoursGoal: 0, appGoal: 5, payAnchor: '2026-09-25', payCycle: 14 },
   ui: {},
 });
@@ -257,7 +258,8 @@ function load() {
       if (!raw) continue;
       const d = defaults();
       const s = { ...d, ...raw, settings: { ...d.settings, ...raw.settings }, ui: { ...d.ui, ...raw.ui } };
-      ['tomb', 'extra', 'shakes', 'meals', 'grocery', 'snacks'].forEach(k => { s[k] = s[k] || {}; });   // older backups lack newer keys
+      ['tomb', 'extra', 'shakes', 'meals', 'grocery', 'snacks', 'skiDays'].forEach(k => { s[k] = s[k] || {}; });
+      s.ski = s.ski && Array.isArray(s.ski.mts) ? s.ski : { mts: [] };   // older backups lack newer keys
       s.study = s.study || {}; s.courses = s.courses || [];
       s.notes = s.notes || []; s.tasks = s.tasks || []; s.jobs = s.jobs || []; s.shifts = s.shifts || {}; s.workouts = s.workouts || {};
       return s;
@@ -310,7 +312,7 @@ function stampChanges() {
     (S[k] || []).forEach(x => { const p = was.get(x.id); if (!p || !same(p, x)) x.u = now; was.delete(x.id); });
     was.forEach((v, id) => { S.tomb[id] = now; });
   });
-  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks', 'study'].forEach(k => {
+  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks', 'study', 'skiDays'].forEach(k => {
     const p = prev[k] || {};
     Object.keys(S[k] || {}).forEach(d => { if (!p[d] || !same(p[d], S[k][d])) S[k][d].u = now; });
     Object.keys(p).forEach(d => { if (!S[k][d]) S.tomb[k + ':' + d] = now; });
@@ -320,13 +322,14 @@ function stampChanges() {
   if (JSON.stringify(prev.clock || null) !== JSON.stringify(S.clock || null)) S.clockU = now;
   if (JSON.stringify(prev.studyClock || null) !== JSON.stringify(S.studyClock || null)) S.studyClockU = now;
   if (JSON.stringify(prev.school || null) !== JSON.stringify(S.school || null)) S.schoolU = now;
+  if (JSON.stringify(prev.ski || null) !== JSON.stringify(S.ski || null)) S.skiU = now;
   LAST = JSON.parse(JSON.stringify(S));
 }
 // Every top-level key this version reads or writes (defaults(), load() and every S.<key>).
 // A newer version can add keys; mergeState passes them through untouched. Add new keys here.
 const KNOWN = new Set(['tasks', 'shifts', 'workouts', 'jobs', 'notes', 'clock', 'template', 'extra', 'settings', 'ui', 'tomb',
   'shakes', 'meals', 'grocery', 'snacks', 'since', 'seen', 'clearDays', 'submitted', 'settingsU', 'templateU', 'clockU',
-  'study', 'courses', 'studyClock', 'studyClockU', 'school', 'schoolU']);
+  'study', 'courses', 'studyClock', 'studyClockU', 'school', 'schoolU', 'ski', 'skiU', 'skiDays']);
 function mergeState(local, remote) {
   if (!remote) return local;
   const out = JSON.parse(JSON.stringify(local));
@@ -340,7 +343,7 @@ function mergeState(local, remote) {
     });
     out[k] = [...m.values()].filter(x => !(out.tomb[x.id] > (x.u || 0)));
   });
-  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks', 'study'].forEach(k => {
+  ['shifts', 'workouts', 'extra', 'shakes', 'meals', 'grocery', 'snacks', 'study', 'skiDays'].forEach(k => {
     out[k] = out[k] || {};
     Object.entries(remote[k] || {}).forEach(([d, r]) => {
       const l = out[k][d];
@@ -354,6 +357,7 @@ function mergeState(local, remote) {
   if ((remote.clockU || 0) > (out.clockU || 0)) { out.clock = remote.clock || null; out.clockU = remote.clockU; }   // clocked in on the other device
   if ((remote.studyClockU || 0) > (out.studyClockU || 0)) { out.studyClock = remote.studyClock || null; out.studyClockU = remote.studyClockU; }
   if ((remote.schoolU || 0) > (out.schoolU || 0)) { out.school = remote.school || null; out.schoolU = remote.schoolU; }
+  if ((remote.skiU || 0) > (out.skiU || 0) && remote.ski && Array.isArray(remote.ski.mts)) { out.ski = remote.ski; out.skiU = remote.skiU; }
   if (remote.since && (!out.since || remote.since < out.since)) out.since = remote.since;
   const cutoff = Date.now() - 30 * 864e5;
   Object.keys(out.tomb).forEach(k => { if (out.tomb[k] < cutoff) delete out.tomb[k]; });
@@ -753,6 +757,86 @@ function migrateProgram() {
   const old = S.template.slice(), t = today();
   for (let d = addDays(parse(S.since || t), -7); iso(d) < t; d = addDays(d, 1)) { const k = iso(d), o = S.workouts[k] || {}; if (!o.s) S.workouts[k] = { ...o, s: old[dowIdx(k)] || 'REST' }; }
   S.template = SPLIT.slice(); S.settings.programV = PROGRAM_V; save();
+}
+
+/* ---------- skiing (p35): the chalet is a ski lodge. His mountains are picked from this list and kept in his synced
+   data, never in the code. Their snow comes from Open-Meteo (the same free source as the sky), films and gear from the
+   worker's /api/ski-feeds, and his days on snow sync like shifts ---------- */
+// [id, name, region, lat, lon, base m, top m, site]. Snow is asked for halfway up.
+const RESORTS = [
+  ['lake-louise', 'Lake Louise', 'Alberta', 51.4419, -116.1622, 1646, 2637, 'https://www.skilouise.com/'],
+  ['sunshine', 'Sunshine Village', 'Alberta', 51.0786, -115.7731, 1660, 2730, 'https://www.skibanff.com/'],
+  ['norquay', 'Mt Norquay', 'Alberta', 51.2036, -115.5978, 1630, 2133, 'https://banffnorquay.com/'],
+  ['castle', 'Castle Mountain', 'Alberta', 49.3186, -114.4122, 1410, 2273, 'https://www.skicastle.ca/'],
+  ['nakiska', 'Nakiska', 'Alberta', 50.9426, -115.1512, 1525, 2258, 'https://www.skinakiska.com/'],
+  ['marmot', 'Marmot Basin', 'Alberta', 52.8007, -118.0838, 1698, 2612, 'https://www.skimarmot.com/'],
+  ['kicking-horse', 'Kicking Horse', 'British Columbia', 51.2977, -117.0480, 1190, 2450, 'https://kickinghorseresort.com/'],
+  ['revelstoke', 'Revelstoke', 'British Columbia', 50.9581, -118.1631, 512, 2225, 'https://www.revelstokemountainresort.com/'],
+  ['fernie', 'Fernie', 'British Columbia', 49.4627, -115.0873, 1068, 2134, 'https://skifernie.com/'],
+  ['panorama', 'Panorama', 'British Columbia', 50.4605, -116.2381, 1150, 2365, 'https://www.panoramaresort.com/'],
+  ['kimberley', 'Kimberley', 'British Columbia', 49.6866, -115.9980, 1280, 2082, 'https://skikimberley.com/'],
+  ['red', 'RED Mountain', 'British Columbia', 49.1036, -117.8200, 1185, 2075, 'https://www.redresort.com/'],
+  ['whitewater', 'Whitewater', 'British Columbia', 49.4436, -117.1450, 1640, 2044, 'https://www.skiwhitewater.com/'],
+  ['big-white', 'Big White', 'British Columbia', 49.7225, -118.9290, 1508, 2319, 'https://www.bigwhite.com/'],
+  ['sun-peaks', 'Sun Peaks', 'British Columbia', 50.8836, -119.8890, 1255, 2152, 'https://www.sunpeaksresort.com/'],
+  ['silver-star', 'SilverStar', 'British Columbia', 50.3600, -119.0600, 1155, 1915, 'https://www.skisilverstar.com/'],
+  ['whistler', 'Whistler Blackcomb', 'British Columbia', 50.1150, -122.9486, 675, 2284, 'https://www.whistlerblackcomb.com/'],
+  ['tremblant', 'Tremblant', 'Quebec', 46.2097, -74.5850, 265, 875, 'https://www.tremblant.ca/'],
+  ['jackson-hole', 'Jackson Hole', 'Wyoming', 43.5875, -110.8279, 1924, 3185, 'https://www.jacksonhole.com/'],
+  ['big-sky', 'Big Sky', 'Montana', 45.2857, -111.4012, 2072, 3403, 'https://bigskyresort.com/'],
+  ['whitefish', 'Whitefish', 'Montana', 48.4820, -114.3536, 1360, 2084, 'https://skiwhitefish.com/'],
+  ['alta', 'Alta', 'Utah', 40.5884, -111.6386, 2600, 3216, 'https://www.alta.com/'],
+  ['snowbird', 'Snowbird', 'Utah', 40.5830, -111.6556, 2365, 3353, 'https://www.snowbird.com/'],
+  ['vail', 'Vail', 'Colorado', 39.6061, -106.3550, 2475, 3527, 'https://www.vail.com/'],
+  ['mammoth', 'Mammoth', 'California', 37.6308, -119.0326, 2424, 3369, 'https://www.mammothmountain.com/'],
+  ['palisades', 'Palisades Tahoe', 'California', 39.1969, -120.2358, 1890, 2750, 'https://www.palisadestahoe.com/'],
+  ['mt-baker', 'Mt Baker', 'Washington', 48.8570, -121.6650, 1070, 1540, 'https://www.mtbaker.us/'],
+  ['stowe', 'Stowe', 'Vermont', 44.5303, -72.7814, 390, 1116, 'https://www.stowe.com/'],
+];
+const SKI_MAX = 6, SNOW_KEY = 'daybook_snow', FEEDS_KEY = 'daybook_skifeeds';
+const resortBy = id => RESORTS.find(r => r[0] === id);
+const skiMts = () => ((S.ski && S.ski.mts) || []).map(resortBy).filter(Boolean);
+const skiKey = () => skiMts().map(r => r[0]).join(',');
+let SNOW = readLS(SNOW_KEY, null), FEEDS = readLS(FEEDS_KEY, null), snowAsk = 0, feedsAsk = 0;
+// the season runs from October 1
+const seasonStart = d => { const y = +d.slice(0, 4), m = +d.slice(5, 7); return `${m >= 10 ? y : y - 1}-10-01`; };
+// one mountain's answer: new snow (24 h, 72 h), what's coming (48 h), the conditions now, the week ahead
+function snowSum(o) {
+  if (!o || !o.hourly || !o.daily) return null;
+  const H = o.hourly, now = new Date(Date.now() + (o.utc_offset_seconds || 0) * 1000).toISOString().slice(0, 13);
+  let i0 = H.time.findIndex(t => t.slice(0, 13) === now); if (i0 < 0) i0 = H.time.length - 1;
+  const sum = (a, b) => { let v = 0; for (let i = Math.max(0, a); i <= Math.min(H.snowfall.length - 1, b); i++) v += +H.snowfall[i] || 0; return Math.round(v); };
+  const D = o.daily, days = D.time.map((d, i) => ({ d, sn: Math.round(+D.snowfall_sum[i] || 0), hi: Math.round(D.temperature_2m_max[i]), lo: Math.round(D.temperature_2m_min[i]), w: Math.round(D.wind_speed_10m_max[i]), c: D.weather_code[i] }));
+  const td = H.time[i0].slice(0, 10);
+  return { f24: sum(i0 - 23, i0), f72: sum(i0 - 71, i0), n48: sum(i0 + 1, i0 + 48), t: Math.round(H.temperature_2m[i0]), w: Math.round(H.wind_speed_10m[i0]), fz: Math.round((H.freezing_level_height[i0] || 0) / 10) * 10, days: days.filter(x => x.d >= td).slice(0, 7) };
+}
+async function loadSnow(force) {
+  const M = skiMts(), key = skiKey(); if (!M.length) return;
+  if (!force && SNOW && SNOW.key === key && Date.now() - SNOW.t < 30 * 60e3) return;
+  if (Date.now() - snowAsk < (force ? 5e3 : 60e3)) return; snowAsk = Date.now();
+  const q = new URLSearchParams({ latitude: M.map(r => r[3]).join(','), longitude: M.map(r => r[4]).join(','), elevation: M.map(r => Math.round((r[5] + r[6]) / 2)).join(','),
+    hourly: 'snowfall,temperature_2m,freezing_level_height,wind_speed_10m', daily: 'snowfall_sum,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,weather_code',
+    past_days: '3', forecast_days: '7', timezone: 'auto' });
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?' + q, { cache: 'no-store' }); if (!r.ok) return;
+    let j = await r.json(); if (!Array.isArray(j)) j = [j];
+    SNOW = { key, t: Date.now(), at: M.map((m, i) => snowSum(j[i])) }; writeLS(SNOW_KEY, SNOW); render();
+  } catch (e) {}
+}
+async function loadFeeds(force) {
+  if (!force && FEEDS && Date.now() - FEEDS.t < 3 * 36e5) return;
+  if (Date.now() - feedsAsk < (force ? 5e3 : 120e3)) return; feedsAsk = Date.now();
+  try { const r = await fetch('api/ski-feeds', { cache: 'no-store' }); if (!r.ok) return; const j = await r.json(); if (!j || !Array.isArray(j.films)) return; FEEDS = { t: Date.now(), films: j.films, gear: j.gear || [] }; writeLS(FEEDS_KEY, FEEDS); render(); } catch (e) {}
+}
+const safeUrl = u => /^https:\/\/[^\s"'<>]+$/i.test(String(u || '')) ? String(u) : '';
+const feedItem = x => ({ t: esc(String(x.t || '').slice(0, 160)), l: esc(safeUrl(x.l)), img: esc(safeUrl(x.img)), src: esc(String(x.src || '').slice(0, 40)), when: x.d ? esc(rel(iso(new Date(x.d))).toUpperCase()) : '' });
+// her powder call: 15 cm in the last day, or 20 coming in the next two, at one of his mountains; the biggest wins
+function powNow(hour) {
+  if (hour < 7 || hour >= 21 || !SNOW || SNOW.key !== skiKey()) return null;
+  let best = null; skiMts().forEach((r, i) => { const x = SNOW.at[i]; if (!x) return;
+    const c = x.f24 >= 15 ? { id: r[0], name: r[1], cm: x.f24, when: 'IN THE LAST 24 H' } : x.n48 >= 20 ? { id: r[0], name: r[1], cm: x.n48, when: 'IN THE NEXT 48 H' } : null;
+    if (c && (!best || c.cm > best.cm)) best = c; });
+  return best;
 }
 
 /* ---------- tasks ---------- */
@@ -1713,6 +1797,34 @@ window.CityApp = {
     if (v > prevBest && prevBest) { celebrate(`New PR · ${v}`, '#ff9f0a'); miraReact('react.best'); } else island.toast('Benchmark logged', { icon: I.check, color: '#ff9f0a' });
     return true;
   },
+  // the ski lodge: his mountains and their snow, films, gear, his days on snow this season
+  ski() {
+    loadSnow(); loadFeeds();
+    const mine = skiMts(), on = new Set(mine.map(r => r[0])), sn = SNOW && SNOW.key === skiKey() ? SNOW : null, td = today(), ss = seasonStart(td);
+    const days = Object.entries(S.skiDays || {}).map(([id, x]) => ({ id, ...x })).filter(x => x && x.d).sort((a, b) => b.d.localeCompare(a.d)), season = days.filter(x => x.d >= ss);
+    return {
+      mts: mine.map((r, i) => ({ id: r[0], name: esc(r[1]), region: esc(r[2]), base: r[5], top: r[6], site: esc(r[7]), snow: sn ? sn.at[i] : null, days: season.filter(x => x.m === r[0]).length })),
+      picker: RESORTS.map(r => ({ id: r[0], name: esc(r[1]), region: esc(r[2]), on: on.has(r[0]) })), max: SKI_MAX,
+      snowAt: sn ? sn.t : 0, snowWhen: sn ? esc(rel(iso(new Date(sn.t))).toUpperCase()) : '',
+      films: ((FEEDS && FEEDS.films) || []).slice(0, 30).map(feedItem).filter(x => x.l), gear: ((FEEDS && FEEDS.gear) || []).slice(0, 30).map(feedItem).filter(x => x.l), feedsAt: FEEDS ? FEEDS.t : 0,
+      days: days.slice(0, 40).map(x => ({ id: esc(x.id), d: x.d, when: esc(short(x.d).toUpperCase()), m: esc(x.m), mName: esc((resortBy(x.m) || [0, x.m || 'Somewhere'])[1]), note: esc(x.note || '') })),
+      season: season.length, seasonFrom: esc(short(ss).toUpperCase()), todayOn: days.some(x => x.d === td), today: td, pow: powNow(new Date().getHours()),
+    };
+  },
+  skiPick(id) {
+    const r = resortBy(id); if (!r) return; const cur = (S.ski && S.ski.mts) || [];
+    if (!cur.includes(id) && cur.length >= SKI_MAX) { island.toast(`Up to ${SKI_MAX} mountains`, { icon: I.training, color: '#64d2ff' }); return; }
+    S.ski = { ...(S.ski || {}), mts: cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id] }; haptic(6); commit(); loadSnow(true);
+  },
+  skiDay(m, d, note) {
+    d = /^\d{4}-\d{2}-\d{2}$/.test(String(d || '')) ? d : today(); if (d > today()) return false;
+    if (m && !resortBy(m)) return false; const id = uid();
+    S.skiDays = S.skiDays || {}; S.skiDays[id] = { d, m: m || '', note: String(note || '').trim().slice(0, 80) }; haptic(10); sfx('tick');
+    island.toast(`Ski day logged${m ? ' · ' + resortBy(m)[1] : ''}`, { icon: I.training, color: '#64d2ff', action: { label: 'Undo', fn: () => { delete S.skiDays[id]; commit(); } } });
+    commit(); return true;
+  },
+  skiDayDel(id) { if (!S.skiDays || !S.skiDays[id]) return; withUndo('Ski day removed', () => { delete S.skiDays[id]; }); },
+  skiRefresh() { loadSnow(true); loadFeeds(true); },
   // the chalet: Fuel and Cardio in one kitchen. Today's shakes, this week's meals and the list they make, the recipe book, cardio
   fuel() {
     if (!BOOK_FRESH && !this._bookAsk) { this._bookAsk = 1; loadBook().then(() => render()).catch(() => { this._bookAsk = 0; }); }
@@ -1793,7 +1905,8 @@ window.CityApp = {
     { const p = periodFor(td); if (inSubmitWindow(p) && !(S.submitted && S.submitted[p.payday]) && hour >= 10 && hour < 20) out.push({ k: 'len', key: `l:${p.payday}|${td}`, hours: fh(periodHours(p) + estimateHours(p) + extraHours(p)), when: `TO LEN · PAID ${DOW_LONG[dowIdx(p.payday)]} ${short(p.payday)}`.toUpperCase() }); }
     { const open = tasksOn(td).filter(t => !isDone(t, td)); if (hour >= 21 && hour < 23 && open.length) out.push({ k: 'checkin', key: 'k:' + td, tasks: open.map(t => ({ id: esc(t.id), d: td, title: esc(t.title) })) }); }
     if (schoolShown() && hour >= 17 && hour < 21) { const tm = iso(addDays(parse(td), 1)), t = schoolTasks().filter(x => !x.done && (x.date === td || x.date === tm)).sort((a, b) => a.date.localeCompare(b.date))[0]; if (t) out.push({ k: 'study', key: `s:${t.id}|${td}`, title: esc(t.title), when: dueSay(t.date).toUpperCase() }); }
-    { const w = wo(td); if (hour >= 19 && hour < 21 && w.s !== 'REST' && !w.done) out.push({ k: 'gym', key: 'g:' + td, label: esc((w.s === 'HIIT' ? 'HIIT' : w.s + ' ' + sessName(w.s)).toUpperCase()) }); }
+    { const P = powNow(hour); if (P) out.push({ k: 'pow', key: `p:${P.id}|${td}`, name: esc(P.name), cm: P.cm, when: P.when }); }
+    { const w = wo(td); if (hour >= 19 && hour < 21 && w.s !== 'REST' && !w.done) out.push({ k: 'gym', key: 'g:' + td, label: esc((w.s === 'HIIT' ? sessName('HIIT') : w.s + ' ' + sessName(w.s)).toUpperCase()) }); }
     if (dow === 6 && hour >= 17 && hour < 22) { const nm = addDays(mondayOf(parse(td)), 7), left = datesOf(nm).reduce((a, d) => a + tasksOn(d).filter(t => !isDone(t, d)).length, 0); out.push({ k: 'week', key: 'w:' + td, mon: iso(nm), n: left }); }
     return out;
   },
