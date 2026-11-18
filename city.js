@@ -541,7 +541,7 @@ label.rbtn{cursor:pointer}
 #tags,#aptBox,#roomBox,#gymBox,#chBox,#scBox{transition:opacity .3s}
 #hud.close #tags,#hud.close #aptBox,#hud.close #roomBox{opacity:0;pointer-events:none}
 /* HIDE in her close-up: everything but her (a call still shows); a faint SHOW in the corner, a tap, H or Escape bring it back */
-#hud.bare>*:not(#call):not(#holo):not(#bareX){opacity:0!important;pointer-events:none!important;transition:opacity .35s!important}
+#hud.bare>*:not(#call):not(#holo):not(#bareX):not(#mcap){opacity:0!important;pointer-events:none!important;transition:opacity .35s!important}
 .hhide{margin-left:auto;width:44px;height:36px;display:grid;place-items:center;color:var(--hud-cyan)}
 .hhide svg,.bareX svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .bareX{position:absolute;top:calc(var(--st) + 10px);right:calc(var(--sr) + 10px);min-width:44px;height:44px;padding:0 12px;display:flex;align-items:center;gap:6px;font:700 11px/1 var(--hud-font);letter-spacing:.1em;color:var(--hud-text);background:rgba(0,0,0,.28);opacity:.45;transition:opacity .2s;z-index:8}
@@ -586,14 +586,20 @@ label.rbtn{cursor:pointer}
 #call.clr .hox{display:none}
 #call .hon em{font-style:normal}
 #call.clr .hon{color:var(--hud-yellow)}#call.clr .hon i{background:var(--hud-yellow)}
-#clSay{margin:5px 0 0;font:600 15px/1.36 var(--body);color:var(--hud-text)}
+/* p37: Sound is on but the device holds it: TAP FOR SOUND, a chip that is safe to tap (any tap lets the sound out) */
+#call.clr.cllk .hoh{flex-wrap:wrap;gap:6px 8px}
+#call.clr.cllk .hon{margin-left:0;padding:9px 10px;border:1px solid var(--hud-yellow);background:rgba(242,221,61,.1);cursor:pointer;animation:cllk 1.1s ease-in-out infinite}
+@keyframes cllk{50%{box-shadow:0 0 12px rgba(242,221,61,.5)}}
+@media (prefers-reduced-motion:reduce){#call.clr.cllk .hon{animation:none}}
+#clSay{margin:5px 0 0;font:600 16px/1.36 var(--body);color:var(--hud-text)}
 #clTitle{margin-top:7px;font:700 17px/1.28 var(--body);color:var(--hud-cyan);overflow-wrap:anywhere}
-#clInfo{display:block;margin-top:4px;font:12px/1.4 var(--micro);color:var(--hud-cyan);letter-spacing:.04em;overflow-wrap:anywhere}
+#clInfo{display:block;margin-top:4px;font:13px/1.4 var(--micro);color:var(--hud-cyan);letter-spacing:.04em;overflow-wrap:anywhere}
+#call.clr #clInfo{font:700 15px/1.3 var(--body);letter-spacing:.03em}   /* p37: ringing, what it's about is the thing to read */
 #clTitle:empty,#clInfo:empty,#clActs:empty,#clList:empty{display:none}
 #clList{margin-top:6px;max-height:min(46vh,340px);overflow-y:auto;overscroll-behavior:contain}
 #call .macts{margin-top:10px}
 #call .macts .rbtn{min-height:44px}
-@media (min-width:900px){#call{left:auto;right:calc(var(--sr) + 18px);top:calc(var(--st) + 76px);width:400px}}
+@media (min-width:900px){#call{left:auto;right:calc(var(--sr) + 18px);top:calc(var(--st) + 76px);width:440px}#clSay{font-size:17px}}
 @media (prefers-reduced-motion:reduce){#call.clr,#call.clr .hof,#call.on .hof img,#call.talk .hov{animation:none}}
 /* the plan board (p29): the week's tasks on one screen, from the city or any room */
 #plan{position:absolute;left:calc(var(--sl) + 6px);right:calc(var(--sr) + 6px);top:calc(var(--st) + 6px);bottom:calc(var(--sb) + 6px);z-index:7;--ct:18px;display:flex;flex-direction:column;opacity:0;transform:translateY(14px);visibility:hidden;transition:opacity .22s var(--ease),transform .32s var(--ease),visibility 0s .32s}
@@ -671,33 +677,55 @@ label.rbtn{cursor:pointer}
 .mtell .rbtn{min-height:40px}
 /* her holo call: a small call of her above the room's panel (placed by holoPos), cyan like a projection; mini is just
    her face and the clock she's keeping */
-#holo{position:absolute;left:10px;bottom:200px;width:calc(100% - 20px);max-width:320px;z-index:4;display:flex;gap:10px;align-items:flex-start;padding:9px 10px 10px 9px;background:rgba(5,14,19,.86);box-shadow:inset 0 0 0 1px var(--hud-cyan-line),0 0 22px rgba(90,228,236,.12);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s,transform .25s,visibility 0s .25s}
+#holo{position:absolute;left:10px;bottom:200px;width:calc(100% - 20px);max-width:320px;z-index:4;display:flex;gap:10px;align-items:flex-start;padding:9px 10px 10px 9px;background:rgba(5,14,19,.95);box-shadow:inset 0 0 0 1px var(--hud-cyan-line),0 0 22px rgba(90,228,236,.12);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s,transform .25s,visibility 0s .25s}
 #holo.on{opacity:1;visibility:visible;transform:none;transition:opacity .3s,transform .3s}
 #holo::before{content:'';position:absolute;left:-1px;top:-1px;width:9px;height:9px;border-left:2px solid var(--hud-cyan);border-top:2px solid var(--hud-cyan)}
 .hof{position:relative;flex:none;width:60px;height:75px;overflow:hidden;background:radial-gradient(circle at 50% 38%,rgba(90,228,236,.3),rgba(90,228,236,.05) 70%);box-shadow:inset 0 0 0 1px var(--hud-cyan-line);cursor:pointer}
-.hof img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) sepia(1) hue-rotate(140deg) saturate(2.6) brightness(1.08) contrast(1.1);opacity:.92}
+.hof img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) sepia(.75) hue-rotate(140deg) saturate(1.8) brightness(1.16) contrast(1.06);opacity:.97}
 #holo.on .hof img{animation:hofl 5s steps(1) infinite}
-.hof::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.34) 0 1px,transparent 1px 3px);pointer-events:none}
+.hof::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 4px);pointer-events:none}
 #holo.nof .hof::before{content:'MK';position:absolute;inset:0;display:grid;place-items:center;font:800 20px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-cyan);text-shadow:0 0 8px var(--hud-cyan)}
 .hov{position:absolute;left:6px;right:6px;bottom:4px;height:11px;z-index:1;background:repeating-linear-gradient(90deg,var(--hud-cyan) 0 2px,transparent 2px 4px);transform-origin:bottom;transform:scaleY(.18);opacity:.85}
 #holo.talk .hov{animation:hov .16s steps(3) 16 alternate}
 @keyframes hov{to{transform:scaleY(1)}}
-@keyframes hofl{0%{opacity:.92}46%{opacity:.62}47%{opacity:.92}81%{opacity:.8}82%{opacity:.92}}
+@keyframes hofl{0%{opacity:.97}46%{opacity:.85}47%{opacity:.97}81%{opacity:.9}82%{opacity:.97}}
 .hob{flex:1;min-width:0}
 .hoh{display:flex;align-items:center;min-height:18px}
-.hoh .mwho{color:var(--hud-cyan)}
-.hoh .hon{margin-left:8px;font-size:10px}
-.hox{margin-left:auto;width:36px;height:30px;margin-top:-6px;margin-right:-6px;font:400 22px/1 var(--hud-font);color:var(--hud-text3);background:none;border:0}
-#hoSay{margin:5px 0 0;font:600 15px/1.36 var(--body);color:var(--hud-text)}
-.hobig{margin-top:4px;font:700 26px/1 var(--micro);letter-spacing:.04em;color:var(--hud-cyan);text-shadow:0 0 10px rgba(90,228,236,.45)}
+.hoh .mwho{color:var(--hud-cyan);font-size:12px}
+.hoh .hon{margin-left:8px;font-size:11.5px}
+.hox{margin:-13px -10px -13px auto;width:44px;height:44px;font:400 24px/1 var(--hud-font);color:var(--hud-text2);background:none;border:0}
+#hoSay{margin:5px 0 0;font:600 16px/1.36 var(--body);color:var(--hud-text)}
+.hobig{margin-top:4px;font:700 26px/1 var(--micro);letter-spacing:.04em;color:var(--hud-cyan);text-shadow:0 0 6px rgba(90,228,236,.3)}
 .hobig:empty{display:none}
-#hoInfo{display:block;margin-top:5px;font:12px/1.4 var(--micro);color:var(--hud-cyan);letter-spacing:.04em;overflow-wrap:anywhere}
+#hoInfo{display:block;margin-top:5px;font:13px/1.4 var(--micro);color:var(--hud-cyan);letter-spacing:.04em;overflow-wrap:anywhere}
 #hoInfo:empty,#hoActs:empty{display:none}
 #holo.hsm{width:auto;padding:6px 10px 6px 6px;align-items:center;cursor:pointer}
 #holo.hsm .hof{width:40px;height:50px}
 #holo.hsm #hoSay,#holo.hsm #hoInfo,#holo.hsm #hoActs,#holo.hsm .mtell,#holo.hsm .hox{display:none}
 #holo.hsm .hobig{margin-top:3px;font-size:20px}
 @media (prefers-reduced-motion:reduce){#holo.on .hof img,#holo.talk .hov{animation:none}}
+@media (min-width:900px){#hoSay{font-size:17px}}
+/* p37: covered by the sheet on a phone, the holo docks in the band above it: one row (her face, LIVE, the clock she's
+   keeping), her words in the caption strip. Under the plan board, or under a call ringing at the top, it steps aside */
+#holo.dock{top:calc(var(--st) + 61px);bottom:auto;left:calc(var(--sl) + 8px);width:auto;max-width:calc(100% - var(--sl) - var(--sr) - 72px);max-height:46px;overflow:hidden;z-index:8;padding:4px 12px 4px 4px;align-items:center;gap:8px;cursor:pointer}
+#holo.dock .hof{width:28px;height:34px}
+#holo.dock .hof::before{font-size:11px}
+#holo.dock .hov{left:3px;right:3px;bottom:2px;height:7px}
+#holo.dock .hob{display:flex;align-items:center;gap:10px}
+#holo.dock #hoSay,#holo.dock #hoInfo,#holo.dock #hoActs,#holo.dock .mtell,#holo.dock .hox,#holo.dock .mwho{display:none}
+#holo.dock .hon{margin-left:0}
+#holo.dock .hobig{margin-top:0;font-size:20px}
+#holo.phid,#hud.capon #holo.dock{opacity:0;visibility:hidden;pointer-events:none}
+#holo:focus-within{z-index:8}
+/* p37: her caption strip (capSync): her line at the top, typed out, when its own box can't be seen. Taps go through it */
+#mcap{position:absolute;left:calc(var(--sl) + 8px);right:calc(var(--sr) + 8px + var(--capr,0px));top:var(--capt,calc(var(--st) + 56px));max-width:560px;margin:0 auto;z-index:8;padding:6px 11px 7px 10px;background:rgba(5,14,19,.95);border-left:2px solid var(--hud-red);box-shadow:inset 0 0 0 1px var(--hud-cyan-line),0 0 18px rgba(90,228,236,.14);font:600 16px/1.32 var(--body);color:var(--hud-text);overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;pointer-events:none;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .2s,transform .25s,visibility 0s .25s}
+#mcap.on{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .25s,visibility 0s}
+#mcap b{margin-right:7px;font:700 12px/1 var(--micro);letter-spacing:.14em;color:var(--hud-red)}
+#mcapA{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#hud.capon #hint{opacity:0!important}
+#hud.gl>#mcap,#hud.gl>#holo{animation:none}
+@media (min-width:900px){#mcap{font-size:17px;-webkit-line-clamp:3}}
+@media (prefers-reduced-motion:reduce){#mcap{transform:none}}
 .mtask{margin-top:6px;max-height:34vh;overflow:auto}
 .mrow{padding:7px 0;border-top:1px solid var(--hud-hair)}
 .mcall{margin:4px 0 10px;padding:8px 10px 9px;border-left:2px solid var(--hud-red);background:rgba(255,70,70,.07)}
@@ -898,6 +926,8 @@ const MARKUP = `
       <form class="mtell" id="hoTell" data-tell="h" hidden><input name="t" type="text" enterkeyhint="send" autocomplete="off" maxlength="300" placeholder="Remind me to call the bank tomorrow" aria-label="Tell Mira"><button class="rbtn">TELL</button></form>
     </div>
   </section>
+  <p id="mcap" aria-hidden="true"><b>MIRA //</b><span id="mcapT"></span></p>
+  <div id="mcapA" role="status" aria-live="polite"></div>
   <section class="dbox frame" id="gymBox" data-m="room" data-r="gym" aria-label="Today's session">
     <div class="in">
       <div class="dhead"><b>TODAY</b><span class="mi" id="gyN"></span><button class="rbtn" id="btnGymSheet">SESSION</button></div>
@@ -7392,7 +7422,7 @@ function miraStart(kind) {
   const again = !kind && Date.now() - miraLast < 20 * 60e3; miraLast = Date.now();
   /* back within 20 minutes: a hello, not the whole day again */
   const news = !kind && APP.linkNews ? APP.linkNews() : null;
-  if (again && !news) { MT = null; const g = Mira.line('greet.again', c.date + miraLast); miraIdle(g.say); if (!(APP.say && APP.say(g.id))) APP.sfx('tick'); return; }
+  if (again && !news) { MT = null; const g = Mira.line('greet.again', c.date + miraLast); miraIdle(g.say); const v = APP.say && APP.say(g.id); if (!v) APP.sfx('tick'); capLine(g, 'm', v); return; }
   const k = kind || Mira.which(c);
   if (k === 'checkin' || k === 'review') { const m = clMem(); m.done['k:' + c.date] = 1; clSave(m); }   // p29: done in person, no 9 pm call
   MT = { kind: k, c, steps: Mira.talk(k, c, again), i: 0, res: { done: 0, moved: 0, left: 0 }, acted: {}, tt: 0 };
@@ -7425,7 +7455,7 @@ function fitOpen() {
 function fitPick(id) {
   if (!APP.fitSet(id)) return; fitApply(); glitchHud(.12);
   const ln = Mira.line('fit.pick', String(Date.now())); miraIdle(ln.say); setText('#mInfo', 'OUTFIT // ' + (Mira.FITS.find(f => f.id === id) || {}).name);
-  if (!(APP.say && APP.say(ln.id))) APP.sfx('tick');
+  const v = APP.say && APP.say(ln.id); if (!v) APP.sfx('tick'); capLine(ln, 'm', v);
 }
 function miraType(text) {
   const p = $('#mSay'); clearInterval(MT.tt);
@@ -7444,7 +7474,7 @@ function miraShow() {
   miraTasks(st);
   const go = st.go ? `<button class="rbtn" data-mgo="${st.go}">GO ›</button>` : '';
   mOut(st.end ? `${go}<button class="rbtn${go ? ' ol' : ''}" data-mbye="1">BYE</button>${miraMore()}` : `${go}<button class="rbtn${go ? ' ol' : ''}" data-mnext="1">NEXT</button>`);
-  if (!(APP.say && APP.say(st.id))) APP.sfx('tick');
+  const v = APP.say && APP.say(st.id); if (!v) APP.sfx('tick'); capLine(st, 'm', v);
 }
 /* the check-in's list: each open task with DONE / TOMORROW / LET GO; what he picked stays in place, labelled */
 function miraTasks(st) {
@@ -7463,7 +7493,7 @@ function miraCall() {
   const n = P.decide.length, ln = Mira.line(n > 1 ? 'call.many' : n ? 'call.one' : 'call.none', new Date().toDateString() + n);
   const info = n === 1 ? `${P.decide[0].title} · WAS ${P.decide[0].was}`.toUpperCase() : n ? `${n} WAITING` : '';
   setHTML('#dcCall', `<div class="mcall"><b class="mwho">MIRA // ON THE LINE</b><p>${ln.say}</p>${info ? `<small>${info}</small>` : ''}</div>`);
-  setTimeout(() => { if (S.sheet && curCard === 'cDecide' && APP.say) APP.say(ln.id); }, 650);   // after the pickup sound
+  setTimeout(() => { if (S.sheet && curCard === 'cDecide' && APP.say) capLine(ln, 'd', APP.say(ln.id)); }, 650);   // after the pickup sound
 }
 /* ---------- her holo call (docs/MIRA.md M3): a small call of her in the gym (she counts the rest), the castle (she keeps
    the study clock) and the shop (clocking in), above the room's panel. Her face is a still caught from her close-up in the
@@ -7490,9 +7520,13 @@ const HV = { room: '', day: '', at: 0, entered: false, asked: {}, hung: false, r
 const HO_TELL = '<button class="rbtn ol" data-hotell="1">TELL</button>';
 const mmss = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function holoFace() { const i = $('#hoImg'); if (FACE) { if (i.getAttribute('src') !== FACE) i.src = FACE; i.hidden = false; } else i.hidden = true; $('#holo').classList.toggle('nof', !FACE); }
+/* p37: what covers her call: the plan board (any size), or on a phone the sheet (not while he types to her) */
+const holoCov = () => !HO ? '' : PL.on ? 'plan' : S.sheet && !CAP_SIDE.matches && $('#hoTell').hidden ? 'sheet' : '';
 function holoPos() {
-  const el = $('#holo'), p = room.def && $(room.def.panel); if (!p) return; const r = p.getBoundingClientRect(); if (!r.height) return;
-  const L = Math.round(r.left) + 'px', B = Math.round(innerHeight - r.top + 8) + 'px', W = Math.min(320, Math.round(r.width)) + 'px';
+  const el = $('#holo'), cov = holoCov(); el.classList.toggle('dock', cov === 'sheet'); el.classList.toggle('phid', cov === 'plan' || (cov === 'sheet' && !!CL));   // p37: docked at the top; aside under the board or a call
+  if (cov) { if (el.style.bottom) el.style.left = el.style.bottom = el.style.maxWidth = ''; return; }
+  const p = room.def && $(room.def.panel); if (!p) return; const r = p.getBoundingClientRect(); if (!r.height) return;
+  const L = Math.round(r.left) + 'px', B = Math.round(innerHeight - r.top + 8) + 'px', W = Math.round(CAP_SIDE.matches ? Math.min(380, r.width) : r.width) + 'px';   // p37: a phone's is the panel's width
   if (el.style.left !== L) el.style.left = L; if (el.style.bottom !== B) el.style.bottom = B; if (el.style.maxWidth !== W) el.style.maxWidth = W;
 }
 /* her on the call: a line (say, voiced; no data in it), what it's about (info, big), buttons. ms: then she hangs up, or goes small */
@@ -7502,11 +7536,13 @@ function holoLine(ln, o = {}) {
   const el = $('#holo'); holoFace(); holoPos();
   setText('#hoSay', ln.say); setText('#hoInfo', o.info || ''); setText('#hoBig', o.big || ''); setHTML('#hoActs', (o.acts || '') + HO_TELL);
   $('#hoTell').hidden = true; $('#hoActs').hidden = false; el.classList.toggle('hsm', !!o.mini); el.classList.add('on'); el.setAttribute('aria-hidden', 'false'); el.inert = false;
-  if (o.voice !== false) { el.classList.remove('talk'); void el.offsetWidth; el.classList.add('talk'); if (!(APP.say && APP.say(ln.id))) APP.sfx('tick'); }
+  if (o.voice !== false) { el.classList.remove('talk'); void el.offsetWidth; el.classList.add('talk'); const v = APP.say && APP.say(ln.id); if (!v) APP.sfx('tick'); capLine(ln, 'h', v); }
   return ln;
 }
 const holoSay = (k, o = {}) => window.Mira && holoLine(Mira.line(k, new Date().toDateString() + '|' + (o.seed != null ? o.seed : '')), o);
-function holoHide() { HO = null; const el = $('#holo'); el.classList.remove('on', 'hsm', 'talk'); el.setAttribute('aria-hidden', 'true'); el.inert = true; $('#hoTell').hidden = true; }
+function holoHide() { HO = null; const el = $('#holo'); el.classList.remove('on', 'hsm', 'talk'); el.setAttribute('aria-hidden', 'true'); el.inert = true; $('#hoTell').hidden = true; capSync(); }   // p37: her voice still going, its words to the strip
+/* p37: still saying this call's line (APP.saying: index.html's speaking signal, bound to the audio clock so it can't stick) */
+function holoTalk() { const sp = APP.saying && APP.saying(); return sp === true || !!(sp && HO && sp.id && sp.id.replace(/\.\d+$/, '') === HO.k); }
 function holoMini() { if (!HO) return; HO.until = 0; if ($('#hoBig').textContent) $('#holo').classList.add('hsm'); else holoHide(); }
 function holoTick() {
   const el = $('#holo'); if (!el) return;
@@ -7518,7 +7554,7 @@ function holoTick() {
     if (HO) holoHide(); Object.assign(HV, { room: id, at: now, entered: false, hung: false, restSaid: false, rest: 0, study: null, studyH: 0, clock: ck ? ck.on : null });
     if (sc && sc.clock.on) { HV.study = sc.clock.ms; HV.studyH = Math.floor(sc.clock.ms / 36e5); }
   }
-  if (HO && HO.until && now > HO.until) { if (HO.then === 'mini') holoMini(); else holoHide(); }
+  if (HO && HO.until && now > HO.until && (now > HO.until + 10e3 || !holoTalk())) { if (HO.then === 'mini') holoMini(); else holoHide(); }   // p37: not while she's still saying it
   if (HO) holoPos();
   const typing = !$('#hoTell').hidden;
   if (id === 'gym') {
@@ -7572,11 +7608,28 @@ const clSave = m => { try { localStorage.setItem('daybook_calls', JSON.stringify
 /* what he didn't get to: again later, or not today */
 function clDefer(items) { const m = clMem(), now = Date.now(); items.forEach(x => { if (CALL_AGAIN[x.k] && !m.done[x.key]) m.snooze[x.key] = now + CALL_AGAIN[x.k] * 60e3; else m.done[x.key] = 1; }); clSave(m); }
 function clDone(x) { const m = clMem(); m.done[x.key] = 1; clSave(m); }
+/* p37: how long it has rung toward missed. Not while the page is hidden (at most CALL_HIDE of that), nor while Sound is
+   on but the device holds it (TAP FOR SOUND; at most CALL_LOCK of that), so a ring he couldn't hear isn't put off for an
+   hour; a longer time away, or a new day, and it was missed (snoozed as usual, never rung again on his return). soft: the
+   first moment, when a waking engine isn't called locked yet (only no audio context at all is) */
+const CALL_LOCK = 60e3, CALL_HIDE = 180e3;
+function clPace(now, soft) {
+  const hid = document.hidden, lk = !hid && APP.sndLocked ? APP.sndLocked() : 0;
+  if (hid) { if (!CL.hdAt) CL.hdAt = now; } else if (CL.hdAt) { CL.hd = (CL.hd || 0) + now - CL.hdAt; CL.hdAt = 0; }
+  if (lk) { if (!CL.lkAt) CL.lkAt = now; } else if (CL.lkAt) { CL.lk = (CL.lk || 0) + now - CL.lkAt; CL.lkAt = 0; }
+  const show = soft ? lk === 2 : !!lk; if (CL.shy !== show) { CL.shy = show; setText('#clT', show ? 'TAP FOR SOUND' : 'RINGING'); $('#call').classList.toggle('cllk', show); }
+  if (new Date(now).toDateString() !== new Date(CL.t0).toDateString()) return Infinity;   // it rang yesterday: missed
+  return now - CL.t0 - Math.min(CALL_HIDE, (CL.hd || 0) + (CL.hdAt ? now - CL.hdAt : 0)) - Math.min(CALL_LOCK, (CL.lk || 0) + (CL.lkAt ? now - CL.lkAt : 0));
+}
+/* away and back: a short time and it rings again; long enough to have rung out and it's missed now, before the owed ring
+   (index.html ringRevive, a timer later) can start */
+const clBack = () => { if (CL && CL.st === 'ring' && clPace(Date.now()) > clRingMs) callDrop(false); };
+document.addEventListener('visibilitychange', clBack); addEventListener('pageshow', clBack); addEventListener('focus', clBack);
 function callTick(force) {
   if (!ready || !window.Mira || !APP.calls) return null;
   const now = Date.now();
   if (CL) {
-    if (CL.st === 'ring') { if (now - CL.t0 > clRingMs) { callDrop(false); return null; } if (now - clRingT > 6500) { clRingT = now; if (APP.ringOnce) APP.ringOnce(); } }
+    if (CL.st === 'ring') { if (clPace(now) > clRingMs) { callDrop(false); return null; } if (now - clRingT > 6500) { clRingT = now; if (APP.ringOnce) APP.ringOnce(); } }
     else if (CL.st === 'live') setText('#clT', mmss(now - CL.t1));
     return null;
   }
@@ -7600,7 +7653,8 @@ function callRing(k, items) {
   setText('#clInfo', CALL_SAY[k] + (items.length > 1 ? ` · ${items.length}` : '')); setHTML('#clList', '');
   setHTML('#clActs', '<button class="rbtn" data-cl="answer">ANSWER</button><button class="rbtn ol dng" data-cl="decline">DECLINE</button>');
   el.classList.remove('live', 'talk'); el.classList.add('on', 'clr');   /* not 'ring': that's the shop's round dial, 74px wide */ el.setAttribute('aria-hidden', 'false'); el.inert = false;
-  clRingT = Date.now(); if (APP.ringOnce) APP.ringOnce();
+  clRingT = Date.now(); if (APP.ringOnce) APP.ringOnce(); clPace(clRingT, true);
+  if (HO) holoPos(); capSync();   // p37: the docked holo steps aside; the strip goes below the call
 }
 function callAnswer() {
   if (!CL || CL.st !== 'ring') return; if (APP.ringStop) APP.ringStop(); APP.sfx('pickup');
@@ -7613,7 +7667,7 @@ const clBtn = (a, l, solid) => `<button class="rbtn${solid ? '' : ' ol'}" data-c
 function callSay(ln, o = {}) {
   const el = $('#call'); setText('#clSay', ln.say); setText('#clBig', o.big || ''); setText('#clTitle', o.title || ''); setText('#clInfo', o.info || ''); setHTML('#clList', o.list || ''); setHTML('#clActs', o.acts || '');
   el.classList.remove('talk'); void el.offsetWidth; el.classList.add('talk'); HV.log = [...(HV.log || []), ln.id.replace(/\.\d+$/, '')].slice(-12);
-  if (!(APP.say && APP.say(ln.id))) APP.sfx('tick');
+  const v = APP.say && APP.say(ln.id); if (!v) APP.sfx('tick'); capLine(ln, 'c', v);
   const f = ROOT.querySelector('#clActs .rbtn, #clList .rbtn'); if (f && ROOT.activeElement && ROOT.activeElement.closest && ROOT.activeElement.closest('#call')) f.focus({ preventScroll: true });
 }
 function callStep() {
@@ -7655,10 +7709,17 @@ function callDo(b) {
   if (k === 'gym') { try { localStorage.setItem('daybook_nudge', x.key.slice(2)); } catch (e) {} if (a === 'go') return callGo('gym|cSess'); return callBye('call.skip'); }
   if (k === 'week') { if (a === 'plan') { callClose(); planOpen(x.mon); return; } const m = clMem(); delete m.done[x.key]; m.snooze[x.key] = Date.now() + CALL_AGAIN.week * 60e3; clSave(m); return callBye('call.later'); }
 }
-/* her last word, then she hangs up */
+/* her last word, then she hangs up: once her voice is done (p37; it was 3.4 s whatever the line), 3.4 s at the least,
+   5.6 s at the most (then the strip has the rest of it) */
 function callBye(k, ln) {
   if (!CL) return; ln = ln || Mira.line(k, new Date().toDateString() + '|' + Date.now()); CL.st = 'bye'; callSay(ln, {});
-  const c = CL; setTimeout(() => { if (CL === c) { APP.sfx('hangup'); callClose(); } }, 3400);
+  const c = CL, t0 = Date.now(); let heard = t0;
+  const end = () => {
+    if (CL !== c) return; const now = Date.now(), sp = APP.saying && APP.saying(); if (sp === true || (sp && sp.id === ln.id)) heard = now;
+    if (now - t0 < 5600 && (now - t0 < 3400 || now - heard < 500)) return void setTimeout(end, 200);
+    APP.sfx('hangup'); callClose();
+  };
+  setTimeout(end, 1000);
 }
 function callGo(to) { const [id, card] = to.split('|'); callClose(); if (S.mode === 'room' && room.id === id) { if (S.close) stepBack(); setTimeout(() => { if (S.mode === 'room' && !S.close) openSheet(card); }, 160); return; } goPlace(id, card); }
 /* declined (he said no) or missed (it rang out): again later, or not today */
@@ -7666,8 +7727,79 @@ function callDrop(said) { if (!CL) return; clDefer(CL.items); HV.log = [...(HV.l
 function callClose() {
   if (APP.ringStop) APP.ringStop(); CL = null; clLast = Date.now();
   const el = $('#call'); el.classList.remove('on', 'clr', 'live', 'talk'); el.setAttribute('aria-hidden', 'true'); el.inert = true;
+  if (HO) holoPos(); capSync();   // p37: the docked holo is back; her voice still going, its words to the strip
 }
 setInterval(() => { try { callTick(); } catch (e) { APP.log(e); } }, 1000);
+/* ---------- p37: her caption strip (his ask: "the panel covers what she says ... have it write itself out at the top of
+   screen"). One strip at the top under the top bar, typed out, for her line when its own box can't be seen: the holo
+   under the sheet (phone) or the plan board, the close-up hidden (HIDE) or under a sheet or the board, a call or holo
+   gone while her voice still plays, and lines with no box at all (her reactions, the voice preview: City.caption from
+   index.html). Held for her voice + 0.9 s or the time to read it, whichever is longer, 12 s at most; gone at once when
+   her voice is stopped (index.html's mvStop calls City.hush). Taps go through it. Homes: m her close-up, h the holo,
+   c the call, d DECIDE's call, r none ---------- */
+const CAP_SIDE = matchMedia('(min-width:900px) and (min-aspect-ratio:1/1)');   // the laptop layout: panels left, the sheet right
+let MCAP = null, mcapT = 0; const MCAP_LOG = [];
+const capRead = s => Math.min(8000, Math.max(2600, 1400 + 55 * s.length));
+/* her line, just said (after APP.say, whose stop hushes the strip) */
+function capLine(ln, home, voiced) {
+  if (!ln || !ln.say) return;
+  MCAP = { id: ln.id || '', say: ln.say, home, t0: Date.now(), voiced: !!voiced, vend: 0, until: 0, on: false, told: false, ho: HO, cl: CL };
+  capSync();
+}
+/* its own box: 'see', 'cov' (covered or hidden: the strip carries it) or 'gone' (only her voice is left, if that) */
+function capHome(c) {
+  if (c.home === 'h') { const el = $('#holo'); if (HO !== c.ho || !el.classList.contains('on') || el.classList.contains('hsm')) return 'gone'; return PL.on || el.classList.contains('dock') ? 'cov' : 'see'; }
+  if (c.home === 'c') return CL && CL === c.cl && $('#call').classList.contains('on') ? 'see' : 'gone';
+  if (c.home === 'm') return !S.close ? 'gone' : S.bare || S.sheet || PL.on ? 'cov' : 'see';
+  if (c.home === 'd') return !S.sheet || curCard !== 'cDecide' ? 'gone' : gOpen || PL.on ? 'cov' : 'see';
+  return 'cov';
+}
+function capSync() {
+  const c = MCAP; if (!c) return capOff();
+  const now = Date.now(), sp = APP.saying ? APP.saying() : null, mine = sp === true || !!(sp && sp.id && sp.id === c.id);
+  if (mine) c.vend = sp.playing === false ? Math.max(c.vend, now + 400) : now + (sp.left || 400);   // still loading: a little longer
+  c.until = Math.min(c.t0 + 12e3, Math.max(c.t0 + capRead(c.say), c.vend ? c.vend + 900 : 0));
+  const st = now > c.until ? '' : capHome(c);
+  if (!st || (st === 'gone' && !c.on && !mine)) { MCAP = null; return capOff(); }   // over, or its box went and she's done
+  if (st === 'see') { c.on = false; return capOff(); }   // kept: covered again mid-line, the strip takes it back
+  if (!c.on) capShow(c);
+  capPos();
+}
+function capShow(c) {
+  const el = $('#mcap'), t = $('#mcapT'); c.on = true; clearInterval(mcapT);
+  if (REDUCED || MIRA_AT.instant || Date.now() - c.t0 > 700) t.textContent = c.say;   // taking over mid-line: all of it at once
+  else { let n = 0; t.textContent = ''; mcapT = setInterval(() => { n += 2; t.textContent = c.say.slice(0, n); if (n >= c.say.length) clearInterval(mcapT); }, 28); }
+  if (!el.classList.contains('on')) { el.classList.add('on'); hudEl.classList.add('capon'); }
+  if (!c.told) { c.told = true; MCAP_LOG.push(c.say); if (MCAP_LOG.length > 12) MCAP_LOG.shift(); const a = $('#mcapA'); a.textContent = ''; setTimeout(() => { if (MCAP === c) a.textContent = 'Mira: ' + c.say; }, 80); }   // read out once, when the strip takes over (her boxes read their own)
+}
+function capOff() { const el = $('#mcap'); if (!el || !el.classList.contains('on')) return; clearInterval(mcapT); el.classList.remove('on'); hudEl.classList.remove('capon'); }
+const capHush = was => { if (was && MCAP && MCAP.voiced) { MCAP = null; capOff(); } };
+/* under the top bar; below the call, the flight box and the app's island when they're in the way. On a laptop, beside the
+   side sheet and a call on the right instead */
+function capPos() {
+  const el = $('#mcap'); let t = 0, r = 0;
+  for (const k of $('.top').children) { const q = k.getBoundingClientRect(); if (q.height && q.bottom > t) t = q.bottom; }
+  t = Math.round(t || 52) + 4;
+  if (S.sheet && CAP_SIDE.matches) r = $('#sheet').offsetWidth + 10;
+  const isl = document.getElementById('island'), ob = [];
+  if (CL) ob.push([$('#call'), 1]); if (S.mode === 'fly') ob.push([$('#flyBox'), 0]); if (isl && isl.classList.contains('on')) ob.push([isl, 0]);
+  ob.map(([o, side]) => [o.getBoundingClientRect(), side]).filter(([q]) => q.width && q.height).sort((a, b) => a[0].top - b[0].top).forEach(([q, side]) => {
+    if (side && q.left > innerWidth * .45 && q.left - 18 >= 360) r = Math.max(r, Math.round(innerWidth - q.left + 2));
+    else if (q.top < t + 60 && q.bottom > t - 2) t = Math.round(q.bottom + 6);
+  });
+  if (el.style.getPropertyValue('--capt') !== t + 'px') el.style.setProperty('--capt', t + 'px');
+  if (el.style.getPropertyValue('--capr') !== r + 'px') el.style.setProperty('--capr', r + 'px');
+}
+setInterval(() => { if (MCAP) try { capSync(); } catch (e) { APP.log(e); } }, 250);
+/* the panels that cover her boxes, watched so the strip and the holo's dock follow at once (the sheet, the board, HIDE,
+   the close-up) without a call in each */
+const capWatch = new MutationObserver(rs => {
+  const moved = rs.some(x => { const a = ` ${x.oldValue || ''} `, b = ` ${x.target.getAttribute('class') || ''} `; return ['open', 'g', 'bare', 'close'].some(k => a.includes(` ${k} `) !== b.includes(` ${k} `)); });
+  if (moved) try { if (HO) holoPos(); capSync(); } catch (e) { APP.log(e); }
+});
+[$('#sheet'), $('#plan'), hudEl].forEach(n => capWatch.observe(n, { attributes: true, attributeFilter: ['class'], attributeOldValue: true }));
+/* the docked holo, tapped: her line again, in the strip */
+$('#holo').addEventListener('click', e => { if (!HO || !$('#holo').classList.contains('dock') || (e.target.closest && e.target.closest('button,input'))) return; const say = $('#hoSay').textContent; if (say) capLine({ id: '', say }, 'h', false); });
 /* the on-screen keyboard: how much of the bottom it covers (iPhone keeps the page the same size under it), for the CSS
    above. A desktop or a hardware keyboard: 0 */
 function kbFit(px) {
@@ -7680,13 +7812,13 @@ if (window.visualViewport) { visualViewport.addEventListener('resize', () => kbF
 /* Tell Mira: in her close-up (m) and on the call (h). Plain words; index.html decides task or note and does it */
 function tellOpen(w) {
   const f = $(w === 'm' ? '#mTell' : '#hoTell'); f.hidden = false; $(w === 'm' ? '#mActs' : '#hoActs').hidden = true; /* the input in place of the buttons */ const i = f.querySelector('input'); i.value = '';
-  if (w === 'h' && HO) { HO.until = 0; $('#holo').classList.remove('hsm'); }
+  if (w === 'h' && HO) { HO.until = 0; $('#holo').classList.remove('hsm'); holoPos(); }   // p37: typing, it leaves the dock
   try { i.focus({ preventScroll: true }); } catch (e) { i.focus(); } APP.sfx('press');
 }
 function tellSend(f) {
   const i = f.querySelector('input'), v = i.value.trim(); if (!v) { i.focus(); return null; }
   const r = APP.tell ? APP.tell(v) : null; i.value = ''; i.blur(); f.hidden = true; if (!r) return null;
-  if (f.dataset.tell === 'm') { miraIdle(r.say); setText('#mInfo', r.info); if (!(APP.say && APP.say(r.id))) APP.sfx('tick'); }
+  if (f.dataset.tell === 'm') { miraIdle(r.say); setText('#mInfo', r.info); const v = APP.say && APP.say(r.id); if (!v) APP.sfx('tick'); capLine(r, 'm', v); }
   else holoLine(r, { ctx: 'tell', info: r.info, ms: 6000 });
   return r;
 }
@@ -8477,7 +8609,10 @@ function rig() {
     plan(on, day) { if (on) planOpen(day || null); else if (on === false) planClose(true); return { on: PL.on, day: PL.day, wk: PL.wk, open: aptOpen }; },
     add: () => { const x = psLive(); return x ? { id: ADD.id, from: ADD.from, step: ADD.step, ask: ADD.ask.slice(), cat: x.cat, date: x.date, remind: x.remind, rep: x.rep, note: ADD.note } : null; },   /* p37 the add steps */
     fit(c) { if (c === undefined) return FIG_FIT.value.toArray(); if (c) FIG_FIT.value.set(c[0], c[1], c[2], 1); else FIG_FIT.value.set(0, 0, 0, 0); return 1; },
-    holo: () => { holoTick(); const el = $('#holo'); return HO ? { k: HO.k, ctx: HO.ctx, on: el.classList.contains('on'), mini: el.classList.contains('hsm'), say: $('#hoSay').textContent, big: $('#hoBig').textContent, info: $('#hoInfo').textContent, face: !!FACE, r: el.getBoundingClientRect().toJSON() } : null; },
+    holo: () => { holoTick(); const el = $('#holo'); return HO ? { k: HO.k, ctx: HO.ctx, on: el.classList.contains('on'), mini: el.classList.contains('hsm'), say: $('#hoSay').textContent, big: $('#hoBig').textContent, info: $('#hoInfo').textContent, face: !!FACE, r: el.getBoundingClientRect().toJSON(), dock: el.classList.contains('dock'), aside: el.classList.contains('phid') } : null; },
+    /* p37: her caption strip: on, what it shows (text) of her line (full), whose box (home), until when, where (r), and the
+       lines it has carried (log) */
+    cap: () => { capSync(); const el = $('#mcap'), c = MCAP; return { on: el.classList.contains('on'), text: $('#mcapT').textContent, full: c ? c.say : '', id: c ? c.id : '', home: c ? c.home : '', voiced: !!(c && c.voiced), until: c ? c.until : 0, r: el.getBoundingClientRect().toJSON(), live: $('#mcapA').textContent, log: [...MCAP_LOG] }; },
     hv: () => JSON.parse(JSON.stringify(HV)),
     face: () => !!FACE, faceClear() { FACE = null; faceDone = false; try { localStorage.removeItem('daybook_mface'); } catch (e) {} },
     tell(w, v) { tellOpen(w); const f = $(w === 'm' ? '#mTell' : '#hoTell'); f.querySelector('input').value = v; return tellSend(f); },
@@ -8505,6 +8640,10 @@ window.City = {
   update,
   /* p29: her calls ring here (index.html leaves its evening nudge and reminder chime to them) */
   calls: () => ready && callsOn(),
+  /* p37: her caption strip, for a line of hers with no box of its own (index.html: her reactions, the voice preview); hush:
+     her voice was stopped (mvStop), so its words go too */
+  caption: (say, o = {}) => { if (!ready || !say) return false; capLine({ id: o.id, say }, 'r', o.voiced); return true; },
+  hush: was => capHush(was),
   /* Ctrl K and / open the HUD's quick add, from the city or any room */
   quickAdd: () => { if (S.mode === 'fly') return; openGlobal('add'); },
   go: (id, card) => { if (S.mode === 'fly' || !ROOM_DEF[id]) return; if (S.close) closeReset(); if (S.sheet) closeSheet(true); goPlace(id, card); },

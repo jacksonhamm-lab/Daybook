@@ -332,6 +332,13 @@ Technical state only. Updated 2026-11-06.
   - **His own ring:** System, Sound: USE MY OWN takes any audio or video file. Kept in IndexedDB `arcadia_own` on the
     device, never synced, exported or uploaded; level matched to -26 with a -14 dBFS cap and played once through.
     PLAY, STOP, REMOVE. Tested only with a generated tone. **Never commit, upload or bundle such a file.**
+  - **A ring that can't sound yet (p37):** every ring goes through `ringPlay` (index.html). His own sound waits up to
+    4 s for the engine to wake instead of the built-in ring standing in; the built-in plays only when this device has no
+    file or the file won't decode. A call's ring that can't sound (no tap since the app opened, a hidden page, a device
+    holding the sound) is owed and plays the moment sound runs: the engine waking on return (tried at once, then after
+    0.3, 1 and 3 s, only while a ring is owed) or his first tap. The audio context is never made from a timer. A call's
+    decoded sound is kept while it rings and freed on pickup or hang-up; a pickup mid-decode never starts it. Away more
+    than 3 min (`CALL_HIDE`), or into a new day, and the call is missed on his return instead of ringing again. t88.
   - **Ambience:** System, Sound, Ambience OFF (default), LOW (-42 LUFS) or MEDIUM (-36). Plays only with Sound on, not on
     Saver, and stops when the app is hidden. The place: the city while flying over it and on the way out, the room once
     the flight heads in. The weather: what the city shows (`skyW()`: snow above .3, downpour from rain .75, rain above
@@ -373,6 +380,13 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p37, 2026-11-17): her words always on screen; a holo he can read.** His notes: "the hologram is hard to read
+  and see"; "Mira also says things sometimes without subtitles popping up when using the UI, the panel covers what she
+  says". One caption strip at the top (`#mcap`, `capSync`) for her line when its own box is covered or gone mid-voice,
+  and for her reactions (the island keeps its Undo); the holo docks above a phone's sheet as a one-row chip and steps
+  aside under the plan board; bigger type and a solid plate on the holo and the call. The strip and the dock follow the
+  sheet, the board, HIDE and the close-up through a `MutationObserver` on their classes, not a call in each.
+  Details in [MIRA.md](MIRA.md) (M2, M3, V). Test t89.
 - **Built (p36, 2026-11-17): rope every lifting day, a street with working lights, roofs with a surface.** His notes:
   "3 sets of 45 seconds doesn't seem enough" (the rope isn't here for 10+ days); "people are crossing the street with
   cars running over them"; "spots on top of buildings where textures aren't great". His picks: 10 min every lifting day,

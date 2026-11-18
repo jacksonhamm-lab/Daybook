@@ -820,9 +820,14 @@ return { PLACES, WX, LEVEL, A, CAL, keyOf, start, stop, setLevel, setWeather, se
 // 'arcadia_own'), outside sync and backups, and are never uploaded; the app ships no such sound. Decoded only to play,
 // set to -26 (K-weighted, 100 ms max) with a -14 dBFS peak cap and 10 ms edge fades, played once through on the cue bus,
 // then freed. Pickup, a hidden page and Sound off stop it.
+// p37: play() wakes a sleeping engine and waits for it (o.wait ms) instead of giving up, so the app never swaps in the
+// built-in ring just because the engine slept. It never makes the audio context (that takes a tap). stop() also cancels
+// a play still waking or decoding, so a late start can't ring over a pickup. A call's ring (o.keep) is decoded once and
+// kept while it rings; stop() frees it.
 const OwnRing = (() => {
-const NS = NeonSound, O = { has: false, name: '', secs: 0, kept: true, src: null };
+const NS = NeonSound, O = { has: false, name: '', secs: 0, kept: true, src: null, why: '' };
 let mem = null; // storage blocked: the file lasts until the page reloads
+let gen = 0, BUF = null, fly = 0; // p37: the latest play (stop() moves past it), a call's decoded sound { c, b }, the play in flight
 const open = () => new Promise((res, rej) => { const q = indexedDB.open('arcadia_own', 1); q.onupgradeneeded = () => q.result.createObjectStore('f'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
 async function store(fn, mode) {
   try { const db = await open(); const out = await new Promise((res, rej) => { const t = db.transaction('f', mode), r = fn(t.objectStore('f')); t.oncomplete = () => res(r.result); t.onerror = t.onabort = () => rej(t.error); }); db.close(); return { ok: true, v: out }; }
@@ -842,23 +847,34 @@ async function load() { const v = await get(); note(v); return v; }
 async function pick(file) {
   try {
     const bytes = await file.arrayBuffer(), b = await decode(bytes, 44100), rec = { name: String(file.name || 'Sound').slice(0, 80), bytes, secs: Math.round(b.duration * 10) / 10 };
-    const r = await store(st => st.put(rec, 'ring'), 'readwrite'); mem = r.ok ? null : rec; O.kept = r.ok; note(rec); return { ok: true, kept: r.ok };
+    const r = await store(st => st.put(rec, 'ring'), 'readwrite'); mem = r.ok ? null : rec; O.kept = r.ok; note(rec); BUF = null; return { ok: true, kept: r.ok };
   } catch (e) { return { ok: false }; }
 }
 async function clear() { stop(); mem = null; await store(st => st.delete('ring'), 'readwrite'); note(null); }
-async function play() {
-  const c = NS.S.ctx; if (!c || c.state !== 'running' || !NS.S.bus || document.hidden) return false;
-  const v = await get(); if (!v) return false; let b; try { b = await decode(v.bytes, c.sampleRate); } catch (e) { return false; }
-  if (NS.S.ctx !== c || c.state !== 'running' || document.hidden) return false;
-  stop(); const s = c.createBufferSource(); s.buffer = b; s.connect(NS.S.bus.ui);
-  s.onended = () => { if (O.src === s) { O.src = null; NS.hold('own', false); } try { s.disconnect(); } catch (e) {} };
-  NS.hold('own', true); s.start(); O.src = s; NS.S.started++; return true;
+// true when it started. false says why in O.why: 'hidden'; 'asleep' (no context yet, or it didn't wake in o.wait ms);
+// 'none' (no file); 'bad' (it won't decode); 'stopped' (stop() or a newer play came first)
+async function play({ wait = 0, keep = false } = {}) {
+  const g = ++gen, no = w => { if (g === gen) O.why = w; return false; }; O.why = ''; fly = g;
+  try {
+    if (document.hidden) return no('hidden'); let c = NS.S.ctx; if (!c || c.state === 'closed') return no('asleep');
+    if (c.state !== 'running') { NS.wake(); const end = performance.now() + wait; while (performance.now() < end && g === gen && !document.hidden && NS.S.ctx && NS.S.ctx.state !== 'running') await new Promise(r => setTimeout(r, 25)); }
+    c = NS.S.ctx; if (g !== gen) return no('stopped'); if (document.hidden) return no('hidden'); if (!c || c.state !== 'running' || !NS.S.bus) return no('asleep');
+    let b = BUF && BUF.c === c ? BUF.b : null;
+    if (!b) { const v = await get(); if (g !== gen) return no('stopped'); if (!v) return no('none');
+      try { b = await decode(v.bytes, c.sampleRate); } catch (e) { return no('bad'); } if (g !== gen) return no('stopped'); if (keep) BUF = { c, b }; }
+    if (NS.S.ctx !== c || c.state !== 'running' || !NS.S.bus || document.hidden) return no(document.hidden ? 'hidden' : 'asleep');
+    kill(); const s = c.createBufferSource(); s.buffer = b; s.connect(NS.S.bus.ui);
+    s.onended = () => { if (O.src === s) { O.src = null; NS.hold('own', false); } try { s.disconnect(); } catch (e) {} };
+    NS.hold('own', true); s.start(); O.src = s; NS.S.started++; return true;
+  } finally { if (fly === g) fly = 0; }
 }
-function stop() { const s = O.src; O.src = null; NS.hold('own', false); if (s) { try { s.onended = null; s.stop(); s.disconnect(); } catch (e) {} } }
-const playing = () => !!O.src;
+function kill() { const s = O.src; O.src = null; NS.hold('own', false); if (s) { try { s.onended = null; s.stop(); s.disconnect(); } catch (e) {} } }
+function stop() { gen++; BUF = null; kill(); }
+const playing = () => !!O.src && O.src.context === NS.S.ctx;
+const busy = () => !!fly && fly === gen; // a play still waking or decoding
 document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
 addEventListener('pagehide', stop);
-return { O, load, pick, clear, play, stop, playing };
+return { O, load, pick, clear, play, stop, playing, busy };
 })();
 /* === end own ring === */
 
