@@ -538,13 +538,13 @@ const haptic = p => { try { navigator.vibrate && navigator.vibrate(p || 8); } ca
 const NS = window.NeonSound, SND = { on: false, amb: 'off', msgAt: 0 };
 try { SND.on = localStorage.getItem('daybook_sound') === '1'; SND.amb = localStorage.getItem('daybook_amb') || 'off'; } catch (e) {}
 // baked first: what a tap needs at once. The level-up (about 1.2 MB) bakes when it is earned and is freed when sound sleeps.
-const SND_FIRST = ['tick', 'open', 'back', 'check', 'uncheck', 'undo', 'error', 'hover', 'spot', 'press', 'fly', 'exit'];
+const SND_FIRST = ['tick', 'open', 'back', 'check', 'uncheck', 'undo', 'error', 'hover', 'spot', 'press', 'fly', 'exit', 'ring'];   // p37: and the ring, for a call that rings as the engine wakes
 function sndBoot() {
   if (!SND.on || !NS) return null; const fresh = !NS.S.ctx, c = NS.boot();
   if (c && fresh) { const rest = Object.keys(NS.NEON).filter(k => k !== 'level' && !SND_FIRST.includes(k)); NS.prepare([['neon', SND_FIRST], ['neon', rest]]); }
   return c;
 }
-['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => { if (SND.on) sndBoot(); }, true));
+['pointerdown', 'keydown'].forEach(ev => addEventListener(ev, () => { if (SND.on) { sndBoot(); ringOwed(); } }, true));   // p37: the tap also plays a ring that was owed
 /* Mira's voice (docs/MIRA.md): her clips are Japanese, the English stays on screen. Through the cue engine like his ring
    (its volume, the silent switch, the ambience dips under her); one line at a time. This device's switch, on by default.
    The clips live in KV (models/voice/<lang>/<line id>.mp3 through the Worker), never in the repo; bump v when they change. */
@@ -596,7 +596,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) mvSto
 function sfx(name, o) { if (!SND.on || document.hidden || !NS) return 0; try { sndBoot(); return NS.play(name, o) || 0; } catch (e) { return 0; } }
 function soundOn(on) {
   SND.on = on; try { localStorage.setItem('daybook_sound', on ? '1' : '0'); } catch (x) {}
-  if (!NS) return; if (on) { sndBoot(); sfx('check', { wait: 1500 }); } else { window.AmbSound && AmbSound.stop(0); window.OwnRing && OwnRing.stop(); NS.off(); }
+  if (!NS) return; if (on) { sndBoot(); sfx('check', { wait: 1500 }); } else { window.AmbSound && AmbSound.stop(0); ringStop(); NS.off(); }
 }
 // the ambience: the city asks for its place and weather about once a second; it plays only with Sound on, its own
 // switch on (Low or Medium), the Performance setting not on Saver, and an audio context a tap has woken
@@ -620,11 +620,39 @@ function ringDecide() {
   const ids = slipped().map(t => t.id), seen = r.ids || [], fresh = ids.filter(i => !seen.includes(i));
   if (!fresh.length || Date.now() - (r.at || 0) < 18e5) return false;
   try { localStorage.setItem('daybook_rung', JSON.stringify({ ids, at: Date.now() })); } catch (e) {}
-  const built = () => sfx('ring', { force: true, wait: 3000 });
-  if (window.OwnRing && OwnRing.O.has) OwnRing.play().then(ok => { if (!ok) built(); }); else built();
+  ringPlay('decide'); return true;
+}
+/* p37, his ask: "the phone call ring doesn't ring correctly outside of the apartment ... It also doesn't play unless the
+   screen is tapped on app reopen". Every ring comes through ringPlay. His own sound waits for the engine to wake; the
+   built-in ring stands in only when this device has no file or the file won't play, never because the engine slept.
+   A call's ring that can't sound yet (no tap since the app opened, a hidden page, a device holding the sound) is owed:
+   it plays the moment sound runs (the engine waking on return, or his first tap). The audio context is never made from
+   a timer; that takes a tap. All of this lives in memory, on this device. */
+const RING = { tok: 0, call: false, owe: false };
+function ringPlay(why) {   // 'decide' (the apartment phone) or 'call' (hers); true when a ring is on its way
+  if (!SND.on || !NS) return false; if (why === 'call') RING.call = true;
+  if (!NS.S.ctx || document.hidden) { if (why === 'call') RING.owe = true; return false; }
+  RING.owe = false; const own = window.OwnRing && OwnRing.O.has;
+  if (own && (OwnRing.playing() || OwnRing.busy())) return true;
+  const tok = ++RING.tok, built = () => { if (tok === RING.tok && !NS.S.voices.some(v => v.nm === 'neon|ring')) sfx('ring', { force: true, wait: 3000 }); };
+  if (!own) { built(); if (why === 'call' && NS.S.ctx.state !== 'running') RING.owe = true; return true; }   // in time, the held ring plays and this one finds it
+  OwnRing.play({ wait: 4000, keep: why === 'call' }).then(ok => {
+    if (ok || tok !== RING.tok) return; const w = OwnRing.O.why;
+    if (w === 'none' || w === 'bad') built(); else if (why === 'call' && RING.call) RING.owe = true;
+  });
   return true;
 }
-const ringStop = () => { if (window.OwnRing) OwnRing.stop(); if (NS) NS.quiet('ring'); };
+const ringOwed = () => { if (RING.owe && RING.call && SND.on && NS && NS.S.ctx && !document.hidden) ringPlay('call'); };
+const ringStop = () => { RING.tok++; RING.call = false; RING.owe = false; if (window.OwnRing) OwnRing.stop(); if (NS) NS.quiet('ring'); };
+// Sound on but not playing: 2 no audio context yet (no tap since the app opened), 1 the engine is asleep or held. Her
+// call card says TAP FOR SOUND and doesn't count it toward missed
+const sndLocked = () => !SND.on || !NS ? 0 : !NS.S.ctx ? 2 : NS.S.ctx.state === 'running' ? 0 : 1;
+if (NS) { const was = NS.S.onstate; NS.S.onstate = () => { if (was) was(); if (NS.S.ctx && NS.S.ctx.state === 'running') ringOwed(); }; }
+// back in the app with her call ringing: wake the engine now and a few times after (a laptop allows it; an iPhone often
+// waits for the tap). Nothing happens when no ring is owed
+function ringRevive() { if (!RING.owe || !RING.call) return; [0, 300, 1000, 3000].forEach(ms => setTimeout(() => { if (!RING.owe || !RING.call || document.hidden || !NS || !NS.S.ctx) return; if (NS.S.ctx.state === 'running') ringOwed(); else NS.wake(); }, ms)); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) ringRevive(); else if (RING.call) RING.owe = true; });
+addEventListener('pageshow', ringRevive); addEventListener('focus', ringRevive);
 // message: a reminder coming due while the app is open. The engine is kept awake from a minute before, or it would sleep.
 // It stays quiet while the phone rings.
 function nextRemind() { const d = today(), now = Date.now(); let best = 0; for (const t of tasksOn(d)) { if (!t.remind || isDone(t, d)) continue; const at = new Date(`${d}T${remAt(t, d)}`).getTime(); if (at > now - 30e3 && (!best || at < best)) best = at; } return best; }
@@ -1572,7 +1600,7 @@ document.addEventListener('click', e => {
     case 'set-mvoice': { MV.on = v === '1'; try { localStorage.setItem('daybook_mvoice', MV.on ? '1' : '0'); } catch (x) {} haptic(6); if (!MV.on) mvStop(); render(); return MV.on ? mvSay('greet.again.3') || sfx('tick') : sfx('tick'); }
     case 'set-amb': { SND.amb = ['low', 'medium'].includes(v) ? v : 'off'; try { localStorage.setItem('daybook_amb', SND.amb); } catch (x) {} haptic(6); if (SND.amb === 'off' && window.AmbSound) AmbSound.stop(); return sfx('tick'); }
     case 'ring-clear': { haptic(6); return window.OwnRing && OwnRing.clear().then(() => { island.toast('Your ring is removed from this device'); window.City && City.update(); }); }
-    case 'ring-test': { if (!SND.on) return island.toast('Turn Sound on first'); sndBoot(); if (OwnRing.O.has) { ringStop(); return OwnRing.play().then(ok => ok || sfx('error')); } return sfx('ring', { force: true, reps: 1 }); }
+    case 'ring-test': { if (!SND.on) return island.toast('Turn Sound on first'); sndBoot(); if (OwnRing.O.has) { ringStop(); return OwnRing.play({ wait: 1500 }).then(ok => ok || sfx('error')); } return sfx('ring', { force: true, reps: 1 }); }
     case 'ring-stop': return ringStop();
     case 'set-perf': { if (window.Perf) window.Perf.set(v); else { try { localStorage.setItem('daybook_perf', v); } catch (x) {} } return haptic(6); }
     case 'copy-log': { let log = []; try { log = JSON.parse(localStorage.getItem('daybook_log') || '[]'); } catch (x) {}
@@ -1679,6 +1707,7 @@ window.CityApp = {
   ambWant,
   ring: ringDecide,
   ringStop,
+  sndLocked,   // p37: her call card's TAP FOR SOUND
   ownPick(file) {
     if (!window.OwnRing || !file) return;
     island.toast('Reading the sound on this device');
@@ -1916,13 +1945,8 @@ window.CityApp = {
     if (dow === 6 && hour >= 17 && hour < 22) { const nm = addDays(mondayOf(parse(td)), 7), left = datesOf(nm).reduce((a, d) => a + tasksOn(d).filter(t => !isDone(t, d)).length, 0); out.push({ k: 'week', key: 'w:' + td, mon: iso(nm), n: left }); }
     return out;
   },
-  // her call's ring: his own sound when this device has one, the built-in ring otherwise; again while it rings
-  ringOnce() {
-    if (!SND.on || !NS || !NS.S.ctx) return false;
-    const built = () => { if (!NS.S.voices.some(v => v.nm === 'neon|ring')) sfx('ring', { force: true, wait: 3000 }); };
-    if (window.OwnRing && OwnRing.O.has) { if (!OwnRing.playing()) OwnRing.play().then(ok => { if (!ok) built(); }); } else built();
-    return true;
-  },
+  // her call's ring: his own sound when this device has one, the built-in ring otherwise; again while it rings (ringPlay)
+  ringOnce: () => ringPlay('call'),
   // a reminder her call rang for: the apartment phone doesn't ring for it again
   rung(ids) { let r = {}; try { r = JSON.parse(localStorage.getItem('daybook_rung') || '{}') || {}; } catch (e) {} lsSet('daybook_rung', JSON.stringify({ ids: [...new Set([...(r.ids || []), ...ids])], at: Date.now() })); },
   // M4: LINK, and what's new since she last told him (her first talk after a level up says so)

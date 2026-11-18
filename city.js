@@ -586,6 +586,11 @@ label.rbtn{cursor:pointer}
 #call.clr .hox{display:none}
 #call .hon em{font-style:normal}
 #call.clr .hon{color:var(--hud-yellow)}#call.clr .hon i{background:var(--hud-yellow)}
+/* p37: Sound is on but the device holds it: TAP FOR SOUND, a chip that is safe to tap (any tap lets the sound out) */
+#call.clr.cllk .hoh{flex-wrap:wrap;gap:6px 8px}
+#call.clr.cllk .hon{margin-left:0;padding:9px 10px;border:1px solid var(--hud-yellow);background:rgba(242,221,61,.1);cursor:pointer;animation:cllk 1.1s ease-in-out infinite}
+@keyframes cllk{50%{box-shadow:0 0 12px rgba(242,221,61,.5)}}
+@media (prefers-reduced-motion:reduce){#call.clr.cllk .hon{animation:none}}
 #clSay{margin:5px 0 0;font:600 15px/1.36 var(--body);color:var(--hud-text)}
 #clTitle{margin-top:7px;font:700 17px/1.28 var(--body);color:var(--hud-cyan);overflow-wrap:anywhere}
 #clInfo{display:block;margin-top:4px;font:12px/1.4 var(--micro);color:var(--hud-cyan);letter-spacing:.04em;overflow-wrap:anywhere}
@@ -7535,11 +7540,23 @@ const clSave = m => { try { localStorage.setItem('daybook_calls', JSON.stringify
 /* what he didn't get to: again later, or not today */
 function clDefer(items) { const m = clMem(), now = Date.now(); items.forEach(x => { if (CALL_AGAIN[x.k] && !m.done[x.key]) m.snooze[x.key] = now + CALL_AGAIN[x.k] * 60e3; else m.done[x.key] = 1; }); clSave(m); }
 function clDone(x) { const m = clMem(); m.done[x.key] = 1; clSave(m); }
+/* p37: how long it has rung toward missed. Not while the page is hidden, nor while Sound is on but the device holds it
+   (TAP FOR SOUND; at most CALL_LOCK of that), so a ring he couldn't hear isn't put off for an hour. soft: the first
+   moment, when a waking engine isn't called locked yet (only no audio context at all is) */
+const CALL_LOCK = 60e3;
+function clPace(now, soft) {
+  const hid = document.hidden, lk = !hid && APP.sndLocked ? APP.sndLocked() : 0;
+  if (hid) { if (!CL.hdAt) CL.hdAt = now; } else if (CL.hdAt) { CL.hd = (CL.hd || 0) + now - CL.hdAt; CL.hdAt = 0; }
+  if (lk) { if (!CL.lkAt) CL.lkAt = now; } else if (CL.lkAt) { CL.lk = (CL.lk || 0) + now - CL.lkAt; CL.lkAt = 0; }
+  const show = soft ? lk === 2 : !!lk; if (CL.shy !== show) { CL.shy = show; setText('#clT', show ? 'TAP FOR SOUND' : 'RINGING'); $('#call').classList.toggle('cllk', show); }
+  return now - CL.t0 - (CL.hd || 0) - (CL.hdAt ? now - CL.hdAt : 0) - Math.min(CALL_LOCK, (CL.lk || 0) + (CL.lkAt ? now - CL.lkAt : 0));
+}
+document.addEventListener('visibilitychange', () => { if (CL && CL.st === 'ring') clPace(Date.now()); });
 function callTick(force) {
   if (!ready || !window.Mira || !APP.calls) return null;
   const now = Date.now();
   if (CL) {
-    if (CL.st === 'ring') { if (now - CL.t0 > clRingMs) { callDrop(false); return null; } if (now - clRingT > 6500) { clRingT = now; if (APP.ringOnce) APP.ringOnce(); } }
+    if (CL.st === 'ring') { if (clPace(now) > clRingMs) { callDrop(false); return null; } if (now - clRingT > 6500) { clRingT = now; if (APP.ringOnce) APP.ringOnce(); } }
     else if (CL.st === 'live') setText('#clT', mmss(now - CL.t1));
     return null;
   }
@@ -7563,7 +7580,7 @@ function callRing(k, items) {
   setText('#clInfo', CALL_SAY[k] + (items.length > 1 ? ` · ${items.length}` : '')); setHTML('#clList', '');
   setHTML('#clActs', '<button class="rbtn" data-cl="answer">ANSWER</button><button class="rbtn ol dng" data-cl="decline">DECLINE</button>');
   el.classList.remove('live', 'talk'); el.classList.add('on', 'clr');   /* not 'ring': that's the shop's round dial, 74px wide */ el.setAttribute('aria-hidden', 'false'); el.inert = false;
-  clRingT = Date.now(); if (APP.ringOnce) APP.ringOnce();
+  clRingT = Date.now(); if (APP.ringOnce) APP.ringOnce(); clPace(clRingT, true);
 }
 function callAnswer() {
   if (!CL || CL.st !== 'ring') return; if (APP.ringStop) APP.ringStop(); APP.sfx('pickup');

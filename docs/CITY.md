@@ -332,6 +332,12 @@ Technical state only. Updated 2026-11-06.
   - **His own ring:** System, Sound: USE MY OWN takes any audio or video file. Kept in IndexedDB `arcadia_own` on the
     device, never synced, exported or uploaded; level matched to -26 with a -14 dBFS cap and played once through.
     PLAY, STOP, REMOVE. Tested only with a generated tone. **Never commit, upload or bundle such a file.**
+  - **A ring that can't sound yet (p37):** every ring goes through `ringPlay` (index.html). His own sound waits up to
+    4 s for the engine to wake instead of the built-in ring standing in; the built-in plays only when this device has no
+    file or the file won't decode. A call's ring that can't sound (no tap since the app opened, a hidden page, a device
+    holding the sound) is owed and plays the moment sound runs: the engine waking on return (tried at once, then after
+    0.3, 1 and 3 s, only while a ring is owed) or his first tap. The audio context is never made from a timer. A call's
+    decoded sound is kept while it rings and freed on pickup or hang-up; a pickup mid-decode never starts it. t88.
   - **Ambience:** System, Sound, Ambience OFF (default), LOW (-42 LUFS) or MEDIUM (-36). Plays only with Sound on, not on
     Saver, and stops when the app is hidden. The place: the city while flying over it and on the way out, the room once
     the flight heads in. The weather: what the city shows (`skyW()`: snow above .3, downpour from rain .75, rain above
