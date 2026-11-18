@@ -1801,7 +1801,7 @@ vec3 fogIt(vec3 c, vec3 P, float e){
   fc=min(fc,mix(vec3(.5,.31,.28),vec3(1.),uSky.x));
 #ifndef MIRROR
   /* the anime street's thick air (never in the reflection: seen from the mirrored camera it veils the whole road) */
-  if(uCel>.5){ float sk=smoothstep(26.,12.,abs(P.x))*smoothstep(-175.,-150.,P.z)*smoothstep(264.,242.,P.z); float na=sk*(1.-exp(-d*.0055))*exp(-max(P.y,0.)*.03)*(1.-uSky.x)*mix(.4,1.,smoothstep(.5,9.,P.y));
+  if(uCel>.5){ float sk=smoothstep(26.,12.,abs(P.x))*smoothstep(-175.,-150.,P.z)*smoothstep(264.,242.,P.z); sk=max(sk,max(max(smoothstep(15.,7.,abs(P.z-150.)),smoothstep(15.,7.,abs(P.z+30.))),smoothstep(15.,7.,abs(P.z+170.)))*smoothstep(126.,110.,abs(P.x))); float na=sk*(1.-exp(-d*.0055))*exp(-max(P.y,0.)*.03)*(1.-uSky.x)*mix(.4,1.,smoothstep(.5,9.,P.y));
     a=1.-(1.-a)*(1.-na*.55);
     vec3 ap=textureLod(uPool,(P.xz+uPoolR)/(2.*uPoolR),3.).rgb; ap=max(mix(vec3(dot(ap,vec3(.33))),ap,1.6),0.); fc=mix(fc,ap*.7+vec3(.06,.03,.17),na*.6);
   }
@@ -1812,6 +1812,11 @@ vec3 fogIt(vec3 c, vec3 P, float e){
 #endif
   }
   vec3 outC=mix(c,fc,clamp(a*(1.-e*.42),0.,1.));
+#ifndef MIRROR
+  /* p38 anime: seen from up in the air, the street floor sinks into dark haze; only its lights come through */
+  if(uCel>.5){ float gh=(1.-smoothstep(1.,18.,P.y))*smoothstep(12.,70.,cameraPosition.y-P.y)*(1.-exp(-d*.009))*(1.-uSky.x)*(1.-e*.6);
+    outC=mix(outC,vec3(.04,.03,.11)+textureLod(uPool,(P.xz+uPoolR)/(2.*uPoolR),4.).rgb*.18,gh*.62); }
+#endif
   /* each row of blocks back from the water sits in its own step of coloured air */
   float s1=smoothstep(160.,138.,P.z), s2=smoothstep(-16.,-42.,P.z), s3=smoothstep(-158.,-184.,P.z), s4=smoothstep(-296.,-326.,P.z);
   float hz=s1*.08+s2*.15+s3*.17+s4*.2+.3*smoothstep(900.,1500.,d);
@@ -2397,7 +2402,7 @@ void main(){
 
 /* ---------- traffic: position comes from time, car bodies and their lights share it ---------- */
 const CAR_COMMON = /* glsl */`
-uniform highp sampler2D uLanes; uniform float uTime;
+uniform highp sampler2D uLanes; uniform float uTime, uCelT;
 in vec4 iLane; /* lane row, phase, speed (fractions per second), side offset */
 in vec4 iLook; /* colour r,g,b, scale */
 in float iH;   /* height offset */
@@ -2410,7 +2415,9 @@ void carAt(out vec3 p, out vec3 T, out float fade){
   vec3 S=normalize(cross(T,vec3(0.,1.,0.)));
   p=mix(a,b,f)+S*iLane.w+vec3(0.,iH,0.);
   float e=fract(iLane.y+uTime*iLane.z); fade=smoothstep(0.,.02,e)*smoothstep(1.,.98,e);
-}`;
+}
+/* p38: a negative scale marks a car or a walker that only the anime look draws */
+float aniK(){ return iLook.a<0.?uCelT:1.; }`;
 const CAR_VS = /* glsl */`
 precision highp float; uniform mat4 viewMatrix, projectionMatrix; uniform float uMY;
 in vec3 position; in vec3 normal; in vec4 aCol;
@@ -2431,7 +2438,7 @@ float gSole(float p){ float th=gThigh(p),fl=gFlex(p),al=gToe(p); vec2 a=vec2(.9,
 void main(){
   vec3 p,T; float fade; carAt(p,T,fade);
   vec3 S=normalize(cross(T,vec3(0.,1.,0.))), U=cross(S,T);
-  float k=iLook.a*step(.001,fade);
+  float k=abs(iLook.a)*step(.001,fade)*aniK();
   vec3 pos=position, nor=normal;
 #ifdef WALK
   /* people are built right handed so their lit side is the outside */
@@ -2527,7 +2534,7 @@ void main(){
   vec3 headC=vec3(.95,.97,1.), tailC=vec3(1.,.09,.07);
   vec3 cc=fr>0.?headC:tailC;
   float part=position.z; float side=mod(part,2.)<.5?-1.:1.; float road=step(1.5,part);
-  float K=iLook.a;
+  float K=abs(iLook.a)*aniK();
   vec3 S=normalize(cross(T,vec3(0.,1.,0.)));
   vec3 at=p+T*sign(fr)*2.32*K+S*side*.66*K+vec3(0.,.62*K,0.);
   float dd=length(cameraPosition-p);
@@ -2574,7 +2581,7 @@ void main(){
   vec3 toC=normalize(cameraPosition-p); vec3 W=normalize(cross(T,toC));
   float dd=length(cameraPosition-p);
   float wid=.09+dd*.00085;
-  vec3 w=p+T*position.y*iLook.a+W*position.x*wid*2.;
+  vec3 w=p+T*position.y*abs(iLook.a)*aniK()+W*position.x*wid*2.*aniK();
   vQ=position.xy*2.; vC2=iLook.rgb*fade*(.45+.55*exp(-dd*.0006))*smoothstep(170.,420.,dd);
   gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);
 }`;
@@ -2837,7 +2844,7 @@ function blade(M, x, y, z, ry, h, idx, R) {
 /* ad screens: sixteen on the island, one per ad, so the same one never shows twice */
 let AD_USED = 0; const AD_MAX = 16; const SPILLS = [];
 /* p38: the main avenue's faces, for the anime street test (filled by dt, read by animeStreet) */
-const AVE_FACES = [];
+const AVE_FACES = [], CROSS_FACES = [];
 function adRig(M, x, y, z, ry, w, h, R, o = {}) {
   if (AD_USED >= AD_MAX) { wrapSign(M, x, y, z, ry, Math.min(w * .36, 6), h * 1.15, (x | 0) + AD_USED, R); return; }
   const k = AD_USED++, seed = k * 16 + R.int(0, 3), off = o.off === undefined ? 1.7 : o.off, nx = Math.sin(ry), nz = Math.cos(ry), tx = nz, tz = -nx;
@@ -3540,6 +3547,8 @@ function buildCityWorld() {
       if (H < 130 && R.chance(.34)) roofSign(M, x, H, z + d * .28, Math.min(w * .8, 26), R);
       if (R.chance(.6)) { const c = R.pick([PAL.magenta, PAL.cyan, PAL.yellow, PAL.orange]); pool(x, z + d / 2 + 7, R.range(14, 24), c, .35); for (let i = 0; i < 3; i++) blade(M, x + R.range(-w / 2, w / 2), R.range(9, 22), z + d / 2 + .5, 0, R.range(5, 10), R.int(0, 40), R); }
     }
+    /* p38: faces on the cross streets at 150, -30 and -170 (no random used) */
+    if (Math.abs(x) < 120 && z > -175 && z < 145) { const zS = z + d / 2, zN = z - d / 2; if (Math.abs(zS - 139) < 3.5 || Math.abs(zS + 41) < 3.5) CROSS_FACES.push({ e: zS + .1, a: x, d: w, H, s: 1, ry: 0 }); if (Math.abs(zN + 19) < 3.5 || Math.abs(zN + 159) < 3.5) CROSS_FACES.push({ e: zN - .1, a: x, d: w, H, s: -1, ry: Math.PI }); }
     if (H > 100 && era === 'corp' && R.chance(.5)) M.set({});
   };
   heroRow(M, rng(1212));
@@ -3674,7 +3683,10 @@ function buildCityFx() {
 /* p38 option 3 test: the main avenue dense as an anime key frame. Own mesh, own random (nothing else moves), drawn in
    ANIME only: projecting blades stacked up the walls, vertical neon bars, screens and plates, floating screens, cables
    with lanterns across the street. Glows, fog and holo panels go to ANI_GLOW / ANI_HOLO for their own meshes */
-const ANI_GLOW = [], ANI_HOLO = [];
+const ANI_GLOW = [], ANI_HOLO = [], ANI_WALKS = [], ANI_FLOATS = []; let ANI_NAVE = 0;
+/* the walkway levels a face carries, and a floating screen moved up off them */
+const galLevels = f => [12, 27, 45].filter(y => f.H >= y + 9 && (y < 40 || f.H > 60));
+function aniClearY(f, y, h) { for (let k = 0; k < 2; k++) for (const L of galLevels(f)) if (y + h / 2 > L - 1.3 && y - h / 2 < L + 1.7) y = L + 1.9 + h / 2; return y; }
 function animeStreet() {
   const M = new MB(40000), R = rng(3838);
   const COLS = [PAL.cyan, PAL.pink, PAL.yellow, PAL.magenta, 0x6a4bff, PAL.orange, PAL.cyan];
@@ -3687,7 +3699,7 @@ function animeStreet() {
       while (y < top - 5) { const h = R.range(3.5, 9); if (R.chance(.85)) { blade(M, f.e + out * (h * .12 + .5), y + h / 2, z, 0, h, R.int(0, 40), R); if (R.chance(.35)) g(f.e + out * (h * .12 + .5), y + h / 2, z + .6, R.pick(COLS), h * .55); } y += h + R.range(.5, 2.6); }
     }
     /* one tall vertical sign per tall face */
-    if (f.H > 40) { const h = R.range(14, 24); blade(M, f.e + out * (h * .12 + .7), R.range(h / 2 + 10, Math.max(h / 2 + 11, top - h / 2)), f.z + R.range(-f.d * .3, f.d * .3), 0, h, R.int(0, 40), R); }
+    if (f.H > 40) { const h = R.range(14, 24), xx = f.e + out * (h * .12 + .7), yy = R.range(h / 2 + 10, Math.max(h / 2 + 11, top - h / 2)), zz = f.z + R.range(-f.d * .3, f.d * .3); f.tall = { z: zz, w: h * .24, y0: yy - h / 2, y1: yy + h / 2 }; blade(M, xx, yy, zz, 0, h, R.int(0, 40), R); }
     /* vertical neon bars on the wall */
     for (let i = 0, n = Math.round(f.d / 3.5); i < n; i++) {
       const z = f.z + R.range(-f.d / 2 + 1, f.d / 2 - 1), h = R.range(5, Math.max(7, top * .55)), y = R.range(4.5, Math.max(5, top - h)), c = R.pick(COLS);
@@ -3705,7 +3717,8 @@ function animeStreet() {
     }
     /* screens floating out over the pavement, and holo panels */
     for (let i = 0, n = Math.max(1, Math.round(f.d / 12)); i < n; i++) {
-      const z = f.z + R.range(-f.d / 2 + 3, f.d / 2 - 3), y = R.range(13, Math.max(14, Math.min(42, top))), w = R.range(3.5, 6.5), h = w * R.range(.55, .8), x = f.e + out * R.range(4.5, 7.5);
+      let z = f.z + R.range(-f.d / 2 + 3, f.d / 2 - 3), y = R.range(13, Math.max(14, Math.min(42, top))), w = R.range(3.5, 6.5), h = w * R.range(.55, .8), x = f.e + out * R.range(4.5, 7.5);
+      y = aniClearY(f, y, h); ANI_FLOATS.push({ x, y, z, w, h });
       if (R.chance(.5)) { const sd = R.int(0, 255); M.plate(x, y, z, w, h, 0, [0, 0, 1, 1], { kind: K.AD, seed: sd, em: 205 }); M.plate(x, y, z - .03, w, h, Math.PI, [0, 0, 1, 1], { kind: K.AD, seed: sd, em: 205 }); g(x, y, z + .5, PAL.cyan, w * .7); }
       else ANI_HOLO.push({ x, y, z, w: w * 1.3, h: h * 1.3, c: hex(R.pick([PAL.cyan, PAL.pink, 0x6a4bff, PAL.cyan])) });
     }
@@ -3716,7 +3729,112 @@ function animeStreet() {
     setPlain(M, 0x09080e); M.beam([-17.6, y, z], [17.6, y2, z2], .07, {});
     for (let i = 0, n = R.int(3, 7); i < n; i++) { const t = R(), x = -17.6 + 35.2 * t, yy = y + (y2 - y) * t - .9, zz = z + (z2 - z) * t, c = R.pick(COLS); M.set({ kind: K.NEON, seed: R() * 200 }); M.box(x, yy + .3, zz, .3, .42, .3, { c }); setPlain(M, 0); g(x, yy + .3, zz, c, 1.8); }
   }
+  ANI_NAVE = ANI_GLOW.length;
+  aniCross(M, g, COLS); aniLevels(M, g, COLS);
   return M.geom();
+}
+/* p38: the cross streets get the same dense walls and cables (own random) */
+function aniCross(M, g, COLS) {
+  const R = rng(3840);
+  for (const f of CROSS_FACES) {
+    const top = Math.min(f.H * .85, 70), P = (o, y, a) => [a, y, f.e + f.s * o];
+    for (let a = f.a - f.d / 2 + 2; a < f.a + f.d / 2 - 1.5; a += R.range(3.2, 5.6)) {
+      let y = R.range(6.5, 9);
+      while (y < top - 5) { const h = R.range(3.5, 9); if (R.chance(.8)) { const q = P(h * .12 + .5, y + h / 2, a); blade(M, q[0], q[1], q[2], Math.PI / 2, h, R.int(0, 40), R); if (R.chance(.3)) g(q[0] + .6, q[1], q[2], R.pick(COLS), h * .55); } y += h + R.range(.6, 3); }
+    }
+    for (let i = 0, n = Math.round(f.d / 4); i < n; i++) {
+      const a = f.a + R.range(-f.d / 2 + 1, f.d / 2 - 1), h = R.range(5, Math.max(7, top * .5)), y = R.range(4.5, Math.max(5, top - h)), c = R.pick(COLS), q = P(R.range(.25, .8), y, a);
+      neonStrip(M, q[0], q[1], q[2], .18, h, .18, c, R.chance(.18) ? 232 : R() * 200);
+      if (R.chance(.45)) { const q2 = P(1.4, y + h / 2, a); g(q2[0], q2[1], q2[2], c, Math.min(h * .45, 9)); }
+    }
+    for (let y = 11; y < top - 6; y += R.range(8, 14)) {
+      if (!R.chance(.55)) continue;
+      const w = R.range(4.5, Math.min(12, f.d - 4)), h = R.range(3.5, 8), a = f.a + R.range(-(f.d - w) / 2 + .5, (f.d - w) / 2 - .5), c = R.pick(COLS);
+      const b = P(.15, y - h / 2 - .3, a), q = P(.34, y, a), gq = P(2.6, y, a);
+      setPlain(M, 0x0d0c14); M.rbox(b[0], b[1], b[2], w + .6, h + .6, .3, f.ry, {});
+      if (R.chance(.5)) M.plate(q[0], q[1], q[2], w, h, f.ry, [0, 0, 1, 1], { kind: K.AD, seed: R.int(0, 255), em: 225 });
+      else M.plate(q[0], q[1], q[2], w, w / 3.75, f.ry, CELL['p' + R.int(0, 11)], { seed: R() * 255, em: 255 });
+      g(gq[0], gq[1], gq[2], c, w * .75);
+    }
+    for (let i = 0, n = Math.max(1, Math.round(f.d / 14)); i < n; i++) {
+      const a = f.a + R.range(-f.d / 2 + 3, f.d / 2 - 3), y = R.range(12, Math.max(13, Math.min(36, top))), w = R.range(3.5, 6), h = w * R.range(.55, .8), q = P(R.range(4.2, 6.5), y, a);
+      if (R.chance(.5)) { const sd = R.int(0, 255); M.plate(q[0], q[1], q[2], w, h, Math.PI / 2, [0, 0, 1, 1], { kind: K.AD, seed: sd, em: 205 }); M.plate(q[0] - .03, q[1], q[2], w, h, -Math.PI / 2, [0, 0, 1, 1], { kind: K.AD, seed: sd, em: 205 }); g(q[0] + .5, q[1], q[2], PAL.cyan, w * .7); }
+      else ANI_HOLO.push({ x: q[0], y: q[1], z: q[2], w: w * 1.3, h: h * 1.3, c: hex(R.pick([PAL.cyan, PAL.pink, 0x6a4bff, PAL.cyan])) });
+    }
+  }
+  /* cables across the cross streets, with lanterns */
+  for (const zc of [150, -30, -170]) for (const sd of [-1, 1]) for (let x = 21 + R.range(0, 6); x < 116; x += R.range(8, 14)) {
+    const xx = x * sd, y = R.range(12, 24), y2 = y + R.range(-1.2, 1.2), x2 = xx + R.range(-2, 2);
+    setPlain(M, 0x09080e); M.beam([xx, y, zc - 11], [x2, y2, zc + 11], .07, {});
+    for (let i = 0, n = R.int(2, 6); i < n; i++) { const t = R(), px = xx + (x2 - xx) * t, yy = y + (y2 - y) * t - .9, pz = zc - 11 + 22 * t, c = R.pick(COLS); M.set({ kind: K.NEON, seed: R() * 200 }); M.box(px, yy + .3, pz, .3, .42, .3, { c }); setPlain(M, 0); g(px, yy + .3, pz, c, 1.8); }
+  }
+}
+/* p38: the avenue in layers. Walkways along the walls at 12, 27 and 45 m with shops on them, sky bridges across at
+   other heights (clear of the three flyer lanes at 33, 52 and 76 m), people on both */
+function aniLevels(M, g, COLS) {
+  const R = rng(3841), SHOPC = [0xffc890, 0x9ee8ff, 0xff9ad8, 0xfff0c0, 0xb8a0ff];
+  for (const f of AVE_FACES) for (const y of galLevels(f)) {
+    const s = f.s, e = f.e, xo = e + s * 5.4, xc = e + s * 4.15, c = R.pick(COLS);
+    let segs = [[f.z - f.d / 2 - 1.2, f.z + f.d / 2 + 1.2]];
+    if (f.tall && y > f.tall.y0 - 2 && y < f.tall.y1 + 2) { const t = f.tall; segs = [[segs[0][0], t.z - t.w / 2 - 1], [t.z + t.w / 2 + 1, segs[0][1]]].filter(q => q[1] - q[0] > 4); }
+    for (const [z0, z1] of segs) {
+      const len = z1 - z0, zc = (z0 + z1) / 2;
+      setPlain(M, 0x1b1826); M.box(xc, y - .4, zc, 2.5, .4, len, {});
+      neonStrip(M, xo - s * .05, y - .42, zc, .07, .2, len - .3, c, R() * 200);
+      setPlain(M, 0x0e0d15);
+      for (let z = z0 + .5; z < z1; z += 2.4) M.box(xo - s * .06, y, z, .07, 1.05, .07, {});
+      M.box(xo - s * .06, y + 1.02, zc, .09, .07, len, {});
+      neonStrip(M, xo - s * .06, y + 1.1, zc, .04, .04, len, c, R() * 200);
+      for (let z = z0 + 2; z < z1 - 1; z += 7) M.beam([e + s * .2, y - 2.6, z], [xo - s * .25, y - .45, z], .13, {});
+      for (let z = z0 + 3; z < z1; z += 8) g(xc, y - 1.2, z, c, 3.4);
+      /* shops on the walkway: a lit window and a name above it */
+      for (let z = z0 + 1.5; z < z1 - 4; z += R.range(5.5, 8.5)) {
+        if (!R.chance(.72)) continue;
+        const w = R.range(3, 5), sc = R.pick(SHOPC);
+        M.plate(e + s * .12, y + 1.3, z + w / 2, w, 2.5, f.ry, [0, 0, 1, 1], { kind: K.PLAIN, em: 150, c: sc });
+        setPlain(M, 0x0c0a14); M.rbox(e + s * .1, y + 2.75, z + w / 2, w * .92, 1.25, .22, f.ry, {});
+        M.plate(e + s * .24, y + 3.37, z + w / 2, w * .86, 1.08, f.ry, CELL['p' + R.int(0, 11)], { seed: R() * 255, em: 255 });
+        g(e + s * 1.6, y + 1.4, z + w / 2, sc, 3.2);
+      }
+      const n = Math.max(1, Math.round(len / 22));
+      ANI_WALKS.push({ pts: [[xc, y + .02, z1 - .6], [xc, y + .02, z0 + .6]], n, sp: 1.3 / len }); if (len > 30) ANI_WALKS.push({ pts: [[xc - s * .5, y + .02, z0 + .6], [xc - s * .5, y + .02, z1 - .6]], n: 1, sp: 1.2 / len });
+    }
+  }
+  /* sky bridges across the avenue */
+  const hAt = (s, z) => { let h = 0; for (const f of AVE_FACES) if (f.s === s && Math.abs(z - f.z) < f.d / 2 - 1.5) h = f.H; return h; };
+  const HS = [12, 20, 27, 42, 45, 63, 66, 90, 104], flyOk = y => [33, 52, 76].every(L => Math.abs(y - L) > 4.5);
+  const hitsFloat = (y, z, wd) => ANI_FLOATS.some(q => Math.abs(q.z - z) < wd / 2 + q.w / 2 + .3 && Math.abs(q.y - y - 1.6) < q.h / 2 + 2.4);
+  for (const [za, zb] of [[126, -10], [-54, -150]]) for (let z = za; z > zb; z -= R.range(11, 19)) {
+    const mx = Math.min(hAt(1, z), hAt(-1, z)) - 7; if (mx < 14) continue;
+    const opts = HS.filter(y => y < mx && flyOk(y)); if (!opts.length) continue;
+    const nB = R.chance(.35) && opts.length > 2 ? 2 : 1, used = [];
+    for (let k = 0; k < nB; k++) {
+      let y = R.pick(opts); if (used.some(u => Math.abs(u - y) < 8)) continue; const type = R.chance(.5) ? 1 : 0, wd = type ? R.range(4, 5.5) : R.range(2.8, 3.6);
+      if (hitsFloat(y, z, wd)) continue; used.push(y);
+      const c = R.pick(COLS), c2 = R.pick(COLS);
+      setPlain(M, 0x1a1724); M.box(0, y - .5, z, 34.8, .5, wd, {});
+      neonStrip(M, 0, y - .62, z + wd / 2 - .05, 34.6, .07, .07, c, R() * 200); neonStrip(M, 0, y - .62, z - wd / 2 + .05, 34.6, .07, .07, c2, R() * 200);
+      for (let x = -15; x <= 15; x += 6) g(x, y - 1.3, z, R.chance(.5) ? c : c2, 3.6);
+      if (type) {
+        /* a lit tube: glass sides with mullions, a roof with a neon edge */
+        const tint = R.pick([[0x8fd8ff, 0x3a6a9a], [0xffc4e8, 0x8a3a6a], [0xc8b8ff, 0x4a3a8a], [0xffd8a0, 0x8a5a2a]]);
+        for (let x = -16.5; x < 16.4; x += 2.2) for (const sz of [1, -1]) { const lit = R(); M.plate(x + 1.1, y + 1.5, z + sz * wd / 2, 2.1, 2.9, sz > 0 ? 0 : Math.PI, [0, 0, 1, 1], { kind: K.PLAIN, em: lit < .25 ? 8 : lit < .8 ? 45 : 130, c: lit < .8 ? tint[1] : tint[0] }); }
+        setPlain(M, 0x0e0d15); for (let x = -16.5; x <= 16.5; x += 2.2) { M.box(x, y, z + wd / 2 + .03, .12, 3, .1, {}); M.box(x, y, z - wd / 2 - .03, .12, 3, .1, {}); }
+        setPlain(M, 0x191622); M.box(0, y + 3, z, 34.8, .45, wd + .3, {});
+        neonStrip(M, 0, y + 3.46, z + wd / 2 + .1, 34.6, .06, .06, c, R() * 200);
+        ANI_WALKS.push({ pts: [[-16, y + .02, z + .6], [16, y + .02, z + .6]], n: R.int(1, 3), sp: 1.3 / 32 });
+      } else {
+        setPlain(M, 0x0e0d15);
+        for (const sz of [-1, 1]) { for (let x = -16.8; x <= 16.8; x += 2.4) M.box(x, y, z + sz * (wd / 2 - .06), .07, 1.05, .07, {}); M.box(0, y + 1.02, z + sz * (wd / 2 - .06), 34.6, .07, .09, {}); }
+        ANI_WALKS.push({ pts: [[-16, y + .02, z - .5], [16, y + .02, z - .5]], n: R.int(1, 3), sp: 1.3 / 32 }, { pts: [[16, y + .02, z + .5], [-16, y + .02, z + .5]], n: R.int(1, 2), sp: 1.2 / 32 });
+      }
+      /* a name board hung under the middle, both ways */
+      const bw = R.range(7, 11), bh = bw / 3.75, cell = CELL['p' + R.int(0, 11)];
+      setPlain(M, 0x0c0a14); M.box(0, y - .7 - bh - .25, z, bw + .4, bh + .3, .3, {});
+      M.plate(0, y - .7 - bh / 2 - .1, z + .17, bw, bh, 0, cell, { seed: R() * 255, em: 255 }); M.plate(0, y - .7 - bh / 2 - .1, z - .17, bw, bh, Math.PI, cell, { seed: R() * 255, em: 255 });
+      g(0, y - .7 - bh / 2, z + 1, c, bw * .6);
+    }
+  }
 }
 /* the anime street's air: light cones under the lamps and out of the signs, sheets of lit fog across the street, and
    holo panels. Shares the fx material (FX_FS kinds 1, 2, 9): no new program */
@@ -3733,9 +3851,9 @@ function animeFog() {
   /* under every avenue lamp (streetLife: x -10.2 at z, +10.2 at z-11, the head 1.9 m in at 7.9 m) */
   for (let z = 244; z > -150; z -= 22) { cone(-8.3, 7.9, z, 0, -1, 0, 7.9, 3.4, [1, .62, .34], .1); cone(8.3, 7.9, z - 11, 0, -1, 0, 7.9, 3.4, [1, .62, .34], .1); }
   /* out of the bigger signs, down to the street */
-  for (const q of ANI_GLOW) if (q.s > 3 && q.y > 8 && R.chance(.4)) cone(q.x, q.y, q.z, -Math.sign(q.x) * .8, -.62, 0, Math.min(q.y, 16), Math.min(q.s * .7, 6), [q.r, q.g, q.b], .05);
+  for (const q of ANI_GLOW.slice(0, ANI_NAVE)) if (q.s > 3 && q.y > 8 && R.chance(.4)) cone(q.x, q.y, q.z, -Math.sign(q.x) * .8, -.62, 0, Math.min(q.y, 16), Math.min(q.s * .7, 6), [q.r, q.g, q.b], .05);
   /* sheets of fog across the street, each lit by the signs and lamps near it */
-  const lights = GLOW.filter(q => Math.abs(q.x) < 60 && q.z > -190 && q.z < 270).concat(ANI_GLOW);
+  const lights = GLOW.filter(q => Math.abs(q.x) < 130 && q.z > -190 && q.z < 270).concat(ANI_GLOW);
   for (let z = 236; z > -150; z -= 13) {
     let r = .04, gg = .16, b = .2;
     for (const q of lights) { const dz = q.z - z, dd = q.x * q.x + dz * dz + q.y * q.y * .5; const w = q.s * q.s / (q.s * q.s + dd); r += q.r * w; gg += q.g * w; b += q.b * w; }
@@ -3744,6 +3862,15 @@ function animeFog() {
     const h = R.range(12, 18), zz = z + R.range(-3, 3);
     M.quad([-18, 0, zz], [18, 0, zz], [18, h, zz], [-18, h, zz], [0, 0, 1, 1]); M.quad([18, 0, zz], [-18, 0, zz], [-18, h, zz], [18, h, zz], [0, 0, 1, 1]);
   }
+  /* p38: fog sheets down the cross streets too (own random) */
+  { const R2 = rng(3943);
+    for (const zc of [150, -30, -170]) for (const sd of [-1, 1]) for (let x = 24; x < 114; x += 13) {
+      const xx = x * sd; let r = .04, gg = .16, b = .2;
+      for (const q of lights) { const dx = q.x - xx, dz = q.z - zc, dd = dx * dx + dz * dz + q.y * q.y * .5; const w = q.s * q.s / (q.s * q.s + dd); r += q.r * w; gg += q.g * w; b += q.b * w; }
+      const k = 1 / Math.max(r, gg, b, .001), c = [r * k, gg * k, b * k];
+      M.set({ kind: 9, a: 20, c }); const h = R2.range(11, 16), x2 = xx + R2.range(-3, 3);
+      M.quad([x2, 0, zc + 11], [x2, 0, zc - 11], [x2, h, zc - 11], [x2, h, zc + 11], [0, 0, 1, 1]); M.quad([x2, 0, zc - 11], [x2, 0, zc + 11], [x2, h, zc + 11], [x2, h, zc - 11], [0, 0, 1, 1]);
+    } }
   /* holo panels: scan-row light, seen from both sides */
   for (const p of ANI_HOLO) { M.set({ kind: 2, a: 170, c: p.c }); M.quad([p.x, p.y - p.h / 2, p.z - p.w / 2], [p.x, p.y - p.h / 2, p.z + p.w / 2], [p.x, p.y + p.h / 2, p.z + p.w / 2], [p.x, p.y + p.h / 2, p.z - p.w / 2], [0, 0, 1, 1]); M.quad([p.x - p.w / 2, p.y - p.h / 2, p.z], [p.x + p.w / 2, p.y - p.h / 2, p.z], [p.x + p.w / 2, p.y + p.h / 2, p.z], [p.x - p.w / 2, p.y + p.h / 2, p.z], [0, 0, 1, 1]); }
   return M.geom();
@@ -6048,6 +6175,7 @@ function mirrorSubset(g) {
   for (let i = 0; i < n; i++) { const o = i * 9, kind = M[i * 12] & 15; let k = kind === K.NEON || kind === K.SIGN || kind === K.AD || kind === 1; if (!k) { const dx = P[o] - P[o + 3], dy = P[o + 1] - P[o + 4], dz = P[o + 2] - P[o + 5], ex = P[o] - P[o + 6], ey = P[o + 1] - P[o + 7], ez = P[o + 2] - P[o + 8]; k = dx * dx + dy * dy + dz * dz > big || ex * ex + ey * ey + ez * ez > big; } if (k) keep.push(i * 3, i * 3 + 1, i * 3 + 2); }
   const m = new THREE.BufferGeometry(); for (const nm of ['position', 'normal', 'aCol', 'aUv', 'aMat']) m.setAttribute(nm, g.getAttribute(nm)); m.setIndex(new THREE.BufferAttribute(new Uint32Array(keep), 1)); return m;
 }
+const CEL_T = { value: 0 };
 function trafficSetup() {
   const R = rng(66);
   const rows = { hwyE: lane(offsetPts(HIGHWAY, 4)), hwyW: lane(offsetPts(HIGHWAY, 4), true) };
@@ -6113,21 +6241,31 @@ function trafficSetup() {
   const bus = (pts, n, sp, sc, col) => { const r = lane(pts); for (let i = 0; i < n; i++) inst.push({ row: r, ph: (i + R() * .5) / n, sp, side: 0, y: 0, sc, col: R.pick(col), mdl: 5 }); };
   bus(curvePts([[-900, 132, 330], [-300, 140, 250], [140, 136, 236], [900, 160, 330]], 30), 2, .009, 2.6, [[.42, .4, .38], [.12, .3, .34]]);
   bus(curvePts([[820, 210, 120], [200, 220, -60], [-200, 236, -260], [-820, 250, -520]], 30), 2, .008, 3.2, [[.3, .2, .08], [.16, .16, .18]]);
+  /* p38 anime only: flyers down the avenue at three heights, people on the walkways and bridges (own random, appended, so nothing above moves) */
+  { const RA = rng(3842);
+    for (const [y, n, sp] of [[33, 5, .026], [52, 4, .03], [76, 4, .034]]) {
+      const a = lane([[-4.5, y, 330], [-4.5, y + 2, 60], [-3.5, y, -230]]), b = lane([[4.5, y, -230], [4.5, y + 2, 60], [3.5, y, 330]]);
+      for (const r of [a, b]) for (let i = 0; i < n; i++) inst.push({ row: r, ph: (i + RA() * .6) / n, sp: sp * RA.range(.85, 1.15), side: RA.range(-1.4, 1.4), y: 0, sc: 1.15, col: RA.pick(flyer), mdl: 4, ani: 1 });
+    }
+    for (const w of ANI_WALKS) { const r = lane(w.pts); for (let i = 0; i < w.n; i++) peds.push({ row: r, ph: (i + RA() * .8) / w.n, sp: w.sp * RA.range(.85, 1.15), side: RA.range(-.4, .4), y: 0, sc: RA.range(.92, 1.06), col: RA.pick(coat), mdl: RA.int(0, 2), ani: 1 }); }
+  }
   return { inst, peds, streams, roads: new Set([aveN, aveS, ...ew, ...ns]) };
 }
 function buildTraffic({ inst, peds, streams }) {
   const lanes = buildLaneTexture(); TEX.lanes = lanes; S.carCount = inst.length;
   const shared = city.u;
-  const fsU = () => ({ uLanes: { value: lanes }, uTime: TIME, uMY: { value: .2 }, uMoon: shared.uMoon, uAmbHi: shared.uAmbHi, uAmbLo: shared.uAmbLo, uFogHi: shared.uFogHi, uFogLo: shared.uFogLo, uFogD: shared.uFogD, uFogH: shared.uFogH, uPoolR: shared.uPoolR, uPoolK: shared.uPoolK, uPool: shared.uPool, uSky: shared.uSky, uMoonC: shared.uMoonC, uSkyH: shared.uSkyH, uSkyZ: shared.uSkyZ });
-  const wire = (g, list) => { const iLane = new Float32Array(list.length * 4), iLook = new Float32Array(list.length * 4), iH = new Float32Array(list.length); list.forEach((c, i) => { iLane.set([c.row, c.ph, c.sp, c.side], i * 4); iLook.set([c.col[0], c.col[1], c.col[2], c.sc], i * 4); iH[i] = c.y; }); g.setAttribute('iLane', new THREE.InstancedBufferAttribute(iLane, 4)); g.setAttribute('iLook', new THREE.InstancedBufferAttribute(iLook, 4)); g.setAttribute('iH', new THREE.InstancedBufferAttribute(iH, 1)); g.instanceCount = list.length; g.userData.list = list; return g; };
+  const fsU = () => ({ uLanes: { value: lanes }, uTime: TIME, uCelT: CEL_T, uMY: { value: .2 }, uMoon: shared.uMoon, uAmbHi: shared.uAmbHi, uAmbLo: shared.uAmbLo, uFogHi: shared.uFogHi, uFogLo: shared.uFogLo, uFogD: shared.uFogD, uFogH: shared.uFogH, uPoolR: shared.uPoolR, uPoolK: shared.uPoolK, uPool: shared.uPool, uSky: shared.uSky, uMoonC: shared.uMoonC, uSkyH: shared.uSkyH, uSkyZ: shared.uSkyZ });
+  const wire = (g, list) => { const iLane = new Float32Array(list.length * 4), iLook = new Float32Array(list.length * 4), iH = new Float32Array(list.length); list.forEach((c, i) => { iLane.set([c.row, c.ph, c.sp, c.side], i * 4); iLook.set([c.col[0], c.col[1], c.col[2], c.ani ? -c.sc : c.sc], i * 4); iH[i] = c.y; }); g.setAttribute('iLane', new THREE.InstancedBufferAttribute(iLane, 4)); g.setAttribute('iLook', new THREE.InstancedBufferAttribute(iLook, 4)); g.setAttribute('iH', new THREE.InstancedBufferAttribute(iH, 1)); g.instanceCount = list.length; g.userData.list = list; return g; };
   const meshFor = (base, list, defs = {}) => { const ig = new THREE.InstancedBufferGeometry(); for (const k of ['position', 'normal', 'aCol']) ig.setAttribute(k, base.getAttribute(k)); wire(ig, list); const m = new THREE.Mesh(ig, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: CAR_VS, fragmentShader: CAR_FS, uniforms: fsU(), defines: defs, blending: THREE.NoBlending, side: THREE.DoubleSide })); m.frustumCulled = false; return m; };
   const models = [carLow(), carModel('muscle'), carModel('cab'), carModel('sedan'), flyerModel(), haulerModel()];
   inst.forEach(c => { if (c.mdl === 2) c.col = [.62, .5, .05]; });
-  const bodies = models.map((g, k) => meshFor(g, inst.filter(c => c.mdl === k)));
+  const bodies = models.map((g, k) => meshFor(g, inst.filter(c => c.mdl === k && !c.ani)));
+  /* p38: the anime-only flyers and walkers get their own meshes, hidden in the classic look (no hidden vertices to pay for) */
+  const aniB = models.map((g, k) => [g, inst.filter(c => c.mdl === k && c.ani)]).filter(q => q[1].length).map(([g, l]) => meshFor(g, l));
   /* people: eight cuts, dealt from their own random stream so the rest of the traffic stays where it was */
   const GR = rng(9091), cast = [0, 1, 2, 3, 5, 7, 0, 1, 2, 3, 4, 5, 6, 7], cloth = [[.13, .16, .3], [.32, .1, .15], [.08, .25, .28], [.36, .3, .2], [.2, .13, .34], [.34, .35, .42], [.06, .06, .08], [.48, .16, .1], [.46, .42, .44], [.1, .2, .17]];
   peds.forEach(c => {
-    c.mdl = GR.pick(cast); c.col = GR.pick(cloth);
+    c.mdl = GR.pick(cast); c.col = GR.pick(cloth); if (c.ani) c.mdl %= 3;
     const pts = LANES[c.row]; let len = 0; for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][2] - pts[i - 1][2]);
     const v = len * c.sp; c.A = v > 0 ? Math.min(.5, Math.max(.3, .17 + v * .17)) : 0;
     c.gw = v > 0 ? Math.PI * v / (2 * .85 * Math.sin(c.A)) / c.sc : 0; c.ph0 = GR() * TAU;
@@ -6135,21 +6273,22 @@ function buildTraffic({ inst, peds, streams }) {
     c.yaw = v > 0 ? 0 : Math.abs(pts[0][0]) < 11 ? -Math.sign(pts[0][0]) * Math.PI / 2 + GR.range(-.35, .35) : GR() * TAU;
   });
   const pedM = [0, 1, 2, 3, 4, 5, 6, 7].map(v => pedModel(v));
-  const pedMesh = (g, k) => { const list = peds.filter(c => c.mdl === k), m = meshFor(g, list, { WALK: 1 }), ig = m.geometry, a = new Float32Array(list.length * 4); list.forEach((c, i) => a.set([c.gw, c.A, c.yaw, c.ph0], i * 4)); ig.setAttribute('aRig', g.getAttribute('aRig')); ig.setAttribute('iGait', new THREE.InstancedBufferAttribute(a, 4)); return m; };
-  const people = pedM.map(pedMesh);
+  const pedMesh = (g, k, ani = false) => { const list = peds.filter(c => c.mdl === k && !!c.ani === ani), m = meshFor(g, list, { WALK: 1 }), ig = m.geometry, a = new Float32Array(list.length * 4); list.forEach((c, i) => a.set([c.gw, c.A, c.yaw, c.ph0], i * 4)); ig.setAttribute('aRig', g.getAttribute('aRig')); ig.setAttribute('iGait', new THREE.InstancedBufferAttribute(a, 4)); return m; };
+  const people = pedM.map((g, k) => pedMesh(g, k));
   /* the same walkers without umbrellas, swapped in when it's dry (skyTick) */
   const umb = [4, 6].map(k => { const dry = pedMesh(pedModel(k, true), k); dry.visible = false; return { wet: people[k], dry }; });
   people.push(...umb.map(u => u.dry));
   /* lamps, tail lights and their streaks on the road */
   const parts = []; for (let k = 0; k < 4; k++) parts.push(-.5, -.5, k, .5, -.5, k, .5, .5, k, -.5, -.5, k, .5, .5, k, -.5, .5, k);
   const qg = new THREE.InstancedBufferGeometry(); qg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(parts), 3)); wire(qg, inst);
-  const mk = (defs) => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: CARGLOW_VS, fragmentShader: CARGLOW_FS, defines: defs, uniforms: { uLanes: { value: lanes }, uTime: TIME, uMY: { value: .2 }, uLamp: SKY_U.lamp }, ...addBlend, side: THREE.DoubleSide });
+  const mk = (defs) => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: CARGLOW_VS, fragmentShader: CARGLOW_FS, defines: defs, uniforms: { uLanes: { value: lanes }, uTime: TIME, uCelT: CEL_T, uMY: { value: .2 }, uLamp: SKY_U.lamp }, ...addBlend, side: THREE.DoubleSide });
   const lights = new THREE.Mesh(qg, mk({})); lights.frustumCulled = false;
   const mirLights = new THREE.Mesh(qg, mk({ MIRROR: 1 })); mirLights.frustumCulled = false;
   /* streams */
   const sg = new THREE.InstancedBufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-.5, -.5, 0, .5, -.5, 0, .5, .5, 0, -.5, -.5, 0, .5, .5, 0, -.5, .5, 0]), 3)); wire(sg, streams);
-  const flow = new THREE.Mesh(sg, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: STREAM_VS, fragmentShader: STREAM_FS, uniforms: { uLanes: { value: lanes }, uTime: TIME, uLamp: SKY_U.lamp }, ...addBlend, side: THREE.DoubleSide })); flow.frustumCulled = false;
-  return { cars: [...bodies, ...people], lights, mirLights, flow, umb };
+  const flow = new THREE.Mesh(sg, new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: STREAM_VS, fragmentShader: STREAM_FS, uniforms: { uLanes: { value: lanes }, uTime: TIME, uCelT: CEL_T, uLamp: SKY_U.lamp }, ...addBlend, side: THREE.DoubleSide })); flow.frustumCulled = false;
+  const aniP = pedM.map((g, k) => peds.some(c => c.ani && c.mdl === k) ? pedMesh(g, k, true) : null).filter(Boolean);
+  return { cars: [...bodies, ...people, ...aniB, ...aniP], aniCars: [...aniB, ...aniP], lights, mirLights, flow, umb };
 }
 
 /* ---------- the street: lights that change, cars that queue at them, people who wait for the walk ----------
@@ -7043,7 +7182,7 @@ function drawScene(t) {
   renderer.info.reset(); skyTick(t); figTick(t); if (city.sim) city.sim.tick(t);
   const inside = isInsideRoom(); const showCity = !inside; const showRoom = S.mode !== 'city' || CAM.position.distanceTo(_v.set(room.box.x, room.box.y + 2, room.box.z)) < 140;
   /* p38 look test: the city view only; the street seen through a room's glass stays classic */
-  const cel = LOOK === 'anime' && !inside && S.mode !== 'room' ? 1 : 0; city.u.uCel.value = cel; MAT.post.m.uniforms.uCel.value = cel;
+  const cel = LOOK === 'anime' && !inside && S.mode !== 'room' ? 1 : 0; city.u.uCel.value = cel; MAT.post.m.uniforms.uCel.value = cel; CEL_T.value = cel; if (city.tr) for (const m of city.tr.aniCars) m.visible = !!cel;
   if (city.ani) city.ani.visible = city.aniFx.visible = city.aniGlow.visible = !!cel;
   /* train runs by time alone */
   const period = 62; for (let i = 0; i < city.train.length; i++) { const a = trainPos(t / period - i * .0088); const m = city.train[i]; m.position.set(a.p[0], a.p[1] + .1, a.p[2]); m.rotation.y = Math.atan2(a.d[0], a.d[2]); m.updateMatrixWorld(true); }
