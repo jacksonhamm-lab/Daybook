@@ -94,7 +94,8 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
      (GYM / SKIP TODAY; it replaces the island nudge); Sunday 5 to 10 pm, next week (PLAN IT opens the board there).
    - **Manners:** one at a time, 90 s between calls; never in a flight, while he types, close up with her, or while she
      counts his rest; reminders not while DECIDE is open. Rings 25 s (his own ring or the built-in, again every 6.5 s),
-     then missed; time hidden doesn't count, nor up to 60 s while Sound is on but held (the card says TAP FOR SOUND).
+     then missed; up to 3 min hidden doesn't count (away longer, or into a new day, and it's missed, not rung again on
+     his return), nor up to 60 s while Sound is on but held (the card says TAP FOR SOUND).
      (p37) Declined or missed: again after `CALL_AGAIN` (reminder 60 min, max 3 rings, then DECIDE holds it;
      clock-out 60; Len 180; week 120), the rest not today. A check-in done in person counts. Kept per device per day in
      `localStorage.daybook_calls`. A reminder call marks `daybook_rung`, so the apartment phone doesn't ring for it too;

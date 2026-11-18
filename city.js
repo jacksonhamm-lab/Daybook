@@ -7484,12 +7484,12 @@ const HO_TELL = '<button class="rbtn ol" data-hotell="1">TELL</button>';
 const mmss = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function holoFace() { const i = $('#hoImg'); if (FACE) { if (i.getAttribute('src') !== FACE) i.src = FACE; i.hidden = false; } else i.hidden = true; $('#holo').classList.toggle('nof', !FACE); }
 /* p37: what covers her call: the plan board (any size), or on a phone the sheet (not while he types to her) */
-const holoCov = () => !HO ? '' : PL.on ? 'plan' : S.sheet && !SIDE_MQ.matches && $('#hoTell').hidden ? 'sheet' : '';
+const holoCov = () => !HO ? '' : PL.on ? 'plan' : S.sheet && !CAP_SIDE.matches && $('#hoTell').hidden ? 'sheet' : '';
 function holoPos() {
   const el = $('#holo'), cov = holoCov(); el.classList.toggle('dock', cov === 'sheet'); el.classList.toggle('phid', cov === 'plan' || (cov === 'sheet' && !!CL));   // p37: docked at the top; aside under the board or a call
   if (cov) { if (el.style.bottom) el.style.left = el.style.bottom = el.style.maxWidth = ''; return; }
   const p = room.def && $(room.def.panel); if (!p) return; const r = p.getBoundingClientRect(); if (!r.height) return;
-  const L = Math.round(r.left) + 'px', B = Math.round(innerHeight - r.top + 8) + 'px', W = Math.round(SIDE_MQ.matches ? Math.min(380, r.width) : r.width) + 'px';   // p37: a phone's is the panel's width
+  const L = Math.round(r.left) + 'px', B = Math.round(innerHeight - r.top + 8) + 'px', W = Math.round(CAP_SIDE.matches ? Math.min(380, r.width) : r.width) + 'px';   // p37: a phone's is the panel's width
   if (el.style.left !== L) el.style.left = L; if (el.style.bottom !== B) el.style.bottom = B; if (el.style.maxWidth !== W) el.style.maxWidth = W;
 }
 /* her on the call: a line (say, voiced; no data in it), what it's about (info, big), buttons. ms: then she hangs up, or goes small */
@@ -7571,18 +7571,23 @@ const clSave = m => { try { localStorage.setItem('daybook_calls', JSON.stringify
 /* what he didn't get to: again later, or not today */
 function clDefer(items) { const m = clMem(), now = Date.now(); items.forEach(x => { if (CALL_AGAIN[x.k] && !m.done[x.key]) m.snooze[x.key] = now + CALL_AGAIN[x.k] * 60e3; else m.done[x.key] = 1; }); clSave(m); }
 function clDone(x) { const m = clMem(); m.done[x.key] = 1; clSave(m); }
-/* p37: how long it has rung toward missed. Not while the page is hidden, nor while Sound is on but the device holds it
-   (TAP FOR SOUND; at most CALL_LOCK of that), so a ring he couldn't hear isn't put off for an hour. soft: the first
-   moment, when a waking engine isn't called locked yet (only no audio context at all is) */
-const CALL_LOCK = 60e3;
+/* p37: how long it has rung toward missed. Not while the page is hidden (at most CALL_HIDE of that), nor while Sound is
+   on but the device holds it (TAP FOR SOUND; at most CALL_LOCK of that), so a ring he couldn't hear isn't put off for an
+   hour; a longer time away, or a new day, and it was missed (snoozed as usual, never rung again on his return). soft: the
+   first moment, when a waking engine isn't called locked yet (only no audio context at all is) */
+const CALL_LOCK = 60e3, CALL_HIDE = 180e3;
 function clPace(now, soft) {
   const hid = document.hidden, lk = !hid && APP.sndLocked ? APP.sndLocked() : 0;
   if (hid) { if (!CL.hdAt) CL.hdAt = now; } else if (CL.hdAt) { CL.hd = (CL.hd || 0) + now - CL.hdAt; CL.hdAt = 0; }
   if (lk) { if (!CL.lkAt) CL.lkAt = now; } else if (CL.lkAt) { CL.lk = (CL.lk || 0) + now - CL.lkAt; CL.lkAt = 0; }
   const show = soft ? lk === 2 : !!lk; if (CL.shy !== show) { CL.shy = show; setText('#clT', show ? 'TAP FOR SOUND' : 'RINGING'); $('#call').classList.toggle('cllk', show); }
-  return now - CL.t0 - (CL.hd || 0) - (CL.hdAt ? now - CL.hdAt : 0) - Math.min(CALL_LOCK, (CL.lk || 0) + (CL.lkAt ? now - CL.lkAt : 0));
+  if (new Date(now).toDateString() !== new Date(CL.t0).toDateString()) return Infinity;   // it rang yesterday: missed
+  return now - CL.t0 - Math.min(CALL_HIDE, (CL.hd || 0) + (CL.hdAt ? now - CL.hdAt : 0)) - Math.min(CALL_LOCK, (CL.lk || 0) + (CL.lkAt ? now - CL.lkAt : 0));
 }
-document.addEventListener('visibilitychange', () => { if (CL && CL.st === 'ring') clPace(Date.now()); });
+/* away and back: a short time and it rings again; long enough to have rung out and it's missed now, before the owed ring
+   (index.html ringRevive, a timer later) can start */
+const clBack = () => { if (CL && CL.st === 'ring' && clPace(Date.now()) > clRingMs) callDrop(false); };
+document.addEventListener('visibilitychange', clBack); addEventListener('pageshow', clBack); addEventListener('focus', clBack);
 function callTick(force) {
   if (!ready || !window.Mira || !APP.calls) return null;
   const now = Date.now();
@@ -7695,7 +7700,7 @@ setInterval(() => { try { callTick(); } catch (e) { APP.log(e); } }, 1000);
    index.html). Held for her voice + 0.9 s or the time to read it, whichever is longer, 12 s at most; gone at once when
    her voice is stopped (index.html's mvStop calls City.hush). Taps go through it. Homes: m her close-up, h the holo,
    c the call, d DECIDE's call, r none ---------- */
-const SIDE_MQ = matchMedia('(min-width:900px) and (min-aspect-ratio:1/1)');   // the laptop layout: panels left, the sheet right
+const CAP_SIDE = matchMedia('(min-width:900px) and (min-aspect-ratio:1/1)');   // the laptop layout: panels left, the sheet right
 let MCAP = null, mcapT = 0; const MCAP_LOG = [];
 const capRead = s => Math.min(8000, Math.max(2600, 1400 + 55 * s.length));
 /* her line, just said (after APP.say, whose stop hushes the strip) */
@@ -7738,7 +7743,7 @@ function capPos() {
   const el = $('#mcap'); let t = 0, r = 0;
   for (const k of $('.top').children) { const q = k.getBoundingClientRect(); if (q.height && q.bottom > t) t = q.bottom; }
   t = Math.round(t || 52) + 4;
-  if (S.sheet && SIDE_MQ.matches) r = $('#sheet').offsetWidth + 10;
+  if (S.sheet && CAP_SIDE.matches) r = $('#sheet').offsetWidth + 10;
   const isl = document.getElementById('island'), ob = [];
   if (CL) ob.push([$('#call'), 1]); if (S.mode === 'fly') ob.push([$('#flyBox'), 0]); if (isl && isl.classList.contains('on')) ob.push([isl, 0]);
   ob.map(([o, side]) => [o.getBoundingClientRect(), side]).filter(([q]) => q.width && q.height).sort((a, b) => a[0].top - b[0].top).forEach(([q, side]) => {
