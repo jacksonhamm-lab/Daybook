@@ -29,8 +29,10 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
 2. **M2 Caller and reactions (built p26, 2026-11-14).**
    - **The phone:** picking up DECIDE puts her on the line (`miraCall`, `#dcCall`): one thing waiting, its name and
      time; several, how many; none, she just wanted to hear him. Her voice after the pickup sound; hanging up stops her.
-   - **Reactions** (`miraReact` in index.html): her voice a beat after the moment, her words in the island once it's
-     free (an Undo goes first; after 8 s the words are dropped). Cleared list, new benchmark best, clocking out.
+   - **Reactions** (`miraReact` in index.html): her voice a beat after the moment, her words with it in the city's
+     caption strip (p37; the island keeps its Undo). With no city, or an island button (the nudge's GYM), her words wait
+     in the island once it's free (an Undo goes first; after 8 s they're dropped). Cleared list, new benchmark best,
+     clocking out.
    - **The evening nudge** (`miraNudge`): 7 to 9 pm, a lifting or HIIT day not done, once a day while the app is open;
      its GYM button flies there (`City.go`).
    - **Where she is** (`figSpot`): on the clock by day, `work` (tablet, or her phone at the glass); 11 pm `late` (in bed
@@ -45,6 +47,12 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
      - **Shop:** by day (6 am to 9 pm), off the clock with nothing logged today, she asks once a day (CLOCK IN).
        Clocking in: "Have a good shift" with the time. Clocking out is M2's "come home".
      - × hangs up until the next thing happens. The app owns the timers; the call only watches them.
+     - **(p37, his note: "the hologram is hard to read and see")** A solid plate (.95), her line 16 px (17 on a
+       laptop), labels 12 px, info 13 px, a 44 px ×, a lighter face tint with fainter scan lines and a softer flicker.
+       Under a phone's sheet it docks as a one-row chip in the band above it (her face, LIVE, the clock; 46 px at most,
+       clear of the sheet's ×; a tap shows her line again in the strip; typing to her takes it off the dock). Under
+       the plan board, or a call ringing at the top, it steps aside. It waits for her voice before it hangs up or goes
+       small (10 s past its time at most). Test t89.
    - **Her face** (`faceGrab`): right after a frame, close up and settled, her head and shoulders into a 120x150 JPEG,
      kept in `localStorage.daybook_mface` (this device only, never synced or uploaded). Before he has seen her close
      up, the call shows MK.
@@ -107,5 +115,17 @@ now**; a voice through **ElevenLabs** (later phase, his account, his key).
    - App: `mvSay(id)` in index.html plays the clip through the cue engine's UI bus (volume, silent switch, ducks the
      ambience), fetched ahead per talk, cached decoded; `MV.v` bumps the cache when clips change. Switch: System > Sound >
      Mira's voice (per device, on by default, only with Sound on). Without her voice, the tick per line.
+   - **Her words always on screen (p37, his note: "Mira also says things sometimes without subtitles ... the panel
+     covers what she says ... write itself out at the top").** One caption strip (`#mcap`, `capSync` in city.js), under
+     the top bar, typed out with MIRA // in front, two lines at most on a phone. It shows a line only when the line's own
+     box can't be seen: the holo under a phone's sheet or the plan board, her close-up hidden (HIDE: the rest of the
+     line in progress) or under a sheet or the board, a call or holo gone while her voice still plays, and lines with no
+     box (reactions, the voice preview: `City.caption`). Held for her voice + 0.9 s or the time to read it, whichever is
+     longer, 12 s at most; gone at once when her voice is stopped (`mvStop` calls `City.hush`). It moves below a call,
+     the flight box or the island when they're in the way (beside the side sheet or a call on a laptop). Taps go through
+     it; a hidden polite node reads it out once, only when the strip takes over. The speaking signal
+     `CityApp.saying()` (`{ id, playing, left }` or null) is read off the audio clock and the context's state, so it
+     can't stick; a clip whose context won't wake within 0.8 s is dropped, not played late on the next tap. A call's
+     last word waits for her voice (3.4 s at least, 5.6 s at most). Test hooks `City._.cap()`. Test t89.
    - **Changing a line:** edit `L` and `JA` in mira.js, run `all` again (only changed lines are made), `kvfile`, upload,
      bump `MV.v`.

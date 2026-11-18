@@ -379,6 +379,13 @@ Technical state only. Updated 2026-11-06.
     first, the add form behind + ADD.
   - Tests t68 (session), t69 (notes, lists, week, shop), t70 (the rest). Lesson: `node --check city.js` misses
     template-literal errors; check a copy as `.mjs`. CSS escapes in the template need `\\`.
+- **Built (p37, 2026-11-17): her words always on screen; a holo he can read.** His notes: "the hologram is hard to read
+  and see"; "Mira also says things sometimes without subtitles popping up when using the UI, the panel covers what she
+  says". One caption strip at the top (`#mcap`, `capSync`) for her line when its own box is covered or gone mid-voice,
+  and for her reactions (the island keeps its Undo); the holo docks above a phone's sheet as a one-row chip and steps
+  aside under the plan board; bigger type and a solid plate on the holo and the call. The strip and the dock follow the
+  sheet, the board, HIDE and the close-up through a `MutationObserver` on their classes, not a call in each.
+  Details in [MIRA.md](MIRA.md) (M2, M3, V). Test t89.
 - **Built (p36, 2026-11-17): rope every lifting day, a street with working lights, roofs with a surface.** His notes:
   "3 sets of 45 seconds doesn't seem enough" (the rope isn't here for 10+ days); "people are crossing the street with
   cars running over them"; "spots on top of buildings where textures aren't great". His picks: 10 min every lifting day,

@@ -548,39 +548,54 @@ function sndBoot() {
 /* Mira's voice (docs/MIRA.md): her clips are Japanese, the English stays on screen. Through the cue engine like his ring
    (its volume, the silent switch, the ambience dips under her); one line at a time. This device's switch, on by default.
    The clips live in KV (models/voice/<lang>/<line id>.mp3 through the Worker), never in the repo; bump v when they change. */
-const MV = { on: true, lang: 'ja', v: 2, buf: new Map(), src: null, want: '' };
+const MV = { on: true, lang: 'ja', v: 2, buf: new Map(), src: null, want: '', id: '', t0: 0, end: 0 };   // p37: id and end (audio clock) of the clip playing, t0 when it was asked for
 try { MV.on = localStorage.getItem('daybook_mvoice') !== '0'; } catch (e) {}
 function mvGet(id, c) {
   let p = MV.buf.get(id);
   if (!p) { p = fetch(`models/voice/${MV.lang}/${id}.mp3?v=${MV.v}`).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status)).then(b => c.decodeAudioData(b)); p.catch(() => MV.buf.delete(id)); MV.buf.set(id, p); }
   return p;
 }
-function mvStop() { MV.want = ''; const s = MV.src; MV.src = null; if (s) { try { s.onended = null; s.stop(); s.disconnect(); } catch (e) {} } if (NS) NS.hold('mira', false); }
+function mvStop() { const was = !!(MV.src || MV.want); MV.want = ''; const s = MV.src; MV.src = null; if (s) { try { s.onended = null; s.stop(); s.disconnect(); } catch (e) {} } if (NS) NS.hold('mira', false);
+  if (window.City && City.hush) try { City.hush(was); } catch (e) {} }   // p37: her caption strip goes with her voice
+/* p37: is she speaking: { id, playing, left (ms) }, or null. Read from the audio clock and the context's state, so it can't
+   stick: a clip that never started or a context that stopped running reads as quiet; a clip still loading counts for 2 s */
+function mvSaying() {
+  const c = NS && NS.S.ctx;
+  if (MV.src && c && c.state === 'running' && c.currentTime < MV.end) return { id: MV.id, playing: true, left: Math.round((MV.end - c.currentTime) * 1000) };
+  if (MV.want && !MV.src && Date.now() - MV.t0 < 2000) return { id: MV.want, playing: false, left: 0 };
+  return null;
+}
 // true when she'll speak it (the caller skips its tick)
 function mvSay(id) {
   mvStop();
   if (!MV.on || !SND.on || document.hidden || !NS || !id) return false;
-  const c = sndBoot(); if (!c) return false; MV.want = id;
-  mvGet(id, c).then(b => {
-    if (MV.want !== id || !SND.on || document.hidden || NS.S.ctx !== c || !NS.S.bus) return;
+  const c = sndBoot(); if (!c) return false; MV.want = id; MV.t0 = Date.now();
+  mvGet(id, c).then(async b => {
+    /* p37: a context still waking gets a moment; one that stays asleep drops the line, so it never plays late on a later tap */
+    for (const end = Date.now() + 800; MV.want === id && c.state !== 'running' && Date.now() < end;) await new Promise(r => setTimeout(r, 40));
+    if (MV.want !== id || !SND.on || document.hidden || NS.S.ctx !== c || !NS.S.bus || c.state !== 'running') { if (MV.want === id) MV.want = ''; return; }
     const s = c.createBufferSource(); s.buffer = b; s.connect(NS.S.bus.ui);
-    s.onended = () => { if (MV.src === s) { MV.src = null; NS.hold('mira', false); } try { s.disconnect(); } catch (e) {} };
-    NS.hold('mira', true); s.start(); MV.src = s; NS.S.started++;
-  }).catch(() => {});
+    s.onended = () => { if (MV.src === s) { MV.src = null; if (MV.want === id) MV.want = ''; NS.hold('mira', false); } try { s.disconnect(); } catch (e) {} };
+    NS.hold('mira', true); s.start(); MV.src = s; MV.id = id; MV.end = c.currentTime + b.duration; NS.S.started++;
+  }).catch(() => { if (MV.want === id) MV.want = ''; });
   return true;
 }
 // a talk's lines, fetched ahead so each one starts on the tap
-// Mira reacts (docs/MIRA.md M2): her voice a beat after the moment, her words in the island once nothing else needs it
-// (an Undo matters more; after 8 s the words are dropped, the voice already said it). act: an island button, e.g. GYM
+// Mira reacts (docs/MIRA.md M2): her voice a beat after the moment, her words with it in the city's caption strip (p37),
+// so the island stays free for an Undo. With no city, or with an island button (act, e.g. GYM), her words wait in the
+// island once nothing else needs it (an Undo matters more; after 8 s they're dropped, the voice already said it)
 function miraReact(kind, delay = 2400, act) {
   if (!window.Mira) return; const ln = Mira.line(kind, today() + '|' + Date.now());
   setTimeout(() => {
-    if (document.hidden) return; mvSay(ln.id); const t0 = Date.now();
+    if (document.hidden) return; const v = mvSay(ln.id); const t0 = Date.now();
+    if (!act && miraCap(ln, v)) return;
     const show = () => { if (document.hidden) return; if (island.action && Date.now() - t0 < 8000) return void setTimeout(show, 500); if (!island.action) island.toast('Mira: ' + ln.say, { icon: I.heart, color: '#ff4646', ms: 4200, action: act }); };
     show();
   }, delay);
   return ln;
 }
+// p37: a line of hers with no box of its own, in the city's caption strip; false when there's no city to show it
+const miraCap = (ln, voiced) => !!(ln && ln.say && window.City && City.caption && City.caption(ln.say, { id: ln.id, voiced: !!voiced }));
 // the evening nudge: between 7 and 9 pm, a lifting or HIIT day not done yet, once a day, while the app is open
 function miraNudge() {
   if (window.City && City.calls && City.calls()) return;   // p29: she calls instead (city.js, the gym call)
@@ -1597,7 +1612,7 @@ document.addEventListener('click', e => {
     case 'set-nag': S.settings.nag = +v; return commit();
     case 'set-sound': { haptic(6); return soundOn(v === '1'); }
     case 'set-mcalls': { lsSet('daybook_mcalls', v === '1' ? '1' : '0'); haptic(6); render(); return sfx('tick'); }
-    case 'set-mvoice': { MV.on = v === '1'; try { localStorage.setItem('daybook_mvoice', MV.on ? '1' : '0'); } catch (x) {} haptic(6); if (!MV.on) mvStop(); render(); return MV.on ? mvSay('greet.again.3') || sfx('tick') : sfx('tick'); }
+    case 'set-mvoice': { MV.on = v === '1'; try { localStorage.setItem('daybook_mvoice', MV.on ? '1' : '0'); } catch (x) {} haptic(6); if (!MV.on) mvStop(); render(); if (!MV.on) return sfx('tick'); const said = mvSay('greet.again.3'); miraCap(window.Mira && { id: 'greet.again.3', say: (Mira.L['greet.again'] || [])[2] }, said); return said || sfx('tick'); }   // p37: her words with it
     case 'set-amb': { SND.amb = ['low', 'medium'].includes(v) ? v : 'off'; try { localStorage.setItem('daybook_amb', SND.amb); } catch (x) {} haptic(6); if (SND.amb === 'off' && window.AmbSound) AmbSound.stop(); return sfx('tick'); }
     case 'ring-clear': { haptic(6); return window.OwnRing && OwnRing.clear().then(() => { island.toast('Your ring is removed from this device'); window.City && City.update(); }); }
     case 'ring-test': { if (!SND.on) return island.toast('Turn Sound on first'); sndBoot(); if (OwnRing.O.has) { ringStop(); return OwnRing.play({ wait: 1500 }).then(ok => ok || sfx('error')); } return sfx('ring', { force: true, reps: 1 }); }
@@ -1963,6 +1978,7 @@ window.CityApp = {
   fitSet(id) { if (!this.fitOk(id)) return false; S.settings.miraFit = id; save(); return true; },
   linkTest(pts) { lsSet('daybook_link', Math.max(pts, lsNum('daybook_link'))); LINK_C = null; linkCheck(); return link(); },   // tests: raise it
   say: id => mvSay(id), sayStop: () => mvStop(), sayPre: ids => mvPre(ids), clockOn: () => !!S.clock, miraTest: (k, d) => miraReact(k, d || 0), miraNudge: () => miraNudge(),
+  saying: () => mvSaying(),   // p37: { id, playing, left } while her voice plays (or loads), else null
   miraDo(act, id, d) {
     const t = S.tasks.find(x => x.id === id); if (!t) return false;
     if (act === 'done') { if (!isDone(t, d)) this.tick(id, d); return true; }
