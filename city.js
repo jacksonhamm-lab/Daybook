@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p37';
+export const BUILD = 'p37h';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -5879,11 +5879,15 @@ const fsGeom = new THREE.BufferGeometry(); fsGeom.setAttribute('position', new T
 const fsCam = new THREE.Camera();
 function fsPass(fs, uniforms) { const m = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: FS_VS, fragmentShader: fs, uniforms, depthTest: false, depthWrite: false, blending: THREE.NoBlending }); const q = new THREE.Mesh(fsGeom, m); q.frustumCulled = false; const s = new THREE.Scene(); s.add(q); return { s, m }; }
 
+// p37h: a sampler2DShadow left on an ordinary placeholder texture makes WebGL reject the whole draw (every room went
+// black when p36 added the second shadow map): unbaked shadow slots hold this 1x1 depth texture instead
+let NO_SHADOW = null;
+const noShadow = () => NO_SHADOW || (NO_SHADOW = Object.assign(new THREE.DepthTexture(1, 1, THREE.UnsignedIntType), { compareFunction: THREE.LessEqualCompare, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, needsUpdate: true }));   // needsUpdate: else three binds its plain empty texture
 function worldUniforms(isRoom) {
   const LP = []; const LC = []; for (let i = 0; i < NL; i++) { LP.push(new THREE.Vector3()); LC.push(new THREE.Vector4(0, 0, 0, 0)); }
   return {
-    uTime: TIME, uMY: { value: .2 }, uRoomMode: { value: isRoom ? 1 : 0 }, uShadowOn: { value: 0 }, uShadow2: { value: null }, uShadowM2: { value: new THREE.Matrix4() }, uShadow2On: { value: 0 }, uShadowBias: { value: isRoom ? .02 : .9 }, uReflOn: { value: 0 }, uRainWin: { value: 0 },
-    uRes: { value: new THREE.Vector2(1, 1) }, uSigns: { value: TEX.signs }, uAds: { value: TEX.ads }, uPool: { value: TEX.pool }, uShadow: { value: null }, uRefl: { value: null }, uMirror: { value: null }, uClipZ: { value: 0 }, uTiles: { value: TEX.tiles }, uShadowM: { value: new THREE.Matrix4() },
+    uTime: TIME, uMY: { value: .2 }, uRoomMode: { value: isRoom ? 1 : 0 }, uShadowOn: { value: 0 }, uShadow2: { value: noShadow() }, uShadowM2: { value: new THREE.Matrix4() }, uShadow2On: { value: 0 }, uShadowBias: { value: isRoom ? .02 : .9 }, uReflOn: { value: 0 }, uRainWin: { value: 0 },
+    uRes: { value: new THREE.Vector2(1, 1) }, uSigns: { value: TEX.signs }, uAds: { value: TEX.ads }, uPool: { value: TEX.pool }, uShadow: { value: noShadow() }, uRefl: { value: null }, uMirror: { value: null }, uClipZ: { value: 0 }, uTiles: { value: TEX.tiles }, uShadowM: { value: new THREE.Matrix4() },
     uLP: { value: LP }, uLC: { value: LC },
     uTill: { value: new THREE.Vector4(0, 0, 1, 1) }, uMoon: { value: moonDir }, uMoonC: { value: isRoom ? new THREE.Color(0, 0, 0) : new THREE.Color(.22, .28, .42) },
     uAmbHi: { value: isRoom ? new THREE.Color(.3, .25, .34) : new THREE.Color(.14, .18, .28) }, uAmbLo: { value: isRoom ? new THREE.Color(.2, .11, .2) : new THREE.Color(.085, .06, .07) }, uAmbSide: { value: isRoom ? new THREE.Color(.05, .05, .09) : new THREE.Color(.44, .35, .34) },
