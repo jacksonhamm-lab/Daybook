@@ -14,7 +14,8 @@
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet"></noscript>
 <script src="sound.js?v=p29"></script>
 <script src="mira.js?v=p36"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
@@ -137,6 +138,7 @@ button:disabled{cursor:default}
 #island .il-ic svg{width:18px;height:18px}
 #island .il-a{height:28px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.14);font-size:13px;font-weight:700}
 #island .il-a:hover{background:rgba(255,255,255,.24)}
+#island{pointer-events:none}#island button,#island .il-a{pointer-events:auto}
 @media(min-width:761px){#island{top:76px}}
 .confetti{position:fixed;z-index:95;width:9px;height:9px;border-radius:2px;pointer-events:none}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
