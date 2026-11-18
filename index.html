@@ -1125,7 +1125,8 @@ function parseQuick(raw, base) {
   const r = { kind: 'task', cat: null, date: base === undefined ? today() : base, dateSet: false, repeat: null };
   const cut = re => { const m = s.match(re); if (m) s = s.replace(m[0], ' '); return m; };
   const td = parse(today()), tw = dowIdx(today());
-  const setD = d => { r.date = iso(d); r.dateSet = true; };
+  let said = false;   /* p37: a day he named (not "every mon", which only lands on the next one) */
+  const setD = (d, y = true) => { r.date = iso(d); r.dateSet = true; if (y) said = true; };
   let m;
   if ((m = cut(/\s#(w|work|g|gym|train|training|j|job|jobs|p|life|personal|s|school)(?=\s)/i)))
     r.tagged = true, r.cat = { w:'work', work:'work', g:'gym', gym:'gym', train:'gym', training:'gym', j:'school', job:'school', jobs:'school', p:'life', life:'life', personal:'life', s:'school', school:'school' }[m[1].toLowerCase()];
@@ -1134,7 +1135,7 @@ function parseQuick(raw, base) {
     if (known.length && (m = s.match(/\s([a-z]{2,6}) ?(\d{2,4}[a-z]?)(?=\s)/i))) { const k = (m[1] + m[2]).toLowerCase(), hit = known.find(([c]) => c === k); if (hit) { s = s.replace(m[0], ' '); r.cat = 'school'; r.tagged = true; r.course = hit[1]; r.code = (m[1] + ' ' + m[2]).toUpperCase(); } } }
   if (cut(/\s(?:every ?day|daily)(?=\s)/i)) r.repeat = { t: 'daily' };
   else if (cut(/\s(?:every ?weekday|weekdays)(?=\s)/i)) r.repeat = { t: 'weekdays' };
-  else if ((m = cut(/\severy (mon|tue|wed|thu|fri|sat|sun)[a-z]*(?=\s)/i))) { const w = DOW3.indexOf(m[1].toLowerCase()); r.repeat = { t: 'weekly', dow: w }; setD(addDays(td, (w - tw + 7) % 7)); }
+  else if ((m = cut(/\severy (mon|tue|wed|thu|fri|sat|sun)[a-z]*(?=\s)/i))) { const w = DOW3.indexOf(m[1].toLowerCase()); r.repeat = { t: 'weekly', dow: w }; setD(addDays(td, (w - tw + 7) % 7), false); }
   if (cut(/\s(?:today|tonight|tod)(?=\s)/i)) setD(td);
   else if (cut(/\s(?:tomorrow|tmrw|tmr)(?=\s)/i)) setD(addDays(td, 1));
   else if (cut(/\syesterday(?=\s)/i)) setD(addDays(td, -1));
@@ -1198,6 +1199,9 @@ function parseQuick(raw, base) {
   if (one) {
     const h = +one[1], ap = (one[3] || '').toLowerCase(), left = rest.replace(one[0], ' ').replace(/\s+/g, ' ').trim();
     if (left && (ap ? h >= 1 && h <= 12 : h <= 23)) { r.remind = `${pad(ap ? h % 12 + (ap === 'p' ? 12 : 0) : h)}:${one[2] || '00'}`; title = left; }
+    /* a time already gone by today, on a day he didn't name, is the next one's (it would ring at once): tomorrow, or
+       next week for "every mon" said on a Monday. A day he named ("today 9am") stays his */
+    if (r.remind && r.date === today() && !said && r.remind <= nowHM()) r.date = iso(addDays(td, r.repeat && r.repeat.t === 'weekly' ? 7 : 1));
   }
   r.title = title[0].toUpperCase() + title.slice(1);
   if (!r.cat) { const g = catGuess(title); r.cat = g.k; r.guessed = true; r.sure = g.sure; }

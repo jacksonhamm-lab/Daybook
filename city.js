@@ -659,6 +659,9 @@ label.rbtn{cursor:pointer}
   .pcol .ttl b{font-size:13px}
   .pcol .hadd .rbtn{padding:0 10px}
   #plStep{flex:none}
+  /* p37: while the add steps show, the board scrolls rather than squeezing the days' rows to nothing */
+  #plan.adding .pbody{overflow-y:auto}
+  #plan.adding .pcols{flex:1 0 auto}
 }
 .macts[hidden]{display:none}
 /* Tell Mira: one line, plain words */
@@ -7973,6 +7976,7 @@ function psHTML(x) {
 function psPaint(from) {
   const sel = PS_SLOT[from], el = $(sel); if (!el) return;
   const x = psLive(), mine = !!x && ADD.from === from;
+  if (from === 'plan') { const pl = $('#plan'), was = pl.classList.contains('adding'); pl.classList.toggle('adding', mine); if (was && !mine && matchMedia('(min-width:900px)').matches) { const pb = $('#plBody'); if (pb) pb.scrollTop = 0; } }
   if (mine && typing(sel)) return;
   const a = ROOT.activeElement, had = !!(a && a.closest && a.closest(sel));
   const h = mine ? `<div class="pstep" role="group" aria-label="New task: ${x.title}">${psHTML(x)}</div>` : '';
@@ -8008,7 +8012,10 @@ function psDo(k, v) {
   A.note = '';
   /* one field per call; taskSet may change nothing (the guess he confirms), so the steps move on by themselves */
   if (k === 'cat') { if (!x.cats.some(c => c[0] === v)) return; APP.taskSet(id, { cat: v }); }
-  else if (k === 'day') { if (!/^\d{4}-\d\d-\d\d$/.test(v || '')) { A.note = 'PICK A DATE FIRST'; return psRefresh(A.from); } if (v !== x.date) APP.taskSet(id, { date: v, quiet: 1 }); }
+  else if (k === 'day') { if (!/^\d{4}-\d\d-\d\d$/.test(v || '')) { A.note = 'PICK A DATE FIRST'; return psRefresh(A.from); }
+    /* its time already gone by today: today would ring at once */
+    if (v === psISO(new Date()) && x.cat !== 'school' && x.remind && x.remind <= psNow()) { A.note = `${psT12(x.remind)} HAS GONE BY TODAY. PICK ANOTHER DAY.`; A.dv = v; return psRefresh(A.from); }
+    if (v !== x.date) APP.taskSet(id, { date: v, quiet: 1 }); }
   else if (k === 'rep') { if (v !== x.rep) APP.taskSet(id, { repeat: v }); return psRefresh(A.from); }
   else if (k === 'time') {
     if (!/^\d\d:\d\d$/.test(v || '')) { A.note = 'PICK A TIME FIRST'; return psRefresh(A.from); }
