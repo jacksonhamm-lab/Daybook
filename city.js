@@ -625,6 +625,24 @@ label.rbtn{cursor:pointer}
 .pcol .tm .hin{width:142px}
 .pcol .pxs:not(:empty),.pcol .pxw:not(:empty){margin-top:8px}
 .pcol .pxw .sed{margin:0}
+/* p37 the add steps: what it is for, the day, a time, one tap each, in a slot of their own (never inside a day's column) */
+.pstep{display:grid;gap:8px;margin:10px 0 2px;padding:8px 10px 10px;background:var(--hud-s2);box-shadow:inset 2px 0 0 var(--hud-cyan),inset 0 0 0 1px var(--hud-hair)}
+#plStep .pstep{margin:4px 0 8px}
+.psh{display:flex;align-items:center;gap:8px;min-width:0}
+.psh b{flex:none;font:700 12px/1 var(--hud-font);letter-spacing:.12em;color:var(--hud-yellow)}
+.psh em{flex:none;font:10px/1 var(--micro);font-style:normal;color:var(--hud-text3)}
+.psh span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 13px/1.2 var(--body);color:var(--hud-text2)}
+.pstep .psx{flex:none;width:40px;min-height:40px;padding:0}
+.psx svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2}
+.pstep .rbtn:disabled{opacity:.3;cursor:default}
+.psf{display:flex;gap:6px;align-items:center}
+.psd{font:600 14px/1.3 var(--body);color:var(--hud-text)}
+.psn{font:600 11px/1.3 var(--micro);letter-spacing:.04em;color:var(--hud-alert)}
+.pstep .pmv{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.pstep .pmv .rbtn{min-width:0;min-height:44px;padding:0;flex-direction:column;gap:2px;font-size:12px;letter-spacing:.06em}
+.pstep .pmv small{font:600 10px/1 var(--body);letter-spacing:0;opacity:.8}
+.pstep .tm .hin{width:150px}
+@media (min-width:900px){.pstep .pmv{max-width:560px}}
 @media (min-width:900px){
   #plan{left:calc(var(--sl) + 18px);right:calc(var(--sr) + 18px);top:calc(var(--st) + 6px);bottom:18px}
   .pstrip{display:none}
@@ -640,6 +658,7 @@ label.rbtn{cursor:pointer}
   .pcol .sedg{grid-template-columns:minmax(0,1fr)}
   .pcol .ttl b{font-size:13px}
   .pcol .hadd .rbtn{padding:0 10px}
+  #plStep{flex:none}
 }
 .macts[hidden]{display:none}
 /* Tell Mira: one line, plain words */
@@ -942,6 +961,7 @@ const MARKUP = `
             <div id="tdRows"></div>
             <div id="tdSch"></div>
             <form class="hadd" id="tdAdd" data-hadd=""><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD A TASK, E.G. CALL LEN 3PM" aria-label="Add a task for today"><button class="rbtn" type="submit">ADD</button></form>
+            <div id="tdStep"></div>
           </section>
           <section class="card" id="cNotes" data-r="apartment">
             <div class="kick">Notes<span class="mi" id="ntN"></span></div>
@@ -1071,6 +1091,7 @@ const MARKUP = `
             <div class="kick">Work tasks<span class="mi" id="wtN"></span></div>
             <div id="wtRows"></div>
             <form class="hadd" id="wtAdd" data-hadd="" data-hcat="work"><input class="hin" type="text" enterkeyhint="done" autocomplete="off" placeholder="ADD A WORK TASK, E.G. EMAIL LEN FRI" aria-label="Add a work task"><button class="rbtn" type="submit">ADD</button></form>
+            <div id="wtStep"></div>
           </section>
         </div>
       </div>
@@ -1083,6 +1104,7 @@ const MARKUP = `
       <div class="pstrip" id="plStrip" role="group" aria-label="Days"></div>
       <div class="pbody" id="plBody">
         <div id="plLate"></div>
+        <div id="plStep"></div>
         <div class="pcols" id="plCols">${[0, 1, 2, 3, 4, 5, 6].map(i => `<section class="pcol" id="plC${i}"><div class="pch" id="plH${i}"></div><div class="prows" id="plR${i}"></div><div id="plA${i}"></div><div class="pxs" id="plG${i}"></div><div id="plS${i}"></div><div class="pxw" id="plW${i}"></div></section>`).join('')}</div>
       </div>
     </div>
@@ -7113,8 +7135,8 @@ function hudInit() {
     if (d.topen) {
       const k = d.topen + '|' + d.date;
       /* from the panel: the sheet opens on today, that task's editor open */
-      if (b.closest('#aptList')) { aptOpen = k; openSheet('cToday'); return focusIn(`#tdRows [data-tt="${d.topen}"]`); }
-      const cd = b.closest('.card,#plan'); aptOpen = aptOpen === k ? null : k; refreshApt(); refreshWtask(); refreshPlan(); if (aptOpen) focusIn(`${cd ? '#' + cd.id + ' ' : ''}[data-tt="${d.topen}"]`); return;
+      if (b.closest('#aptList')) { aptOpen = k; openSheet('cToday'); return psTouch() || focusIn(`#tdRows [data-tt="${d.topen}"]`); }
+      const cd = b.closest('.card,#plan'); aptOpen = aptOpen === k ? null : k; refreshApt(); refreshWtask(); refreshPlan(); if (aptOpen && !psTouch()) focusIn(`${cd ? '#' + cd.id + ' ' : ''}[data-tt="${d.topen}"]`); return;
     }
     if (d.tw) { const [id, when] = d.tw.split(':'); aptOpen = null; APP.taskSet(id, { when }); return; }
     if (d.tcat) { const [id, cat] = d.tcat.split(':'); APP.taskSet(id, { cat }); return; }
@@ -7153,8 +7175,14 @@ function hudInit() {
   hudEl.addEventListener('submit', e => {
     const f = e.target; if (!f.dataset || (f.dataset.hadd === undefined && !f.dataset.nadd)) return; e.preventDefault();
     const inp = f.querySelector('.hin'), ok = f.dataset.nadd ? APP.noteAdd(inp.value) : APP.addTask(inp.value, f.dataset.hadd || null, f.dataset.hcat);
-    if (ok) inp.value = ''; inp.focus();
+    if (ok) inp.value = ''; if (ok && ok.id && psFrom(f)) return psOpen(ok, psFrom(f), inp); inp.focus();
   });
+  /* p37 the add steps: a tap, a SET (a time or a date only counts when he says so: an iPhone wheel fires change as it
+     spins), 1-4 for what it's for; what he types in their boxes survives a redraw */
+  hudEl.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-ps]'); if (b && !b.disabled) psDo(b.dataset.ps, b.dataset.v); });
+  hudEl.addEventListener('submit', e => { const f = e.target; if (!f.dataset || !f.dataset.psf) return; e.preventDefault(); const i = f.querySelector('input'), v = i ? i.value : ''; if (i) i.blur(); psDo(f.dataset.psf, v); });
+  for (const ev of ['input', 'change']) hudEl.addEventListener(ev, e => { const el = e.target, d = el.dataset || {}; if (!ADD) return; if (d.pst !== undefined) ADD.tv = el.value; else if (d.psd !== undefined) ADD.dv = el.value; });
+  hudEl.addEventListener('keydown', e => { if (!ADD || ADD.step !== 'cat' || e.metaKey || e.ctrlKey || e.altKey || !/^[1-4]$/.test(e.key)) return; const p = e.target.closest && e.target.closest('.pstep'), c = p && p.querySelectorAll('[data-ps="cat"]')[+e.key - 1]; if (c) { e.preventDefault(); c.click(); } });
   /* the top bar's own: quick add, progress, system */
   hudEl.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('[data-hud],[data-sact],[data-jst],[data-jdel],[data-hgo],[data-hstop],[data-gfx]'); if (!b) return; const d = b.dataset;
@@ -7250,6 +7278,11 @@ function hudInit() {
     aptDay = d.day; refreshApt();
   });
   hudEl.addEventListener('click', e => { if (justArrived()) { e.stopPropagation(); e.preventDefault(); } }, true);
+  /* p37: on an iPhone a tap on a button leaves the box he was in focused, and a focused box holds its list still (typing()):
+     WORK, a delete, another title seemed to do nothing. The box lets go first (a text box saves, as blurIn does; a date or
+     time box has already saved), unless the button is its own form's (ADD, SET) */
+  hudEl.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button'), a = ROOT.activeElement; if (!b || !a || !a.matches || !a.matches('input,textarea') || !a.closest('#sheet,#plan') || (b.form && b.form.contains(a))) return;
+    if (a.matches('textarea,input[type=text],input[type=search],input:not([type])')) blurIn('#sheet,#plan'); else a.blur(); }, true);
   /* A held Enter would click again with every repeat, and focus moving between WORK and close would flap the sheet. */
   hudEl.addEventListener('keydown', e => { if (e.repeat && e.key === 'Enter' && e.target.closest('button')) e.preventDefault(); }, true);
   /* anything marked data-act runs the app's own action */
@@ -7262,7 +7295,8 @@ function hudInit() {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     /* the plan board: Escape closes it, even from one of its boxes; while it's up, no other key of the city's. W opens it
        anywhere but a flight */
-    if (PL.on && e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); planClose(); return; }
+    if (PL.on && e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); if (psEsc()) return; planClose(); return; }
+    if (e.key === 'Escape' && S.sheet && psEsc()) { e.stopPropagation(); e.preventDefault(); return; }   /* p37: the add steps first */
     const tg = e.composedPath()[0]; if (tg && tg.matches && tg.matches('input,textarea,select')) return;
     if (PL.on) return;
     if (e.key.toLowerCase() === 'w' && S.mode !== 'fly' && !S.sheet) { e.stopPropagation(); e.preventDefault(); planOpen(); return; }
@@ -7715,7 +7749,7 @@ function tapClock() { if (APP.clock().on) APP.act('clock-out'); else APP.clockIn
 /* the sheet holds the room's cards, or one of the city's own (quick add, progress, system) on its own */
 const GCARD = { add: ['gAdd', 'Quick add', 'SYS.INPUT'], prog: ['gProg', 'Progress', 'SYS.RECORD'], sys: ['gSys', 'System', 'SYS.CONFIG'] };
 let gOpen = null;
-function openGlobal(k) { if (!GCARD[k]) return; if (!S.sheet || gOpen !== k) APP.sfx('open'); gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') requestAnimationFrame(() => { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); }); }
+function openGlobal(k) { if (!GCARD[k]) return; if (!S.sheet || gOpen !== k) APP.sfx('open'); gOpen = k; refreshGlobal(k); openSheet(GCARD[k][0]); if (k === 'add') { const i = $('#gAddI'); if (i) i.focus({ preventScroll: true }); } }   /* in the tap itself: an iPhone raises its keyboard only then */
 /* a room's sheet shows one card at a time; tabs switch between them */
 const TABS = { apartment: [['cToday', 'TODAY'], ['cNotes', 'NOTES'], ['cDecide', 'DECIDE'], ['cCareer', 'CAREER']], gym: [['cSess', 'SESSION'], ['cSplit', 'SPLIT'], ['cMeals', 'FUEL', ['cList', 'cShakes']], ['cCardio', 'CARDIO'], ['cBench', 'TESTS'], ['cRest', 'REST']], shop: [['cClock', 'CLOCK'], ['cShifts', 'SHIFTS'], ['cPay', 'PAY'], ['cWtask', 'TASKS']], chalet: [['cSnow', 'SNOW'], ['cFilms', 'FILMS'], ['cGear', 'GEAR'], ['cDays', 'DAYS']], castle: [['cDue', 'DUE'], ['cStudy', 'STUDY'], ['cBoard', 'CURRENT'], ['cShelf', 'ALL COURSES']] };
 /* a tab can carry a count (what's left, what's waiting) */
@@ -7800,6 +7834,7 @@ function refreshWtask() {
   const sec = (h, L) => L.length ? `<div class="gsec">${h} / ${L.length}</div>` + aptSort(L).map(t => taskRow(t, true)).join('') : '';
   if (!typing('#wtRows')) setRows('#wtRows', late + T.today.length + T.soon.length ? sec('LATE', T.late) + sec('TODAY', T.today) + sec('COMING UP', T.soon) : noneRow('No work tasks this week. Add one below, or tag one Work anywhere.'));
   const g = tagEls.find(x => x.h.key === 'wtask'); if (g) { const m = g.el.querySelector('small'); setText2(m, T.left ? String(T.left) : ''); m.hidden = !T.left; }
+  psPaint('work');
 }
 /* a room's panels read through the app; a throw here must not stop the app's own render */
 function refreshRoom() { if (PL.on) try { refreshPlan(); } catch (e) { APP.log(e); } if (gOpen && S.sheet) try { refreshGlobal(gOpen); } catch (e) { APP.log(e); } if (room.def && room.def.refresh) try { room.def.refresh(); } catch (e) { APP.log(e); } }
@@ -7852,6 +7887,7 @@ function refreshPlan() {
     { const L = P.schoolDays[d.d] || []; setHTML('#plS' + i, L.length ? `<div class="gsec">SCHOOL</div>${L.map(schRow).join('')}` : ''); }
     shiftInto('#plW' + i, APP.shift(d.d));
   });
+  psPaint('plan');
 }
 /* a row on the board: the apartment's row and editor; a one-off task also drags, and its editor moves it to any day of the
    week shown. A repeating one moves its whole series, so that stays in the editor's own date box */
@@ -7859,6 +7895,7 @@ const planMoves = t => `<div class="tacts pmv" role="group" aria-label="Move to 
 const planRow = t => { const x = APP.task(t.id), mv = !!x && !x.repeat, h = taskRow(t, true, mv && aptOpen === rowKey(t) ? planMoves(t) : ''); return mv ? h.replace('<div class="trow', `<div draggable="true" data-pdrag="${t.id}|${t.d}" class="trow`) : h; };
 function planMove(id, to) { const x = APP.task(id); if (!x || x.repeat || x.date === to) return; aptOpen = null; APP.taskSet(id, { date: to }); }
 function planOpen(day) {
+  ADD = null;   /* p37: a board opens without the last one's add steps */
   if (S.mode === 'fly') return; if (S.sheet) closeSheet(true);
   if (!PL.on) { PL.from = ROOT.activeElement; APP.sfx('open'); }
   PL.on = true; aptOpen = null; PL.wk = day || null; PL.day = day || null;
@@ -7870,6 +7907,121 @@ function planClose(quiet) {
   const el = $('#plan'); el.classList.remove('open'); el.setAttribute('aria-hidden', 'true'); if (!quiet) APP.sfx('back');
   const f = PL.from; PL.from = null; if (f && f.isConnected && f.focus) f.focus({ preventScroll: true });
 }
+/* p37 the add steps (his ask: "it doesn't sequentially ask me is this for work"): a task saves at Enter, then one tap each
+   says what it's for, which day and a time. Every step can be skipped, and one the words already answered is (a #tag, a
+   course code or the shop's own box; a day; "3pm"). One slot per box, outside the day columns so a day pick never hides
+   it: the board's (#plStep), the Today card's (#tdStep), the shop's (#wtStep). Drawn from ADD on every refresh, so a
+   redraw or a sync never loses it; a task deleted under it ends it */
+let ADD = null;
+const PS_SLOT = { plan: '#plStep', today: '#tdStep', work: '#wtStep' }, PS_CARD = { today: 'cToday', work: 'cWtask' };
+const PS_DOW = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'], PS_MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const PS_AT = ['09:00', '12:00', '15:00', '18:00', '20:00'];
+const psISO = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const psAdd = (s, n) => { const d = new Date(s + 'T12:00'); d.setDate(d.getDate() + n); return psISO(d); };
+const psDow = s => (new Date(s + 'T12:00').getDay() + 6) % 7;
+const psNow = () => { const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`; };
+const psT12 = t => { if (!t) return ''; let [h, m] = t.split(':').map(Number); const ap = h < 12 ? 'AM' : 'PM'; h = h % 12 || 12; return m ? `${h}:${String(m).padStart(2, '0')}${ap}` : `${h}${ap}`; };
+const psSay = s => { const td = psISO(new Date()); if (s === td) return 'TODAY'; if (s === psAdd(td, 1)) return 'TOMORROW'; const d = new Date(s + 'T12:00'); return `${PS_DOW[psDow(s)]} ${PS_MON[d.getMonth()]} ${d.getDate()}`; };
+/* a phone (no hover): a box focused for him there may not raise the keyboard, yet it holds its list still (typing()) */
+const psTouch = () => matchMedia('(hover:none)').matches;
+const psFrom = f => f.id === 'tdAdd' ? 'today' : f.id === 'wtAdd' ? 'work' : f.closest && f.closest('#plan') ? 'plan' : null;
+/* the task the steps are on; null (and the steps end) once its box is gone, or the task is */
+function psLive() {
+  if (!ADD) return null;
+  const on = ADD.from === 'plan' ? PL.on : S.sheet && curCard === PS_CARD[ADD.from], x = on ? APP.task(ADD.id) : null;
+  if (!x) ADD = null;
+  return x;
+}
+const psSteps = x => ADD.ask.filter(k => !(k === 'time' && x.cat === 'school'));   /* school work: a due day, no time */
+const psRefresh = from => { try { if (from === 'plan') refreshPlan(); else if (from === 'today') refreshApt(); else refreshWtask(); } catch (e) { APP.log(e); } psPaint(from); };
+function psOpen(r, from, inp) {
+  const ask = []; if (!r.tagged) ask.push('cat'); if (!r.dateSet) ask.push('day'); if (r.kind === 'task' && !r.timed) ask.push('time');
+  ADD = { id: r.id, from, ask, step: 'cat', sure: r.sure, hadd: (inp.form && inp.form.dataset.hadd) || '', tv: '', dv: '', note: '', kb: !psTouch() };
+  inp.blur();   /* the phone's keyboard drops and the steps show (neither the board nor the sheet lifts above it) */
+  const x = psLive(); if (!x) return;
+  ADD.step = psSteps(x)[0] || 'done'; if (ADD.step === 'done') psLand(x);
+  psRefresh(from);
+  const el = $(PS_SLOT[from]); if (el && el.scrollIntoView) requestAnimationFrame(() => { if (ADD && el.firstChild) el.scrollIntoView({ block: 'nearest' }); });
+}
+/* done: the board goes to the task's day when that day is on it (never before: a picked day would move the column away) */
+function psLand(x) { if (ADD && ADD.from === 'plan' && PL.week.some(d => d.d === x.date)) PL.day = x.date; }
+function psNext(x) { if (ADD.step === 'done') return; const o = ['cat', 'day', 'time'], at = o.indexOf(ADD.step); ADD.step = psSteps(x).find(k => o.indexOf(k) > at) || 'done'; ADD.note = ''; ADD.tv = ''; ADD.dv = ''; if (ADD.step === 'done') psLand(x); }
+function psHTML(x) {
+  const A = ADD, L = psSteps(x), n = L.indexOf(A.step), td = psISO(new Date());
+  const head = h => `<div class="psh"><b>${h}</b>${n >= 0 && L.length > 1 ? `<em>${n + 1}/${L.length}</em>` : ''}<span>${x.title}</span><button class="rbtn ol psx" data-ps="x" aria-label="Close the add steps"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>`;
+  const btn = (k, v, l, on, more = '') => `<button class="rbtn${on ? '' : ' ol'}" data-ps="${k}" data-v="${v}" aria-pressed="${on}"${more}>${l}</button>`;
+  const note = A.note ? `<div class="psn" role="alert">${A.note}</div>` : '';
+  if (A.step === 'cat') return head('WHAT\'S IT FOR?') + `<div class="tacts" role="group" aria-label="What it's for">${x.cats.map(([k, l, c], i) => { const on = x.cat === k; return `<button class="rbtn${on ? '' : ' ol'} tcat" style="--k:${c}" data-ps="cat" data-v="${k}" aria-pressed="${on}" aria-keyshortcuts="${i + 1}"${on ? ' data-pdef="1"' : ''}>${l.toUpperCase()}${on && !A.sure ? '?' : ''}</button>`; }).join('')}<button class="rbtn ol" data-ps="skip">SKIP</button></div>`;
+  if (A.step === 'day') {
+    const sch = x.cat === 'school', tm = psAdd(td, 1), nw = psAdd(td, 7 - psDow(td)), wk = A.from === 'plan' && PL.week.length ? PL.week.map(d => d.d) : PS_DOW.map((_, i) => psAdd(td, i - psDow(td)));
+    return head(sch ? 'DUE WHEN?' : 'WHICH DAY?')
+      + `<div class="tacts pmv" role="group" aria-label="Which day">${wk.map(d => btn('day', d, `${PS_DOW[psDow(d)]}<small>${+d.slice(8)}</small>`, d === x.date, ` aria-label="${psSay(d)}"${d === x.date ? ' data-pdef="1"' : d < td ? ' disabled' : ''}`)).join('')}</div>`
+      + `<div class="tacts">${btn('day', tm, 'TOMORROW', x.date === tm && !wk.includes(tm))}${btn('day', nw, 'NEXT WEEK', x.date === nw && !wk.includes(nw))}<form class="psf" data-psf="day"><label class="tm">ON<input class="hin" type="date" data-psd value="${A.dv || x.date}" aria-label="Pick a date"></label><button class="rbtn ol" type="submit">SET</button></form></div>`
+      + (sch ? '' : `<div class="tacts" role="group" aria-label="Repeats">${REPS.map(([k, l]) => btn('rep', k, l, x.rep === k)).join('')}</div>`)
+      + `<div class="tacts"><button class="rbtn ol" data-ps="skip"${wk.includes(x.date) ? '' : ' data-pdef="1"'}>SKIP</button></div>` + note;
+  }
+  if (A.step === 'time') {
+    /* on today, a time already gone by would ring at once: those picks are left off */
+    const past = x.date <= td ? psNow() : '', picks = PS_AT.filter(t => !past || t > past);
+    return head('A TIME?') + `<div class="tacts" role="group" aria-label="A time"><button class="rbtn${x.remind ? ' ol' : ''}" data-ps="skip" aria-pressed="${!x.remind}" data-pdef="1">NO TIME</button>${picks.map(t => btn('time', t, psT12(t), x.remind === t)).join('')}</div>`
+      + `<div class="tacts"><form class="psf" data-psf="time"><label class="tm">AT<input class="hin" type="time" data-pst value="${A.tv || x.remind}" aria-label="Remind me at"></label><button class="rbtn ol" type="submit">SET</button></form></div>` + note;
+  }
+  const cat = (x.cats.find(c => c[0] === x.cat) || [])[1] || '', rep = x.rep !== 'none' ? (REPS.find(r => r[0] === x.rep) || [])[1] : '';
+  return head('ADDED') + `<div class="psd">${[cat.toUpperCase(), (x.cat === 'school' ? 'DUE ' : '') + psSay(x.date), psT12(x.remind), rep].filter(Boolean).join(' / ')}</div><div class="tacts"><button class="rbtn" data-ps="another" data-pdef="1">+ ANOTHER</button><button class="rbtn ol" data-ps="edit">EDIT</button></div>`;
+}
+/* the slot, from ADD; left alone while he types a time in it. Focus follows the steps when it was in them (keys) */
+function psPaint(from) {
+  const sel = PS_SLOT[from], el = $(sel); if (!el) return;
+  const x = psLive(), mine = !!x && ADD.from === from;
+  if (mine && typing(sel)) return;
+  const a = ROOT.activeElement, had = !!(a && a.closest && a.closest(sel));
+  const h = mine ? `<div class="pstep" role="group" aria-label="New task: ${x.title}">${psHTML(x)}</div>` : '';
+  if (el._h === h) return;
+  setHTML(sel, h);
+  if (mine && (had || ADD.kb)) { ADD.kb = false; const f = el.querySelector('[data-pdef]'); if (f) f.focus({ preventScroll: true }); }
+}
+/* the add box the steps came from: on a phone's board, the day showing */
+function psBox(A) {
+  if (A.from !== 'plan') return $(A.from === 'today' ? '#tdAdd .hin' : '#wtAdd .hin');
+  const x = APP.task(A.id), d = !matchMedia('(min-width:900px)').matches ? PL.day : x && PL.week.some(w => w.d === x.date) ? x.date : A.hadd;
+  return ROOT.querySelector(`#plan .pcol[data-pcol="${d}"] form.hadd .hin`) || ROOT.querySelector('#plan .pcol.sel form.hadd .hin');
+}
+function psClose(back) { const A = ADD; ADD = null; if (!A) return; const i = back && !psTouch() ? psBox(A) : null; psRefresh(A.from); if (i && i.isConnected) i.focus({ preventScroll: true }); }
+/* + ANOTHER: its box takes focus right here in the tap, the only way an iPhone raises its keyboard */
+function psAnother() { const A = ADD, i = psBox(A); ADD = null; psRefresh(A.from); if (i) i.focus(); }
+/* EDIT: the task's own editor, where it now is (the board follows it to its week; school work is in the castle) */
+function psEdit() {
+  const A = ADD, x = APP.task(A.id); ADD = null; psRefresh(A.from); if (!x) return;
+  if (x.cat === 'school') { goPlace('castle', 'cDue'); return; }
+  const row = sel => ROOT.querySelector(`${sel} [data-topen="${A.id}"]`);
+  const open = (r, box) => { aptOpen = A.id + '|' + r.dataset.date; refreshApt(); refreshWtask(); refreshPlan(); if (!psTouch()) requestAnimationFrame(() => { const t = ROOT.querySelector(`${box} [data-tt="${A.id}"]`); if (t) t.focus({ preventScroll: false }); }); };
+  if (A.from !== 'plan') { const r = row(A.from === 'today' ? '#tdRows' : '#wtRows'); if (r) return open(r, A.from === 'today' ? '#cToday' : '#cWtask'); planOpen(x.date); }
+  else { if (!PL.week.some(d => d.d === x.date)) PL.wk = x.date; PL.day = x.date; refreshPlan(); }
+  const r = row(`#plan .pcol[data-pcol="${PL.day}"]`) || row('#plCols') || row('#plLate'); if (r) open(r, '#plan');
+}
+function psDo(k, v) {
+  const x = psLive(); if (!x) { Object.keys(PS_SLOT).forEach(f => psPaint(f)); return; }
+  const A = ADD, id = A.id;
+  if (k === 'x') return psClose(true);
+  if (k === 'another') return psAnother();
+  if (k === 'edit') return psEdit();
+  A.note = '';
+  /* one field per call; taskSet may change nothing (the guess he confirms), so the steps move on by themselves */
+  if (k === 'cat') { if (!x.cats.some(c => c[0] === v)) return; APP.taskSet(id, { cat: v }); }
+  else if (k === 'day') { if (!/^\d{4}-\d\d-\d\d$/.test(v || '')) { A.note = 'PICK A DATE FIRST'; return psRefresh(A.from); } if (v !== x.date) APP.taskSet(id, { date: v, quiet: 1 }); }
+  else if (k === 'rep') { if (v !== x.rep) APP.taskSet(id, { repeat: v }); return psRefresh(A.from); }
+  else if (k === 'time') {
+    if (!/^\d\d:\d\d$/.test(v || '')) { A.note = 'PICK A TIME FIRST'; return psRefresh(A.from); }
+    if (x.date <= psISO(new Date()) && v <= psNow()) { A.note = 'THAT TIME HAS GONE BY TODAY. PICK A LATER ONE.'; A.tv = v; return psRefresh(A.from); }
+    APP.taskSet(id, { remind: v });
+  }
+  else if (k !== 'skip') return;
+  if (ADD !== A) return psRefresh(A.from);
+  const y = psLive(); if (y) psNext(y);
+  psRefresh(A.from);
+}
+/* Escape: the steps first, unless they are done (then the board or sheet goes too) */
+function psEsc() { const x = psLive(); if (!x) return false; const done = ADD.step === 'done'; psClose(!done); return !done; }
 const noneRow = s => `<div class="none">${s}</div>`;
 function refreshApt() {
   /* rows are rewritten below: note what had focus, to hand it back */
@@ -7900,6 +8052,7 @@ function refreshApt() {
   const tag = k => tagEls.find(g => g.h.key === k), say = (g, s) => { if (!g) return; const m = g.el.querySelector('small'); setText2(m, s); m.hidden = !s; };
   say(tag('today'), P.today.length ? `${P.done}/${P.today.length}` : ''); say(tag('decide'), P.decide.length ? String(P.decide.length) : '');
   if (fk && !fo.isConnected) { const same = [...zone.querySelectorAll(`[data-${fk}]`)].find(b => b.dataset[fk] === fv && (!fi || b.dataset.id === fi && !b.dataset.dec || b.dataset.id === fi)); const to = same || (S.sheet ? $('#btnClose') : $(room.def.panel + ' button')); if (to) to.focus({ preventScroll: true }); }
+  psPaint('today');
 }
 /* the city's own cards: quick add's preview, progress, system */
 const KIND_C = { task: 'var(--hud-cyan)', shift: '#64d2ff', job: 'var(--hud-green)', school: 'var(--hud-green)', wo: '#ff9f0a', city: 'var(--hud-red)' };
@@ -8315,6 +8468,7 @@ function rig() {
     ringFor(ms) { clRingMs = ms || CALL_RING; return clRingMs; },   // tests: how long it rings before it's missed
     callMem: () => clMem(), callReset() { try { localStorage.removeItem('daybook_calls'); } catch (e) {} if (CL) callClose(); clLast = 0; clNext = 0; CL_AT = null; return 1; },
     plan(on, day) { if (on) planOpen(day || null); else if (on === false) planClose(true); return { on: PL.on, day: PL.day, wk: PL.wk, open: aptOpen }; },
+    add: () => { const x = psLive(); return x ? { id: ADD.id, from: ADD.from, step: ADD.step, ask: ADD.ask.slice(), cat: x.cat, date: x.date, remind: x.remind, rep: x.rep, note: ADD.note } : null; },   /* p37 the add steps */
     fit(c) { if (c === undefined) return FIG_FIT.value.toArray(); if (c) FIG_FIT.value.set(c[0], c[1], c[2], 1); else FIG_FIT.value.set(0, 0, 0, 0); return 1; },
     holo: () => { holoTick(); const el = $('#holo'); return HO ? { k: HO.k, ctx: HO.ctx, on: el.classList.contains('on'), mini: el.classList.contains('hsm'), say: $('#hoSay').textContent, big: $('#hoBig').textContent, info: $('#hoInfo').textContent, face: !!FACE, r: el.getBoundingClientRect().toJSON() } : null; },
     hv: () => JSON.parse(JSON.stringify(HV)),
