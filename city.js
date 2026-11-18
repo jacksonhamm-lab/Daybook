@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p37h';
+export const BUILD = 'p38a';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -1706,7 +1706,7 @@ precision highp float; precision highp int; precision highp sampler2DArray;
 in vec3 vW; in vec3 vN; in vec4 vC; in vec2 vU; flat in vec4 vM;
 layout(location=0) out vec4 O;
 uniform vec3 cameraPosition;
-uniform float uTime, uMY, uRoomMode, uShadowOn, uShadowBias, uReflOn, uRainWin;
+uniform float uTime, uMY, uRoomMode, uShadowOn, uShadowBias, uReflOn, uRainWin, uCel;
 uniform vec2 uRes;
 uniform sampler2D uSigns, uAds, uPool, uRefl, uMirror; uniform highp sampler2DShadow uShadow, uShadow2; uniform mat4 uShadowM2; uniform float uShadow2On; uniform float uClipZ;
 uniform sampler2DArray uTiles;
@@ -1747,7 +1747,10 @@ vec3 lightAll(vec3 P, vec3 N, vec3 V, float gl, out float keyL){
   amb += uAmbSide*max(0.,dot(N,vec3(.33,.24,.91)));
   float sh=gSh;
   float m=dot(N,uMoon);
-  vec3 c=amb + uMoonC*band(max(m,0.)*.85)*sh;
+  vec3 c;
+  /* p38 anime test (city only): one hard terminator, and the shade side goes violet up top, teal low, never grey */
+  if(uCel>.5){ float k=smoothstep(.05,.09,m)*smoothstep(.35,.6,sh); c=mix(amb*mix(vec3(.62,.98,1.08),vec3(.8,.58,1.25),N.y*.5+.5),amb+uMoonC*.9,k); }
+  else c=amb + uMoonC*band(max(m,0.)*.85)*sh;
   keyL=0.;
   for(int i=0;i<${NL};i++){
     vec4 lc=uLC[i]; if(lc.a<=0.) continue;
@@ -2681,7 +2684,7 @@ precision highp float; in vec2 v; layout(location=0) out vec4 O; uniform sampler
 void main(){ vec3 c=texture(t,v).rgb*.2; float w[4]=float[4](.19,.13,.075,.03); for(int i=0;i<4;i++){ vec2 o=dir*(float(i)*1.5+1.2); c+=(texture(t,v+o).rgb+texture(t,v-o).rgb)*w[i]; } O=vec4(c*1.0,1.); }`;
 const POST_FS = /* glsl */`
 precision highp float; in vec2 v; layout(location=0) out vec4 O;
-uniform sampler2D tC, tD, tB, tB2; uniform vec2 px; uniform float nearZ, farZ, uTime, uGlitch, uScan, uInkW, uInkOn, uBloom, uFade, uGrain;
+uniform sampler2D tC, tD, tB, tB2; uniform vec2 px; uniform float nearZ, farZ, uTime, uGlitch, uScan, uInkW, uInkOn, uBloom, uFade, uGrain, uCel;
 ${NOISE_GLSL}
 float lin(float d){ float z=d*2.-1.; return 2.*nearZ*farZ/(farZ+nearZ-z*(farZ-nearZ)); }
 void main(){
@@ -2694,31 +2697,38 @@ void main(){
   vec3 c=vec3(texture(tC,uv+ca).r,s0.g,texture(tC,uv-ca).b);
   /* ink: depth creases and object boundaries, thin with distance */
   if(uInkOn>.5){
-    vec2 o=px*uInkW;
+    vec2 o=px*uInkW*(1.+uCel*.8);
 
     float d0=lin(texture(tD,uv).r);
     float dL=lin(texture(tD,uv-vec2(o.x,0.)).r), dR=lin(texture(tD,uv+vec2(o.x,0.)).r), dU=lin(texture(tD,uv+vec2(0.,o.y)).r), dD=lin(texture(tD,uv-vec2(0.,o.y)).r);
     float lap=abs(dL+dR-2.*d0)+abs(dU+dD-2.*d0);
     float rel=lap/max(d0,.001);
-    float eD=smoothstep(.014,.05,rel);
+    float eD=smoothstep(mix(.014,.009,uCel),mix(.05,.03,uCel),rel);
     float i0=floor(s0.a*255.+.5);
-    float iL=floor(texture(tC,uv-vec2(o.x,0.)).a*255.+.5), iR=floor(texture(tC,uv+vec2(o.x,0.)).a*255.+.5), iU=floor(texture(tC,uv+vec2(0.,o.y)).a*255.+.5), iD=floor(texture(tC,uv-vec2(0.,o.y)).a*255.+.5);
+    vec4 tL=texture(tC,uv-vec2(o.x,0.)), tR=texture(tC,uv+vec2(o.x,0.)), tU=texture(tC,uv+vec2(0.,o.y)), tDn=texture(tC,uv-vec2(0.,o.y));
+    float iL=floor(tL.a*255.+.5), iR=floor(tR.a*255.+.5), iU=floor(tU.a*255.+.5), iD=floor(tDn.a*255.+.5);
     float eI=0.; if(i0>.5){ if(iL>.5&&iL!=i0)eI=1.; if(iR>.5&&iR!=i0)eI=1.; if(iU>.5&&iU!=i0)eI=1.; if(iD>.5&&iD!=i0)eI=1.; }
     /* no black outlines on far towers: lines thin to a tint and are gone by 700 m */
-    float near=1.-smoothstep(60.,420.,d0), gone=1.-smoothstep(380.,720.,d0);
+    float near=1.-smoothstep(mix(60.,110.,uCel),mix(420.,640.,uCel),d0), gone=1.-smoothstep(mix(380.,560.,uCel),mix(720.,950.,uCel),d0);
     float e=max(eD*(i0>.5?1.:.0),eI*.9);
+    /* anime test: a colour-block edge as well, on solid things only, near */
+    if(uCel>.5&&i0>.5){ vec3 Y=vec3(.3,.59,.11); float eL=abs(dot(tL.rgb-tR.rgb,Y))+abs(dot(tU.rgb-tDn.rgb,Y)); e=max(e,smoothstep(.16,.32,eL)*.6*near); }
     float l=max(c.r,max(c.g,c.b));
-    e*=(1.-smoothstep(.72,.98,l)*.8)*mix(.22,.94,near)*gone;
+    e*=(1.-smoothstep(.72,.98,l)*mix(.8,.45,uCel))*mix(mix(.22,.94,near),mix(.4,1.,near),uCel)*gone;
     vec3 ink=mix(vec3(.012,.012,.02),c*.42,.2+.7*(1.-near));
+    ink=mix(ink,mix(vec3(.035,.008,.07),c*.34,.12+.6*(1.-near)),uCel);
     c=mix(c,ink,clamp(e,0.,1.));
   }
-  if(uBloom>0.){ c+=texture(tB,uv).rgb*uBloom+texture(tB2,uv).rgb*uBloom*.8; }
+  /* anime test: flat colour bands (hue kept), the lows pushed violet instead of grey */
+  if(uCel>.5&&s0.a>.5/255.){ float Lm=max(dot(c,vec3(.3,.59,.11)),1e-4); float sq=sqrt(Lm); float qs=(floor(sq*8.)+.72)/8.; c*=mix(1.,min(qs*qs/Lm,1.6),.7);
+    float lo=(1.-smoothstep(.02,.12,Lm))*(1.-.75*clamp((c.r-c.b)/(Lm+.02),0.,1.)); c=mix(c,c*vec3(.92,.8,1.3)+vec3(.012,0.,.03),lo*.5); }   // warm lamp light stays warm
+  if(uBloom>0.){ vec3 bl=texture(tB,uv).rgb+texture(tB2,uv).rgb*.8; bl=max(mix(vec3(dot(bl,vec3(.33))),bl,1.+.6*uCel),0.); c+=bl*uBloom; }
   /* grade: neutral blacks, an s-curve, saturated accents, rolled highlights */
   float lum=dot(c,vec3(.3,.59,.11));
-  c=mix(vec3(lum),c,1.22);
+  c=mix(vec3(lum),c,mix(1.22,1.42,uCel));
   c=c/(1.+max(c-.85,0.)*.55);
   c=max(c-.004,0.);
-  c=mix(c,c*c*(3.-2.*min(c,vec3(1.))),.42);
+  c=mix(c,c*c*(3.-2.*min(c,vec3(1.))),mix(.42,.56,uCel));
   /* vignette */
   c*=1.-r2*.58;
   /* scan line on arrival */
@@ -5734,6 +5744,10 @@ function buildCastle() {
 /* ---------- renderer, passes and the camera story ---------- */
 const canvas = $('#gl');
 const RIG = QS.has('cityrig');
+/* p38 look test: 'anime' = neon cel-shade on the city view only (rooms unchanged). ?look=anime|classic is this page only;
+   System > Performance > LOOK saves it */
+let LOOK = (() => { const q = QS.get('look'); if (q === 'anime' || q === 'classic') return q; try { return localStorage.getItem('daybook_look') === 'anime' ? 'anime' : 'classic'; } catch (e) { return 'classic'; } })();
+function setLook(v, save) { LOOK = v === 'anime' ? 'anime' : 'classic'; if (save) { try { localStorage.setItem('daybook_look', LOOK); } catch (e) {} } S.needsPlace = true; return LOOK; }
 let renderer;
 /* the first, friendly reason is the one he sees; a later error never overwrites it */
 let failMsg = '';
@@ -5886,7 +5900,7 @@ const noShadow = () => NO_SHADOW || (NO_SHADOW = Object.assign(new THREE.DepthTe
 function worldUniforms(isRoom) {
   const LP = []; const LC = []; for (let i = 0; i < NL; i++) { LP.push(new THREE.Vector3()); LC.push(new THREE.Vector4(0, 0, 0, 0)); }
   return {
-    uTime: TIME, uMY: { value: .2 }, uRoomMode: { value: isRoom ? 1 : 0 }, uShadowOn: { value: 0 }, uShadow2: { value: noShadow() }, uShadowM2: { value: new THREE.Matrix4() }, uShadow2On: { value: 0 }, uShadowBias: { value: isRoom ? .02 : .9 }, uReflOn: { value: 0 }, uRainWin: { value: 0 },
+    uTime: TIME, uMY: { value: .2 }, uRoomMode: { value: isRoom ? 1 : 0 }, uShadowOn: { value: 0 }, uCel: { value: 0 }, uShadow2: { value: noShadow() }, uShadowM2: { value: new THREE.Matrix4() }, uShadow2On: { value: 0 }, uShadowBias: { value: isRoom ? .02 : .9 }, uReflOn: { value: 0 }, uRainWin: { value: 0 },
     uRes: { value: new THREE.Vector2(1, 1) }, uSigns: { value: TEX.signs }, uAds: { value: TEX.ads }, uPool: { value: TEX.pool }, uShadow: { value: noShadow() }, uRefl: { value: null }, uMirror: { value: null }, uClipZ: { value: 0 }, uTiles: { value: TEX.tiles }, uShadowM: { value: new THREE.Matrix4() },
     uLP: { value: LP }, uLC: { value: LC },
     uTill: { value: new THREE.Vector4(0, 0, 1, 1) }, uMoon: { value: moonDir }, uMoonC: { value: isRoom ? new THREE.Color(0, 0, 0) : new THREE.Color(.22, .28, .42) },
@@ -6223,7 +6237,7 @@ async function initGraphics() {
   setBoot('Sharpening ink', .82); await yieldFrame();
   MAT.bright = fsPass(BRIGHT_FS, { t: { value: null }, px: { value: new THREE.Vector2() }, th: { value: .86 } });
   MAT.blur = fsPass(BLUR_FS, { t: { value: null }, dir: { value: new THREE.Vector2() } });
-  MAT.post = fsPass(POST_FS, { tC: { value: null }, tD: { value: null }, tB: { value: null }, tB2: { value: null }, px: { value: new THREE.Vector2() }, nearZ: { value: 1 }, farZ: { value: 1 }, uTime: TIME, uGlitch: { value: 0 }, uScan: { value: 0 }, uInkW: { value: 1 }, uInkOn: { value: 1 }, uBloom: { value: .9 }, uFade: { value: 1 }, uGrain: { value: 0 } });
+  MAT.post = fsPass(POST_FS, { tC: { value: null }, tD: { value: null }, tB: { value: null }, tB2: { value: null }, px: { value: new THREE.Vector2() }, nearZ: { value: 1 }, farZ: { value: 1 }, uTime: TIME, uGlitch: { value: 0 }, uScan: { value: 0 }, uInkW: { value: 1 }, uInkOn: { value: 1 }, uBloom: { value: .9 }, uFade: { value: 1 }, uGrain: { value: 0 }, uCel: { value: 0 } });
   MAT.aa = fsPass(AA_FS, { t: { value: null }, px: { value: new THREE.Vector2() }, uTime: TIME, uFade: { value: 1 }, uGrain: { value: Q.grain } });
   WEAK = weakGpu(); perfPick(perf().pick);
   resize();
@@ -6921,6 +6935,8 @@ function setNear(n, f) { if (CAM.near !== n || CAM.far !== f) { CAM.near = n; CA
 function drawScene(t) {
   renderer.info.reset(); skyTick(t); figTick(t); if (city.sim) city.sim.tick(t);
   const inside = isInsideRoom(); const showCity = !inside; const showRoom = S.mode !== 'city' || CAM.position.distanceTo(_v.set(room.box.x, room.box.y + 2, room.box.z)) < 140;
+  /* p38 look test: the city view only; the street seen through a room's glass stays classic */
+  const cel = LOOK === 'anime' && !inside && S.mode !== 'room' ? 1 : 0; city.u.uCel.value = cel; MAT.post.m.uniforms.uCel.value = cel;
   /* train runs by time alone */
   const period = 62; for (let i = 0; i < city.train.length; i++) { const a = trainPos(t / period - i * .0088); const m = city.train[i]; m.position.set(a.p[0], a.p[1] + .1, a.p[2]); m.rotation.y = Math.atan2(a.d[0], a.d[2]); m.updateMatrixWorld(true); }
   CAM.updateMatrixWorld();
@@ -6960,12 +6976,12 @@ function drawScene(t) {
   const u = MAT.post.m.uniforms;
   if (Q.bloom) {
     /* by day only what is really bright blooms, and less */
-    MAT.bright.m.uniforms.t.value = RT.main.texture; MAT.bright.m.uniforms.th.value = .86 + SKY.L * .1; renderer.setRenderTarget(RT.b0); renderer.render(MAT.bright.s, fsCam);
+    MAT.bright.m.uniforms.t.value = RT.main.texture; MAT.bright.m.uniforms.th.value = cel ? .74 + SKY.L * .2 : .86 + SKY.L * .1; renderer.setRenderTarget(RT.b0); renderer.render(MAT.bright.s, fsCam);
     const br = MAT.blur.m.uniforms; br.t.value = RT.b0.texture; br.dir.value.set(1 / RT.b0.width, 0); renderer.setRenderTarget(RT.b1); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b1.texture; br.dir.value.set(0, 1 / RT.b0.height); renderer.setRenderTarget(RT.b0); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b0.texture; br.dir.value.set(2 / RT.b2.width, 0); renderer.setRenderTarget(RT.b2); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b2.texture; br.dir.value.set(0, 2 / RT.b2.height); renderer.setRenderTarget(RT.b3); renderer.render(MAT.blur.s, fsCam);
-    u.tB.value = RT.b0.texture; u.tB2.value = RT.b3.texture; u.uBloom.value = (inside ? .34 : .42) * (1 - SKY.L * .75);
+    u.tB.value = RT.b0.texture; u.tB2.value = RT.b3.texture; u.uBloom.value = (inside ? .34 : cel ? .6 : .42) * (1 - SKY.L * .75);
   } else { u.uBloom.value = 0; u.tB.value = RT.main.texture; u.tB2.value = RT.main.texture; }
   u.tC.value = RT.main.texture; u.tD.value = RT.main.depthTexture; u.nearZ.value = CAM.near; u.farZ.value = CAM.far; u.uInkOn.value = Q.ink ? 1 : 0;
   u.uGlitch.value = Math.max(0, 1 - (t - S.glitchT) / .42); u.uScan.value = clamp((t - S.scanT) / 1.1, 0, 1);
@@ -7247,9 +7263,10 @@ function hudInit() {
   hudEl.addEventListener('keydown', e => { if (!ADD || ADD.step !== 'cat' || e.metaKey || e.ctrlKey || e.altKey || !/^[1-4]$/.test(e.key)) return; const p = e.target.closest && e.target.closest('.pstep'), c = p && p.querySelectorAll('[data-ps="cat"]')[+e.key - 1]; if (c) { e.preventDefault(); c.click(); } });
   /* the top bar's own: quick add, progress, system */
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-hud],[data-sact],[data-jst],[data-jdel],[data-hgo],[data-hstop],[data-gfx]'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-hud],[data-sact],[data-jst],[data-jdel],[data-hgo],[data-hstop],[data-gfx],[data-look]'); if (!b) return; const d = b.dataset;
     if (d.hgo) { const [r, c] = d.hgo.split('|'); goPlace(r, c); return; }
     if (d.hstop) { APP.schoolDo('stop'); return; }
+    if (d.look) { setLook(d.look, true); APP.sfx('press'); refreshGlobal('sys'); return; }
     if (d.gfx !== undefined) { const p = $('#perf'); p.hidden = !p.hidden; refreshGlobal('sys'); return; }
     if (d.hud === 'plan') { planOpen(d.pd || null); return; }
     if (d.hud) { if (d.sg) sysOpen.add(d.sg); openGlobal(d.hud); if (d.sg) setTimeout(() => { const g = ROOT.querySelector(`#gSysB [data-sg="${d.sg}"]`); if (g) g.scrollIntoView({ block: 'start' }); }, 80); return; }
@@ -8256,7 +8273,7 @@ function refreshGlobal(k) {
         <p style="margin-top:12px">Mira's voice: she speaks Japanese, the English is on screen.</p><div class="seg2" style="margin-top:6px">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.mvoice ? '1' : '0', v)}" data-sact="set-mvoice" data-v="${v}" aria-pressed="${(X.mvoice ? '1' : '0') === v}">${l}</button>`).join('')}</div>
         <p style="margin-top:12px">Mira's calls: she rings wherever you are in the app. Reminders, clocking out, hours for Len, the check-in, school, the gym and Sunday's plan.</p><div class="seg2" style="margin-top:6px">${[['0', 'OFF'], ['1', 'ON']].map(([v, l]) => `<button class="rbtn${on(X.mcalls ? '1' : '0', v)}" data-sact="set-mcalls" data-v="${v}" aria-pressed="${(X.mcalls ? '1' : '0') === v}">${l}</button>`).join('')}</div>
         ${X.own ? `<p style="margin-top:12px">Ring: ${X.own.has ? `your sound, ${X.own.name} (${X.own.secs} s)${X.own.kept ? '' : ', until you reload'}.` : 'the built-in ring. You can use a sound of your own: it stays on this device and is never uploaded.'} It rings when a decision is waiting.</p><div class="seg2" style="margin-top:6px"><input class="vh" id="gRingF" type="file" accept="audio/*,video/*,.mov,.m4a,.mp3,.wav"><label class="rbtn ol" for="gRingF">${X.own.has ? 'CHANGE' : 'USE MY OWN'}</label><button class="rbtn ol" data-sact="ring-test">PLAY</button><button class="rbtn ol" data-sact="ring-stop">STOP</button>${X.own.has ? '<button class="rbtn ol" data-sact="ring-clear">REMOVE</button>' : ''}</div>` : ''}</details>
-      <details class="sgp" data-sg="perf"${sysOpen.has('perf') ? ' open' : ''}><summary>PERFORMANCE</summary><div class="seg2">${[['auto', 'AUTO'], ['smooth', 'SMOOTH'], ['balanced', 'BALANCED'], ['saver', 'SAVER']].map(([v, l]) => `<button class="rbtn${on(X.perf, v)}" data-sact="set-perf" data-v="${v}" aria-pressed="${X.perf === v}">${l}</button>`).join('')}</div><p>${X.perfSay}</p><div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn ol" data-sact="copy-log">COPY PROBLEM LOG</button><span class="mi">${X.probs} LOGGED</span></div><div class="seg2 sgsw"><button class="rbtn${$('#perf').hidden ? ' ol' : ''}" data-gfx="1" aria-pressed="${!$('#perf').hidden}">QUALITY READOUT</button></div></details>
+      <details class="sgp" data-sg="perf"${sysOpen.has('perf') ? ' open' : ''}><summary>PERFORMANCE</summary><div class="seg2">${[['auto', 'AUTO'], ['smooth', 'SMOOTH'], ['balanced', 'BALANCED'], ['saver', 'SAVER']].map(([v, l]) => `<button class="rbtn${on(X.perf, v)}" data-sact="set-perf" data-v="${v}" aria-pressed="${X.perf === v}">${l}</button>`).join('')}</div><p>${X.perfSay}</p><div class="seg2" style="margin-top:8px;align-items:center"><button class="rbtn ol" data-sact="copy-log">COPY PROBLEM LOG</button><span class="mi">${X.probs} LOGGED</span></div><div class="seg2 sgsw"><button class="rbtn${$('#perf').hidden ? ' ol' : ''}" data-gfx="1" aria-pressed="${!$('#perf').hidden}">QUALITY READOUT</button></div><p style="margin-top:10px">LOOK (TEST): THE CITY VIEW</p><div class="seg2">${[['classic', 'CLASSIC'], ['anime', 'ANIME']].map(([v, l]) => `<button class="rbtn${LOOK === v ? '' : ' ol'}" data-look="${v}" aria-pressed="${LOOK === v}">${l}</button>`).join('')}</div></details>
       <details class="sgp" data-sg="sync"${sysOpen.has('sync') ? ' open' : ''}><summary>SYNC</summary>${X.sync ? `<div class="seg2"><button class="rbtn" data-sact="sync-now">SYNC NOW</button><button class="rbtn ol${syncArm ? ' dng' : ''}" data-sact="sync-off">${syncArm ? 'TAP AGAIN: TURN OFF' : 'TURN OFF'}</button></div>` : '<form class="hadd" id="gSyncF" style="margin-top:0"><input class="hin" id="gSyncI" type="password" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="SYNC CODE" aria-label="Sync code"><button class="rbtn" type="submit">CONNECT</button></form>'}<p>${X.syncSay}</p></details>
       <details class="sgp" data-sg="backup"${sysOpen.has('backup') ? ' open' : ''}><summary>BACKUP</summary><div class="seg2"><button class="rbtn ol" data-sact="export">EXPORT BACKUP</button><button class="rbtn ol" data-sact="import">IMPORT BACKUP</button></div><p>Install: iPhone Share, then Add to Home Screen.</p></details>`);
   }
@@ -8646,6 +8663,7 @@ function rig() {
     close() { closeSheet(); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
     /* the city's two shadow maps, on or off, for checking edges */
+    look(v) { setLook(v); return frame(); },
     shadows(a, b) { city.u.uShadowOn.value = a; city.u.uShadow2On.value = b; return { far: !!city.shadowRT, near: !!city.shadowRT2 }; },
     /* the street sim: run it on its own clock and report anyone who entered a junction on red, and how many crossed */
     street(t0, secs) { const sm = city.sim; if (!sm) return null; let bad = 0, worst = null; const xs = sm.ents.filter(e => e.c.cross), at0 = xs.map(e => e.flips || 0); let stopped = 0; for (let k = 0; k < secs * 10; k++) { const t = t0 + k / 10; sm.step(t, .1); const b = sm.check(t); bad += b.length; if (b.length && !worst) worst = { t, ...b[0] }; if (k % 10 === 0) stopped = Math.max(stopped, sm.ents.filter(e => e.car && e.v < .1).length); } return { n: sm.ents.length, cars: sm.ents.filter(e => e.car).length, crossers: xs.length, flipped: xs.reduce((n, e, i) => n + (e.flips || 0) - at0[i], 0), bad, worst, stopped }; },
