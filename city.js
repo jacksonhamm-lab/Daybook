@@ -804,7 +804,7 @@ const MARKUP = `
     <div class="in">
       <div style="display:flex;justify-content:space-between;align-items:center"><b id="flyT" style="font:700 14px/1 var(--hud-font);letter-spacing:.12em">APPROACH: SHOP</b><span class="mi" id="flyAlt">ALT 000M</span></div>
       <div class="load"><i id="flyP" style="width:0"></i></div>
-      <div style="display:flex;justify-content:space-between"><span class="mi">VECTOR LOCK</span><span class="mi" id="flyD">DST 0000M</span></div>
+      <div style="display:flex;justify-content:space-between"><span class="mi">TAP TO SKIP</span><span class="mi" id="flyD">DST 0000M</span></div>
     </div>
   </section>
 
@@ -6946,9 +6946,28 @@ function tick(now) {
   }
   const dt = Math.min(.1, (now - S.last) / 1000 || .016); S.last = now;
   S.t += dt; TIME.value = S.t;
+  if (!RIG && covered(now, dt)) { requestAnimationFrame(tick); return; }
   updateCamera(dt); drawScene(S.t); hudFrame(dt);
   S.frames++; S.acc += dt; if (S.acc > 1) { S.fpsNow = S.frames / S.acc; S.frames = 0; S.acc = 0; if (!S.idle) { S.fps = S.fpsNow; adapt(); } }
   if (!RIG) requestAnimationFrame(tick);
+}
+/* p37: nothing is drawn behind the plan board once it is up, or behind a sheet that fills a phone's width (the CSS test that
+   makes it a side panel instead). Time runs on, the HUD still ticks over a sheet, and the street keeps up once a second, so
+   the scene is current when it shows again. A resize clears the canvas (resize() sets needsPlace), so that frame is drawn,
+   as is the first one back from the background */
+const SIDE_MQ = matchMedia('(min-width:900px) and (min-aspect-ratio:1/1)');
+document.addEventListener('visibilitychange', () => { if (!document.hidden) S.needsPlace = true; });
+function covered(now, dt) {
+  const k = PL.on ? 2 : S.sheet && !S.close && (S.mode === 'room' || S.mode === 'city') && !SIDE_MQ.matches ? 1 : 0;   // close up, she may show above it
+  if (k !== S.covK) { S.covK = k; S.covT = now; }
+  if (!k || now - S.covT < (k === 2 ? 350 : 450) || S.needsPlace) {
+    S.needsPlace = false; if (S.covOn) { S.covOn = false; S.frames = 0; S.acc = 0; }   // the fps count restarts with drawing
+    return false;
+  }
+  S.covOn = true;
+  if (k === 1) hudFrame(dt);
+  if (city.sim && Math.abs(S.t - (S.covSim || 0)) > 1) { S.covSim = S.t; city.sim.tick(S.t); }
+  return true;
 }
 /* adaptive quality: step resolution first, then features */
 let adaptCool = 2; const SCALES = [1, .86, .74, .64, .55];
@@ -7000,7 +7019,11 @@ const hms = ms => { const s = Math.floor(ms / 1000); return String(Math.floor(s 
 let tagEls = [], iconEls = [], EQ = {}, sel = 1, selT = 0, kick = 0;
 let HOME = null, WORK = null, CLOCK = { on: false, brk: false, ms: 0 }, clockSeen = null;
 
-function wave(cv, draw) { const r = cv.getBoundingClientRect(); const dpr = Math.min(DPR, 2); const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr)); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } const x = cv.getContext('2d'); x.clearRect(0, 0, w, h); draw(x, w, h, dpr); }
+/* p37: a canvas's (or a tag's) CSS size comes from one ResizeObserver, so drawing reads no layout; one with no size (hidden) isn't drawn */
+const roBox = e => { const b = e.borderBoxSize && (e.borderBoxSize[0] || e.borderBoxSize); return b && b.inlineSize != null ? [b.inlineSize, b.blockSize] : [e.contentRect.width, e.contentRect.height]; };
+const sizeRO = window.ResizeObserver ? new ResizeObserver(es => { for (const e of es) e.target._sz = roBox(e); }) : null;
+function cssSize(el) { if (!el._sz || !sizeRO) { const r = el.getBoundingClientRect(); el._sz = [r.width, r.height]; if (sizeRO) sizeRO.observe(el); } return el._sz; }
+function wave(cv, draw) { const r = cssSize(cv); if (!r[0] || !r[1]) return; const dpr = Math.min(DPR, 2); const w = Math.max(1, Math.round(r[0] * dpr)), h = Math.max(1, Math.round(r[1] * dpr)); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } const x = cv.getContext('2d'); x.clearRect(0, 0, w, h); draw(x, w, h, dpr); }
 function drawEq(x, w, h, dpr, t) {
   const n = Math.max(14, Math.floor(w / (dpr * 5))); const bw = w / n; const seg = 6;
   for (let i = 0; i < n; i++) {
@@ -8205,18 +8228,44 @@ function paintClock() {
 }
 
 let hudFrameN = 0;
+/* p37: what the pins need from the layout, kept between frames: read again after a resize, when the boxes change size
+   (ResizeObserver), every frame while a mode change settles (the boxes slide in) and every 10th frame otherwise */
+const HR = { n: -99, st: 0, cover: null, data: null, ro: null };
+function hudRead() {
+  if (!HR.ro && window.ResizeObserver) { HR.ro = new ResizeObserver(() => { HR.n = -99; }); HR.ro.observe($('#cityBox')); HR.ro.observe($('#dataBox')); addEventListener('resize', () => { HR.n = -99; }); }
+  if (hudFrameN - HR.n < 10 && HR.ro && performance.now() - (S.modeT || 0) > 1200) return HR;
+  HR.n = hudFrameN; HR.st = parseFloat(getComputedStyle(hudEl).getPropertyValue('--st')) || 0;
+  HR.cover = $(innerWidth < 900 ? '#dataBox' : '#cityBox').getBoundingClientRect(); HR.data = innerWidth >= 900 ? $('#dataBox').getBoundingClientRect() : null;
+  return HR;
+}
+/* p37: the room's tags without a layout read per tag: widths from the ResizeObserver (a label's text, a font arriving),
+   every read before the first write, and under a sheet they are hidden once, then left alone until it closes */
+let tagSet = null, tagHid = null;
+function tagFrame() {
+  if (S.sheet && tagHid === tagEls) return;
+  if (tagSet !== tagEls) { if (tagSet && sizeRO) for (const g of tagSet) sizeRO.unobserve(g.el); tagSet = tagEls; for (const g of tagEls) g.ln = g.el.querySelector('.ln'); }
+  const IW = innerWidth, at = tagEls.map(g => {
+    const p = project(g.h.p), w = cssSize(g.el)[0] || 90;
+    /* stay on screen and let the box have the bottom */
+    const X = clamp(p.x - 16, 8, IW - w - 8);
+    return { X, Y: p.y - g.line - 30, off: p.x < -20 || p.x > IW + 20 || !p.on || S.sheet, l: clamp(p.x - X, 3, w - 3).toFixed(1) + 'px' };
+  });
+  tagEls.forEach((g, i) => { const a = at[i]; place(g.el, a.X, a.Y, a.off ? 0 : 1); if (g.ln && g.lnL !== a.l) { g.lnL = a.l; g.ln.style.left = a.l; } });
+  tagHid = S.sheet ? tagEls : null;
+}
 function place(el, x, y, op) { el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`; if (op !== undefined && el._op !== op) { el.style.opacity = op; el._op = op; el.style.pointerEvents = op ? '' : 'none'; } }
 function hudFrame(dt) {
   const t = S.t; hudFrameN++;
   eqStep(dt, t);
-  wave($('#eq'), (x, w, h, d) => drawEq(x, w, h, d, t));
+  if (!PL.on && (RIG || hudFrameN % 2 === 0)) wave($('#eq'), (x, w, h, d) => drawEq(x, w, h, d, t));
   if (S.close) herPose();
   if (S.mode === 'city') {
-    const safeTop = (parseFloat(getComputedStyle(hudEl).getPropertyValue('--st')) || 0) + 84;
-    const cover = $(innerWidth < 900 ? '#dataBox' : '#cityBox').getBoundingClientRect();
+    const { innerWidth, innerHeight } = window, V = hudRead();   // read once, before the writes below
+    const safeTop = V.st + 84;
+    const cover = V.cover;
     const PW = 90, PH = 40, botLimit = (innerWidth < 900 ? cover.top : innerHeight) - PH - 6;
     const pinLift = innerWidth < 900 ? { train: -74, fuel: 88 } : {}; const px = iconEls.map(o => { const p = project(o.a); return { o, ax: p.x, ay: p.y, x: p.x - 12, y: p.y - 58 + (pinLift[o.k] || 0), on: p.on, off: p.x < 4 ? -1 : p.x > innerWidth - 4 ? 1 : 0 }; });
-    const boxes = innerWidth >= 900 ? [cover, $('#dataBox').getBoundingClientRect()] : [];
+    const boxes = innerWidth >= 900 ? [cover, V.data] : [];
     const bound = p => { p.x = p.off < 0 ? 0 : p.off > 0 ? innerWidth - (p.o.w || PW + 11) : clamp(p.x, 12, innerWidth - PW - 12); p.y = clamp(p.y, safeTop, botLimit); for (const b of boxes) if (p.x + PW > b.left - 6 && p.x < b.right + 6 && p.y + PH > b.top - 6) p.y = b.top - PH - 6; };
     px.forEach(bound);
     /* pins never overlap each other */
@@ -8231,14 +8280,7 @@ function hudFrame(dt) {
     const kIn = sstep(0, .9, t - (S.ringIn || 0)); if (kIn < 1 && !RIG && HOME) { const a = HOME.attrs[ICONS[sel].attr], v = pct01(a.bar); setRing($('#ringA'), String(Math.round(v * 100 * kIn)), v * kIn); setBar($('#bA'), v * kIn); setBar($('#bB'), HOME.into / HOME.need * kIn); setBar($('#bC'), HOME.overall * kIn); }
     const arc = $('#ringA .arc2'); if (arc) arc.setAttribute('transform', `rotate(${(t * 40) % 360} 50 50)`);
   } else if (S.mode === 'room') {
-    for (const g of tagEls) {
-      const p = project(g.h.p); const r = g.el.getBoundingClientRect(); const w = r.width || 90;
-      /* stay on screen and let the box have the bottom */
-      const off = p.x < -20 || p.x > innerWidth + 20 || !p.on || S.sheet;
-      const X = clamp(p.x - 16, 8, innerWidth - w - 8), Y = p.y - g.line - 30;
-      place(g.el, X, Y, off ? 0 : 1);
-      const ln = g.el.querySelector('.ln'); if (ln) ln.style.left = clamp(p.x - X, 3, w - 3).toFixed(1) + 'px';
-    }
+    tagFrame();
     if (room.id === 'gym' && (RIG || hudFrameN % 6 === 0)) paintRest();
     if (room.id === 'shop') {
     if (hudFrameN % 24 === 0 && innerWidth >= 900) { const cs = $('#cellsB').children; const on = 1 + Math.floor(Math.random() * 4); for (let i = 0; i < cs.length; i++) cs[i].classList.toggle('on', i < on); }
