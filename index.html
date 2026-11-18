@@ -1094,18 +1094,39 @@ const fmtDur = ms => { const s = Math.floor(ms / 1000); return `${Math.floor(s /
 const DOW3 = ['mon','tue','wed','thu','fri','sat','sun'];
 const MON3 = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 const BREAK_RE = /(?:^|\s)(?:(\d{1,3})\s*(?:m|min|mins|minutes?)?\s*(?:break|lunch)|(?:break|lunch)\s*(\d{1,3})\s*(?:m|min|mins|minutes?)?)(?=\s|$)/i;
-function guessCat(t) {
-  if (/\b(apply|applied|application|resume|cv|cover letter|interview|recruiter|linkedin|job|portfolio|follow[- ]?up with)\b/i.test(t)) return 'life';
-  if (/\b(gym|workout|lift|run|hiit|stretch|ski|hike|cardio|mobility|protein)\b/i.test(t)) return 'gym';
-  if (/\b(len|tim|jim|store|tj|thomas jeffery|mailchimp|campaign|newsletter|coppley|promo|website|seo|ads?|instagram|shift)\b/i.test(t)) return 'work';
-  return 'life';
+// what a task is for, from its words (p37): job hunting is Personal, then training, then work (generic words only: the repo
+// is public, so no more names here); failing those, what he has filed the same words under himself. sure: false when it is
+// only the default, so the add steps can say so
+function catGuess(t) {
+  if (/\b(apply|applied|application|resume|cv|cover letter|interview|recruiter|linkedin|job|portfolio)\b/i.test(t)) return { k: 'life', sure: true };
+  if (/\b(gym|workout|lift|run(?!\s+(?:errands?|to|by|out|over|late)\b)|hiit|stretch|ski|hike|cardio|mobility|protein)\b/i.test(t)) return { k: 'gym', sure: true };
+  if (/\b(len|tim|jim|store|tj|thomas jeffery|mailchimp|campaign|newsletter|coppley|promo|website|seo|ads?|instagram|shift|e-?mails?|clients?|customers?|orders?|stock|inventory|vendors?|display|signage|merch|pos)\b/i.test(t)) return { k: 'work', sure: true };
+  const k = learnedCat(t); return k ? { k, sure: true } : { k: 'life', sure: false };
+}
+function guessCat(t) { return catGuess(t).k; }
+// the learned guess: his own last ~300 tasks, the ones he filed himself (a task whose category was only guessed carries
+// t.cg until he picks one). Each shared word votes its tasks' categories, split by how many tasks use it, so a word on
+// both sides counts for little; it needs a clear lead
+const GUESS_STOP = new Set(['the', 'and', 'for', 'with', 'from', 'that', 'this', 'then', 'into', 'onto', 'about', 'after', 'before', 'again', 'some', 'get', 'got', 'make', 'take', 'buy', 'new', 'all', 'out', 'off', 'due', 'are', 'was', 'his', 'her', 'its', 'our', 'your', 'you', 'can', 'will', 'one', 'two', 'three', 'task', 'tasks', 'thing', 'things', 'stuff', 'need', 'more', 'call', 'text', 'send', 'see', 'check', 'look', 'ask', 'tell', 'write', 'book', 'pick', 'finish', 'start', 'today', 'tomorrow', 'week']);
+const guessWords = s => (String(s).toLowerCase().match(/[a-z][a-z']{2,}/g) || []).filter(w => !GUESS_STOP.has(w));
+function learnedCat(t) {
+  const want = new Set(guessWords(t)); if (!want.size) return null;
+  const idx = memo('guessIdx', () => { const m = new Map();
+    S.tasks.filter(x => !x.cg && ['work', 'gym', 'life'].includes(x.cat) && x.title).sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 300)
+      .forEach(x => new Set(guessWords(x.title)).forEach(w => { const h = m.get(w) || {}; h[x.cat] = (h[x.cat] || 0) + 1; m.set(w, h); }));
+    return m; });
+  const score = {};
+  want.forEach(w => { const h = idx.get(w); if (!h) return; const n = Object.values(h).reduce((a, b) => a + b, 0); for (const k in h) score[k] = (score[k] || 0) + h[k] / n; });
+  const best = Object.entries(score).sort((a, b) => b[1] - a[1]);
+  return best.length && best[0][1] >= 1 && (!best[1] || best[0][1] - best[1][1] >= .5) ? best[0][0] : null;
 }
 function parseQuick(raw, base) {
   let s = ' ' + raw.replace(/\s+/g, ' ').trim() + ' ';
   const r = { kind: 'task', cat: null, date: base === undefined ? today() : base, dateSet: false, repeat: null };
   const cut = re => { const m = s.match(re); if (m) s = s.replace(m[0], ' '); return m; };
   const td = parse(today()), tw = dowIdx(today());
-  const setD = d => { r.date = iso(d); r.dateSet = true; };
+  let said = false;   /* p37: a day he named (not "every mon", which only lands on the next one) */
+  const setD = (d, y = true) => { r.date = iso(d); r.dateSet = true; if (y) said = true; };
   let m;
   if ((m = cut(/\s#(w|work|g|gym|train|training|j|job|jobs|p|life|personal|s|school)(?=\s)/i)))
     r.tagged = true, r.cat = { w:'work', work:'work', g:'gym', gym:'gym', train:'gym', training:'gym', j:'school', job:'school', jobs:'school', p:'life', life:'life', personal:'life', s:'school', school:'school' }[m[1].toLowerCase()];
@@ -1114,7 +1135,7 @@ function parseQuick(raw, base) {
     if (known.length && (m = s.match(/\s([a-z]{2,6}) ?(\d{2,4}[a-z]?)(?=\s)/i))) { const k = (m[1] + m[2]).toLowerCase(), hit = known.find(([c]) => c === k); if (hit) { s = s.replace(m[0], ' '); r.cat = 'school'; r.tagged = true; r.course = hit[1]; r.code = (m[1] + ' ' + m[2]).toUpperCase(); } } }
   if (cut(/\s(?:every ?day|daily)(?=\s)/i)) r.repeat = { t: 'daily' };
   else if (cut(/\s(?:every ?weekday|weekdays)(?=\s)/i)) r.repeat = { t: 'weekdays' };
-  else if ((m = cut(/\severy (mon|tue|wed|thu|fri|sat|sun)[a-z]*(?=\s)/i))) { const w = DOW3.indexOf(m[1].toLowerCase()); r.repeat = { t: 'weekly', dow: w }; setD(addDays(td, (w - tw + 7) % 7)); }
+  else if ((m = cut(/\severy (mon|tue|wed|thu|fri|sat|sun)[a-z]*(?=\s)/i))) { const w = DOW3.indexOf(m[1].toLowerCase()); r.repeat = { t: 'weekly', dow: w }; setD(addDays(td, (w - tw + 7) % 7), false); }
   if (cut(/\s(?:today|tonight|tod)(?=\s)/i)) setD(td);
   else if (cut(/\s(?:tomorrow|tmrw|tmr)(?=\s)/i)) setD(addDays(td, 1));
   else if (cut(/\syesterday(?=\s)/i)) setD(addDays(td, -1));
@@ -1172,8 +1193,18 @@ function parseQuick(raw, base) {
       return r;
     }
   }
-  r.title = rest;
-  if (!r.cat) r.cat = guessCat(rest);
+  /* p37: one time is when to remind him ("3pm", "at 3:30 pm", "at 15:30"); a bare number is not ("ski 2 a day") */
+  let title = rest;
+  const one = rest.match(/(?:^|\s)(?:at\s+)?(\d{1,2})(?::([0-5]\d))?\s*([ap])\.?m\.?(?=\s|$)/i) || rest.match(/(?:^|\s)at\s+(\d{1,2}):([0-5]\d)(?=\s|$)/i);
+  if (one) {
+    const h = +one[1], ap = (one[3] || '').toLowerCase(), left = rest.replace(one[0], ' ').replace(/\s+/g, ' ').trim();
+    if (left && (ap ? h >= 1 && h <= 12 : h <= 23)) { r.remind = `${pad(ap ? h % 12 + (ap === 'p' ? 12 : 0) : h)}:${one[2] || '00'}`; title = left; }
+    /* a time already gone by today, on a day he didn't name, is the next one's (it would ring at once): tomorrow, or
+       next week for "every mon" said on a Monday. A day he named ("today 9am") stays his */
+    if (r.remind && r.date === today() && !said && r.remind <= nowHM()) r.date = iso(addDays(td, r.repeat && r.repeat.t === 'weekly' ? 7 : 1));
+  }
+  r.title = title[0].toUpperCase() + title.slice(1);
+  if (!r.cat) { const g = catGuess(title); r.cat = g.k; r.guessed = true; r.sure = g.sure; }
   if (r.repeat && !r.date) r.date = today();
   return r;
 }
@@ -1184,18 +1215,21 @@ function describe(r) {
   if (r.kind === 'job') return { c: 'var(--green)', icon: I.jobs, title: r.company, chips: [r.status, r.role || 'No role', r.link ? 'Link saved' : null, rel(r.date)].filter(Boolean) };
   if (r.kind === 'wo') { const w = wo(r.date); return { c: 'var(--orange)', icon: I.training, title: `Mark ${w.s} · ${sessName(w.s)} done`, chips: [d] }; }
   if (r.kind === 'school') return { c: SCH_C, icon: I.school, title: r.title, chips: [courseLabel(r.course) || r.code || 'School', r.type, 'Due ' + rel(r.date).replace(/^(Today|Tomorrow|Yesterday)$/, x => x.toLowerCase())] };
-  return { c: catOf(r.cat).color, icon: I.task, title: r.title, chips: [catOf(r.cat).label, d, repeatLabel(r.repeat)].filter(Boolean) };
+  return { c: catOf(r.cat).color, icon: I.task, title: r.title, chips: [catOf(r.cat).label, d, r.remind ? t12(r.remind) : '', repeatLabel(r.repeat)].filter(Boolean) };
 }
 function applyQuick(r) {
   if (!r) return false;
   if (r.kind === 'shift') { S.shifts[r.date] = { ...(S.shifts[r.date] || {}), start: r.start, end: r.end, brk: r.brk }; commit(); island.toast(`Shift logged · ${rel(r.date)} · ${fh(shiftHours(r))}h`, { icon: I.hours, color: '#64d2ff' }); return true; }
   if (r.kind === 'job') { S.jobs.push({ id: uid(), created: Date.now(), company: r.company, role: r.role || '', link: r.link || '', status: r.status, date: r.date, notes: '' }); commit(); island.toast(`${r.company} added to Jobs`, { icon: I.jobs, color: '#30d158' }); return true; }
   if (r.kind === 'wo') { const o = S.workouts[r.date] || {}; S.workouts[r.date] = { ...o, done: true, auto: false }; commit(); celebrate(`${wo(r.date).s} done`, '#ff9f0a'); return true; }
-  if (r.kind === 'school') return !!SCHOOL.taskAdd({ title: r.title, course: r.course, type: r.type, date: r.date });
+  // a task or school work gives back its id (still truthy), so the add steps can find it
+  if (r.kind === 'school') return SCHOOL.taskAdd({ title: r.title, course: r.course, type: r.type, date: r.date }) || false;
   const t = { id: uid(), created: Date.now(), title: r.title, cat: r.cat, date: r.date || today(), done: false, repeat: r.repeat, doneOn: {} };
+  if (r.remind) t.remind = r.remind;
+  if (r.guessed) t.cg = 1;   // only guessed: the learned guess skips it until he picks one himself
   S.tasks.push(t); commit();
   island.toast(r.repeat ? `Repeats ${repeatLabel(r.repeat).toLowerCase()}` : `Added to ${rel(t.date)}`, { icon: I.check, color: catOf(r.cat).color });
-  return true;
+  return t.id;
 }
 
 /* ---------- animation plumbing ---------- */
@@ -1879,7 +1913,12 @@ window.CityApp = {
   cardioType(t) { t = String(t || '').trim().slice(0, 24); if (t) cardioType = t; },
   // the rooms edit in place, the pages' own way: tasks added, renamed, moved, deleted; notes written, edited, pinned,
   // deleted; shifts set and cleared. A delete gives back only what it took (a sync may have landed since).
-  addTask(text, d, cat) { const v = String(text || '').trim(); if (!v) return false; const r = parseQuick(v, d || today()); if (r && r.kind === 'task' && !r.tagged && CAT_ORDER.includes(cat) && cat !== 'school') r.cat = cat; return !!applyQuick(r); },
+  // p37: what was made, for the add steps (still truthy): its id when it is a task or school work, and which steps the
+  // words already answered (a #tag, a course code or the box's own category; a day; a time)
+  addTask(text, d, cat) { const v = String(text || '').trim(); if (!v) return false; const r = parseQuick(v, d || today()); if (!r) return false;
+    const pre = r.kind === 'task' && !r.tagged && CAT_ORDER.includes(cat) && cat !== 'school'; if (pre) { r.cat = cat; r.guessed = false; }
+    const id = applyQuick(r); if (!id) return false;
+    return { kind: r.kind, id: typeof id === 'string' ? esc(id) : '', cat: r.cat || '', date: r.date || '', tagged: !!(r.tagged || pre), dateSet: !!(r.dateSet || r.repeat), timed: !!r.remind, sure: !!(r.sure || pre || r.tagged) }; },
   // Mira's picture of his day (docs/MIRA.md): plain data, escaped, for mira.js to talk from. at: { hour, dow } for tests
   mira(at = {}) {
     const n = new Date(), td = today(), hour = at.hour ?? n.getHours(), dow = at.dow ?? dowIdx(td), mon = mondayOf(n);
@@ -1959,12 +1998,14 @@ window.CityApp = {
   taskSet(id, f) {
     const t = S.tasks.find(x => x.id === id); if (!t) return;
     if (f.title !== undefined) { const v = String(f.title).replace(/\n/g, ' ').trim(); if (!v || v === t.title) return; t.title = v; }
-    if (f.when) { const td = parse(today()), to = { today: today(), tomorrow: iso(addDays(td, 1)), nextweek: iso(addDays(mondayOf(td), 7)) }[f.when]; if (!to) return; t.date = to; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); island.toast(`Moved to ${rel(to)}`, { icon: I.check, color: catOf(t.cat).color }); }
+    if (f.when) { const td = parse(today()), to = { today: today(), tomorrow: iso(addDays(td, 1)), nextweek: iso(addDays(mondayOf(td), 7)) }[f.when]; if (!to) return; t.date = to; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); if (!f.quiet) island.toast(`Moved to ${rel(to)}`, { icon: I.check, color: catOf(t.cat).color }); }
     if (f.remind !== undefined) t.remind = f.remind || null;
     // any date, a category, a repeat: the old task sheet's own rules (tm-when, tm-cat, tm-rep)
-    if (f.date !== undefined) { if (!/^\d{4}-\d\d-\d\d$/.test(f.date)) return; t.date = f.date; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); island.toast(`Moved to ${rel(t.date)}`, { icon: I.check, color: catOf(t.cat).color }); }
-    if (f.cat !== undefined) { if (!CAT_ORDER.includes(f.cat) || f.cat === t.cat) return;
-      if (f.cat === 'school') { const snap = JSON.stringify(t); toSchool(t, today()); haptic(6); commit();
+    if (f.date !== undefined) { if (!/^\d{4}-\d\d-\d\d$/.test(f.date)) return; t.date = f.date; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); if (!f.quiet) island.toast(`Moved to ${rel(t.date)}`, { icon: I.check, color: catOf(t.cat).color }); }
+    // f.quiet: no "Moved to" (a toast replaces the last one, and the add steps keep School's Undo up). Picking the category it
+    // already has still counts when it was only guessed (t.cg): he has said so himself now
+    if (f.cat !== undefined) { if (!CAT_ORDER.includes(f.cat) || (f.cat === t.cat && !t.cg)) return; delete t.cg;
+      if (f.cat === 'school' && t.cat !== 'school') { const snap = JSON.stringify(t); toSchool(t, today()); haptic(6); commit();
         island.toast(`Moved to School · ${dueSay(t.date)}`, { icon: I.school, color: SCH_C, action: { label: 'Undo', fn: () => { const i = S.tasks.findIndex(x => x.id === id); if (i >= 0) { S.tasks[i] = JSON.parse(snap); commit(); island.toast('Restored'); } } } }); return; }
       t.cat = f.cat; }
     if (f.repeat !== undefined) { const v = f.repeat; if (!['none', 'daily', 'weekdays', 'weekly'].includes(v)) return; t.repeat = v === 'none' ? null : { t: v, dow: dowIdx(t.date || today()) }; if (t.repeat && !t.date) t.date = today(); t.doneOn = t.doneOn || {}; }
@@ -2019,7 +2060,8 @@ window.CityApp = {
   },
   syncOn(code) { const v = String(code || '').trim(); if (v.length < 16) { island.toast('That code looks too short'); return false; } setSyncCode(v); return true; },
   // quick add: what it would do, then do it. A plain task goes to today rather than opening the compose sheet
-  quickSay(v) { const r = String(v || '').trim() ? parseQuick(v) : null, d = describe(r); return d ? { kind: r.kind || 'task', title: esc(d.title), chips: d.chips.map(c => esc(c)) } : null; },
+  // base: a board column's own day, so the preview says that day
+  quickSay(v, base) { const r = String(v || '').trim() ? parseQuick(v, /^\d{4}-\d\d-\d\d$/.test(base || '') ? base : undefined) : null, d = describe(r); return d ? { kind: r.kind || 'task', title: esc(d.title), chips: d.chips.map(c => esc(c)) } : null; },
   quick(v) { const r = String(v || '').trim() ? parseQuick(v) : null; return r ? !!applyQuick(r) : false; },
   // Tell Mira (docs/MIRA.md M3): his plain words become a task or a note, and she answers (a voiced line; what was made as
   // info). A note when he says so ("note", "remember that", "idea", "write down") or when it reads like a thought (long, or
