@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p38a';
+export const BUILD = 'p38c';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -1749,7 +1749,7 @@ vec3 lightAll(vec3 P, vec3 N, vec3 V, float gl, out float keyL){
   float m=dot(N,uMoon);
   vec3 c;
   /* p38 anime test (city only): one hard terminator, and the shade side goes violet up top, teal low, never grey */
-  if(uCel>.5){ float k=smoothstep(.05,.09,m)*smoothstep(.35,.6,sh); c=mix(amb*mix(vec3(.62,.98,1.08),vec3(.8,.58,1.25),N.y*.5+.5),amb+uMoonC*.9,k); }
+  if(uCel>.5){ amb=mix(amb,dot(amb,vec3(.33))*vec3(.62,.66,1.35),.6*(1.-uSky.x*.85)); float k=smoothstep(.05,.09,m)*smoothstep(.35,.6,sh); c=mix(amb*mix(vec3(.62,.98,1.08),vec3(.8,.58,1.25),N.y*.5+.5),amb+uMoonC*.9,k); }
   else c=amb + uMoonC*band(max(m,0.)*.85)*sh;
   keyL=0.;
   for(int i=0;i<${NL};i++){
@@ -1781,7 +1781,7 @@ vec3 lightAll(vec3 P, vec3 N, vec3 V, float gl, out float keyL){
   c+=uRim*smoothstep(.72,.76,rim)*smoothstep(-.3,.3,m+.3)*.55;
   return c;
 }
-vec3 poolAt(vec2 xz){ return texture(uPool,(xz+uPoolR)/(2.*uPoolR)).rgb; }
+vec3 poolAt(vec2 xz){ vec3 p=texture(uPool,(xz+uPoolR)/(2.*uPoolR)).rgb; if(uCel>.5) p=max(mix(vec3(dot(p,vec3(.33))),p,1.5),0.)*1.3; return p; }
 vec3 fogIt(vec3 c, vec3 P, float e){
   vec3 D=P-cameraPosition; float d=length(D);
   if(uFogD<=0.) return c;
@@ -1799,12 +1799,14 @@ vec3 fogIt(vec3 c, vec3 P, float e){
   fc+=textureLod(uPool,(P.xz+uPoolR)/(2.*uPoolR),4.5).rgb*uPoolK*(low*1.3+street*1.9)+uFogLo*street*.45;
 #endif
   fc=min(fc,mix(vec3(.5,.31,.28),vec3(1.),uSky.x));
+  if(uCel>.5){ fc=mix(fc,mix(vec3(.24,.12,.4),vec3(.06,.3,.37),low),1.-uSky.x*.8); a=1.-(1.-a)*(1.-.5*smoothstep(90.,800.,d)*exp(-max(P.y,0.)*.003)*(1.-uSky.x*.6)); }
   vec3 outC=mix(c,fc,clamp(a*(1.-e*.42),0.,1.));
   /* each row of blocks back from the water sits in its own step of coloured air */
   float s1=smoothstep(160.,138.,P.z), s2=smoothstep(-16.,-42.,P.z), s3=smoothstep(-158.,-184.,P.z), s4=smoothstep(-296.,-326.,P.z);
   float hz=s1*.08+s2*.15+s3*.17+s4*.2+.3*smoothstep(900.,1500.,d);
   vec3 hc=vec3(.46,.17,.21); hc=mix(hc,vec3(.1,.3,.37),s2); hc=mix(hc,vec3(.56,.2,.27),s3); hc=mix(hc,vec3(.46,.2,.33),s4);
   /* by day the steps of coloured air are plain haze */
+  hc=mix(hc,mix(vec3(.08,.32,.39),vec3(.27,.12,.42),s3),uCel);
   hc=mix(hc,uFogLo,uSky.x);
   hz*=smoothstep(120.,360.,d)*exp(-max(P.y,0.)*.0024)*(1.-e*.5)*(1.-uSky.x*.35);
   return mix(outC,hc,hz);
@@ -1844,6 +1846,7 @@ vec3 interior(vec2 p, vec3 v, float h, vec3 tint){
   else if(g<.55){ float bl=fract(h*23.)*1.2; float sy=p.y+v.y*.03; if(sy>1.-bl) c=mix(tint*.7,tint*.5,step(.5,fract(sy*7.))); }
   return c;
 }
+vec3 celTint(float h){ return h<.5?vec3(.35,.92,1.):h<.88?vec3(1.,.76,.36):vec3(1.,.34,.74); }
 vec3 litTint(float h){
   if(h<.66) return mix(vec3(1.,.8,.5),vec3(1.,.91,.7),h/.66);
   if(h<.82) return vec3(1.,.62,.3);
@@ -1894,10 +1897,10 @@ vec3 facade(vec3 P, vec3 N, vec3 V, vec3 base, float lit, float seed, int style,
   if(style<2){ wall+=skyRefl*.55*(.75+.25*gr); }
   vec3 pool=poolAt(P.xz)*uPoolK; wall+=w0*pool*exp(-max(P.y,0.)*.017)*1.9;
   /* the street lights every wall from under */
-  wall+=(w0+.03)*vec3(.5,.3,.34)*exp(-max(P.y,0.)*.011)*.55*(1.-uSky.x*.92);
+  wall+=(w0+.03)*mix(vec3(.5,.3,.34),(fract(seed*7.3)<.5?vec3(.1,.55,.82):vec3(.82,.16,.62)),uCel)*exp(-max(P.y,0.)*.011)*.55*(1.-uSky.x*.92);
   /* by day the street is lit by the sky bouncing between the walls instead */
   wall+=(w0+.03)*uAmbLo*exp(-max(P.y,0.)*.008)*.9*uSky.x;
-  float hc=h21(c+seed*57.);
+  float hc=h21((uCel>.5?vec2(floor(c.x/4.),c.y):c)+seed*57.);
   float floorDark=step(h21(vec2(c.y*.37,seed*91.)),.16);
   float blocks=h21(floor(c/vec2(5.,3.))+seed*13.);
   float lf=lit*(1.-floorDark*.8)*(.55+.9*blocks);
@@ -1910,11 +1913,12 @@ vec3 facade(vec3 P, vec3 N, vec3 V, vec3 base, float lit, float seed, int style,
     int T = style==7? int(fract(seed*3.7)*3.99) : style==1? 1 : style==0? (fract(seed*5.3)<.5?0:3) : style==5? 3 : 2;
     float wxF= T==0?.38 : T==1?.47 : T==2?.3 : .36;
     float wyF= T==0?.36 : T==1?.25 : T==2?.4 : .3;
+    if(uCel>.5){ wxF=.5; wyF*=.78; }
     vec2 qf=q*vec2(2.,1.); vec2 cf=floor(qf), ff=fract(qf)-.5;
     float fx=length(vec2(dFdx(qf.x),dFdy(qf.x))), fy=length(vec2(dFdx(qf.y),dFdy(qf.y)));
     /* vertical piers run the full height on two of the four types */
     float pier= T==2? step(2.,mod(cf.x,3.)) : T==3? step(3.,mod(cf.x+1.,4.)) : T==0? step(7.,mod(cf.x,8.)) : 0.;
-    float hw=h21(cf+seed*57.), hf=h21(vec2(cf.y*.37+seed*91.,seed*17.));
+    float hw=h21((uCel>.5?vec2(floor(cf.x/5.),cf.y):cf)+seed*57.), hf=h21(vec2(cf.y*.37+seed*91.,seed*17.));
     float bl=h21(floor(cf/vec2(11.,5.))+seed*13.);
     float pp=lit*(.2+2.7*bl*bl);
     if(hf<.032) pp=.84; else if(hf>.86) pp*=.08;
@@ -1929,7 +1933,7 @@ vec3 facade(vec3 P, vec3 N, vec3 V, vec3 base, float lit, float seed, int style,
     float low=(1.-isOn)*step(fract(hw*37.1),.62)*.07*(.6+.8*fract(hw*11.3));
     float val=mix((isOn*bright+low)*win,rowM*.62*cy,xb); val=mix(val,patchM,yb);
     float cover=mix(mix(win,cy*2.*wxF,xb),4.*wxF*wyF,yb);
-    vec3 t=mix(litTint(fract(hw*17.3)),litTint(h21(floor(cf/vec2(11.,5.))+seed*17.)),max(xb,yb));
+    vec3 t=uCel>.5 ? celTint(fract(hw*17.3)) : mix(litTint(fract(hw*17.3)),litTint(h21(floor(cf/vec2(11.,5.))+seed*17.)),max(xb,yb));
     /* the wall is never pure black, glass keeps the sky */
     float piers= T==2?1.15:T==3?1.05:1.;
     vec3 wallF=wall*piers;
@@ -1958,7 +1962,7 @@ vec3 facade(vec3 P, vec3 N, vec3 V, vec3 base, float lit, float seed, int style,
 #endif
   vec3 wcol=glass;
   if(on>.5){
-    vec3 t=litTint(hT);
+    vec3 t=uCel>.5 ? celTint(hT) : litTint(hT);
     wcol=t*(.34+.74*fract(hc*53.1));
 #ifndef MIRROR
     /* too small for a room: ceiling light falling off, then blinds, curtains or furniture */
@@ -2019,6 +2023,8 @@ void main(){
   if(!(kind==4||kind==5||kind==6||kind==1||kind==7||kind==10||kind==11||kind==8||kind==12)){ float kL; gSh=shadowAt(P,N); gL=lightAll(P,N,V,0.,kL); }
   vec3 alb=vC.rgb; vec3 col; float e=0.;
   if(uRoomMode<.5&&kind==0&&em0<.01) alb=mix(vec3(dot(alb,vec3(.33))),alb,.62);
+  /* p38 anime: one navy-to-indigo palette for everything solid (less by day); the lights carry the colour */
+  if(uCel>.5&&(kind==0||kind==2||kind==3||kind==13||kind==15)){ float la=dot(alb,vec3(.3,.59,.11)); alb=mix(alb,mix(vec3(.065,.075,.18),vec3(.3,.33,.56),clamp(la*1.5,0.,1.)),.8*(1.-uSky.x*.9)); }
   if(kind==2){ /* building fronts */
     int style=int(vC.a*255.+.5)&7;
     col=facade(P,N,V,alb,em0,seed,style,e);
@@ -2697,35 +2703,34 @@ void main(){
   vec3 c=vec3(texture(tC,uv+ca).r,s0.g,texture(tC,uv-ca).b);
   /* ink: depth creases and object boundaries, thin with distance */
   if(uInkOn>.5){
-    vec2 o=px*uInkW*(1.+uCel*.8);
+    vec2 o=px*uInkW;
 
     float d0=lin(texture(tD,uv).r);
     float dL=lin(texture(tD,uv-vec2(o.x,0.)).r), dR=lin(texture(tD,uv+vec2(o.x,0.)).r), dU=lin(texture(tD,uv+vec2(0.,o.y)).r), dD=lin(texture(tD,uv-vec2(0.,o.y)).r);
     float lap=abs(dL+dR-2.*d0)+abs(dU+dD-2.*d0);
     float rel=lap/max(d0,.001);
-    float eD=smoothstep(mix(.014,.009,uCel),mix(.05,.03,uCel),rel);
+    float eD=smoothstep(.014,.05,rel);
     float i0=floor(s0.a*255.+.5);
     vec4 tL=texture(tC,uv-vec2(o.x,0.)), tR=texture(tC,uv+vec2(o.x,0.)), tU=texture(tC,uv+vec2(0.,o.y)), tDn=texture(tC,uv-vec2(0.,o.y));
     float iL=floor(tL.a*255.+.5), iR=floor(tR.a*255.+.5), iU=floor(tU.a*255.+.5), iD=floor(tDn.a*255.+.5);
     float eI=0.; if(i0>.5){ if(iL>.5&&iL!=i0)eI=1.; if(iR>.5&&iR!=i0)eI=1.; if(iU>.5&&iU!=i0)eI=1.; if(iD>.5&&iD!=i0)eI=1.; }
     /* no black outlines on far towers: lines thin to a tint and are gone by 700 m */
-    float near=1.-smoothstep(mix(60.,110.,uCel),mix(420.,640.,uCel),d0), gone=1.-smoothstep(mix(380.,560.,uCel),mix(720.,950.,uCel),d0);
+    float near=1.-smoothstep(60.,420.,d0), gone=1.-smoothstep(mix(380.,40.,uCel),mix(720.,240.,uCel),d0);
     float e=max(eD*(i0>.5?1.:.0),eI*.9);
     /* anime test: a colour-block edge as well, on solid things only, near */
-    if(uCel>.5&&i0>.5){ vec3 Y=vec3(.3,.59,.11); float eL=abs(dot(tL.rgb-tR.rgb,Y))+abs(dot(tU.rgb-tDn.rgb,Y)); e=max(e,smoothstep(.16,.32,eL)*.6*near); }
     float l=max(c.r,max(c.g,c.b));
-    e*=(1.-smoothstep(.72,.98,l)*mix(.8,.45,uCel))*mix(mix(.22,.94,near),mix(.4,1.,near),uCel)*gone;
+    e*=(1.-smoothstep(.72,.98,l)*.8)*mix(.22,.94,near)*gone;
     vec3 ink=mix(vec3(.012,.012,.02),c*.42,.2+.7*(1.-near));
-    ink=mix(ink,mix(vec3(.035,.008,.07),c*.34,.12+.6*(1.-near)),uCel);
+    ink=mix(ink,mix(vec3(.02,.02,.08),c*.4,.3),uCel);
     c=mix(c,ink,clamp(e,0.,1.));
   }
   /* anime test: flat colour bands (hue kept), the lows pushed violet instead of grey */
-  if(uCel>.5&&s0.a>.5/255.){ float Lm=max(dot(c,vec3(.3,.59,.11)),1e-4); float sq=sqrt(Lm); float qs=(floor(sq*8.)+.72)/8.; c*=mix(1.,min(qs*qs/Lm,1.6),.7);
-    float lo=(1.-smoothstep(.02,.12,Lm))*(1.-.75*clamp((c.r-c.b)/(Lm+.02),0.,1.)); c=mix(c,c*vec3(.92,.8,1.3)+vec3(.012,0.,.03),lo*.5); }   // warm lamp light stays warm
+  if(uCel>.5&&s0.a>.5/255.){ float Lm=max(dot(c,vec3(.3,.59,.11)),1e-4); float sq=sqrt(Lm); float qs=(floor(sq*8.)+.72)/8.; c*=mix(1.,min(qs*qs/Lm,1.6),.5);
+    float lo=(1.-smoothstep(.02,.12,Lm))*(1.-.75*clamp((c.r-c.b)/(Lm+.02),0.,1.)); c=mix(c,c*vec3(.92,.8,1.3)+vec3(.012,0.,.03),lo*.3); }   // warm lamp light stays warm
   if(uBloom>0.){ vec3 bl=texture(tB,uv).rgb+texture(tB2,uv).rgb*.8; bl=max(mix(vec3(dot(bl,vec3(.33))),bl,1.+.6*uCel),0.); c+=bl*uBloom; }
   /* grade: neutral blacks, an s-curve, saturated accents, rolled highlights */
   float lum=dot(c,vec3(.3,.59,.11));
-  c=mix(vec3(lum),c,mix(1.22,1.42,uCel));
+  c=mix(vec3(lum),c,mix(1.22,1.3,uCel));
   c=c/(1.+max(c-.85,0.)*.55);
   c=max(c-.004,0.);
   c=mix(c,c*c*(3.-2.*min(c,vec3(1.))),mix(.42,.56,uCel));
