@@ -16,8 +16,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap" rel="stylesheet"></noscript>
-<script src="sound.js?v=p29"></script>
-<script src="mira.js?v=p36"></script>
+<script src="sound.js?v=p37"></script>
+<script src="mira.js?v=p37"></script>
 <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
 <script>
 // Arcadia (once Daybook) is the city: the old home, Dex and its pages were retired in November 2026. The old ?city= switch and the
@@ -28,9 +28,9 @@
     var q = new URLSearchParams(location.search);
     if (q.has('city')) { q.delete('city'); var rest = q.toString(); history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '') + location.hash); }
   } catch (e) {}
-  window.DAYBOOK_BUILD = 'p36';
+  window.DAYBOOK_BUILD = 'p37';
   window.DAYBOOK_CITY = true;
-  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p36'; document.head.appendChild(l);
+  var l = document.createElement('link'); l.rel = 'modulepreload'; l.href = './city.js?v=p37'; document.head.appendChild(l);
   document.documentElement.dataset.city = '';
   var c = document.createElement('style');
   c.textContent = 'html[data-city]{background:#05040a}html[data-city] body{overflow:hidden;overscroll-behavior:none}';
@@ -38,7 +38,7 @@
 })();
 </script>
 <script type="module">
-import('./city.js?v=p36').catch(e => window.CityApp.fallback('The city could not load.', e));
+import('./city.js?v=p37').catch(e => window.CityApp.fallback('The city could not load.', e));
 </script>
 <style>
 #noCity{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;background:#05040a;color:#e8e6f0;font:14px/1.45 Inter,system-ui,sans-serif}
@@ -1145,8 +1145,11 @@ const BREAK_RE = /(?:^|\s)(?:(\d{1,3})\s*(?:m|min|mins|minutes?)?\s*(?:break|lun
 function catGuess(t) {
   if (/\b(apply|applied|application|resume|cv|cover letter|interview|recruiter|linkedin|job|portfolio)\b/i.test(t)) return { k: 'life', sure: true };
   if (/\b(gym|workout|lift|run(?!\s+(?:errands?|to|by|out|over|late)\b)|hiit|stretch|ski|hike|cardio|mobility|protein)\b/i.test(t)) return { k: 'gym', sure: true };
-  if (/\b(len|tim|jim|store|tj|thomas jeffery|mailchimp|campaign|newsletter|coppley|promo|website|seo|ads?|instagram|shift|e-?mails?|clients?|customers?|orders?|stock|inventory|vendors?|display|signage|merch|pos)\b/i.test(t)) return { k: 'work', sure: true };
-  const k = learnedCat(t); return k ? { k, sure: true } : { k: 'life', sure: false };
+  if (/\b(len|tim|jim|store|tj|thomas jeffery|mailchimp|campaign|newsletter|coppley|promo|website|seo|ads?|instagram|shift)\b/i.test(t)) return { k: 'work', sure: true };
+  const k = learnedCat(t); if (k) return { k, sure: true };
+  // generic words lean Work but are not sure ('email mom', 'order groceries'): the add steps show the ?
+  if (/\b(e-?mails?|clients?|customers?|orders?|stock|inventory|vendors?|display|signage|merch|pos)\b/i.test(t)) return { k: 'work', sure: false };
+  return { k: 'life', sure: false };
 }
 function guessCat(t) { return catGuess(t).k; }
 // the learned guess: his own last ~300 tasks, the ones he filed himself (a task whose category was only guessed carries
@@ -1157,7 +1160,7 @@ const guessWords = s => (String(s).toLowerCase().match(/[a-z][a-z']{2,}/g) || []
 function learnedCat(t) {
   const want = new Set(guessWords(t)); if (!want.size) return null;
   const idx = memo('guessIdx', () => { const m = new Map();
-    S.tasks.filter(x => !x.cg && ['work', 'gym', 'life'].includes(x.cat) && x.title).sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 300)
+    S.tasks.filter(x => !x.cg && (x.cat === 'work' || x.cat === 'gym' || (x.cat === 'life' && x.cf)) && x.title)   // Personal was the old default: it votes only when he picked it (cf).sort((a, b) => (b.created || 0) - (a.created || 0)).slice(0, 300)
       .forEach(x => new Set(guessWords(x.title)).forEach(w => { const h = m.get(w) || {}; h[x.cat] = (h[x.cat] || 0) + 1; m.set(w, h); }));
     return m; });
   const score = {};
@@ -1271,7 +1274,7 @@ function applyQuick(r) {
   if (r.kind === 'school') return SCHOOL.taskAdd({ title: r.title, course: r.course, type: r.type, date: r.date }) || false;
   const t = { id: uid(), created: Date.now(), title: r.title, cat: r.cat, date: r.date || today(), done: false, repeat: r.repeat, doneOn: {} };
   if (r.remind) t.remind = r.remind;
-  if (r.guessed) t.cg = 1;   // only guessed: the learned guess skips it until he picks one himself
+  if (r.guessed) t.cg = 1; else if (t.cat === 'life') t.cf = 1;   // tagged #p: he picked Personal   // only guessed: the learned guess skips it until he picks one himself
   S.tasks.push(t); commit();
   island.toast(r.repeat ? `Repeats ${repeatLabel(r.repeat).toLowerCase()}` : `Added to ${rel(t.date)}`, { icon: I.check, color: catOf(r.cat).color });
   return t.id;
@@ -2046,7 +2049,7 @@ window.CityApp = {
     if (f.date !== undefined) { if (!/^\d{4}-\d\d-\d\d$/.test(f.date)) return; t.date = f.date; if (t.repeat && t.repeat.t === 'weekly') t.repeat.dow = dowIdx(t.date); if (!f.quiet) island.toast(`Moved to ${rel(t.date)}`, { icon: I.check, color: catOf(t.cat).color }); }
     // f.quiet: no "Moved to" (a toast replaces the last one, and the add steps keep School's Undo up). Picking the category it
     // already has still counts when it was only guessed (t.cg): he has said so himself now
-    if (f.cat !== undefined) { if (!CAT_ORDER.includes(f.cat) || (f.cat === t.cat && !t.cg)) return; delete t.cg;
+    if (f.cat !== undefined) { if (!CAT_ORDER.includes(f.cat) || (f.cat === t.cat && !t.cg)) return; delete t.cg; t.cf = 1;
       if (f.cat === 'school' && t.cat !== 'school') { const snap = JSON.stringify(t); toSchool(t, today()); haptic(6); commit();
         island.toast(`Moved to School · ${dueSay(t.date)}`, { icon: I.school, color: SCH_C, action: { label: 'Undo', fn: () => { const i = S.tasks.findIndex(x => x.id === id); if (i >= 0) { S.tasks[i] = JSON.parse(snap); commit(); island.toast('Restored'); } } } }); return; }
       t.cat = f.cat; }

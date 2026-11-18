@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p36';
+export const BUILD = 'p37';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -717,6 +717,7 @@ label.rbtn{cursor:pointer}
 #holo.dock .hobig{margin-top:0;font-size:20px}
 #holo.phid,#hud.capon #holo.dock{opacity:0;visibility:hidden;pointer-events:none}
 #holo:focus-within{z-index:8}
+#holo.peek{z-index:8}
 /* p37: her caption strip (capSync): her line at the top, typed out, when its own box can't be seen. Taps go through it */
 #mcap{position:absolute;left:calc(var(--sl) + 8px);right:calc(var(--sr) + 8px + var(--capr,0px));top:var(--capt,calc(var(--st) + 56px));max-width:560px;margin:0 auto;z-index:8;padding:6px 11px 7px 10px;background:rgba(5,14,19,.95);border-left:2px solid var(--hud-red);box-shadow:inset 0 0 0 1px var(--hud-cyan-line),0 0 18px rgba(90,228,236,.14);font:600 16px/1.32 var(--body);color:var(--hud-text);overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;pointer-events:none;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .2s,transform .25s,visibility 0s .25s}
 #mcap.on{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .25s,visibility 0s}
@@ -7015,7 +7016,8 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) S.ne
 function covered(now, dt) {
   const k = PL.on ? 2 : S.sheet && !S.close && (S.mode === 'room' || S.mode === 'city') && !SIDE_MQ.matches ? 1 : 0;   // close up, she may show above it
   if (k !== S.covK) { S.covK = k; S.covT = now; }
-  if (!k || now - S.covT < (k === 2 ? 350 : 450) || S.needsPlace) {
+  // keep drawing until the scan sweep and glitch have played out, or their tint freezes above the sheet
+  if (!k || now - S.covT < (k === 2 ? 350 : 450) || S.needsPlace || S.t - S.scanT < 1.15 || S.t - S.glitchT < .45) {
     S.needsPlace = false; if (S.covOn) { S.covOn = false; S.frames = 0; S.acc = 0; }   // the fps count restarts with drawing
     return false;
   }
@@ -7544,9 +7546,11 @@ const HO_TELL = '<button class="rbtn ol" data-hotell="1">TELL</button>';
 const mmss = ms => { const s = Math.ceil(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function holoFace() { const i = $('#hoImg'); if (FACE) { if (i.getAttribute('src') !== FACE) i.src = FACE; i.hidden = false; } else i.hidden = true; $('#holo').classList.toggle('nof', !FACE); }
 /* p37: what covers her call: the plan board (any size), or on a phone the sheet (not while he types to her) */
-const holoCov = () => !HO ? '' : PL.on ? 'plan' : S.sheet && !CAP_SIDE.matches && $('#hoTell').hidden ? 'sheet' : '';
+const holoPeek = () => !!(HO && HO.peek > Date.now());   // p37: a tap on the docked chip opens her card over the sheet for a while
+const holoCov = () => !HO ? '' : PL.on ? 'plan' : S.sheet && !CAP_SIDE.matches && $('#hoTell').hidden && !holoPeek() ? 'sheet' : '';
 function holoPos() {
   const el = $('#holo'), cov = holoCov(); el.classList.toggle('dock', cov === 'sheet'); el.classList.toggle('phid', cov === 'plan' || (cov === 'sheet' && !!CL));   // p37: docked at the top; aside under the board or a call
+  el.classList.toggle('peek', !cov && holoPeek() && !!S.sheet && !CAP_SIDE.matches);
   if (cov) { if (el.style.bottom) el.style.left = el.style.bottom = el.style.maxWidth = ''; return; }
   const p = room.def && $(room.def.panel); if (!p) return; const r = p.getBoundingClientRect(); if (!r.height) return;
   const L = Math.round(r.left) + 'px', B = Math.round(innerHeight - r.top + 8) + 'px', W = Math.round(CAP_SIDE.matches ? Math.min(380, r.width) : r.width) + 'px';   // p37: a phone's is the panel's width
@@ -7822,7 +7826,7 @@ const capWatch = new MutationObserver(rs => {
 });
 [$('#sheet'), $('#plan'), hudEl].forEach(n => capWatch.observe(n, { attributes: true, attributeFilter: ['class'], attributeOldValue: true }));
 /* the docked holo, tapped: her line again, in the strip */
-$('#holo').addEventListener('click', e => { if (!HO || !$('#holo').classList.contains('dock') || (e.target.closest && e.target.closest('button,input'))) return; const say = $('#hoSay').textContent; if (say) capLine({ id: '', say }, 'h', false); });
+$('#holo').addEventListener('click', e => { const el = $('#holo'); if (!HO || !el.classList.contains('dock') || (e.target.closest && e.target.closest('button,input'))) return; e.stopPropagation(); if (el.classList.contains('hsm')) { el.classList.remove('hsm'); HO.until = Date.now() + 8000; HO.then = 'mini'; } HO.peek = Date.now() + 12000; APP.sfx('press'); holoPos(); capSync(); });   // p37: the chip opens her whole card (line, buttons, TELL, hang up) over the sheet
 /* the on-screen keyboard: how much of the bottom it covers (iPhone keeps the page the same size under it), for the CSS
    above. A desktop or a hardware keyboard: 0 */
 function kbFit(px) {
@@ -8086,7 +8090,7 @@ const psFrom = f => f.id === 'tdAdd' ? 'today' : f.id === 'wtAdd' ? 'work' : f.c
 /* the task the steps are on; null (and the steps end) once its box is gone, or the task is */
 function psLive() {
   if (!ADD) return null;
-  const on = ADD.from === 'plan' ? PL.on : S.sheet && curCard === PS_CARD[ADD.from], x = on ? APP.task(ADD.id) : null;
+  const on = ADD.from === 'plan' ? PL.on : S.sheet && !gOpen && curCard === PS_CARD[ADD.from], x = on ? APP.task(ADD.id) : null;
   if (!x) ADD = null;
   return x;
 }
