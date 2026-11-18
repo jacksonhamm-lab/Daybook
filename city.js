@@ -1444,7 +1444,7 @@ const FONT_DISP = '"Avenir Next","Arial Black",Impact,sans-serif';
 const FONT_MONO = 'Menlo,Consolas,monospace';
 
 function drawSigns() {
-  const S = 2048, SH = 3072, cv = document.createElement('canvas'); cv.width = S; cv.height = SH; const x = cv.getContext('2d');
+  const S = 2048, SH = 3392, cv = document.createElement('canvas'); cv.width = S; cv.height = SH; const x = cv.getContext('2d');
   let cx = 0, cy = 0, rowH = 0; const R = rng(77);
   const cell = (name, w, h, fn) => { if (cx + w > S) { cx = 0; cy += rowH + 2; rowH = 0; } const u0 = cx / S, u1 = (cx + w) / S, v1 = 1 - cy / SH, v0 = 1 - (cy + h) / SH; if (cy + h > SH) console.error('atlas overflow', name, cy + h); window.__atlasH = cy + h; x.save(); x.beginPath(); x.rect(cx, cy, w, h); x.clip(); x.translate(cx, cy); fn(x, w, h); x.restore(); CELL[name] = [u0 + .0004, v0 + .0004, u1 - .0004, v1 - .0004]; cx += w + 2; rowH = Math.max(rowH, h); };
   const neon = (x, txt, X, Y, font, col, core = '#fff4e0', lw = 5, blur = 16) => { x.font = font; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round'; x.shadowColor = col; x.shadowBlur = blur; x.strokeStyle = col; x.lineWidth = lw; x.strokeText(txt, X, Y); x.shadowBlur = blur * .6; x.fillStyle = core; x.fillText(txt, X, Y); x.shadowBlur = 0; };
@@ -1463,6 +1463,17 @@ function drawSigns() {
     const nm = 'b' + i; const chars = f === jp ? [...t] : [...t.replace(' ', '')];
     cell(nm, 76, 300, (x, w, h) => { sol ? solid(x, w, h, chars, f, c2(c), '#0a0814') : vert(x, w, h, chars, f, c2(c), '#0b0916'); });
     CELL.blades.push(nm);
+  });
+  /* p38: a second set for the anime streets, so the dense walls don't repeat */
+  const blades2 = [
+    ['寿司', jp, PAL.red], ['焼鳥', jp, PAL.orange, 1], ['占い', jp, PAL.magenta], ['銭湯', jp, PAL.cyan], ['漫画', jp, PAL.yellow], ['古着', jp, PAL.green, 1], ['餃子', jp, PAL.orange], ['両替', jp, PAL.yellow, 1], ['中華', jp, PAL.red], ['珈琲', jp, PAL.cyan], ['電気街', jp, PAL.magenta], ['修理', jp, PAL.green],
+    ['SUSHI', en, PAL.red], ['REPAIR', en, PAL.cyan, 1], ['TATTOO', en, PAL.magenta], ['DINER', en, PAL.yellow], ['LIQUOR', en, PAL.orange], ['BATHS', en, PAL.cyan], ['MANGA', en, PAL.yellow, 1], ['SOBA', en, PAL.green], ['LOANS', en, PAL.red, 1], ['OPTICS', en, PAL.cyan], ['DENTIST', en, PAL.green], ['CYBER', en, PAL.magenta], ['VINYL', en, PAL.orange], ['HOSTEL', en, PAL.yellow], ['WOK', en, PAL.red], ['DONUTS', en, PAL.magenta, 1],
+  ];
+  CELL.blades2 = [];
+  blades2.forEach(([t, f, c, sol], i) => {
+    const nm = 'B' + i; const chars = f === jp ? [...t] : [...t.replace(' ', '')];
+    cell(nm, 76, 300, (x, w, h) => { sol ? solid(x, w, h, chars, f, c2(c), '#0a0814') : vert(x, w, h, chars, f, c2(c), '#0b0916'); });
+    CELL.blades2.push(nm);
   });
   const plates = [
     ['p0', 'SASTRERÍA ORO', '#f4c860', 'FINE MENSWEAR  仕立屋'], ['p1', 'TACOS EL TRONZO', '#ff9a3c', 'ABIERTO 24H'], ['p2', 'NOVA NOODLE', '#f7e84a', 'ラーメン・餃子'], ['p3', 'HOTEL PARAÍSO', '#ff2e88', 'ホテル・VACANTE'], ['p4', 'CAFÉ LUNA', '#2fe3ee', '喫茶'], ['p5', 'ROBO-WASH', '#8cff5a', 'LAVANDERÍA'], ['p6', 'FARMACIA 24H', '#2fe3ee', '薬局'], ['p7', 'GOLD DOT PAWN', '#f7e84a', 'CASH 現金'], ['p8', 'PINKLINE KARAOKE', '#ff2e88', 'カラオケ'], ['p9', 'BLUE HERON BAR', '#2fe3ee', '酒場'], ['p10', 'CANTINA CÓNDOR', '#ff3b3b', 'CERVEZA FRÍA'], ['p11', 'IRON DOG GYM', '#ff9f0a', 'OPEN 24H'],
@@ -1532,7 +1543,7 @@ function drawSigns() {
   const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.NoColorSpace; tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.magFilter = THREE.LinearFilter; tex.anisotropy = 8; tex.flipY = true; tex.premultiplyAlpha = false;
   return tex;
 }
-const bladeCell = i => CELL[CELL.blades[((i % CELL.blades.length) + CELL.blades.length) % CELL.blades.length]];
+const bladeCell = i => i >= 1000 ? CELL[(i % 2 ? CELL.blades2 : CELL.blades)[((i - 1000) >> 1) % (i % 2 ? CELL.blades2 : CELL.blades).length]] : CELL[CELL.blades[((i % CELL.blades.length) + CELL.blades.length) % CELL.blades.length]];
 
 /* ---------- animated ad screens, 4x4 cells: lit like photographs, gradients and a subject, not icons ---------- */
 function drawAds() {
@@ -3696,10 +3707,10 @@ function animeStreet() {
     /* columns of blades sticking out over the pavement, stacked */
     for (let z = f.z - f.d / 2 + 2; z < f.z + f.d / 2 - 1.5; z += R.range(3, 5.2)) {
       let y = R.range(6.5, 9);
-      while (y < top - 5) { const h = R.range(3.5, 9); if (R.chance(.85)) { blade(M, f.e + out * (h * .12 + .5), y + h / 2, z, 0, h, R.int(0, 40), R); if (R.chance(.35)) g(f.e + out * (h * .12 + .5), y + h / 2, z + .6, R.pick(COLS), h * .55); } y += h + R.range(.5, 2.6); }
+      while (y < top - 5) { const h = R.range(3.5, 9); if (R.chance(.85)) { blade(M, f.e + out * (h * .12 + .5), y + h / 2, z, 0, h, 1000 + R.int(0, 119), R); if (R.chance(.35)) g(f.e + out * (h * .12 + .5), y + h / 2, z + .6, R.pick(COLS), h * .55); } y += h + R.range(.5, 2.6); }
     }
     /* one tall vertical sign per tall face */
-    if (f.H > 40) { const h = R.range(14, 24), xx = f.e + out * (h * .12 + .7), yy = R.range(h / 2 + 10, Math.max(h / 2 + 11, top - h / 2)), zz = f.z + R.range(-f.d * .3, f.d * .3); f.tall = { z: zz, w: h * .24, y0: yy - h / 2, y1: yy + h / 2 }; blade(M, xx, yy, zz, 0, h, R.int(0, 40), R); }
+    if (f.H > 40) { const h = R.range(14, 24), xx = f.e + out * (h * .12 + .7), yy = R.range(h / 2 + 10, Math.max(h / 2 + 11, top - h / 2)), zz = f.z + R.range(-f.d * .3, f.d * .3); f.tall = { z: zz, w: h * .24, y0: yy - h / 2, y1: yy + h / 2 }; blade(M, xx, yy, zz, 0, h, 1000 + R.int(0, 119), R); }
     /* vertical neon bars on the wall */
     for (let i = 0, n = Math.round(f.d / 3.5); i < n; i++) {
       const z = f.z + R.range(-f.d / 2 + 1, f.d / 2 - 1), h = R.range(5, Math.max(7, top * .55)), y = R.range(4.5, Math.max(5, top - h)), c = R.pick(COLS);
@@ -3740,7 +3751,7 @@ function aniCross(M, g, COLS) {
     const top = Math.min(f.H * .85, 70), P = (o, y, a) => [a, y, f.e + f.s * o];
     for (let a = f.a - f.d / 2 + 2; a < f.a + f.d / 2 - 1.5; a += R.range(3.2, 5.6)) {
       let y = R.range(6.5, 9);
-      while (y < top - 5) { const h = R.range(3.5, 9); if (R.chance(.8)) { const q = P(h * .12 + .5, y + h / 2, a); blade(M, q[0], q[1], q[2], Math.PI / 2, h, R.int(0, 40), R); if (R.chance(.3)) g(q[0] + .6, q[1], q[2], R.pick(COLS), h * .55); } y += h + R.range(.6, 3); }
+      while (y < top - 5) { const h = R.range(3.5, 9); if (R.chance(.8)) { const q = P(h * .12 + .5, y + h / 2, a); blade(M, q[0], q[1], q[2], Math.PI / 2, h, 1000 + R.int(0, 119), R); if (R.chance(.3)) g(q[0] + .6, q[1], q[2], R.pick(COLS), h * .55); } y += h + R.range(.6, 3); }
     }
     for (let i = 0, n = Math.round(f.d / 4); i < n; i++) {
       const a = f.a + R.range(-f.d / 2 + 1, f.d / 2 - 1), h = R.range(5, Math.max(7, top * .5)), y = R.range(4.5, Math.max(5, top - h)), c = R.pick(COLS), q = P(R.range(.25, .8), y, a);
@@ -3772,7 +3783,15 @@ function aniCross(M, g, COLS) {
 /* p38: the avenue in layers. Walkways along the walls at 12, 27 and 45 m with shops on them, sky bridges across at
    other heights (clear of the three flyer lanes at 33, 52 and 76 m), people on both */
 function aniLevels(M, g, COLS) {
-  const R = rng(3841), SHOPC = [0xffc890, 0x9ee8ff, 0xff9ad8, 0xfff0c0, 0xb8a0ff];
+  const R = rng(3841), SHOPC = [0xffc890, 0x9ee8ff, 0xff9ad8, 0xfff0c0, 0xb8a0ff], SOFC = [0x5ac8e8, 0xd060b0, 0x8a70e0, 0xe0a060];
+  /* a lit ceiling under a deck: a soft panel and three bright strips, facing down */
+  const soffit = (x, y, z, w, d, c) => {
+    const k = hex(c), q = (x0, x1, z0, z1, em, cc) => { M.set({ kind: K.PLAIN, layer: 0, em, c: cc, a: 0 }); M.quad([x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1]); M.quad([x0, y, z1], [x1, y, z1], [x1, y, z0], [x0, y, z0]); };
+    q(x - w / 2, x + w / 2, z - d / 2, z + d / 2, 55, k);
+    const lw = w > d ? 'z' : 'x';
+    for (const t of [-.3, 0, .3]) { if (lw === 'x') q(x + t * w - .07, x + t * w + .07, z - d / 2 + .2, z + d / 2 - .2, 230, [1, .95, .9]); else q(x - w / 2 + .2, x + w / 2 - .2, z + t * d - .07, z + t * d + .07, 230, [1, .95, .9]); }
+    setPlain(M, 0);
+  };
   for (const f of AVE_FACES) for (const y of galLevels(f)) {
     const s = f.s, e = f.e, xo = e + s * 5.4, xc = e + s * 4.15, c = R.pick(COLS);
     let segs = [[f.z - f.d / 2 - 1.2, f.z + f.d / 2 + 1.2]];
@@ -3780,6 +3799,7 @@ function aniLevels(M, g, COLS) {
     for (const [z0, z1] of segs) {
       const len = z1 - z0, zc = (z0 + z1) / 2;
       setPlain(M, 0x1b1826); M.box(xc, y - .4, zc, 2.5, .4, len, {});
+      soffit(xc, y - .42, zc, 2.3, len - .4, R.pick(SOFC));
       neonStrip(M, xo - s * .05, y - .42, zc, .07, .2, len - .3, c, R() * 200);
       setPlain(M, 0x0e0d15);
       for (let z = z0 + .5; z < z1; z += 2.4) M.box(xo - s * .06, y, z, .07, 1.05, .07, {});
@@ -3800,38 +3820,66 @@ function aniLevels(M, g, COLS) {
       ANI_WALKS.push({ pts: [[xc, y + .02, z1 - .6], [xc, y + .02, z0 + .6]], n, sp: 1.3 / len }); if (len > 30) ANI_WALKS.push({ pts: [[xc - s * .5, y + .02, z0 + .6], [xc - s * .5, y + .02, z1 - .6]], n: 1, sp: 1.2 / len });
     }
   }
-  /* sky bridges across the avenue */
+  /* glass lift shafts off the walkways, a lit cabin somewhere in each */
+  { const lampZ = []; for (let z = 244; z > -150; z -= 22) lampZ.push([-1, z], [1, z - 11]);
+    for (const f of AVE_FACES) {
+      const lv = galLevels(f); if (lv.length < 2 || !R.chance(.45)) continue;
+      const z = f.z + R.range(-f.d * .3, f.d * .3), sd = f.s > 0 ? -1 : 1;
+      if (f.tall && Math.abs(z - f.tall.z) < f.tall.w / 2 + 2) continue;
+      if (ANI_FLOATS.some(q => Math.sign(q.x) === sd && Math.abs(q.z - z) < q.w / 2 + 1.8)) continue;
+      if (lampZ.some(([ls, lz]) => ls === sd && Math.abs(lz - z) < 2.6)) continue;
+      const x = f.e + f.s * 6.5, top = lv[lv.length - 1] + 4, c = R.pick(COLS);
+      setPlain(M, 0x0e0d15); for (const [dx, dz] of [[-.9, -.9], [.9, -.9], [-.9, .9], [.9, .9]]) M.box(x + dx, 0, z + dz, .12, top, .12, {});
+      for (const L of lv) { M.box(x, L - .4, z, 2, .4, 2, {}); setPlain(M, 0x1b1826); M.box(x - f.s * 1.1, L - .4, z, .5, .4, 1.6, {}); setPlain(M, 0x0e0d15); }
+      M.box(x, top, z, 2.1, .5, 2.1, {}); neonStrip(M, x, top + .5, z, 2.1, .08, 2.1, c, R() * 200);
+      for (let yy = 2.5; yy < top - 1; yy += 3.2) { M.box(x, yy, z - .9, 1.9, .07, .07, {}); M.box(x, yy, z + .9, 1.9, .07, .07, {}); M.box(x - .9, yy, z, .07, .07, 1.9, {}); M.box(x + .9, yy, z, .07, .07, 1.9, {}); }
+      const cy = R.pick(lv) + R.range(-6, 6), cy2 = Math.max(1, Math.min(top - 3, cy));
+      M.set({ kind: K.PLAIN, layer: 0, em: 200, c: hex(R.pick([0xfff0c8, 0x9ee8ff, 0xffb0e0])), a: 0 }); M.box(x, cy2, z, 1.5, 2.4, 1.5, {}); setPlain(M, 0);
+      g(x, cy2 + 1.2, z, c, 4.5); g(x, top + .6, z, c, 3);
+    }
+  }
+  { const fN = s => AVE_FACES.find(f => f.s === s && Math.abs(f.z - f.d / 2 + 19) < 3.5), fS = s => AVE_FACES.find(f => f.s === s && Math.abs(f.z + f.d / 2 + 41) < 3.5);
+    for (const s of [1, -1]) { const a = fN(s), b = fS(s); if (!a || !b) continue; const e = (a.e + b.e) / 2, xc = e + s * 4.15, xo = e + s * 5.4, c = R.pick(COLS);
+      for (const y of galLevels(a).filter(y => galLevels(b).includes(y))) {
+        const z0 = b.z + b.d / 2 + 1.2, z1 = a.z - a.d / 2 - 1.2, len = z1 - z0, zc = (z0 + z1) / 2;
+        setPlain(M, 0x1b1826); M.box(xc, y - .4, zc, 2.5, .4, len, {}); soffit(xc, y - .42, zc, 2.3, len - .4, R.pick(SOFC));
+        neonStrip(M, xo - s * .05, y - .42, zc, .07, .2, len, c, R() * 200); neonStrip(M, e + s * 2.95, y - .42, zc, .07, .2, len, c, R() * 200);
+        setPlain(M, 0x0e0d15); for (const xr of [xo - s * .06, e + s * 2.96]) { for (let z = z0 + .5; z < z1; z += 2.4) M.box(xr, y, z, .07, 1.05, .07, {}); M.box(xr, y + 1.02, zc, .09, .07, len, {}); }
+        for (let z = z0 + 3; z < z1; z += 7) g(xc, y - 1.2, z, c, 3.4);
+      } } }
+  /* sky bridges across the avenue (own random, so other layers can change without moving them); none right in front of the street views */
+  const RB = rng(3844);
   const hAt = (s, z) => { let h = 0; for (const f of AVE_FACES) if (f.s === s && Math.abs(z - f.z) < f.d / 2 - 1.5) h = f.H; return h; };
   const HS = [12, 20, 27, 42, 45, 63, 66, 90, 104], flyOk = y => [33, 52, 76].every(L => Math.abs(y - L) > 4.5);
   const hitsFloat = (y, z, wd) => ANI_FLOATS.some(q => Math.abs(q.z - z) < wd / 2 + q.w / 2 + .3 && Math.abs(q.y - y - 1.6) < q.h / 2 + 2.4);
-  for (const [za, zb] of [[126, -10], [-54, -150]]) for (let z = za; z > zb; z -= R.range(11, 19)) {
+  for (const [za, zb] of [[108, -10], [-54, -150]]) for (let z = za; z > zb; z -= RB.range(8, 13)) {
     const mx = Math.min(hAt(1, z), hAt(-1, z)) - 7; if (mx < 14) continue;
     const opts = HS.filter(y => y < mx && flyOk(y)); if (!opts.length) continue;
-    const nB = R.chance(.35) && opts.length > 2 ? 2 : 1, used = [];
+    const nB = RB.chance(.5) && opts.length > 2 ? 2 : 1, used = [];
     for (let k = 0; k < nB; k++) {
-      let y = R.pick(opts); if (used.some(u => Math.abs(u - y) < 8)) continue; const type = R.chance(.5) ? 1 : 0, wd = type ? R.range(4, 5.5) : R.range(2.8, 3.6);
+      let y = RB.pick(opts); if (used.some(u => Math.abs(u - y) < 8)) continue; const type = RB.chance(.5) ? 1 : 0, wd = type ? RB.range(4, 5.5) : RB.range(2.8, 3.6);
       if (hitsFloat(y, z, wd)) continue; used.push(y);
-      const c = R.pick(COLS), c2 = R.pick(COLS);
-      setPlain(M, 0x1a1724); M.box(0, y - .5, z, 34.8, .5, wd, {});
-      neonStrip(M, 0, y - .62, z + wd / 2 - .05, 34.6, .07, .07, c, R() * 200); neonStrip(M, 0, y - .62, z - wd / 2 + .05, 34.6, .07, .07, c2, R() * 200);
-      for (let x = -15; x <= 15; x += 6) g(x, y - 1.3, z, R.chance(.5) ? c : c2, 3.6);
+      const c = RB.pick(COLS), c2 = RB.pick(COLS);
+      setPlain(M, 0x1a1724); M.box(0, y - .5, z, 34.8, .5, wd, {}); soffit(0, y - .52, z, 34.4, wd - .3, RB.pick(SOFC));
+      neonStrip(M, 0, y - .62, z + wd / 2 - .05, 34.6, .07, .07, c, RB() * 200); neonStrip(M, 0, y - .62, z - wd / 2 + .05, 34.6, .07, .07, c2, RB() * 200);
+      for (let x = -15; x <= 15; x += 6) g(x, y - 1.3, z, RB.chance(.5) ? c : c2, 3.6);
       if (type) {
         /* a lit tube: glass sides with mullions, a roof with a neon edge */
-        const tint = R.pick([[0x8fd8ff, 0x3a6a9a], [0xffc4e8, 0x8a3a6a], [0xc8b8ff, 0x4a3a8a], [0xffd8a0, 0x8a5a2a]]);
-        for (let x = -16.5; x < 16.4; x += 2.2) for (const sz of [1, -1]) { const lit = R(); M.plate(x + 1.1, y + 1.5, z + sz * wd / 2, 2.1, 2.9, sz > 0 ? 0 : Math.PI, [0, 0, 1, 1], { kind: K.PLAIN, em: lit < .25 ? 8 : lit < .8 ? 45 : 130, c: lit < .8 ? tint[1] : tint[0] }); }
+        const tint = RB.pick([[0x8fd8ff, 0x3a6a9a], [0xffc4e8, 0x8a3a6a], [0xc8b8ff, 0x4a3a8a], [0xffd8a0, 0x8a5a2a]]);
+        for (let x = -16.5; x < 16.4; x += 2.2) for (const sz of [1, -1]) for (const [py, ph] of [[.8, 1.45], [2.27, 1.35]]) { const lit = RB(); M.plate(x + 1.1, y + py, z + sz * wd / 2, 2.05, ph, sz > 0 ? 0 : Math.PI, [0, 0, 1, 1], { kind: K.PLAIN, em: lit < .3 ? 6 : lit < .82 ? 38 : 115, c: lit < .82 ? tint[1] : tint[0] }); }
         setPlain(M, 0x0e0d15); for (let x = -16.5; x <= 16.5; x += 2.2) { M.box(x, y, z + wd / 2 + .03, .12, 3, .1, {}); M.box(x, y, z - wd / 2 - .03, .12, 3, .1, {}); }
         setPlain(M, 0x191622); M.box(0, y + 3, z, 34.8, .45, wd + .3, {});
-        neonStrip(M, 0, y + 3.46, z + wd / 2 + .1, 34.6, .06, .06, c, R() * 200);
-        ANI_WALKS.push({ pts: [[-16, y + .02, z + .6], [16, y + .02, z + .6]], n: R.int(1, 3), sp: 1.3 / 32 });
+        neonStrip(M, 0, y + 3.46, z + wd / 2 + .1, 34.6, .06, .06, c, RB() * 200);
+        ANI_WALKS.push({ pts: [[-16, y + .02, z + .6], [16, y + .02, z + .6]], n: RB.int(1, 3), sp: 1.3 / 32 });
       } else {
         setPlain(M, 0x0e0d15);
         for (const sz of [-1, 1]) { for (let x = -16.8; x <= 16.8; x += 2.4) M.box(x, y, z + sz * (wd / 2 - .06), .07, 1.05, .07, {}); M.box(0, y + 1.02, z + sz * (wd / 2 - .06), 34.6, .07, .09, {}); }
-        ANI_WALKS.push({ pts: [[-16, y + .02, z - .5], [16, y + .02, z - .5]], n: R.int(1, 3), sp: 1.3 / 32 }, { pts: [[16, y + .02, z + .5], [-16, y + .02, z + .5]], n: R.int(1, 2), sp: 1.2 / 32 });
+        ANI_WALKS.push({ pts: [[-16, y + .02, z - .5], [16, y + .02, z - .5]], n: RB.int(1, 3), sp: 1.3 / 32 }, { pts: [[16, y + .02, z + .5], [-16, y + .02, z + .5]], n: RB.int(1, 2), sp: 1.2 / 32 });
       }
       /* a name board hung under the middle, both ways */
-      const bw = R.range(7, 11), bh = bw / 3.75, cell = CELL['p' + R.int(0, 11)];
+      const bw = RB.range(7, 11), bh = bw / 3.75, cell = CELL['p' + RB.int(0, 11)];
       setPlain(M, 0x0c0a14); M.box(0, y - .7 - bh - .25, z, bw + .4, bh + .3, .3, {});
-      M.plate(0, y - .7 - bh / 2 - .1, z + .17, bw, bh, 0, cell, { seed: R() * 255, em: 255 }); M.plate(0, y - .7 - bh / 2 - .1, z - .17, bw, bh, Math.PI, cell, { seed: R() * 255, em: 255 });
+      M.plate(0, y - .7 - bh / 2 - .1, z + .17, bw, bh, 0, cell, { seed: RB() * 255, em: 255 }); M.plate(0, y - .7 - bh / 2 - .1, z - .17, bw, bh, Math.PI, cell, { seed: RB() * 255, em: 255 });
       g(0, y - .7 - bh / 2, z + 1, c, bw * .6);
     }
   }
@@ -6244,9 +6292,11 @@ function trafficSetup() {
   /* p38 anime only: flyers down the avenue at three heights, people on the walkways and bridges (own random, appended, so nothing above moves) */
   { const RA = rng(3842);
     for (const [y, n, sp] of [[33, 5, .026], [52, 4, .03], [76, 4, .034]]) {
-      const a = lane([[-4.5, y, 330], [-4.5, y + 2, 60], [-3.5, y, -230]]), b = lane([[4.5, y, -230], [4.5, y + 2, 60], [3.5, y, 330]]);
+      const a = lane([[-4.5, y, 330], [-4.5, y + 2, 60], [-3.5, y, -172]]), b = lane([[4.5, y, -172], [4.5, y + 2, 60], [3.5, y, 330]]);
       for (const r of [a, b]) for (let i = 0; i < n; i++) inst.push({ row: r, ph: (i + RA() * .6) / n, sp: sp * RA.range(.85, 1.15), side: RA.range(-1.4, 1.4), y: 0, sc: 1.15, col: RA.pick(flyer), mdl: 4, ani: 1 });
     }
+    for (const [y, x] of [[33, 4], [52, -4], [76, 4], [33, -4], [52, 4], [76, -4]]) { const r = lane((x > 0 ? [[x, y, 900], [x, y + 2, 60], [x, y, -150]] : [[x, y, -150], [x, y + 2, 60], [x, y, 900]]));
+      for (let g = 0; g < 14; g++) { const base = (g + RA() * .6) / 14, n = RA.int(2, 5); for (let i = 0; i < n; i++) streams.push({ row: r, ph: (base + i * .0035) % 1, sp: .016, side: RA.range(-1.4, 1.4), y: RA.range(-1.2, 1.2), sc: 3.2, col: RA.pick([[.85, .76, .58], [.68, .78, .88], [.82, .1, .07]]), ani: 1 }); } }
     for (const w of ANI_WALKS) { const r = lane(w.pts); for (let i = 0; i < w.n; i++) peds.push({ row: r, ph: (i + RA() * .8) / w.n, sp: w.sp * RA.range(.85, 1.15), side: RA.range(-.4, .4), y: 0, sc: RA.range(.92, 1.06), col: RA.pick(coat), mdl: RA.int(0, 2), ani: 1 }); }
   }
   return { inst, peds, streams, roads: new Set([aveN, aveS, ...ew, ...ns]) };
