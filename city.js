@@ -1749,7 +1749,7 @@ vec3 lightAll(vec3 P, vec3 N, vec3 V, float gl, out float keyL){
   float m=dot(N,uMoon);
   vec3 c;
   /* p38 anime test (city only): one hard terminator, and the shade side goes violet up top, teal low, never grey */
-  if(uCel>.5){ amb=mix(amb,dot(amb,vec3(.33))*vec3(.62,.66,1.35),.6*(1.-uSky.x*.85)); float k=smoothstep(.05,.09,m)*smoothstep(.35,.6,sh); c=mix(amb*mix(vec3(.62,.98,1.08),vec3(.8,.58,1.25),N.y*.5+.5),amb+uMoonC*mix(.55,.9,uSky.x),k); }
+  if(uCel>.5){ amb=mix(amb,dot(amb,vec3(.33))*vec3(.62,.66,1.35),.6*(1.-uSky.x*.85)); float k=smoothstep(.05,.09,m)*smoothstep(.35,.6,sh); c=mix(amb*mix(vec3(.62,.98,1.08),vec3(.8,.58,1.25),N.y*.5+.5),amb+uMoonC*mix(mix(.4,.24,smoothstep(.6,.9,N.y)),.9,uSky.x),k); }
   else c=amb + uMoonC*band(max(m,0.)*.85)*sh;
   keyL=0.;
   for(int i=0;i<${NL};i++){
@@ -1801,9 +1801,9 @@ vec3 fogIt(vec3 c, vec3 P, float e){
   fc=min(fc,mix(vec3(.5,.31,.28),vec3(1.),uSky.x));
 #ifndef MIRROR
   /* the anime street's thick air (never in the reflection: seen from the mirrored camera it veils the whole road) */
-  if(uCel>.5){ float sk=smoothstep(26.,12.,abs(P.x))*smoothstep(-175.,-150.,P.z)*smoothstep(264.,242.,P.z); float na=sk*(1.-exp(-d*.0055))*exp(-max(P.y,0.)*.03)*(1.-uSky.x);
+  if(uCel>.5){ float sk=smoothstep(26.,12.,abs(P.x))*smoothstep(-175.,-150.,P.z)*smoothstep(264.,242.,P.z); float na=sk*(1.-exp(-d*.0055))*exp(-max(P.y,0.)*.03)*(1.-uSky.x)*mix(.4,1.,smoothstep(.5,9.,P.y));
     a=1.-(1.-a)*(1.-na*.55);
-    fc=mix(fc,textureLod(uPool,(P.xz+uPoolR)/(2.*uPoolR),3.).rgb*.8+vec3(.05,.04,.14),na*.6);
+    vec3 ap=textureLod(uPool,(P.xz+uPoolR)/(2.*uPoolR),3.).rgb; ap=max(mix(vec3(dot(ap,vec3(.33))),ap,1.6),0.); fc=mix(fc,ap*.7+vec3(.06,.03,.17),na*.6);
   }
 #endif
   if(uCel>.5){ fc=mix(fc,mix(vec3(.24,.12,.4),vec3(.06,.3,.37),low),1.-uSky.x*.8);
@@ -2035,7 +2035,7 @@ void main(){
   vec3 alb=vC.rgb; vec3 col; float e=0.;
   if(uRoomMode<.5&&kind==0&&em0<.01) alb=mix(vec3(dot(alb,vec3(.33))),alb,.62);
   /* p38 anime: one navy-to-indigo palette for everything solid (less by day); the lights carry the colour */
-  if(uCel>.5&&(kind==0||kind==2||kind==3||kind==13||kind==15)){ float la=dot(alb,vec3(.3,.59,.11)); alb=mix(alb,mix(vec3(.065,.075,.18),vec3(.3,.33,.56),clamp(la*1.5,0.,1.))*(kind==3?.55:1.),.8*(1.-uSky.x*.9)); }   // asphalt stays dark
+  if(uCel>.5&&(kind==0||kind==2||kind==3||kind==13||kind==15)){ float la=dot(alb,vec3(.3,.59,.11)); float mx=max(alb.r,max(alb.g,alb.b)), keep=max(smoothstep(.3,.55,(mx-min(alb.r,min(alb.g,alb.b)))/(mx+.02))*smoothstep(.12,.3,mx),smoothstep(.45,.7,la)*.6); alb=mix(alb,mix(vec3(.065,.075,.18),vec3(.3,.33,.56),clamp(la*1.5,0.,1.))*(kind==3?.55:1.),.8*(1.-uSky.x*.9)*(1.-keep)); }   // asphalt stays dark
   if(kind==2){ /* building fronts */
     int style=int(vC.a*255.+.5)&7;
     col=facade(P,N,V,alb,em0,seed,style,e);
@@ -2275,6 +2275,8 @@ void main(){
     vec3 sc=vec3(.93,.95,1.)*(uAmbHi*1.05+uMoonC*max(dot(N,uMoon),0.)*.9*gSh)+poolAt(P.xz)*uPoolK*1.5;
     col=mix(col,sc,cov);
   }
+  /* p38 anime: flat bands of light on solid things, before the air (banding the fog drew stripes across the road) */
+  if(uCel>.5&&id>.5){ float Lm=max(dot(col,vec3(.3,.59,.11)),1e-4); float qs=(floor(sqrt(Lm)*8.)+.5)/8.; col*=mix(1.,clamp(qs*qs/Lm,.8,1.25),.5*smoothstep(.015,.06,Lm)); }
   if(kind!=8) col=fogIt(col,P,e);
   O=vec4(col,id/255.);
 }`;
@@ -2740,7 +2742,7 @@ void main(){
     c=mix(c,ink,clamp(e,0.,1.));
   }
   /* anime test: flat colour bands (hue kept), the lows pushed violet instead of grey */
-  if(uCel>.5&&s0.a>.5/255.){ float Lm=max(dot(c,vec3(.3,.59,.11)),1e-4); float sq=sqrt(Lm); float qs=(floor(sq*8.)+.72)/8.; c*=mix(1.,min(qs*qs/Lm,1.6),.5);
+  if(uCel>.5&&s0.a>.5/255.){ float Lm=max(dot(c,vec3(.3,.59,.11)),1e-4);
     float lo=(1.-smoothstep(.02,.12,Lm))*(1.-.75*clamp((c.r-c.b)/(Lm+.02),0.,1.)); c=mix(c,c*vec3(.92,.8,1.3)+vec3(.012,0.,.03),lo*.3); }   // warm lamp light stays warm
   if(uBloom>0.){ vec3 bl=texture(tB,uv).rgb+texture(tB2,uv).rgb*.8; bl=max(mix(vec3(dot(bl,vec3(.33))),bl,1.+.6*uCel),0.); c+=bl*uBloom; }
   /* grade: neutral blacks, an s-curve, saturated accents, rolled highlights */
