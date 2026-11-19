@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p38p';
+export const BUILD = 'p39a';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -763,6 +763,17 @@ label.rbtn{cursor:pointer}
 #hud.gl>.scanl.go{animation:scan 1s var(--ease) 1}
 @keyframes gl{0%{transform:translateX(-5px);filter:hue-rotate(-14deg)}33%{transform:translateX(4px) skewX(-.6deg)}66%{transform:translateX(-2px)}100%{transform:none}}
 #hud.city [data-m]:not([data-m~=city]),#hud.room [data-m]:not([data-m~=room]),#hud.fly [data-m]:not([data-m~=fly]){display:none!important}
+#hud.tour [data-m]:not([data-m~=tour]),#hud.tour .top>:not([data-m~=tour]){display:none!important}
+#hud.tour .top>[data-m~=tour]{flex:none}#hud.tour .top .tsp{flex:1}
+#tourBox{left:calc(var(--sl) + 10px);right:calc(var(--sr) + 10px);bottom:calc(var(--sb) + 10px);max-width:520px;margin:0 auto}
+#tourBox .in{padding:8px 12px 9px;display:grid;gap:7px}
+#tourCap{transition:opacity .3s;min-height:52px}
+#tourCap .tt{display:flex;align-items:baseline;gap:10px}
+#tourT{font:700 21px/1.05 var(--hud-font);letter-spacing:.1em;color:var(--hud-text)}
+#tourL{margin:4px 0 0;font:500 13px/1.35 var(--body);color:var(--hud-text2)}
+#tourD{display:flex;gap:3px}#tourD i{flex:1;height:4px;background:var(--hud-red-soft)}#tourD i.on{background:var(--hud-red)}#tourD i.at{background:var(--hud-cyan)}
+#tourBox .trow{display:flex;align-items:center;gap:8px}
+.q .tic{width:18px;height:18px;fill:currentColor;stroke:none;display:block}
 #hud:not([data-room=shop]) [data-r=shop],#hud:not([data-room=apartment]) [data-r=apartment],#hud:not([data-room=gym]) [data-r=gym],#hud:not([data-room=chalet]) [data-r=chalet],#hud:not([data-room=castle]) [data-r=castle]{display:none!important}
 .scanl{position:absolute;left:0;right:0;top:0;height:2px;background:var(--hud-red);box-shadow:0 0 14px var(--hud-red);opacity:0;pointer-events:none}
 .scanl.go{animation:scan 1s var(--ease) 1}
@@ -814,6 +825,11 @@ const MARKUP = `
     <button class="frame brand" data-hud="prog" data-m="room" data-r="castle" aria-label="Progress"><div class="in"><i></i><div><b>CASTLE</b><small>SCHOOL</small></div></div></button>
     <div class="frame eqw"><div class="in"><canvas id="eq" aria-hidden="true"></canvas><div class="row"><span class="mi">SIGNAL</span><span class="mi" id="eqv">SYNC OFF</span></div></div></div>
     <div class="frame clk"><div class="in"><b id="clk">00:00</b><span class="mi" id="clkd"></span></div></div>
+    <button class="back" data-m="tour" data-tour="end" aria-label="End the tour (Escape)"><span><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8"/></svg></span></button>
+    <div class="frame brand" data-m="tour"><div class="in"><i></i><div><b>CITY TOUR</b><small id="tourN">ARCADIA</small></div></div></div>
+    <div class="tsp" data-m="tour"></div>
+    <button class="q" data-m="tour" data-tour="play" id="tourPlay" aria-label="Play the tour (P)" aria-pressed="false"><span><svg class="tic" id="tourPI" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg></span></button>
+    <button class="q" data-hud="tour" data-m="city" aria-label="Tour the city (T)"><span><svg class="gear" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5 13.4 13.4 8.5 15.5 10.6 10.6z"/></svg></span></button>
     <button class="q" data-hud="plan" aria-label="Plan the week (W)"><span><svg class="gear" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16V20H4zM4 10h16M8.5 3v4.5M15.5 3v4.5M8 14h3M13 14h3M8 17h3"/></svg></span></button>
     <button class="q" data-hud="add" aria-label="Quick add"><span style="font-size:22px;font-weight:400">+</span></button>
     <button class="q" data-hud="sys" aria-label="System settings"><span><svg class="gear" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></span></button>
@@ -859,6 +875,13 @@ const MARKUP = `
     </div>
   </section>
 
+  <section class="dbox frame" id="tourBox" data-m="tour" aria-label="City tour">
+    <div class="in">
+      <div id="tourCap" aria-live="polite"><div class="tt"><b id="tourT">ARCADIA</b><span class="mi" id="tourK"></span></div><p id="tourL"></p></div>
+      <div id="tourD" aria-hidden="true"></div>
+      <div class="trow"><span class="mi" id="tourH">SWIPE UP TO MOVE</span><span class="mi" style="margin-left:auto" id="tourA">ALT 000M</span></div>
+    </div>
+  </section>
   <div id="tags" data-m="room"></div>
   <section class="dbox frame" id="roomBox" data-m="room" data-r="shop" aria-label="Work status">
     <div class="in">
@@ -7104,6 +7127,7 @@ function resize() {
 
 /* ---------- state ---------- */
 const S = { spin: 0, spinGoal: 0, mode: 'city', t: 0, az: 0, azGoal: 0, el: 0, elGoal: 0, yaw: 0, yawGoal: 0, pitch: 0, fly: null, last: 0, frames: 0, acc: 0, fps: 0, scanT: -9, glitchT: -9, needsPlace: true, sheet: false, drag: null, close: false, closeK: 0 };
+let TOUR = null;   // p39 the city tour, while it's on
 /* p33: on a rooftop over the waterfront highway, looking straight up the avenue: its signs either side, the corp tower at the end */
 const POSE = () => CAM.aspect < .8 ? { p: [6, 40, 330], l: [-6, 112, -160], fov: 84 } : CAM.aspect < 1.3 ? { p: [10, 44, 322], l: [-6, 104, -160], fov: 66 } : { p: [10, 44, 322], l: [-6, 110, -160], fov: 58 };
 /* how far in on her the view is, eased (0 at rest) */
@@ -7277,6 +7301,7 @@ const _p = new THREE.Vector3(), _l = new THREE.Vector3(), _v = new THREE.Vector3
 function updateCamera(dt) {
   const smooth = 1 - Math.exp(-dt * 7);
   if (S.mode === 'cam') { CAM.position.set(...S.camP); CAM.lookAt(...S.camL); setNear(S.camN || .5, 8000); }
+  else if (S.mode === 'city' && TOUR) { S.flyK = 0; tourCam(dt); }
   else if (S.mode === 'city') {
     S.az = lerp(S.az, S.azGoal, smooth); S.el = lerp(S.el, S.elGoal, smooth);
     const c = cityPose(); CAM.position.set(...c.p); CAM.lookAt(...c.l); S.flyK = 0; setNear(3.5, 13000);
@@ -7505,7 +7530,7 @@ function eqStep(dt, t) {
 }
 function glitchHud(force = 1) { kick = 1; if (REDUCED) return; hudEl.classList.remove('gl'); void hudEl.offsetWidth; hudEl.classList.add('gl'); clearTimeout(S.glOff); S.glOff = setTimeout(() => hudEl.classList.remove('gl'), 380); if (force >= 1) S.glitchT = S.t; }
 function scanNow() { S.scanT = S.t; const s = $('#scan'); s.classList.remove('go'); void s.offsetWidth; s.classList.add('go'); s.onanimationend = () => s.classList.remove('go'); }
-function setMode(m) { if (m === 'fly' && PL.on) planClose(true); S.mode = m; SKY.next = 0; S.lastInput = S.modeT = performance.now(); hudEl.classList.remove('city', 'fly', 'room'); hudEl.classList.add(m); }
+function setMode(m) { if (m === 'fly' && PL.on) planClose(true); if (TOUR) tourEnd(true); S.mode = m; SKY.next = 0; S.lastInput = S.modeT = performance.now(); hudEl.classList.remove('city', 'fly', 'room', 'tour'); hudEl.classList.add(m); }
 /* Buttons appear under the finger on arrival, and a touch's click lands after the mode has changed. Nobody means to press what they cannot have seen yet. */
 const justArrived = () => S.mode !== 'fly' && performance.now() - (S.modeT || 0) < 350;
 
@@ -7643,7 +7668,10 @@ function hudInit() {
   hudEl.addEventListener('keydown', e => { if (!ADD || ADD.step !== 'cat' || e.metaKey || e.ctrlKey || e.altKey || !/^[1-4]$/.test(e.key)) return; const p = e.target.closest && e.target.closest('.pstep'), c = p && p.querySelectorAll('[data-ps="cat"]')[+e.key - 1]; if (c) { e.preventDefault(); c.click(); } });
   /* the top bar's own: quick add, progress, system */
   hudEl.addEventListener('click', e => {
-    const b = e.target.closest && e.target.closest('[data-hud],[data-sact],[data-jst],[data-jdel],[data-hgo],[data-hstop],[data-gfx],[data-look]'); if (!b) return; const d = b.dataset;
+    const b = e.target.closest && e.target.closest('[data-hud],[data-sact],[data-jst],[data-jdel],[data-hgo],[data-hstop],[data-gfx],[data-look],[data-tour]'); if (!b) return; const d = b.dataset;
+    if (d.tour === 'end') { tourLeave(); return; }
+    if (d.tour === 'play') { tourPlay(); return; }
+    if (d.hud === 'tour') { tourStart(); return; }
     if (d.hgo) { const [r, c] = d.hgo.split('|'); goPlace(r, c); return; }
     if (d.hstop) { APP.schoolDo('stop'); return; }
     if (d.look) { setLook(d.look, true); APP.sfx('press'); refreshGlobal('sys'); return; }
@@ -7758,6 +7786,14 @@ function hudInit() {
     if (e.key === 'Escape' && S.sheet && psEsc()) { e.stopPropagation(); e.preventDefault(); return; }   /* p37: the add steps first */
     const tg = e.composedPath()[0]; if (tg && tg.matches && tg.matches('input,textarea,select')) return;
     if (PL.on) return;
+    /* the tour: arrows, space and page keys step a stop; P plays; Escape ends it */
+    if (TOUR && !S.sheet) { const k = e.key, f = Math.round(TOUR.goal);
+      if (k === 'Escape') { e.preventDefault(); tourLeave(); return; }
+      if (k.toLowerCase() === 'p') { e.preventDefault(); tourPlay(); return; }
+      if (['ArrowDown', 'ArrowRight', 'PageDown', ' ', 'j'].includes(k)) { e.preventDefault(); tourNudge(f + 1); return; }
+      if (['ArrowUp', 'ArrowLeft', 'PageUp', 'k'].includes(k)) { e.preventDefault(); tourNudge(f - 1); return; }
+      return; }
+    if (e.key.toLowerCase() === 't' && S.mode === 'city' && !S.sheet) { e.stopPropagation(); e.preventDefault(); tourStart(); return; }
     if (e.key.toLowerCase() === 'w' && S.mode !== 'fly' && !S.sheet) { e.stopPropagation(); e.preventDefault(); planOpen(); return; }
     if (e.key === 'Escape' && S.mode === 'fly' && S.fly && S.fly.dir > 0) return goBack();
     if (S.mode !== 'room') return;
@@ -7770,6 +7806,8 @@ function hudInit() {
     const h = room.hot.find(x => x.hotkey.toLowerCase() === e.key.toLowerCase()); if (h && !S.sheet) { e.stopPropagation(); e.preventDefault(); tapHot(h.key); }
   }, true);
   addEventListener('popstate', () => {
+    if (TOUR) { if (!(history.state && history.state.tour)) tourEnd(); return; }
+    if (history.state && history.state.tour) return;
     /* back out of the close-up first; forward into it again */
     const cl = !!(history.state && history.state.close);
     if (S.close && !cl && history.state && history.state.city === room.id) { closeUp(false, true); return; }
@@ -7779,19 +7817,22 @@ function hudInit() {
   });
   /* drag: small orbit in the city, look around in the room; vertical stays with the page */
   const dom = canvas;
-  dom.addEventListener('pointerdown', e => { S.drag = { x: e.clientX, y: e.clientY, a: S.azGoal, e: S.elGoal, yaw: S.yawGoal, spin: S.spinGoal, moved: false, id: e.pointerId, t: performance.now(), mode: S.mode }; try { dom.setPointerCapture(e.pointerId); } catch (_) {} });
-  dom.addEventListener('pointermove', e => { const d = S.drag; if (!d) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; if (Math.abs(dx) + Math.abs(dy) > 8) d.moved = true; if (S.mode === 'city') { S.azGoal = clamp(d.a - dx * .0016, -.3, .3); if (e.pointerType === 'mouse') S.elGoal = clamp(d.e + dy * .0024, -.3, .4); } else if (S.mode === 'room' && !S.sheet && !S.close) { S.yawGoal = clamp(d.yaw + dx * (isPhone ? .0052 : .0028), -.61, .61); S.lastDrag = performance.now(); } else if (S.mode === 'room' && !S.sheet && S.close && d.moved) S.spinGoal = d.spin + dx * (isPhone ? .016 : .009); });
-  const up = e => { const d = S.drag; S.drag = null; if (!d) return; if (!d.moved && d.mode === S.mode && performance.now() - d.t < 500) tapWorld(e.clientX, e.clientY); else S.lastDrag = performance.now(); };
+  dom.addEventListener('pointerdown', e => { S.drag = { x: e.clientX, y: e.clientY, a: S.azGoal, e: S.elGoal, yaw: S.yawGoal, spin: S.spinGoal, g: TOUR ? TOUR.goal : 0, moved: false, id: e.pointerId, t: performance.now(), mode: S.mode }; try { dom.setPointerCapture(e.pointerId); } catch (_) {} });
+  dom.addEventListener('pointermove', e => { const d = S.drag; if (!d) return; const dx = e.clientX - d.x, dy = e.clientY - d.y; if (Math.abs(dx) + Math.abs(dy) > 8) d.moved = true; if (TOUR) { if (d.moved) tourNudge(d.g - dy / (innerHeight * .5), true); return; } if (S.mode === 'city') { S.azGoal = clamp(d.a - dx * .0016, -.3, .3); if (e.pointerType === 'mouse') S.elGoal = clamp(d.e + dy * .0024, -.3, .4); } else if (S.mode === 'room' && !S.sheet && !S.close) { S.yawGoal = clamp(d.yaw + dx * (isPhone ? .0052 : .0028), -.61, .61); S.lastDrag = performance.now(); } else if (S.mode === 'room' && !S.sheet && S.close && d.moved) S.spinGoal = d.spin + dx * (isPhone ? .016 : .009); });
+  const up = e => { const d = S.drag; S.drag = null; if (!d) return; if (TOUR) TOUR.inT = performance.now(); if (!d.moved && d.mode === S.mode && performance.now() - d.t < 500) tapWorld(e.clientX, e.clientY); else S.lastDrag = performance.now(); };
   dom.addEventListener('pointerup', up); dom.addEventListener('pointercancel', () => { S.drag = null; S.lastDrag = performance.now(); });
   addEventListener('resize', () => { if (host.hidden) S.sizeStale = true; else resize(); });
   document.addEventListener('visibilitychange', () => { S.last = performance.now(); if (document.hidden) S.away = true; });
   S.lastDrag = 0;
+  /* the tour: a wheel or a trackpad moves along it, about a stop a notch-full */
+  addEventListener('wheel', e => { if (!TOUR || S.sheet || PL.on) return; const k = e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? innerHeight : 1; tourNudge(TOUR.goal + e.deltaY * k / 650, true); }, { passive: true });
   for (const ev of ['pointerdown', 'pointermove', 'wheel', 'keydown', 'touchstart']) addEventListener(ev, wake, { passive: true, capture: true });
   setRealClock(); setInterval(setRealClock, 1000);
 }
 function setRealClock() { const d = new Date(), mo = d.toLocaleString('en', { month: 'short' }).toUpperCase(), dd = String(d.getDate()).padStart(2, '0'), hh = String(d.getHours()).padStart(2, '0'), mm = String(d.getMinutes()).padStart(2, '0'); setText('#clk', hh + ':' + mm); setText('#clkd', mo + '.' + dd); setText('#nA', mo + ' ' + dd); setText('#nB', hh + ' ' + mm); setText('#nC', mo + ' ' + dd); setText('#nD', hh + ' ' + mm); }
 function tapWorld(x, y) {
   if (justArrived()) return;
+  if (TOUR) return;
   if (S.mode === 'fly') { skipFlight(); return; }
   if (S.mode === 'city') { let best = null, bd = 56; for (const o of iconEls) { const p = project(o.a); const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = o; } } if (best) tapIcon(best.k); return; }
   if (S.mode === 'room' && !S.sheet) {
@@ -8061,7 +8102,7 @@ function callTick(force) {
     else if (CL.st === 'live') setText('#clT', mmss(now - CL.t1));
     return null;
   }
-  if (!callsOn() || document.hidden || S.mode === 'fly' || S.mode === 'cam' || S.close || MT) return null;
+  if (!callsOn() || document.hidden || S.mode === 'fly' || S.mode === 'cam' || S.close || MT || TOUR) return null;
   if (!force && (now - clLast < CALL_GAP || now < clNext)) return null; clNext = now + 5000;
   const a = ROOT.activeElement; if (a && a.matches && a.matches('input,textarea,select')) return null;   // never mid-typing
   if (HO && HO.ctx === 'rest') return null;                                                             // she's counting his rest
@@ -8291,6 +8332,111 @@ function goPlace(id, card, then) {
   const inRoom = history.state && history.state.city;
   if (S.mode === 'fly') S.mode = 'city';   // a flight under way gives way to this one
   flyIn(id, !inRoom); if (inRoom) history.replaceState({ city: id }, '');
+}
+/* ---------- p39 the city tour: one camera path through the island, for showing people what's here. Swipe up, scroll
+   or the arrow keys move along it and it settles on the nearest stop; PLAY flies it on its own, holding at each.
+   Stop 0 and the last are the city view itself, so it starts and ends where he is ---------- */
+const TOUR_STOPS = [
+  ['ARCADIA', 'Swipe up, scroll, or press play to fly through the city.'],
+  ['THE NIGHT MARKET', 'Food stalls where the avenue meets the water.', [-60, 3.5, 246], [-10, 4, 236]],
+  ['THE AVENUE', 'Street level, under the signs and the cables.', [0, 9, 236], [0, 22, 60]],
+  ['THE WALKWAYS', 'Shops stacked in levels above the street.', [-12, 22, 120], [10, 26, 40]],
+  ['UNDER THE EXPRESSWAY', 'The cross street runs in its shadow.', [8, 5, -27], [-110, 22, -32]],
+  ['THE EXPRESSWAY', 'Forty metres up, gate to gate.', [-20, 44, -30], [-170, 41, -30]],
+  ['THE TOWER', 'The tallest thing on the island.', [60, 300, -60], [0, 380, -235]],
+  ['THE HIGH BRIDGES', 'Sky bridges between the tallest towers.', [10, 120, 140], [0, 135, 0]],
+  ['THE ROOFTOPS', 'Looking down into the avenue.', [-40, 80, 40], [20, 50, -40]],
+  ['THE OLD MARKET', 'Low blocks, tarps and lanterns.', [250, 40, 130], [190, 10, 60]],
+  ['THE HARBOUR', 'Boats, the barge and the skyline.', [-20, 6, 400], [60, 30, 280]],
+  ['THE CASTLE', 'School, out on the point.', [-150, 60, 380], [-212, 30, 296]],
+  ['THE ISLAND', 'All of it, from above.', [0, 420, 200], [0, 0, -120]],
+  ['ARCADIA', 'Back to the city.'],
+];
+/* the way between stop i and i+1: [camera, look] points it passes, kept in the open air */
+const TOUR_VIA = [
+  [[[-35, 10, 290], [-30, 5, 236]]],
+  [[[-28, 5, 244], [10, 8, 220]]],
+  [],
+  [[[-6, 8, 110], [0, 9, 20]], [[0, 7, 30], [0, 8, -40]], [[4, 6, 0], [-40, 7, -30]]],
+  [[[12, 10, -10], [-60, 15, -25]], [[10, 46, -8], [-100, 40, -30]]],
+  [[[-10, 90, -14], [0, 200, -235]]],
+  [[[40, 230, 60], [0, 200, -100]]],
+  [[[0, 100, 75], [10, 60, 0]]],
+  [[[60, 200, 90], [200, 20, 90]], [[230, 90, 150], [195, 10, 80]]],
+  [[[240, 40, 320], [100, 20, 380]], [[200, 14, 470], [20, 20, 330]]],
+  [[[-90, 25, 420], [-200, 30, 300]]],
+  [[[-80, 220, 330], [-60, 0, 100]]],
+  [[[10, 200, 330], [-6, 110, -160]]],
+];
+const _tp = new THREE.Vector3(), _tq = new THREE.Vector3(), _tl = new THREE.Vector3();
+function tourBuild() {
+  const c = cityPose(), P = [], L = [], at = [];
+  TOUR_STOPS.forEach((s, i) => { at.push(P.length); P.push(s[2] || c.p); L.push(s[3] || c.l); if (i < TOUR_STOPS.length - 1) for (const [p, l] of TOUR_VIA[i]) { P.push(p); L.push(l); } });
+  const toV = a => a.map(p => new THREE.Vector3(...p)), n = P.length - 1;
+  const cp = new THREE.CatmullRomCurve3(toV(P), false, 'centripetal'), cl = new THREE.CatmullRomCurve3(toV(L), false, 'centripetal');
+  /* each leg is flown at an even pace along its own length */
+  const legs = [];
+  for (let i = 0; i < at.length - 1; i++) { const a = at[i] / n, b = at[i + 1] / n, tab = [0]; cp.getPoint(a, _tq); for (let k = 1; k <= 96; k++) { cp.getPoint(a + (b - a) * k / 96, _tp); tab.push(tab[k - 1] + _tp.distanceTo(_tq)); _tq.copy(_tp); } legs.push({ a, b, tab, len: tab[96] }); }
+  return { cp, cl, legs, n: legs.length, t: 0, goal: 0, play: false, hold: 0, inT: 0, shown: -1 };
+}
+function tourSample(T, t, P, L) {
+  const i = Math.min(Math.floor(t), T.n - 1), f = clamp(t - i), lg = T.legs[i], e = f * f * (3 - 2 * f), want = e * lg.len, tb = lg.tab;
+  let k = 0; while (k < 95 && tb[k + 1] < want) k++;
+  const u = lg.a + (lg.b - lg.a) * (k + clamp((want - tb[k]) / Math.max(1e-6, tb[k + 1] - tb[k]))) / 96;
+  T.cp.getPoint(u, P); T.cl.getPoint(u, L);
+}
+function tourStart() {
+  if (S.mode !== 'city' || TOUR || PL.on) return;
+  closeSheet(true); S.azGoal = S.az; TOUR = tourBuild();
+  hudEl.classList.remove('city'); hudEl.classList.add('tour'); canvas.style.touchAction = 'none';
+  setHTML('#tourD', '<i></i>'.repeat(TOUR.n - 1));
+  history.pushState({ tour: 1 }, ''); glitchHud(1); APP.sfx('tap'); tourHud(true); wake();
+}
+/* from a button, Escape or browser back: the history entry goes first, and its popstate ends the tour */
+function tourLeave() { if (!TOUR || TOUR.leaving) return; TOUR.leaving = true; if (history.state && history.state.tour) history.back(); else tourEnd(); }
+function tourEnd(quiet) {
+  if (!TOUR) return; TOUR = null;
+  hudEl.classList.remove('tour'); if (S.mode === 'city') hudEl.classList.add('city'); canvas.style.touchAction = '';
+  if (!quiet) { glitchHud(1); APP.sfx('exit'); }
+  S.lastInput = performance.now();
+}
+function tourNudge(g, free) { const T = TOUR; if (!T) return; if (T.play) tourPlay(false); T.goal = clamp(g, 0, T.n); T.inT = free ? performance.now() : 0; wake(); }
+function tourPlay(on) {
+  const T = TOUR; if (!T) return; T.play = on === undefined ? !T.play : on;
+  if (T.play) { if (T.t > T.n - .02) T.t = 0; T.goal = T.t; T.hold = Math.abs(T.t - Math.round(T.t)) < .01 ? .6 : 0; }
+  else { T.goal = Math.round(T.t); T.inT = performance.now(); }
+  const b = $('#tourPlay'); b.setAttribute('aria-pressed', String(T.play)); b.setAttribute('aria-label', T.play ? 'Pause the tour (P)' : 'Play the tour (P)');
+  $('#tourPI').innerHTML = T.play ? '<path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z"/>' : '<path d="M7 4.5v15l12.5-7.5z"/>';
+  APP.sfx('press'); tourHud(true);
+}
+function tourCam(dt) {
+  const T = TOUR, now = performance.now();
+  if (T.play) {
+    if (T.hold > 0) T.hold -= dt;
+    else { const i = Math.min(Math.floor(T.goal + 1e-6), T.n - 1), lg = T.legs[i], dur = clamp(lg.len / 42, 4.5, 9.5) * (REDUCED ? .5 : 1);
+      T.goal = Math.min(T.n, T.goal + dt / dur); if (T.goal >= i + 1) { T.goal = i + 1; T.hold = T.goal >= T.n ? 0 : 3.4; } }
+    T.t = T.goal; wake();
+  } else {
+    /* let go, and it settles on the nearest stop */
+    if (!S.drag && T.inT && now - T.inT > 600) T.goal = lerp(T.goal, Math.round(T.goal), 1 - Math.exp(-dt * 2.6));
+    T.t = lerp(T.t, T.goal, 1 - Math.exp(-dt * (REDUCED ? 8 : 3.4))); if (Math.abs(T.t - T.goal) < 1e-4) T.t = T.goal; else wake();
+  }
+  tourSample(T, T.t, _tp, _tl);
+  /* the ends ease onto the live city view, which sways */
+  const ke = Math.max(sstep(.6, 0, T.t), sstep(T.n - .6, T.n, T.t));
+  if (ke > 0) { const c = cityPose(); _tp.lerp(_tq.set(...c.p), ke); _tl.lerp(_tq.set(...c.l), ke); }
+  CAM.position.copy(_tp); CAM.lookAt(_tl); setNear(lerp(_tp.y < 70 ? .5 : 2, 3.5, ke), 13000);
+  tourHud();
+  if (T.t >= T.n - 1e-3 && T.goal >= T.n) tourLeave();
+}
+function tourHud(force) {
+  const T = TOUR; if (!T) return; const i = Math.round(T.t), d = Math.abs(T.t - i), st = TOUR_STOPS[i];
+  if (force || i !== T.shown) { T.shown = i; setText('#tourT', st[0]); setText('#tourL', st[1]); const mid = i > 0 && i < T.n, nm = String(T.n - 1).padStart(2, '0');
+    setText('#tourK', mid ? String(i).padStart(2, '0') + '/' + nm : ''); setText('#tourN', mid ? 'STOP ' + String(i).padStart(2, '0') + '/' + nm : 'ARCADIA');
+    const ds = $('#tourD').children; for (let k = 0; k < ds.length; k++) { ds[k].classList.toggle('on', k + 1 < i); ds[k].classList.toggle('at', k + 1 === i); } }
+  const cap = $('#tourCap'), o = String(+(1 - sstep(.14, .34, d)).toFixed(2)); if (cap.style.opacity !== o) cap.style.opacity = o;
+  setText('#tourH', T.play ? 'PLAYING' : isPhone ? 'SWIPE UP TO MOVE' : 'SCROLL OR ARROWS TO MOVE');
+  setText('#tourA', 'ALT ' + String(Math.max(0, Math.round(CAM.position.y))).padStart(3, '0') + 'M');
 }
 function goBack() { if (S.close) return stepBack(); if (history.state && history.state.city) history.back(); else flyOut(); }
 function skipFlight() { if (S.fly) { S.fly.u = S.fly.dir > 0 ? 1 : 0; } }
@@ -9042,6 +9188,12 @@ function rig() {
     sheet(id) { openSheet(id); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     close() { closeSheet(); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
+    tour(t) { if (!TOUR) tourStart(); if (TOUR && t !== undefined) { TOUR.play = false; TOUR.t = TOUR.goal = t; TOUR.inT = 0; } return frame(); },
+    tourInfo: () => TOUR ? { t: TOUR.t, goal: TOUR.goal, n: TOUR.n, play: TOUR.play, hold: TOUR.hold, p: CAM.position.toArray().map(v => Math.round(v * 10) / 10) } : null,
+    tourEnd() { tourEnd(); return frame(); },
+    /* the camera on its own clock, no drawing: for input tests in the rig, which has no frame loop */
+    tick(dt = .05) { updateCamera(dt); CAM.updateMatrixWorld(); return 1; },
+    camNow: () => [CAM.position.toArray().map(v => Math.round(v * 10) / 10), Math.round(CAM.fov * 10) / 10, CAM.getWorldDirection(new THREE.Vector3()).toArray().map(v => Math.round(v * 1000) / 1000), CAM.near],
     /* the city's two shadow maps, on or off, for checking edges */
     look(v) { setLook(v); return frame(); },
     shadows(a, b) { city.u.uShadowOn.value = a; city.u.uShadow2On.value = b; return { far: !!city.shadowRT, near: !!city.shadowRT2 }; },
