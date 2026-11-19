@@ -1760,7 +1760,11 @@ vec3 lightAll(vec3 P, vec3 N, vec3 V, float gl, out float keyL){
   float m=dot(N,uMoon);
   vec3 c;
   /* p38 anime test (city only): one hard terminator, and the shade side goes violet up top, teal low, never grey */
-  if(uCel>.5){ amb=mix(amb,dot(amb,vec3(.33))*vec3(.62,.66,1.35),.6*(1.-uSky.x*.85)); float k=smoothstep(.05,.09,m)*smoothstep(.35,.6,sh); c=mix(amb*mix(vec3(.62,.98,1.08),vec3(.8,.58,1.25),N.y*.5+.5),amb+uMoonC*mix(mix(.4,.24,smoothstep(.6,.9,N.y)),.9,uSky.x),k); }
+  if(uCel>.5){ float dy=uSky.x; amb=mix(amb,dot(amb,vec3(.33))*vec3(.62,.66,1.35),.6*(1.-dy*.85)); float k=smoothstep(.05,.09,m)*smoothstep(.35,.6,sh);
+    /* night: teal and violet shade; day (his ref 3): cyan shade, warm sun */
+    vec3 shT=mix(mix(vec3(.62,.98,1.08),vec3(.8,.58,1.25),N.y*.5+.5),vec3(.66,.92,1.16),dy);
+    vec3 lit=(amb+uMoonC*mix(mix(.4,.24,smoothstep(.6,.9,N.y)),.95,dy))*mix(vec3(1.),vec3(1.2,1.03,.78),dy);
+    c=mix(amb*shT*(1.+dy*.28),lit,k); }
   else c=amb + uMoonC*band(max(m,0.)*.85)*sh;
   keyL=0.;
   for(int i=0;i<${NL};i++){
@@ -1818,6 +1822,13 @@ vec3 fogIt(vec3 c, vec3 P, float e){
   }
 #endif
   if(uCel>.5){ fc=mix(fc,mix(vec3(.24,.12,.4),vec3(.06,.3,.37),low),1.-uSky.x*.8);
+    /* day: pale cyan air that swallows the far city, as in ref 3 */
+    fc=mix(fc,mix(vec3(.66,.86,.98),vec3(.84,.94,1.),low),uSky.x*.8);
+#ifndef MIRROR
+    /* looking toward the sun the air glows warm white */
+    float sg=pow(max(dot(normalize(P-cameraPosition),uMoon),0.),5.); fc=mix(fc,vec3(1.,.97,.9),uSky.x*sg*.75);
+    a=1.-(1.-a)*(1.-uSky.x*mix(.55,.8,sg)*smoothstep(70.,620.,d)*exp(-max(P.y,0.)*.0015));
+#endif
 #ifndef MIRROR
     a=1.-(1.-a)*(1.-.5*smoothstep(90.,800.,d)*exp(-max(P.y,0.)*.003)*(1.-uSky.x*.6));
 #endif
@@ -2728,7 +2739,7 @@ precision highp float; in vec2 v; layout(location=0) out vec4 O; uniform sampler
 void main(){ vec3 c=texture(t,v).rgb*.2; float w[4]=float[4](.19,.13,.075,.03); for(int i=0;i<4;i++){ vec2 o=dir*(float(i)*1.5+1.2); c+=(texture(t,v+o).rgb+texture(t,v-o).rgb)*w[i]; } O=vec4(c*1.0,1.); }`;
 const POST_FS = /* glsl */`
 precision highp float; in vec2 v; layout(location=0) out vec4 O;
-uniform sampler2D tC, tD, tB, tB2; uniform vec2 px; uniform float nearZ, farZ, uTime, uGlitch, uScan, uInkW, uInkOn, uBloom, uFade, uGrain, uCel;
+uniform sampler2D tC, tD, tB, tB2; uniform vec2 px; uniform float nearZ, farZ, uTime, uGlitch, uScan, uInkW, uInkOn, uBloom, uFade, uGrain, uCel, uDay;
 ${NOISE_GLSL}
 float lin(float d){ float z=d*2.-1.; return 2.*nearZ*farZ/(farZ+nearZ-z*(farZ-nearZ)); }
 void main(){
@@ -2764,7 +2775,7 @@ void main(){
   }
   /* anime test: flat colour bands (hue kept), the lows pushed violet instead of grey */
   if(uCel>.5&&s0.a>.5/255.){ float Lm=max(dot(c,vec3(.3,.59,.11)),1e-4);
-    float lo=(1.-smoothstep(.02,.12,Lm))*(1.-.75*clamp((c.r-c.b)/(Lm+.02),0.,1.)); c=mix(c,c*vec3(.92,.8,1.3)+vec3(.012,0.,.03),lo*.3); }   // warm lamp light stays warm
+    float lo=(1.-smoothstep(.02,.12,Lm))*(1.-.75*clamp((c.r-c.b)/(Lm+.02),0.,1.)); c=mix(c,c*vec3(.92,.8,1.3)+vec3(.012,0.,.03),lo*.3*(1.-uDay)); }   // warm lamp light stays warm
   if(uBloom>0.){ vec3 bl=texture(tB,uv).rgb+texture(tB2,uv).rgb*.8; bl=max(mix(vec3(dot(bl,vec3(.33))),bl,1.+.6*uCel),0.); c+=bl*uBloom; }
   /* grade: neutral blacks, an s-curve, saturated accents, rolled highlights */
   float lum=dot(c,vec3(.3,.59,.11));
@@ -3761,7 +3772,7 @@ function aniHigh(M, g, COLS) {
   setPlain(M, 0x2a2634); for (const sz of [-1, 1]) M.box(0, Y, ZC + sz * 6.35, XE * 2, .9, .3, {});
   neonStrip(M, 0, Y + .9, ZC + 6.42, XE * 2, .07, .1, c1, R() * 200); neonStrip(M, 0, Y + .9, ZC - 6.42, XE * 2, .07, .1, c2, R() * 200);
   neonStrip(M, 0, Y - 1.45, ZC + 6.5, XE * 2, .2, .07, c2, R() * 200); neonStrip(M, 0, Y - 1.45, ZC - 6.5, XE * 2, .2, .07, c1, R() * 200);
-  glowQ(-XE, XE, ZC - 6.3, ZC + 6.3, Y - 1.42, 30, hex(0x5a70c8)); for (const dz of [-3.6, 0, 3.6]) glowQ(-XE, XE, ZC + dz - .07, ZC + dz + .07, Y - 1.43, 230, [1, .95, .9]);
+  glowQ(-XE, XE, ZC - 6.3, ZC + 6.3, Y - 1.42, 14, hex(0x5a70c8)); for (const dz of [-3.6, 0, 3.6]) glowQ(-XE, XE, ZC + dz - .07, ZC + dz + .07, Y - 1.43, 230, [1, .95, .9]);
   /* ribs across the underside every 6 m, so from below it reads as a ceiling, not sky */
   setPlain(M, 0x0d0c14); for (let x = -XE + 3; x < XE; x += 6) M.box(x, Y - 2.1, ZC, .5, .7, 12.6, {});
   setPlain(M, 0x0d0c14); for (const dz of [-5.2, 5.2]) M.box(0, Y - 2.1, ZC + dz, XE * 2, .7, .5, {});
@@ -3786,7 +3797,7 @@ function aniHigh(M, g, COLS) {
     const gx = sd * 238, xi = sd * 230 - sd * .04, c = R.pick(COLS);
     setPlain(M, 0x1f1c2a); M.box(gx, 0, ZC - 15.5, 16, 30, 5, {}); M.box(gx, 0, ZC + 15.5, 16, 30, 5, {});
     setPlain(M, 0x1a1724); M.box(gx, 30, ZC, 16, 36, 36, {});
-    glowQ(gx - 8, gx + 8, ZC - 13, ZC + 13, 29.97, 40, hex(0xd060b0)); for (const dz of [-6, 0, 6]) glowQ(gx - 7.5, gx + 7.5, ZC + dz - .08, ZC + dz + .08, 29.96, 230, [1, .95, .9]);
+    glowQ(gx - 8, gx + 8, ZC - 13, ZC + 13, 29.97, 20, hex(0xd060b0)); for (const dz of [-6, 0, 6]) glowQ(gx - 7.5, gx + 7.5, ZC + dz - .08, ZC + dz + .08, 29.96, 230, [1, .95, .9]);
     M.plate(xi, Y + 2.4, ZC, 14.4, 6, sd > 0 ? -Math.PI / 2 : Math.PI / 2, [0, 0, 1, 1], { kind: K.PLAIN, em: 0, c: 0x020204 });
     const xn = xi - sd * .06; neonStrip(M, xn, Y - .6, ZC - 7.4, .1, 6.8, .14, c, 232); neonStrip(M, xn, Y - .6, ZC + 7.3, .1, 6.8, .14, c, 232); neonStrip(M, xn, Y + 6.1, ZC, .1, .14, 14.8, c, 232);
     g(xn - sd * 1.5, Y + 3, ZC, c, 9);
@@ -6604,7 +6615,7 @@ async function initGraphics() {
   setBoot('Sharpening ink', .82); await yieldFrame();
   MAT.bright = fsPass(BRIGHT_FS, { t: { value: null }, px: { value: new THREE.Vector2() }, th: { value: .86 } });
   MAT.blur = fsPass(BLUR_FS, { t: { value: null }, dir: { value: new THREE.Vector2() } });
-  MAT.post = fsPass(POST_FS, { tC: { value: null }, tD: { value: null }, tB: { value: null }, tB2: { value: null }, px: { value: new THREE.Vector2() }, nearZ: { value: 1 }, farZ: { value: 1 }, uTime: TIME, uGlitch: { value: 0 }, uScan: { value: 0 }, uInkW: { value: 1 }, uInkOn: { value: 1 }, uBloom: { value: .9 }, uFade: { value: 1 }, uGrain: { value: 0 }, uCel: { value: 0 } });
+  MAT.post = fsPass(POST_FS, { tC: { value: null }, tD: { value: null }, tB: { value: null }, tB2: { value: null }, px: { value: new THREE.Vector2() }, nearZ: { value: 1 }, farZ: { value: 1 }, uTime: TIME, uGlitch: { value: 0 }, uScan: { value: 0 }, uInkW: { value: 1 }, uInkOn: { value: 1 }, uBloom: { value: .9 }, uFade: { value: 1 }, uGrain: { value: 0 }, uCel: { value: 0 }, uDay: { value: 0 } });
   MAT.aa = fsPass(AA_FS, { t: { value: null }, px: { value: new THREE.Vector2() }, uTime: TIME, uFade: { value: 1 }, uGrain: { value: Q.grain } });
   WEAK = weakGpu(); perfPick(perf().pick);
   resize();
@@ -7303,7 +7314,7 @@ function drawScene(t) {
   renderer.info.reset(); skyTick(t); figTick(t); if (city.sim) city.sim.tick(t);
   const inside = isInsideRoom(); const showCity = !inside; const showRoom = S.mode !== 'city' || CAM.position.distanceTo(_v.set(room.box.x, room.box.y + 2, room.box.z)) < 140;
   /* p38 look test: the city view only; the street seen through a room's glass stays classic */
-  const cel = LOOK === 'anime' && !inside && S.mode !== 'room' ? 1 : 0, sh = cel && !ANI_OFF.includes('shade') ? 1 : 0; city.u.uCel.value = sh; MAT.post.m.uniforms.uCel.value = sh; CEL_T.value = cel; if (city.tr) for (const m of city.tr.aniCars) m.visible = !!cel && !ANI_OFF.includes('trf');
+  const cel = LOOK === 'anime' && !inside && S.mode !== 'room' ? 1 : 0, sh = cel && !ANI_OFF.includes('shade') ? 1 : 0; city.u.uCel.value = sh; MAT.post.m.uniforms.uCel.value = sh; MAT.post.m.uniforms.uDay.value = SKY.L; CEL_T.value = cel; if (city.tr) for (const m of city.tr.aniCars) m.visible = !!cel && !ANI_OFF.includes('trf');
   if (city.ani) { city.ani.visible = !!cel && !ANI_OFF.includes('mesh'); city.aniFx.visible = !!cel && !ANI_OFF.includes('fog'); city.aniGlow.visible = !!cel && !ANI_OFF.includes('glow'); }
   /* train runs by time alone */
   const period = 62; for (let i = 0; i < city.train.length; i++) { const a = trainPos(t / period - i * .0088); const m = city.train[i]; m.position.set(a.p[0], a.p[1] + .1, a.p[2]); m.rotation.y = Math.atan2(a.d[0], a.d[2]); m.updateMatrixWorld(true); }
@@ -7344,12 +7355,12 @@ function drawScene(t) {
   const u = MAT.post.m.uniforms;
   if (Q.bloom) {
     /* by day only what is really bright blooms, and less */
-    MAT.bright.m.uniforms.t.value = RT.main.texture; MAT.bright.m.uniforms.th.value = cel ? .74 + SKY.L * .2 : .86 + SKY.L * .1; renderer.setRenderTarget(RT.b0); renderer.render(MAT.bright.s, fsCam);
+    MAT.bright.m.uniforms.t.value = RT.main.texture; MAT.bright.m.uniforms.th.value = cel ? .74 + SKY.L * .1 : .86 + SKY.L * .1; renderer.setRenderTarget(RT.b0); renderer.render(MAT.bright.s, fsCam);
     const br = MAT.blur.m.uniforms; br.t.value = RT.b0.texture; br.dir.value.set(1 / RT.b0.width, 0); renderer.setRenderTarget(RT.b1); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b1.texture; br.dir.value.set(0, 1 / RT.b0.height); renderer.setRenderTarget(RT.b0); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b0.texture; br.dir.value.set(2 / RT.b2.width, 0); renderer.setRenderTarget(RT.b2); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b2.texture; br.dir.value.set(0, 2 / RT.b2.height); renderer.setRenderTarget(RT.b3); renderer.render(MAT.blur.s, fsCam);
-    u.tB.value = RT.b0.texture; u.tB2.value = RT.b3.texture; u.uBloom.value = (inside ? .34 : cel ? .6 : .42) * (1 - SKY.L * .75);
+    u.tB.value = RT.b0.texture; u.tB2.value = RT.b3.texture; u.uBloom.value = inside ? .34 * (1 - SKY.L * .75) : cel ? .6 * (1 - SKY.L * .45) : .42 * (1 - SKY.L * .75);
   } else { u.uBloom.value = 0; u.tB.value = RT.main.texture; u.tB2.value = RT.main.texture; }
   u.tC.value = RT.main.texture; u.tD.value = RT.main.depthTexture; u.nearZ.value = CAM.near; u.farZ.value = CAM.far; u.uInkOn.value = Q.ink ? 1 : 0;
   u.uGlitch.value = Math.max(0, 1 - (t - S.glitchT) / .42); u.uScan.value = clamp((t - S.scanT) / 1.1, 0, 1);
