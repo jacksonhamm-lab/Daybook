@@ -1823,11 +1823,11 @@ vec3 fogIt(vec3 c, vec3 P, float e){
 #endif
   if(uCel>.5){ fc=mix(fc,mix(vec3(.24,.12,.4),vec3(.06,.3,.37),low),1.-uSky.x*.8);
     /* day: pale cyan air that swallows the far city, as in ref 3 */
-    fc=mix(fc,mix(vec3(.66,.86,.98),vec3(.84,.94,1.),low),uSky.x*.8);
+    fc=mix(fc,mix(vec3(.6,.8,.92),vec3(.74,.88,.96),low),uSky.x*.6);
 #ifndef MIRROR
     /* looking toward the sun the air glows warm white */
-    float sg=pow(max(dot(normalize(P-cameraPosition),uMoon),0.),5.); fc=mix(fc,vec3(1.,.97,.9),uSky.x*sg*.75);
-    a=1.-(1.-a)*(1.-uSky.x*mix(.55,.8,sg)*smoothstep(70.,620.,d)*exp(-max(P.y,0.)*.0015));
+    float sg=pow(max(dot(normalize(P-cameraPosition),uMoon),0.),5.); fc=mix(fc,vec3(1.,.97,.9),uSky.x*sg*.18);
+    a=1.-(1.-a)*(1.-uSky.x*.16*smoothstep(250.,1000.,d)*exp(-max(P.y,0.)*.0015));   // a light depth haze only: he found the full ref-3 glare too bright to see
 #endif
 #ifndef MIRROR
     a=1.-(1.-a)*(1.-.5*smoothstep(90.,800.,d)*exp(-max(P.y,0.)*.003)*(1.-uSky.x*.6));
@@ -7355,12 +7355,12 @@ function drawScene(t) {
   const u = MAT.post.m.uniforms;
   if (Q.bloom) {
     /* by day only what is really bright blooms, and less */
-    MAT.bright.m.uniforms.t.value = RT.main.texture; MAT.bright.m.uniforms.th.value = cel ? .74 + SKY.L * .1 : .86 + SKY.L * .1; renderer.setRenderTarget(RT.b0); renderer.render(MAT.bright.s, fsCam);
+    MAT.bright.m.uniforms.t.value = RT.main.texture; MAT.bright.m.uniforms.th.value = cel ? .74 + SKY.L * .2 : .86 + SKY.L * .1; renderer.setRenderTarget(RT.b0); renderer.render(MAT.bright.s, fsCam);
     const br = MAT.blur.m.uniforms; br.t.value = RT.b0.texture; br.dir.value.set(1 / RT.b0.width, 0); renderer.setRenderTarget(RT.b1); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b1.texture; br.dir.value.set(0, 1 / RT.b0.height); renderer.setRenderTarget(RT.b0); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b0.texture; br.dir.value.set(2 / RT.b2.width, 0); renderer.setRenderTarget(RT.b2); renderer.render(MAT.blur.s, fsCam);
     br.t.value = RT.b2.texture; br.dir.value.set(0, 2 / RT.b2.height); renderer.setRenderTarget(RT.b3); renderer.render(MAT.blur.s, fsCam);
-    u.tB.value = RT.b0.texture; u.tB2.value = RT.b3.texture; u.uBloom.value = inside ? .34 * (1 - SKY.L * .75) : cel ? .6 * (1 - SKY.L * .45) : .42 * (1 - SKY.L * .75);
+    u.tB.value = RT.b0.texture; u.tB2.value = RT.b3.texture; u.uBloom.value = inside ? .34 * (1 - SKY.L * .75) : cel ? .6 * (1 - SKY.L * .75) : .42 * (1 - SKY.L * .75);
   } else { u.uBloom.value = 0; u.tB.value = RT.main.texture; u.tB2.value = RT.main.texture; }
   u.tC.value = RT.main.texture; u.tD.value = RT.main.depthTexture; u.nearZ.value = CAM.near; u.farZ.value = CAM.far; u.uInkOn.value = Q.ink ? 1 : 0;
   u.uGlitch.value = Math.max(0, 1 - (t - S.glitchT) / .42); u.uScan.value = clamp((t - S.scanT) / 1.1, 0, 1);
