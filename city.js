@@ -2051,7 +2051,8 @@ void main(){
   vec3 alb=vC.rgb; vec3 col; float e=0.;
   if(uRoomMode<.5&&kind==0&&em0<.01) alb=mix(vec3(dot(alb,vec3(.33))),alb,.62);
   /* p38 anime: one navy-to-indigo palette for everything solid (less by day); the lights carry the colour */
-  if(uCel>.5&&(kind==0||kind==2||kind==3||kind==13||kind==15)){ float la=dot(alb,vec3(.3,.59,.11)); float mx=max(alb.r,max(alb.g,alb.b)), keep=max(smoothstep(.3,.55,(mx-min(alb.r,min(alb.g,alb.b)))/(mx+.02))*smoothstep(.12,.3,mx),smoothstep(.45,.7,la)*.6); alb=mix(alb,mix(vec3(.065,.075,.18),vec3(.3,.33,.56),clamp(la*1.5,0.,1.))*(kind==3?.55:1.),.8*(1.-uSky.x*.9)*(1.-keep)); }   // asphalt stays dark
+  float keepG=0.;
+  if(uCel>.5&&(kind==0||kind==2||kind==3||kind==13||kind==15)){ float la=dot(alb,vec3(.3,.59,.11)); float mx=max(alb.r,max(alb.g,alb.b)), keep=max(smoothstep(.3,.55,(mx-min(alb.r,min(alb.g,alb.b)))/(mx+.02))*smoothstep(.12,.3,mx),smoothstep(.45,.7,la)*.6); keepG=smoothstep(.004,.022,vC.g-max(vC.r,vC.b)); keep=max(keep,keepG); alb=mix(alb,mix(vec3(.065,.075,.18),vec3(.3,.33,.56),clamp(la*1.5,0.,1.))*(kind==3?.55:1.),.8*(1.-uSky.x*.9)*(1.-keep)); }   // asphalt stays dark
   if(kind==2){ /* building fronts */
     int style=int(vC.a*255.+.5)&7;
     col=facade(P,N,V,alb,em0,seed,style,e);
@@ -2279,6 +2280,8 @@ void main(){
       alb=rf_; L+=uAmbHi*.45+uSkyZ*.18;
     }
     if(uRoomMode<.5){ L+=poolAt(P.xz)*uPoolK*exp(-max(P.y,0.)*.05)*2.; }
+    /* p38 anime: leaves keep their green under the blue night light */
+    if(uCel>.5) L=mix(L,vec3(dot(L,vec3(.333))),keepG*.8);
     float g=kind==14?1.:1.;
     col=alb*tile*L;
     if(kind==14){ vec4 s=texture(uSigns,vU); if(s.a<.04) discard; col=s.rgb*alb*L; }
@@ -2638,9 +2641,9 @@ void main(){
     vec2 q=vU*2.-1.; float r=max(0.,1.-dot(q,q)); a*=r*r;
   } else if(kind==7){ /* a soft round decal of light */
     vec2 q=vU*2.-1.; float r=max(0.,1.-dot(q,q)); a*=pow(r,1.6);
-  } else if(kind==9){ /* p38: a sheet of lit street fog, dense low, soft at its ends, never a veil right in front of you */
-    float ed=abs(dot(V,N)), dc=length(vW-cameraPosition);
-    a*=pow(1.-clamp(vU.y,0.,1.),1.5)*smoothstep(0.,.22,vU.x)*smoothstep(1.,.78,vU.x)*smoothstep(.1,.45,ed)*smoothstep(3.,16.,dc)*(1.-smoothstep(60.,150.,dc));
+  } else if(kind==9){ /* p38: a sheet of lit street fog, densest at the signs, thin on the road (else it greys the road and stacks white down the street), soft at its ends, never a veil right in front of you */
+    float ed=abs(dot(V,N)), dc=length(vW-cameraPosition), v=clamp(vU.y,0.,1.);
+    a*=smoothstep(.08,.4,v)*pow(1.-v,1.1)*1.1*smoothstep(0.,.22,vU.x)*smoothstep(1.,.78,vU.x)*smoothstep(.1,.45,ed)*smoothstep(3.,16.,dc)*(1.-smoothstep(30.,90.,dc));
     a*=.75+.25*sin(vW.x*.21+uTime*.13)*sin(vW.z*.17-uTime*.09);
   } else if(kind==8){ /* scan ring climbing the form */
     float hy=clamp((vW.y-.1)/1.62,0.,1.); a*=sin(hy*3.14159);
@@ -3960,7 +3963,7 @@ function animeFog() {
     for (let i = 0; i < 10; i++) { const a0 = i / 10 * TAU, a1 = (i + 1) / 10 * TAU; M.quad(P(a0, r * .06, [x, y, z]), P(a1, r * .06, [x, y, z]), P(a1, r, b), P(a0, r, b), [0, 0, 1, 1]); }
   };
   /* under every avenue lamp (streetLife: x -10.2 at z, +10.2 at z-11, the head 1.9 m in at 7.9 m) */
-  for (let z = 244; z > -150; z -= 22) { cone(-8.3, 7.9, z, 0, -1, 0, 7.9, 3.4, [1, .62, .34], .1); cone(8.3, 7.9, z - 11, 0, -1, 0, 7.9, 3.4, [1, .62, .34], .1); }
+  for (let z = 244; z > -150; z -= 22) { cone(-8.3, 7.9, z, 0, -1, 0, 7.9, 3.4, [1, .62, .34], .06); cone(8.3, 7.9, z - 11, 0, -1, 0, 7.9, 3.4, [1, .62, .34], .06); }
   /* out of the bigger signs, down to the street */
   for (const q of ANI_GLOW.slice(0, ANI_NAVE)) if (q.s > 3 && q.y > 8 && R.chance(.4)) cone(q.x, q.y, q.z, -Math.sign(q.x) * .8, -.62, 0, Math.min(q.y, 16), Math.min(q.s * .7, 6), [q.r, q.g, q.b], .05);
   /* sheets of fog across the street, each lit by the signs and lamps near it */
