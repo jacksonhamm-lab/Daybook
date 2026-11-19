@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p38j';
+export const BUILD = 'p38o';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -3879,8 +3879,8 @@ function aniLevels(M, g, COLS) {
         M.plate(e + s * .24, y + 3.37, z + w / 2, w * .86, 1.08, f.ry, CELL['p' + R.int(0, 11)], { seed: R() * 255, em: 255 });
         g(e + s * 1.6, y + 1.4, z + w / 2, sc, 3.2);
       }
-      const n = Math.max(1, Math.round(len / 22));
-      ANI_WALKS.push({ pts: [[xc, y + .02, z1 - .6], [xc, y + .02, z0 + .6]], n, sp: 1.3 / len }); if (len > 30) ANI_WALKS.push({ pts: [[xc - s * .5, y + .02, z0 + .6], [xc - s * .5, y + .02, z1 - .6]], n: 1, sp: 1.2 / len });
+      /* walkers are the costliest part on a weak chip: one on the longer walkways only */
+      if (len > 28) ANI_WALKS.push({ pts: [[xc, y + .02, z1 - .6], [xc, y + .02, z0 + .6]], n: 1, sp: 1.3 / len });
     }
   }
   /* glass lift shafts off the walkways, a lit cabin somewhere in each */
@@ -3933,11 +3933,11 @@ function aniLevels(M, g, COLS) {
         setPlain(M, 0x0e0d15); for (let x = -16.5; x <= 16.5; x += 2.2) { M.box(x, y, z + wd / 2 + .03, .12, 3, .1, {}); M.box(x, y, z - wd / 2 - .03, .12, 3, .1, {}); }
         setPlain(M, 0x191622); M.box(0, y + 3, z, 34.8, .45, wd + .3, {});
         neonStrip(M, 0, y + 3.46, z + wd / 2 + .1, 34.6, .06, .06, c, RB() * 200);
-        ANI_WALKS.push({ pts: [[-16, y + .02, z + .6], [16, y + .02, z + .6]], n: RB.int(1, 3), sp: 1.3 / 32 });
+        ANI_WALKS.push({ pts: [[-16, y + .02, z + .6], [16, y + .02, z + .6]], n: 1, sp: 1.3 / 32 }); RB.int(1, 3);
       } else {
         setPlain(M, 0x0e0d15);
         for (const sz of [-1, 1]) { for (let x = -16.8; x <= 16.8; x += 2.4) M.box(x, y, z + sz * (wd / 2 - .06), .07, 1.05, .07, {}); M.box(0, y + 1.02, z + sz * (wd / 2 - .06), 34.6, .07, .09, {}); }
-        ANI_WALKS.push({ pts: [[-16, y + .02, z - .5], [16, y + .02, z - .5]], n: RB.int(1, 3), sp: 1.3 / 32 }, { pts: [[16, y + .02, z + .5], [-16, y + .02, z + .5]], n: RB.int(1, 2), sp: 1.2 / 32 });
+        ANI_WALKS.push({ pts: [[-16, y + .02, z - .5], [16, y + .02, z - .5]], n: 1, sp: 1.3 / 32 }); RB.int(1, 3); RB.int(1, 2);
       }
       /* a name board hung under the middle, both ways */
       const bw = RB.range(7, 11), bh = bw / 3.75, cell = CELL['p' + RB.int(0, 11)];
@@ -3969,9 +3969,9 @@ function animeFog() {
     let r = .04, gg = .16, b = .2;
     for (const q of lights) { const dz = q.z - z, dd = q.x * q.x + dz * dz + q.y * q.y * .5; const w = q.s * q.s / (q.s * q.s + dd); r += q.r * w; gg += q.g * w; b += q.b * w; }
     const k = 1 / Math.max(r, gg, b, .001), c = [r * k, gg * k, b * k];
-    M.set({ kind: 9, a: 22, c });
+    M.set({ kind: 9, a: 44, c });
     const h = R.range(12, 18), zz = z + R.range(-3, 3);
-    M.quad([-18, 0, zz], [18, 0, zz], [18, h, zz], [-18, h, zz], [0, 0, 1, 1]); M.quad([18, 0, zz], [-18, 0, zz], [-18, h, zz], [18, h, zz], [0, 0, 1, 1]);
+    M.quad([-18, 0, zz], [18, 0, zz], [18, h, zz], [-18, h, zz], [0, 0, 1, 1]);   // the fx material is double sided: one quad, twice the alpha
   }
   /* p38: fog sheets down the cross streets too (own random) */
   { const R2 = rng(3943);
@@ -3979,8 +3979,8 @@ function animeFog() {
       const xx = x * sd; let r = .04, gg = .16, b = .2;
       for (const q of lights) { const dx = q.x - xx, dz = q.z - zc, dd = dx * dx + dz * dz + q.y * q.y * .5; const w = q.s * q.s / (q.s * q.s + dd); r += q.r * w; gg += q.g * w; b += q.b * w; }
       const k = 1 / Math.max(r, gg, b, .001), c = [r * k, gg * k, b * k];
-      M.set({ kind: 9, a: 20, c }); const h = R2.range(11, 16), x2 = xx + R2.range(-3, 3);
-      M.quad([x2, 0, zc + 11], [x2, 0, zc - 11], [x2, h, zc - 11], [x2, h, zc + 11], [0, 0, 1, 1]); M.quad([x2, 0, zc - 11], [x2, 0, zc + 11], [x2, h, zc + 11], [x2, h, zc - 11], [0, 0, 1, 1]);
+      M.set({ kind: 9, a: 40, c }); const h = R2.range(11, 16), x2 = xx + R2.range(-3, 3);
+      M.quad([x2, 0, zc + 11], [x2, 0, zc - 11], [x2, h, zc - 11], [x2, h, zc + 11], [0, 0, 1, 1]);
     } }
   /* holo panels: scan-row light, seen from both sides */
   for (const p of ANI_HOLO) { M.set({ kind: 2, a: 170, c: p.c }); M.quad([p.x, p.y - p.h / 2, p.z - p.w / 2], [p.x, p.y - p.h / 2, p.z + p.w / 2], [p.x, p.y + p.h / 2, p.z + p.w / 2], [p.x, p.y + p.h / 2, p.z - p.w / 2], [0, 0, 1, 1]); M.quad([p.x - p.w / 2, p.y - p.h / 2, p.z], [p.x + p.w / 2, p.y - p.h / 2, p.z], [p.x + p.w / 2, p.y + p.h / 2, p.z], [p.x - p.w / 2, p.y + p.h / 2, p.z], [0, 0, 1, 1]); }
@@ -6085,6 +6085,8 @@ function buildCastle() {
 /* ---------- renderer, passes and the camera story ---------- */
 const canvas = $('#gl');
 const RIG = QS.has('cityrig');
+/* p38 test: ?anioff=mesh,fog,glow,trf,shade hides one part of the anime look, to measure what it costs */
+const ANI_OFF = (QS.get('anioff') || '').split(',');
 /* p38 look test: 'anime' = neon cel-shade on the city view only (rooms unchanged). ?look=anime|classic is this page only;
    System > Performance > LOOK saves it */
 let LOOK = (() => { const q = QS.get('look'); if (q === 'anime' || q === 'classic') return q; try { return localStorage.getItem('daybook_look') === 'anime' ? 'anime' : 'classic'; } catch (e) { return 'classic'; } })();
@@ -6354,7 +6356,7 @@ function trafficSetup() {
   bus(curvePts([[820, 210, 120], [200, 220, -60], [-200, 236, -260], [-820, 250, -520]], 30), 2, .008, 3.2, [[.3, .2, .08], [.16, .16, .18]]);
   /* p38 anime only: flyers down the avenue at three heights, people on the walkways and bridges (own random, appended, so nothing above moves) */
   { const RA = rng(3842);
-    for (const [y, n, sp] of [[33, 5, .026], [52, 4, .03], [76, 4, .034]]) {
+    for (const [y, n, sp] of [[33, 3, .026], [52, 2, .03], [76, 2, .034]]) {
       const a = lane([[-4.5, y, 245], [-4.5, y + 2, 60], [-3.5, y, -172]]), b = lane([[4.5, y, -172], [4.5, y + 2, 60], [3.5, y, 245]]);
       for (const r of [a, b]) for (let i = 0; i < n; i++) inst.push({ row: r, ph: (i + RA() * .6) / n, sp: sp * RA.range(.85, 1.15), side: RA.range(-1.4, 1.4), y: 0, sc: 1.15, col: RA.pick(flyer), mdl: 4, ani: 1 });
     }
@@ -6363,7 +6365,7 @@ function trafficSetup() {
     for (const w of ANI_WALKS) { const r = lane(w.pts); for (let i = 0; i < w.n; i++) peds.push({ row: r, ph: (i + RA() * .8) / w.n, sp: w.sp * RA.range(.85, 1.15), side: RA.range(-.4, .4), y: 0, sc: RA.range(.92, 1.06), col: RA.pick(coat), mdl: RA.int(0, 2), ani: 1 }); }
     /* cars on the expressway over the -30 street, gate to gate */
     const RX = rng(3847);
-    for (const [zz, dir] of [[-26, -1], [-28.6, -1], [-31.4, 1], [-34, 1]]) { const r = lane(dir > 0 ? [[-238, 40.05, zz], [238, 40.05, zz]] : [[238, 40.05, zz], [-238, 40.05, zz]]); for (let i = 0; i < 9; i++) inst.push({ row: r, ph: (i + RX() * .7) / 9, sp: .036 * RX.range(.85, 1.1), side: 0, y: 0, sc: 1, col: RX.pick(street), mdl: 3, ani: 1 }); }
+    for (const [zz, dir] of [[-26, -1], [-28.6, -1], [-31.4, 1], [-34, 1]]) { const r = lane(dir > 0 ? [[-238, 40.05, zz], [238, 40.05, zz]] : [[238, 40.05, zz], [-238, 40.05, zz]]); for (let i = 0; i < 7; i++) inst.push({ row: r, ph: (i + RX() * .7) / 7, sp: .036 * RX.range(.85, 1.1), side: 0, y: 0, sc: 1, col: RX.pick(street), mdl: 0, ani: 1 }); }
   }
   return { inst, peds, streams, roads: new Set([aveN, aveS, ...ew, ...ns]) };
 }
@@ -7298,8 +7300,8 @@ function drawScene(t) {
   renderer.info.reset(); skyTick(t); figTick(t); if (city.sim) city.sim.tick(t);
   const inside = isInsideRoom(); const showCity = !inside; const showRoom = S.mode !== 'city' || CAM.position.distanceTo(_v.set(room.box.x, room.box.y + 2, room.box.z)) < 140;
   /* p38 look test: the city view only; the street seen through a room's glass stays classic */
-  const cel = LOOK === 'anime' && !inside && S.mode !== 'room' ? 1 : 0; city.u.uCel.value = cel; MAT.post.m.uniforms.uCel.value = cel; CEL_T.value = cel; if (city.tr) for (const m of city.tr.aniCars) m.visible = !!cel;
-  if (city.ani) city.ani.visible = city.aniFx.visible = city.aniGlow.visible = !!cel;
+  const cel = LOOK === 'anime' && !inside && S.mode !== 'room' ? 1 : 0, sh = cel && !ANI_OFF.includes('shade') ? 1 : 0; city.u.uCel.value = sh; MAT.post.m.uniforms.uCel.value = sh; CEL_T.value = cel; if (city.tr) for (const m of city.tr.aniCars) m.visible = !!cel && !ANI_OFF.includes('trf');
+  if (city.ani) { city.ani.visible = !!cel && !ANI_OFF.includes('mesh'); city.aniFx.visible = !!cel && !ANI_OFF.includes('fog'); city.aniGlow.visible = !!cel && !ANI_OFF.includes('glow'); }
   /* train runs by time alone */
   const period = 62; for (let i = 0; i < city.train.length; i++) { const a = trainPos(t / period - i * .0088); const m = city.train[i]; m.position.set(a.p[0], a.p[1] + .1, a.p[2]); m.rotation.y = Math.atan2(a.d[0], a.d[2]); m.updateMatrixWorld(true); }
   CAM.updateMatrixWorld();
@@ -7413,6 +7415,7 @@ function covered(now, dt) {
 let adaptCool = 2; const SCALES = [1, .86, .74, .64, .55];
 perfPick(perf().pick); onPerf(o => perfPick(o.pick));
 function adapt() {
+  if (ANI_OFF.includes('pin')) return;   // p38 test: hold the sharpness still while measuring
   if (adaptCool > 0) { adaptCool--; return; }
   if (document.hidden) return;
   if (S.mode === 'fly') return;
