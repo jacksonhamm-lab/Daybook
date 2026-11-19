@@ -3741,8 +3741,71 @@ function animeStreet() {
     for (let i = 0, n = R.int(3, 7); i < n; i++) { const t = R(), x = -17.6 + 35.2 * t, yy = y + (y2 - y) * t - .9, zz = z + (z2 - z) * t, c = R.pick(COLS); M.set({ kind: K.NEON, seed: R() * 200 }); M.box(x, yy + .3, zz, .3, .42, .3, { c }); setPlain(M, 0); g(x, yy + .3, zz, c, 1.8); }
   }
   ANI_NAVE = ANI_GLOW.length;
-  aniCross(M, g, COLS); aniLevels(M, g, COLS);
+  aniCross(M, g, COLS); aniLevels(M, g, COLS); aniHigh(M, g, COLS);
   return M.geom();
+}
+/* p38: the top layers. An expressway over the -30 cross street at 40 m (anime-only cars on it), crossing the avenue
+   as an overpass and running into a gate building at each end; and mega bridges between the tallest towers, 105-165 m */
+function aniHigh(M, g, COLS) {
+  const R = rng(3845), XE = 236, ZC = -30, Y = 40;
+  const glowQ = (x0, x1, z0, z1, y, em, c) => { M.set({ kind: K.PLAIN, layer: 0, em, c, a: 0 }); M.quad([x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1]); M.quad([x0, y, z1], [x1, y, z1], [x1, y, z0], [x0, y, z0]); };
+  /* deck, road, marks, barriers with neon, a lit underside */
+  setPlain(M, 0x1d1a26); M.box(0, Y - 1.4, ZC, XE * 2, 1.4, 13, {});
+  M.set({ kind: K.ROAD, layer: L.ASPHALT, c: 0x1c1a24, id: 3 }); M.quad([-XE, Y + .02, ZC + 6.2], [XE, Y + .02, ZC + 6.2], [XE, Y + .02, ZC - 6.2], [-XE, Y + .02, ZC - 6.2], [-XE, ZC + 6.2, XE, ZC - 6.2]);
+  M.set({ kind: K.PLAIN, layer: 0, c: 0xc9a23a, em: 0, id: 3 }); for (const dz of [-.2, .2]) M.quad([-XE, Y + .05, ZC + dz + .07], [XE, Y + .05, ZC + dz + .07], [XE, Y + .05, ZC + dz - .07], [-XE, Y + .05, ZC + dz - .07]);
+  M.set({ c: 0xbab09a }); for (let x = -XE + 2; x < XE - 4; x += 9) for (const dz of [-2.7, 2.7]) M.quad([x, Y + .05, ZC + dz + .07], [x + 4, Y + .05, ZC + dz + .07], [x + 4, Y + .05, ZC + dz - .07], [x, Y + .05, ZC + dz - .07]);
+  const c1 = R.pick(COLS), c2 = R.pick(COLS);
+  setPlain(M, 0x2a2634); for (const sz of [-1, 1]) M.box(0, Y, ZC + sz * 6.35, XE * 2, .9, .3, {});
+  neonStrip(M, 0, Y + .9, ZC + 6.42, XE * 2, .07, .1, c1, R() * 200); neonStrip(M, 0, Y + .9, ZC - 6.42, XE * 2, .07, .1, c2, R() * 200);
+  neonStrip(M, 0, Y - 1.45, ZC + 6.5, XE * 2, .2, .07, c2, R() * 200); neonStrip(M, 0, Y - 1.45, ZC - 6.5, XE * 2, .2, .07, c1, R() * 200);
+  glowQ(-XE, XE, ZC - 6.3, ZC + 6.3, Y - 1.42, 30, hex(0x5a70c8)); for (const dz of [-3.6, 0, 3.6]) glowQ(-XE, XE, ZC + dz - .07, ZC + dz + .07, Y - 1.43, 230, [1, .95, .9]);
+  /* ribs across the underside every 6 m, so from below it reads as a ceiling, not sky */
+  setPlain(M, 0x0d0c14); for (let x = -XE + 3; x < XE; x += 6) M.box(x, Y - 2.1, ZC, .5, .7, 12.6, {});
+  setPlain(M, 0x0d0c14); for (const dz of [-5.2, 5.2]) M.box(0, Y - 2.1, ZC + dz, XE * 2, .7, .5, {});
+  for (let x = -XE + 6; x < XE; x += 18) g(x, Y - 2.6, ZC, R.pick(COLS), 4.2);
+  setPlain(M, 0);
+  /* lamps along the deck */
+  for (let x = -XE + 10; x < XE - 8; x += 24) { const sz = (x / 24 | 0) % 2 ? 1 : -1; setPlain(M, 0x15131c); M.box(x, Y + .9, ZC + sz * 6.1, .14, 4.4, .14, {}); M.box(x, Y + 5.2, ZC + sz * 5.2, .12, .12, 1.9, {}); g(x, Y + 5, ZC + sz * 4.4, 0xffb070, 5); }
+  /* pillars in the middle of the cross street, between its lanes, none on the junctions */
+  for (let x = -XE + 22; x < XE - 20; x += 34) {
+    if (Math.abs(x) < 26 || Math.abs(Math.abs(x) - 128) < 14) continue;
+    const c = R.pick(COLS); setPlain(M, 0x24212e); M.box(x, 0, ZC, 1.8, Y - 3.4, 1.8, {}); M.box(x, Y - 3.4, ZC, 3.4, 2, 9.5, {});
+    neonStrip(M, x, 5, ZC, 1.92, .14, 1.92, c, R() * 200); g(x, 5, ZC, c, 3.2);
+  }
+  /* boards under the deck facing down the avenue, both ways, and along its sides */
+  for (const [x, w] of [[0, 13], [-62, 9], [64, 9], [-170, 10], [176, 10]]) for (const sz of [1, -1]) {
+    const h = w / 3.75, cell = CELL['p' + R.int(0, 11)], yb = Y - 1.6 - h / 2;
+    setPlain(M, 0x0c0a14); M.box(x, yb - h / 2 - .2, ZC + sz * 6.75, w + .4, h + .4, .3, {});
+    M.plate(x, yb, ZC + sz * 6.92, w, h, sz > 0 ? 0 : Math.PI, cell, { seed: R() * 255, em: 255 }); g(x, yb, ZC + sz * 8, R.pick(COLS), w * .6);
+  }
+  /* the gate buildings the expressway runs into: an arch over the street, windows, a portal ringed in neon */
+  for (const sd of [-1, 1]) {
+    const gx = sd * 238, xi = sd * 230 - sd * .04, c = R.pick(COLS);
+    setPlain(M, 0x1f1c2a); M.box(gx, 0, ZC - 15.5, 16, 30, 5, {}); M.box(gx, 0, ZC + 15.5, 16, 30, 5, {});
+    setPlain(M, 0x1a1724); M.box(gx, 30, ZC, 16, 36, 36, {});
+    glowQ(gx - 8, gx + 8, ZC - 13, ZC + 13, 29.97, 40, hex(0xd060b0)); for (const dz of [-6, 0, 6]) glowQ(gx - 7.5, gx + 7.5, ZC + dz - .08, ZC + dz + .08, 29.96, 230, [1, .95, .9]);
+    M.plate(xi, Y + 2.4, ZC, 14.4, 6, sd > 0 ? -Math.PI / 2 : Math.PI / 2, [0, 0, 1, 1], { kind: K.PLAIN, em: 0, c: 0x020204 });
+    const xn = xi - sd * .06; neonStrip(M, xn, Y - .6, ZC - 7.4, .1, 6.8, .14, c, 232); neonStrip(M, xn, Y - .6, ZC + 7.3, .1, 6.8, .14, c, 232); neonStrip(M, xn, Y + 6.1, ZC, .1, .14, 14.8, c, 232);
+    g(xn - sd * 1.5, Y + 3, ZC, c, 9);
+    M.plate(xi - sd * .02, 57, ZC, 24, 6.4, sd > 0 ? -Math.PI / 2 : Math.PI / 2, CELL['p' + R.int(0, 11)], { seed: R() * 255, em: 255 }); g(xi - sd * 2, 57, ZC, R.pick(COLS), 12);
+    const win = (fn) => { for (let y = 32; y < 64; y += 2.3) for (let a = 0; a < 1; a += .07) { const r = R(); if (r < .35) continue; fn(y, a, r < .85 ? 40 : 140, r < .85 ? hex(0x4a3a6a) : hex(R.pick([0xffd8a0, 0x9ee8ff, 0xff9ad8]))); } };
+    win((y, a, em, cc) => { if (y > Y - 2 && y < Y + 8 && Math.abs(-17 + a * 34) < 9) return; M.plate(xi, y + 1, ZC - 17 + a * 34 + 1, 1.7, 1.3, sd > 0 ? -Math.PI / 2 : Math.PI / 2, [0, 0, 1, 1], { kind: K.PLAIN, em, c: cc }); });
+    for (const sz of [-1, 1]) win((y, a, em, cc) => M.plate(gx - 7 + a * 14 + .7, y + 1, ZC + sz * 18.03, 1.3, 1.3, sz > 0 ? 0 : Math.PI, [0, 0, 1, 1], { kind: K.PLAIN, em, c: cc }));
+    neonStrip(M, gx, 66, ZC - 18.05, 16, .14, .1, c, R() * 200); neonStrip(M, gx, 66, ZC + 18.05, 16, .14, .1, c, R() * 200);
+  }
+  /* mega bridges between the tallest towers on the avenue */
+  { const R2 = rng(3846), hAt = (s, z) => { let h = 0; for (const f of AVE_FACES) if (f.s === s && Math.abs(z - f.z) < f.d / 2 - 2) h = f.H; return h; };
+    for (let z = 104; z > -150; z -= R2.range(24, 40)) {
+      const mn = Math.min(hAt(1, z), hAt(-1, z)); if (mn < 128) continue;
+      const y = R2.range(105, Math.min(mn - 18, 165)), dz = R2.range(8, 11), c = R2.pick(COLS), tint = R2.pick([[0x8fd8ff, 0x34507a], [0xffc4e8, 0x6a3458], [0xffd8a0, 0x6a4a2a]]);
+      setPlain(M, 0x161420); M.box(0, y, z, 34.8, 7, dz, {});
+      for (const sz of [-1, 1]) {
+        for (let yy = y + .9; yy < y + 6.4; yy += 1.75) for (let x = -16.2; x < 16.2; x += 1.9) { const r = R2(); if (r < .3) continue; M.plate(x + .85, yy + .6, z + sz * (dz / 2 + .02), 1.6, 1.2, sz > 0 ? 0 : Math.PI, [0, 0, 1, 1], { kind: K.PLAIN, em: r < .85 ? 36 : 140, c: hex(r < .85 ? tint[1] : tint[0]) }); }
+        neonStrip(M, 0, y + 7, z + sz * (dz / 2 + .05), 34.6, .12, .08, c, R2() * 200); neonStrip(M, 0, y - .12, z + sz * (dz / 2 + .05), 34.6, .12, .08, c, R2() * 200);
+      }
+      glowQ(-17.2, 17.2, z - dz / 2 + .2, z + dz / 2 - .2, y - .03, 40, hex(tint[0])); g(0, y - 2, z, c, 14); g(-12, y + 3.5, z + dz / 2 + 1, c, 8); g(12, y + 3.5, z - dz / 2 - 1, c, 8);
+    } }
+  setPlain(M, 0);
 }
 /* p38: the cross streets get the same dense walls and cables (own random) */
 function aniCross(M, g, COLS) {
@@ -6292,12 +6355,15 @@ function trafficSetup() {
   /* p38 anime only: flyers down the avenue at three heights, people on the walkways and bridges (own random, appended, so nothing above moves) */
   { const RA = rng(3842);
     for (const [y, n, sp] of [[33, 5, .026], [52, 4, .03], [76, 4, .034]]) {
-      const a = lane([[-4.5, y, 330], [-4.5, y + 2, 60], [-3.5, y, -172]]), b = lane([[4.5, y, -172], [4.5, y + 2, 60], [3.5, y, 330]]);
+      const a = lane([[-4.5, y, 245], [-4.5, y + 2, 60], [-3.5, y, -172]]), b = lane([[4.5, y, -172], [4.5, y + 2, 60], [3.5, y, 245]]);
       for (const r of [a, b]) for (let i = 0; i < n; i++) inst.push({ row: r, ph: (i + RA() * .6) / n, sp: sp * RA.range(.85, 1.15), side: RA.range(-1.4, 1.4), y: 0, sc: 1.15, col: RA.pick(flyer), mdl: 4, ani: 1 });
     }
     for (const [y, x] of [[33, 4], [52, -4], [76, 4], [33, -4], [52, 4], [76, -4]]) { const r = lane((x > 0 ? [[x, y, 900], [x, y + 2, 60], [x, y, -150]] : [[x, y, -150], [x, y + 2, 60], [x, y, 900]]));
       for (let g = 0; g < 14; g++) { const base = (g + RA() * .6) / 14, n = RA.int(2, 5); for (let i = 0; i < n; i++) streams.push({ row: r, ph: (base + i * .0035) % 1, sp: .016, side: RA.range(-1.4, 1.4), y: RA.range(-1.2, 1.2), sc: 3.2, col: RA.pick([[.85, .76, .58], [.68, .78, .88], [.82, .1, .07]]), ani: 1 }); } }
     for (const w of ANI_WALKS) { const r = lane(w.pts); for (let i = 0; i < w.n; i++) peds.push({ row: r, ph: (i + RA() * .8) / w.n, sp: w.sp * RA.range(.85, 1.15), side: RA.range(-.4, .4), y: 0, sc: RA.range(.92, 1.06), col: RA.pick(coat), mdl: RA.int(0, 2), ani: 1 }); }
+    /* cars on the expressway over the -30 street, gate to gate */
+    const RX = rng(3847);
+    for (const [zz, dir] of [[-26, -1], [-28.6, -1], [-31.4, 1], [-34, 1]]) { const r = lane(dir > 0 ? [[-238, 40.05, zz], [238, 40.05, zz]] : [[238, 40.05, zz], [-238, 40.05, zz]]); for (let i = 0; i < 9; i++) inst.push({ row: r, ph: (i + RX() * .7) / 9, sp: .036 * RX.range(.85, 1.1), side: 0, y: 0, sc: 1, col: RX.pick(street), mdl: 3, ani: 1 }); }
   }
   return { inst, peds, streams, roads: new Set([aveN, aveS, ...ew, ...ns]) };
 }
