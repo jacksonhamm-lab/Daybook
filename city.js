@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p39c';
+export const BUILD = 'p39d';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -3283,7 +3283,7 @@ function castle(M) {
   setPlain(M, 0x22402f);
   /* the point, gardens and forest */
   M.lathe(cx, -6, cz, [[108, 0], [100, 6], [92, 9], [40, 12], [0, 13]], 14, { c: 0x22402f, sq: .85, grad: .55 });
-  for (let i = 0; i < 44; i++) { const a = R() * TAU, r = R.range(50, 96), x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r * .85; if (z > cz + 40 && Math.abs(x - cx) < 24) continue; if (x > cx + 30 && Math.abs(z - (cz - 4)) < 16) continue;   /* the flight into the study hall comes in low here */ const rr = Math.hypot(x - cx, (z - cz) / .85), gy = rr < 40 ? 12.6 : rr < 92 ? lerp(12, 9, (rr - 40) / 52) : 8; tree(M, x, gy, z, R.range(10, 15), R); }
+  for (let i = 0; i < 44; i++) { const a = R() * TAU, r = R.range(50, 96), x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r * .85; if (z > cz + 40 && Math.abs(x - cx) < 24) continue; if (x > cx + 30 && Math.abs(z - (cz - 4)) < 16) continue;   /* the flight into the study hall comes in low here */ const rr = Math.hypot(x - cx, (z - cz) / .85), gy = rr < 40 ? 6.6 : rr < 92 ? lerp(6, 3, (rr - 40) / 52) : 2; tree(M, x, gy - .1, z, R.range(10, 15), R); }
   const st = 0x6a6578;
   const seed = 20;
   M.set({ kind: K.FACADE, em: 90, seed, a: 6 }); M.extrude(rectPoly(cx, cz, 68, 26), 7, 30, { c: st, topc: 0x2e3040 });
@@ -3296,8 +3296,8 @@ function castle(M) {
   M.cyl(cx - 38, 70, cz + 6, 8, .3, 12, 8, { c: 0x41685c });
   glow(cx + 2, 18, cz + 16, 0x5be38a, 28); pool(cx + 2, cz + 34, 38, 0x5be38a, .35);
   /* a gravel walk round the hall, lamps along it */
-  { const pr = 52; M.set({ kind: K.PLAIN, c: hex(0x6a645a), em: 0, layer: 0, id: 3 }); for (let i = 0; i < 40; i++) { const a0 = i / 40 * TAU, a1 = (i + 1) / 40 * TAU, y0 = 12.08; const P = (a, r) => [cx + Math.cos(a) * r, y0, cz + Math.sin(a) * r * .85]; M.quad(P(a0, pr - 1.3), P(a1, pr - 1.3), P(a1, pr + 1.3), P(a0, pr + 1.3)); }
-    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU + .13, lx = cx + Math.cos(a) * (pr + 2), lz = cz + Math.sin(a) * (pr + 2) * .85; setPlain(M, 0x1e1c24); M.cyl(lx, 12, lz, .1, .07, 3.6, 4, { top: false }); M.set({ kind: K.PLAIN, c: hex(0xffd8a0), em: 230, layer: 0 }); M.box(lx, 15.5, lz, .34, .4, .34, {}); M.set({ em: 0 }); glow(lx, 15.7, lz, 0xffc880, 3.4); pool(lx, lz, 9, 0xffc880, .5); } }
+  { const pr = 52; M.set({ kind: K.PLAIN, c: hex(0x6a645a), em: 0, layer: 0, id: 3 }); for (let i = 0; i < 40; i++) { const a0 = i / 40 * TAU, a1 = (i + 1) / 40 * TAU, y0 = 5.37; const P = (a, r) => [cx + Math.cos(a) * r, y0, cz + Math.sin(a) * r * .85]; M.quad(P(a0, pr - 1.3), P(a1, pr - 1.3), P(a1, pr + 1.3), P(a0, pr + 1.3)); }
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU + .13, lx = cx + Math.cos(a) * (pr + 2), lz = cz + Math.sin(a) * (pr + 2) * .85; setPlain(M, 0x1e1c24); M.cyl(lx, 5.1, lz, .1, .07, 3.6, 4, { top: false }); M.set({ kind: K.PLAIN, c: hex(0xffd8a0), em: 230, layer: 0 }); M.box(lx, 8.6, lz, .34, .4, .34, {}); M.set({ em: 0 }); glow(lx, 8.8, lz, 0xffc880, 3.4); pool(lx, lz, 9, 0xffc880, .5); } }
 }
 
 /* the room's chalet (CH) as the city sees it: a stone base down the slope, timber walls, a steep snowy roof with its ridge along x,
@@ -4349,7 +4349,7 @@ function harbourLife(M) {
    the ring, hedged beds with small lights in them, benches round the ring, school banners on the hall, students walking */
 function castleGrounds(M) {
   const R = rng(3931), cx = -212, cz = 296;
-  const hgt = (x, z) => { const r = Math.hypot(x - cx, (z - cz) / .85), P = [[0, 13], [40, 12], [92, 9], [100, 6]]; for (let i = 0; i < P.length - 1; i++) if (r <= P[i + 1][0]) return lerp(P[i][1], P[i + 1][1], (r - P[i][0]) / (P[i + 1][0] - P[i][0])); return 6; };
+  const hgt = (x, z) => { const r = Math.hypot(x - cx, (z - cz) / .85), P = [[0, 7], [40, 6], [92, 3], [100, 0]]; for (let i = 0; i < P.length - 1; i++) if (r <= P[i + 1][0]) return lerp(P[i][1], P[i + 1][1], (r - P[i][0]) / (P[i + 1][0] - P[i][0])); return 0; };
   const PX = cx + 2, z0 = 310, z1 = 372, fz = 327;
   /* the walk: gravel, a stone edge, lamps both sides */
   M.set({ kind: K.PLAIN, c: hex(0x6a645a), em: 0, layer: 0, id: 3 });
@@ -4383,7 +4383,7 @@ function castleGrounds(M) {
     M.set({ c: hex(0xc9a050), em: 90 }); M.quad([x - .16, 19, 309.25], [x + .16, 19, 309.25], [x + .16, 25.6, 309.25], [x - .16, 25.6, 309.25]); M.quad([x - .8, 23.6, 309.25], [x + .8, 23.6, 309.25], [x + .8, 23.9, 309.25], [x - .8, 23.9, 309.25]); M.set({ em: 0 });
     glow(x, 22, 311, 0x5be38a, 5); }
   /* students: round the ring both ways, and up and down the walk */
-  { const ring = d => { const pts = []; for (let i = 0; i <= 36; i++) { const a = (d > 0 ? i : 36 - i) / 36 * TAU; pts.push([cx + Math.cos(a) * (52 + d * .4), 12.12, cz + Math.sin(a) * (52 + d * .4) * .85]); } return pts; };
+  { const ring = d => { const pts = []; for (let i = 0; i <= 36; i++) { const a = (d > 0 ? i : 36 - i) / 36 * TAU; pts.push([cx + Math.cos(a) * (52 + d * .4), 5.4, cz + Math.sin(a) * (52 + d * .4) * .85]); } return pts; };
     ANI_WALKS.push({ pts: ring(1), n: 5, sp: 1.1 / 300 }); ANI_WALKS.push({ pts: ring(-1), n: 4, sp: 1.1 / 300 });
     const wk = []; for (let z = z0 + 1; z <= z1; z += 3) wk.push([PX + .7, hgt(PX, z) + .12, z]); if (wk.length > 1) { ANI_WALKS.push({ pts: wk, n: 2, sp: 1.1 / 40 }); ANI_WALKS.push({ pts: wk.slice().reverse().map(p => [p[0] - 1.4, p[1], p[2]]), n: 1, sp: 1.1 / 40 }); } }
   setPlain(M, 0);
@@ -8575,7 +8575,7 @@ const TOUR_STOPS = [
   ['THE ROOFTOPS', 'Where the city goes to be alone. Someone strings new lights up here every winter, and nobody knows who.', [-44, 61, 24], [-68, 46.5, -3]],
   ['THE OLD MARKET', 'The island before the towers. Lanterns, tarps, and traders whose grandparents sold the same things.', [262, 6, 58], [160, 3.5, 62]],
   ['THE HARBOUR', 'Everything Arcadia eats or sells comes through here. The cranes have not stopped since the city was built.', [330, 13, 412], [236, 17, 330]],
-  ['THE CASTLE', 'The oldest stones on the island. Built as a fortress, kept as a school, still standing guard on the point.', [-172, 34, 378], [-214, 14, 310]],
+  ['THE CASTLE', 'The oldest stones on the island. Built as a fortress, kept as a school, still standing guard on the point.', [-172, 30, 378], [-214, 8, 310]],
   ['THE ISLAND', 'Small enough to cross in a night. Deep enough that nobody has seen all of it.', [0, 420, 200], [0, 0, -120]],
   ['ARCADIA', 'Home. The lights stay on.'],
 ];
