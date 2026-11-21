@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p39b';
+export const BUILD = 'p39c';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -3399,12 +3399,13 @@ function mountain(M) {
   pool(vx, vz, 90, 0xff6fae, 0);
 }
 
+const MKT = [];   /* the old market's blocks, for the alleys between them (p39) */
 function market(M, R) {
   /* low rounded fronts packed around an alley, tarps, lanterns, stacked blades */
   const cx = 195, cz = 95;
   for (let i = 0; i < 16; i++) {
     const x = 148 + (i % 4) * 26 + R.range(-3, 3), z = 22 + Math.floor(i / 4) * 26 + (i % 2) * 2, w = R.range(16, 22), d = R.range(16, 22), h = R.range(11, 34);
-    tower(M, x, z, w, d, h, 'kitsch', R, { segs: R.int(1, 2) });
+    tower(M, x, z, w, d, h, 'kitsch', R, { segs: R.int(1, 2) }); MKT.push({ x, z, w, d, h });
     for (let k = 0; k < 2; k++) blade(M, x + w / 2 + .5, h * R.range(.45, .85), z + (k - .5) * d * .6, Math.PI / 2 * 0 + (R.chance(.5) ? 0 : 0), R.range(5, 11), R.int(0, 40), R);
   }
   /* stalls on the waterfront blocks */
@@ -3568,7 +3569,7 @@ function buildCityWorld() {
   deck(M, RAIL_CLOSED.concat([RAIL_CLOSED[0]]), 6.5, { c: 0x4a4656, every: 7, neon: PAL.cyan });
   bridge(M, R); harbour(M, R);
   shopFront(M, R);
-  megatower(M); towerMark(M); megablock(M); castle(M); mountain(M); market(M, R); gymDistrict(M, R); streetLife(M, R); shopKerb(M, rng(3131)); nearTower(M); quayDress(M, rng(7171)); nearBoats(M, rng(8181)); nightStalls(M, rng(7373));
+  megatower(M); towerMark(M); megablock(M); castle(M); mountain(M); market(M, R); gymDistrict(M, R); streetLife(M, R); shopKerb(M, rng(3131)); nearTower(M); quayDress(M, rng(7171)); nearBoats(M, rng(8181)); nightStalls(M, rng(7373)); oldMarket(M); harbourLife(M); castleGrounds(M); hideoutRoof(M);
   /* downtown lots */
   const lots = (x0, x1, z0, z1, gen) => { let x = x0; while (x < x1 - 10) { const w = Math.min(x1 - x, R.range(26, 46)); let z = z0; const ww = (x1 - x - w < 16) ? x1 - x : w; while (z < z1 - 10) { const d0 = R.range(26, 48); const d = (z1 - z - d0 < 16) ? z1 - z : d0; gen(x + ww / 2, z + d / 2, ww - R.range(1, 4), d - R.range(1, 4)); z += d; } x += ww; } };
   const downtownH = (x, z) => { const r = Math.hypot(x, z + 170); return 54 + 240 * Math.exp(-r * r / (190 * 190)) * R.range(.5, 1.12); };
@@ -3835,7 +3836,7 @@ function aniHigh(M, g, COLS) {
     for (let z = 104; z > -150; z -= R2.range(24, 40)) {
       const mn = Math.min(hAt(1, z), hAt(-1, z)); if (mn < 128) continue;
       const y = R2.range(105, Math.min(mn - 18, 165)), dz = R2.range(8, 11), c = R2.pick(COLS), tint = R2.pick([[0x8fd8ff, 0x34507a], [0xffc4e8, 0x6a3458], [0xffd8a0, 0x6a4a2a]]);
-      setPlain(M, 0x161420); M.box(0, y, z, 34.8, 7, dz, {});
+      setPlain(M, 0x161420); M.box(0, y, z, 34.8, 7, dz, {}); MKT.br = (MKT.br || []).concat([[Math.round(z), Math.round(y), Math.round(dz)]]);
       for (const sz of [-1, 1]) {
         for (let yy = y + .9; yy < y + 6.4; yy += 1.75) for (let x = -16.2; x < 16.2; x += 1.9) { const r = R2(); if (r < .3) continue; M.plate(x + .85, yy + .6, z + sz * (dz / 2 + .02), 1.6, 1.2, sz > 0 ? 0 : Math.PI, [0, 0, 1, 1], { kind: K.PLAIN, em: r < .85 ? 36 : 140, c: hex(r < .85 ? tint[1] : tint[0]) }); }
         neonStrip(M, 0, y + 7, z + sz * (dz / 2 + .05), 34.6, .12, .08, c, R2() * 200); neonStrip(M, 0, y - .12, z + sz * (dz / 2 + .05), 34.6, .12, .08, c, R2() * 200);
@@ -4201,6 +4202,229 @@ function nightStalls(M, R) {
     M.set({ kind: K.PLAIN, c: hex(0xffd8a0), em: 220, layer: 0 }); M.box(x, 1.05, z + .61, 1.6, .5, .03, {}); M.set({ em: 0 });
     setPlain(M, 0x222026); M.cyl(x - .6, 1.8, z, .04, .04, 1.6, 4, { top: false }); M.set({ kind: K.PLAIN, c: hex(c), em: 0, layer: 0 }); M.cyl(x - .6, 3.2, z, 1.7, .05, .55, 8, {});
     glow(x, 1.4, z + 1, 0xffc880, 4.5); pool(x, z + 2, 8, 0xffc880, .7); }
+}
+/* p39: the old market's alleys. Stalls against the walls under striped awnings, paper lanterns strung across,
+   a gate at each end of the main lane, crates and steam, and people walking it (anime). Own random, after the blocks */
+function oldMarket(M) {
+  const R = rng(3911), cols = [0xb8323a, 0x2a7a8a, 0xd09a2a, 0x7a3a8a, 0x3a8a5a, 0xc8562a, 0x2a4a8a], lit = [0xffd08a, 0xffe0b0, 0xffb878, 0xffc890];
+  const lan = [PAL.red, PAL.red, PAL.orange, 0xff5a3a, PAL.yellow];
+  /* world point of a local one under M.at(cx, 0, cz, ry) */
+  const W = (cx, cz, ry, lx, lz) => [cx + lx * Math.cos(ry) + lz * Math.sin(ry), cz - lx * Math.sin(ry) + lz * Math.cos(ry)];
+  /* the gap from a wall to the next block out that way (or open ground) */
+  const gap = (b, nx, nz) => { let g = 16; for (const o of MKT) { if (o === b) continue;
+      if (nx) { if (Math.abs(o.z - b.z) > (o.d + b.d) / 2 - 1.5) continue; const d = nx > 0 ? (o.x - o.w / 2) - (b.x + b.w / 2) : (b.x - b.w / 2) - (o.x + o.w / 2); if (d > -.5 && d < g) g = d; }
+      else { if (Math.abs(o.x - b.x) > (o.w + b.w) / 2 - 1.5) continue; const d = nz > 0 ? (o.z - o.d / 2) - (b.z + b.d / 2) : (b.z - b.d / 2) - (o.z + o.d / 2); if (d > -.5 && d < g) g = d; } }
+    return g; };
+  /* one stall, local: x along the wall, z out into the alley from the wall at 0 */
+  const stall = (w, dp, c, lc) => {
+    setPlain(M, 0x2a2228); for (const sx of [-1, 1]) M.box(sx * (w / 2 - .08), 0, dp - .08, .1, 2.55, .1, {});
+    setPlain(M, 0x5a4434); M.box(0, 0, dp * .62, w - .3, .95, .62, { topc: 0x3a2a20 });
+    setPlain(M, 0x3a2e2a); M.box(0, 1.35, .24, w - .3, .07, .42, {}); M.box(0, 2, .24, w - .3, .07, .42, {});
+    for (let i = 0; i < 5; i++) { setPlain(M, R.pick([0xc84a2a, 0xe0c060, 0x6aa04a, 0xd8d0c0, 0x8a4a6a, 0xd07a3a])); M.box(-w / 2 + .45 + i * (w - .9) / 4, .95, dp * .62 + R.range(-.15, .15), R.range(.3, .5), R.range(.18, .34), .34, {}); }
+    for (let k = 0; k < 2; k++) for (let i = 0; i < 6; i++) { setPlain(M, R.pick([0xb84a3a, 0xd0b060, 0x5a8a4a, 0xc8c0b0, 0x7a5a8a, 0x2a6a7a])); M.box(-w / 2 + .35 + i * (w - .7) / 5, 1.42 + k * .65, .24, .26, R.range(.2, .4), .26, {}); }
+    for (let i = 0; i < 6; i++) { const x0 = -w / 2 - .1 + i * (w + .2) / 6, x1 = x0 + (w + .2) / 6; M.set({ kind: K.PLAIN, c: hex(i % 2 ? c : 0xe8e0d0), em: 0, layer: 0, id: 3 });
+      M.quad([x0, 3.1, 0], [x1, 3.1, 0], [x1, 2.55, dp + .45], [x0, 2.55, dp + .45]); M.quad([x1, 2.55, dp + .45], [x0, 2.55, dp + .45], [x0, 3.1, 0], [x1, 3.1, 0]); }
+    setPlain(M, mixC(c, 0x000000, .3)); M.box(0, 2.25, dp + .45, w + .2, .3, .05, {});
+    M.set({ kind: K.NEON, c: hex(R.pick([PAL.cyan, PAL.magenta, PAL.yellow, PAL.orange])), seed: R() * 200 }); M.box(0, 2.32, dp + .48, w * .45, .14, .03, {});
+    M.set({ kind: K.PLAIN, c: hex(lc), em: 255, layer: 0 }); M.box(0, 2.3, dp * .45, .22, .22, .22, {}); M.set({ em: 0 });
+  };
+  /* paper lanterns on a sagging line from a to b */
+  const string = (a, b, sag) => { const n = Math.max(3, Math.round(Math.hypot(b[0] - a[0], b[2] - a[2]) / 1.5)), pts = [];
+    for (let i = 0; i <= n; i++) { const t = i / n; pts.push([lerp(a[0], b[0], t), lerp(a[1], b[1], t) - Math.sin(t * Math.PI) * sag, lerp(a[2], b[2], t)]); }
+    M.tube(pts, .025, n, 3, { c: 0x0a0a0e });
+    const lc = R.pick(lan); for (let i = 1; i < n; i++) { const q = pts[i], c = R.chance(.75) ? lc : R.pick(lan); M.set({ kind: K.PLAIN, c: hex(c), em: 255, layer: 0 }); M.blob(q[0], q[1] - .45, q[2], .3, { sy: 1.3, r: R }); setPlain(M, 0x1a1214); M.box(q[0], q[1] - .1, q[2], .2, .08, .2, {}); M.box(q[0], q[1] - .86, q[2], .2, .06, .2, {}); if (i % 2) glow(q[0], q[1] - .45, q[2], c, 3.2); }
+    M.set({ em: 0 }); };
+  const walks = [];
+  for (const b of MKT) for (const [nx, nz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const g = gap(b, nx, nz), L = nx ? b.d : b.w, ry = Math.atan2(nx, nz);
+    const wx = b.x + nx * (b.w / 2 + .05), wz = b.z + nz * (b.d / 2 + .05);
+    if (g < 2.6) continue;
+    const dp = Math.max(1.2, Math.min(2.3, g * .27));
+    /* stalls along the wall, a few gaps */
+    let s = -L / 2 + 1.2;
+    while (s < L / 2 - 3.2) { const w = R.range(2.6, 4); if (R.chance(.82)) { const c = R.pick(cols), lc = R.pick(lit); M.at(wx + Math.cos(ry) * (s + w / 2), 0, wz - Math.sin(ry) * (s + w / 2), ry, () => stall(w, dp, c, lc));
+        const [gx, gz] = W(wx, wz, ry, s + w / 2, dp * .5); glow(gx, 2.3, gz, lc, 5); pool(gx, gz, 6, lc, .55);
+        if (R.chance(.25)) glow(gx, 3.6, gz, 0xfff4e8, 2.6, 1); }
+      else { const [cx, cz] = W(wx, wz, ry, s + w / 2, .5); setPlain(M, 0x6a5a3a); M.box(cx, 0, cz, .8, .6, .7, {}); if (R.chance(.6)) M.box(cx + .1, .6, cz, .7, .5, .6, {}); setPlain(M, 0x2a3a5a); M.cyl(cx + .9, 0, cz + .3, .32, .32, .9, 8, {}); }
+      s += w + R.range(.2, 1); }
+    /* cloth banners and a hanging lamp on the wall above the stalls */
+    for (let k = 0; k < Math.floor(L / 7); k++) { const t = -L / 2 + (k + .5 + R.range(-.2, .2)) * L / Math.floor(L / 7), [cx, cz] = W(wx, wz, ry, t, .08), c = R.pick(cols);
+      M.set({ kind: K.PLAIN, c: hex(c), em: 26, layer: 0, a: 0 }); M.at(cx, 0, cz, ry, () => { M.quad([-.55, 3.6, 0], [.55, 3.6, 0], [.55, 6.4, 0], [-.55, 6.4, 0]); });
+      setPlain(M, 0x1a1418); M.at(cx, 0, cz, ry, () => M.box(0, 6.4, 0, 1.4, .1, .12, {})); }
+    /* lantern lines across to the next block (each pair once: the +x / +z walls draw them) */
+    if (g < 15 && (nx > 0 || nz > 0)) {
+      for (let t = -L / 2 + 2.5; t < L / 2 - 1.5; t += R.range(3.6, 5.2)) { const y0 = R.range(5.2, 7.4), dz = R.range(-1.5, 1.5);
+        const a = W(wx, wz, ry, t, 0), c = W(wx, wz, ry, t + dz, g); string([a[0], y0, a[1]], [c[0], y0 + R.range(-.6, .6), c[1]], R.range(.4, .9)); }
+      const m0 = W(wx, wz, ry, -L / 2, g / 2), m1 = W(wx, wz, ry, L / 2, g / 2); walks.push([m0, m1]);
+    }
+  }
+  /* the main lane gets a red gate at each end, lanterns along its beam */
+  const lane = (() => { const rows = {}; for (const b of MKT) { const k = Math.round((b.z - 22) / 26); (rows[k] = rows[k] || []).push(b); }
+    let best = null; for (let k = 0; k < 3; k++) { const A = rows[k], B = rows[k + 1]; if (!A || !B) continue; const z0 = Math.max(...A.map(b => b.z + b.d / 2)), z1 = Math.min(...B.map(b => b.z - b.d / 2)), w = z1 - z0;
+      const x0 = Math.min(...MKT.map(b => b.x - b.w / 2)), x1 = Math.max(...MKT.map(b => b.x + b.w / 2)); if (!best || w > best.w) best = { z: (z0 + z1) / 2, w, x0, x1 }; } return best; })();
+  if (lane && lane.w > 3) { MKT.lane = lane;
+    for (const x of [lane.x0 - 2.5, lane.x1 + 2.5]) { const hw = lane.w / 2 + 1.4;
+      setPlain(M, 0x8a1e22); for (const sz of [-1, 1]) M.box(x, 0, lane.z + sz * hw, .7, 8.6, .7, {}); M.box(x, 7.4, lane.z, .9, .7, hw * 2 + 2.4, {}); M.box(x, 8.5, lane.z, 1.1, .45, hw * 2 + 3.6, {});
+      setPlain(M, 0x141016); M.box(x, 9, lane.z, 1.2, .25, hw * 2 + 3.8, {});
+      M.set({ kind: K.NEON, c: hex(PAL.orange), seed: R() * 200 }); M.box(x, 7.3, lane.z, .3, .06, hw * 2 + 2.3, {});
+      for (let i = 0; i < 7; i++) { const z = lane.z - hw + (i + .5) * hw * 2 / 7; M.set({ kind: K.PLAIN, c: hex(PAL.red), em: 255, layer: 0 }); M.blob(x, 6.6, z, .3, { sy: 1.3, r: R }); if (i % 2) glow(x, 6.6, z, PAL.red, 2.4); }
+      M.set({ em: 0 }); glow(x, 8, lane.z, PAL.red, 7); pool(x, lane.z, 10, PAL.red, .4); }
+  }
+  /* people along the alleys (anime) */
+  for (const [a, b] of walks) { const len = Math.hypot(b[0] - a[0], b[1] - a[1]); if (len < 10) continue; ANI_WALKS.push({ pts: [[a[0], .02, a[1]], [b[0], .02, b[1]]], n: 2, sp: 1.2 / len }); ANI_WALKS.push({ pts: [[b[0], .02, b[1]], [a[0], .02, a[1]]], n: 2, sp: 1.2 / len }); }
+  setPlain(M, 0);
+}
+/* p39: the harbour lived in. The barge has people on it (lit homes in the containers, plants, washing, lights strung
+   along its rails, a lit wheelhouse, a mailbox), a tug alongside, a ferry coming in, fishing boats with lamps, buoys */
+function harbourLife(M) {
+  const R = rng(3921), warm = [0xffd08a, 0xffc070, 0xffe0b0];
+  const win = (x, y, z, w, h, ry, c, em = 210) => { M.set({ kind: K.PLAIN, c: hex(c), em, layer: 0, a: 0 }); M.at(x, y, z, ry, () => M.quad([-w / 2, -h / 2, 0], [w / 2, -h / 2, 0], [w / 2, h / 2, 0], [-w / 2, h / 2, 0])); M.set({ em: 0 }); };
+  const bulbs = (pts) => { M.tube(pts, .03, pts.length - 1, 3, { c: 0x0a0a0e }); for (let i = 1; i < pts.length - 1; i++) { const q = pts[i]; M.set({ kind: K.PLAIN, c: hex(R.pick([0xffd8a0, 0xffd8a0, 0xff9a6a, 0x9ee8ff])), em: 255, layer: 0 }); M.box(q[0], q[1] - .12, q[2], .2, .2, .2, {}); } M.set({ em: 0 }); };
+  /* the barge, in its own frame (as harbour() places it) */
+  const BX = 170, BZ = 470, BR = .25, WP = (lx, ly, lz) => [BX + lx * Math.cos(BR) + lz * Math.sin(BR), ly - 2, BZ - lx * Math.sin(BR) + lz * Math.cos(BR)];
+  M.at(BX, -2, BZ, BR, () => {
+    /* rails and strung lights both sides */
+    setPlain(M, 0x1a1820); for (const sz of [-1, 1]) { M.box(-2, 5, sz * 12.7, 126, .08, .08, {}); for (let x = -64; x < 62; x += 3) M.box(x, 5, sz * 12.7, .07, 1.1, .07, {}); M.box(-2, 6.05, sz * 12.7, 126, .06, .06, {}); }
+    for (const sz of [-1, 1]) for (let x0 = -62; x0 < 44; x0 += 18) { const pts = []; for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([x0 + t * 18, 8.6 - Math.sin(t * Math.PI) * .8, sz * 12.9]); } bulbs(pts); setPlain(M, 0x1a1820); M.box(x0, 5, sz * 12.9, .08, 3.6, .08, {}); }
+    /* homes in the bottom containers on the near side: windows, a door, a lamp, plants on the sill */
+    for (let i = 0; i < 11; i++) { if (i % 3 === 1) continue; const x = -52 + i * 10.4, c = R.pick(warm);
+      for (const dx of [-2.6, 2.4]) { win(x + dx, 6.6, 11.56, 1.6, 1.1, 0, c); setPlain(M, 0x2a2020); M.box(x + dx, 5.9, 11.62, 1.9, .1, .3, {}); for (let k = 0; k < 2; k++) M.blob(x + dx - .5 + k, 6.1, 11.75, .26, { c: 0x2f6a3a, r: R }); }
+      win(x, 6.3, 11.56, .9, 1.9, 0, mixC(c, 0x000000, .35), 120); glow(...WP(x, 6.6, 13.5), c, 5); }
+    /* washing between two stacks, a satellite dish, potted trees on top of the stacks */
+    { const pts = [[-30, 13.4, 9], [-14, 13.1, 9]]; setPlain(M, 0x1a1820); M.box(-30, 8, 9, .08, 5.4, .08, {}); M.box(-14, 8, 9, .08, 5.1, .08, {}); M.tube([pts[0], [-22, 12.6, 9], pts[1]], .02, 2, 3, { c: 0x111114 });
+      for (let k = 0; k < 7; k++) { setPlain(M, R.pick([0xe8e0d0, 0x2a6a9a, 0xc84a4a, 0xe0c060, 0x8a6aa8])); M.box(-29 + k * 2.1, 11.6 + Math.sin((k + .5) / 7 * Math.PI) * -.5, 9, 1.2, R.range(.9, 1.4), .04, {}); } }
+    setPlain(M, 0xd8d4cc); M.cyl(-40, 11, -4, 1.3, .2, .5, 10, {}); setPlain(M, 0x2a2830); M.box(-40, 8, -4, .2, 3, .2, {});
+    for (const [x, z] of [[-8, 6], [12, -6], [30, 4]]) { setPlain(M, 0x5a3a2a); M.box(x, 8, z, 1.2, .9, 1.2, {}); M.blob(x, 10.2, z, 1.2, { c: 0x2a5a34, r: R, sy: 1.2 }); }
+    /* the wheelhouse lived in: two rows of warm windows round it, a lit door, the address board */
+    for (const [y, c] of [[9, 0xffd8a0], [13.4, 0xffe6b8]]) { for (let k = 0; k < 5; k++) win(52 + .6 + k * 2.2, y, 10.06, 1.4, 1.4, 0, c); for (let k = 0; k < 7; k++) win(64.06, y, -7.5 + k * 2.5, 1.5, 1.4, Math.PI / 2, c); }
+    win(58, 7, 10.06, 1.2, 2.2, 0, 0xffc070, 160);
+    setPlain(M, 0x101014); M.box(62, 9.6, 10.2, 4.4, 1.6, .12, {}); M.set({ kind: K.NEON, c: hex(PAL.cyan), seed: 40 }); M.box(62, 10.35, 10.3, 3.8, .12, .04, {}); M.box(62, 9.75, 10.3, 2.4, .1, .04, {});
+    setPlain(M, 0x8a2a2a); M.box(55, 5, 12.3, .6, 1.1, .5, {}); setPlain(M, 0x2a2a30); M.box(55, 3.8, 12.3, .12, 1.2, .12, {});
+    /* mast lights */
+    setPlain(M, 0x2a2830); M.box(60, 17, 0, .3, 9, .3, {}); M.box(60, 23, 0, .12, .12, 4, {});
+  });
+  glow(...WP(58, 9, 14), 0xffd8a0, 16); glow(...WP(66, 11, 0), 0xffd8a0, 14); glow(...WP(62, 10, 12), PAL.cyan, 4); glow(...WP(60, 26, 0), 0xffffff, 4, 1); glow(...WP(60, 23, 2), PAL.green, 3);
+  for (const sz of [-1, 1]) for (let x = -60; x < 50; x += 12) glow(...WP(x, 8.3, sz * 13), 0xffd8a0, 4.5);
+  /* the tug alongside */
+  { const [tx, , tz] = WP(-74, 0, 6); M.at(tx, -.8, tz, BR + Math.PI / 2 * 0, () => { setPlain(M, 0x8a2a24); M.loft([[[-3, 0, -8], [3, 0, -8], [2.4, 0, 6], [0, 0, 9]], [[-3.6, 2.4, -8.6], [3.6, 2.4, -8.6], [3, 2.6, 6.4], [0, 3, 10]]], { c: 0x8a2a24 });
+      setPlain(M, 0xd8d0c0); M.box(0, 2.4, -2, 4.4, 2.8, 5, {}); M.box(0, 5.2, -2.6, 3.4, 1.8, 3, {}); setPlain(M, 0x1a1a20); M.cyl(0, 5.2, .6, .5, .5, 3, 8, {}); for (const sx of [-1, 1]) setPlain(M, 0x1a1a1e), M.cyl(sx * 3.4, 1.4, 0, .5, .5, .5, 8, {}); });
+    for (const [x, y, z] of [[0, 6, -2.6]]) glow(tx + x, y, tz + z, 0xffe0b0, 7); M.set({ kind: K.PLAIN, c: hex(0xffe0b0), em: 220, layer: 0 }); M.box(tx, 5.8, tz - 1.6, 3.2, .7, .05, {}); M.set({ em: 0 }); }
+  /* the ferry coming in: two decks of lit windows, a lit name band, a wake */
+  { const fx = 214, fz = 392, fr = -1.5; M.at(fx, -1.6, fz, fr, () => {
+      setPlain(M, 0xe8e4dc); M.loft([[[-5, 0, -22], [5, 0, -22], [4, 0, 16], [0, 0, 22]], [[-6.2, 3.2, -23], [6.2, 3.2, -23], [5.4, 3.4, 17], [0, 4, 25]]], { c: 0xe8e4dc });
+      setPlain(M, 0x2a3a5a); M.box(0, 3.2, -6, 11.6, .7, 32, {}); setPlain(M, 0xdcd6cc); M.box(0, 3.9, -6, 10.6, 3, 28, {}); M.box(0, 6.9, -9, 9, 2.6, 18, {}); setPlain(M, 0x3a3a44); M.box(0, 9.5, -4, 4, 2.2, 4, {});
+      for (const sx of [-1, 1]) { for (let k = 0; k < 12; k++) { M.set({ kind: K.PLAIN, c: hex(0xffe0a8), em: 230, layer: 0 }); M.box(sx * 5.31, 4.9, -19 + k * 2.2, .04, 1.1, 1.5, {}); }
+        for (let k = 0; k < 7; k++) M.box(sx * 4.51, 7.7, -17 + k * 2.3, .04, 1, 1.6, {}); M.set({ kind: K.NEON, c: hex(PAL.cyan), seed: 77 }); M.box(sx * 5.32, 3.5, -6, .04, .18, 30, {}); }
+      M.set({ em: 0 }); setPlain(M, 0x2a2a30); M.box(0, 11.7, -4, .2, 4, .2, {}); });
+    glow(fx, 6, fz, 0xffe0a8, 30); glow(fx + 22, 6, fz + 7, 0xffffff, 6); glow(fx, 16, fz, PAL.red, 3, 1);
+    M.set({ kind: K.PLAIN, c: [.85, .92, 1], em: 90, layer: 0, a: 0 }); for (let k = 0; k < 6; k++) { const d = -26 - k * 6, w = 2 + k * 1.4, cx = fx + Math.cos(fr) * 0 + Math.sin(fr) * d, cz = fz + Math.cos(fr) * d; M.at(cx, -.3, cz, fr, () => { M.quad([-w, 0, -2.6], [w, 0, -2.6], [w, 0, 2.6], [-w, 0, 2.6]); }); } M.set({ em: 0 }); }
+  /* fishing boats with a lamp on a pole, out between the barge and the quay */
+  for (let i = 0; i < 9; i++) { const x = R.range(170, 330), z = R.range(340, 430), ry = R.range(0, Math.PI * 2), L0 = R.range(9, 14), c = R.pick([0x2a4a44, 0x7a2a3a, 0x24384a, 0xb09a78]);
+    if (Math.abs(x - 214) < 34 && Math.abs(z - 392) < 14) continue; if (z < 352 && x < 320) continue;
+    M.at(x, -.7, z, ry, () => { smallBoat(M, L0, c, 0xffd08a); setPlain(M, 0x1a1a20); M.box(0, 2, L0 * .3, .1, 4.5, .1, {}); M.set({ kind: K.PLAIN, c: hex(0xfff0c8), em: 255, layer: 0 }); M.box(0, 6.4, L0 * .3, .35, .35, .35, {}); M.set({ em: 0 }); });
+    glow(x + Math.sin(ry) * L0 * .3, 6.4, z + Math.cos(ry) * L0 * .3, 0xfff0c8, 7); glow(x, 2.4, z, 0xffd08a, 8); }
+  /* a container ship at the cranes, being loaded: hull, stacked boxes, the bridge lit, work lights, a box on the hook */
+  { const sx = 252, sz = 326; M.at(sx, -2, sz, Math.PI / 2, () => {
+      setPlain(M, 0x1e2a3a); M.loft([[[-8, 0, -50], [8, 0, -50], [8, 0, 44], [0, 0, 56]], [[-9, 9, -52], [9, 9, -52], [9, 9, 46], [0, 9.6, 62]]], { c: 0x1e2a3a });
+      setPlain(M, 0x8a2a24); M.loft([[[-8.05, 0, -50], [8.05, 0, -50], [8.05, 0, 44], [0, 0, 56]], [[-8.3, 2.6, -50.6], [8.3, 2.6, -50.6], [8.3, 2.6, 44.6], [0, 2.8, 57.5]]], { c: 0x8a2a24 });
+      setPlain(M, 0x2a3442); M.box(0, 9, -3, 17.6, .6, 96, {});
+      for (let i = 0; i < 9; i++) for (let j = 0; j < 3; j++) { let y = 9.6; const n = R.int(1, 4); for (let k = 0; k < n; k++) { setPlain(M, 0, 0, 34); M.box(-5.6 + j * 5.6, y, 38 - i * 8.6, 5.4, 2.6, 8.2, { c: R.pick([0xb03a3a, 0x2a6a7a, 0xc99a3a, 0x7a7684, 0x3a5a3a, 0xa04a8a, 0x2a4a8a]) }); y += 2.6; } } setPlain(M, 0);
+      M.set({ kind: K.PLAIN, c: hex(0xffe0b0), em: 255, layer: 0 }); for (const s2 of [-1, 1]) for (let z = -40; z < 50; z += 6) M.box(s2 * 8.9, 9.7, z, .25, .25, .25, {}); M.set({ em: 0 });
+      setPlain(M, 0xe0dad0); M.box(0, 9.6, -46, 16, 8, 8, {}); M.box(0, 17.6, -46.5, 18, 5, 7, {}); M.box(0, 22.6, -46.5, 10, 2.6, 5, {});
+      setPlain(M, 0x2a2a30); M.box(0, 25.2, -47, .3, 5, .3, {}); setPlain(M, 0x8a2a24); M.box(0, 17.6, -52, 4, 9, 3, {});
+      M.set({ kind: K.PLAIN, c: hex(0xffe6b8), em: 230, layer: 0 }); for (const s2 of [-1, 1]) for (const y of [11.4, 13.8, 19.4]) for (let k = 0; k < 4; k++) M.box(s2 * (y > 17 ? 9.02 : 8.02), y, -48.5 + k * 1.7, .04, .9, 1.1, {});
+      for (let k = 0; k < 7; k++) M.box(-6 + k * 2, 19.4, -43, 1.4, .9, .04, {});
+      M.set({ em: 0 }); });
+    for (let x = sx - 40; x < sx + 50; x += 12) for (const s2 of [-1, 1]) glow(x, 8, sz + s2 * 9, 0xffe0b0, 3.6);
+    glow(sx - 46, 20, sz, 0xffe6b8, 16); glow(sx - 47, 28, sz, PAL.red, 3, 1); glow(sx + 60, 10, sz, 0xffffff, 4);
+    /* work lights under the booms, and a box on its way up */
+    for (const cx of [236, 274]) { glow(cx, 33, sz + 4, 0xfff0d8, 12); pool(cx, 296, 18, 0xfff0d8, .5); }
+    setPlain(M, 0x111114); M.box(274, 24, 330, .08, 11.6, .08, {}); M.box(273, 24, 330, .08, 11.6, .08, {}); M.box(273.5, 23.6, 330, 6.4, .4, 2.6, { c: 0x2a2a30 });
+    setPlain(M, 0xc99a3a); M.box(273.5, 21, 330, 6, 2.6, 2.4, { c: 0xc99a3a }); }
+  /* buoys marking the channel, red and green, blinking */
+  for (let i = 0; i < 8; i++) { const t = i / 7, x = lerp(80, 380, t), z = lerp(380, 520, t); for (const [dz, c] of [[-24, PAL.red], [24, PAL.green]]) { setPlain(M, c === PAL.red ? 0x8a2222 : 0x227a44); M.cyl(x, -.6, z + dz, .7, .4, 2.4, 8, {}); glow(x, 2.2, z + dz, c, 3.4, 1); } }
+  setPlain(M, 0);
+}
+/* p39: the castle's grounds. A lantern walk from the hall door down through a fountain garden to stone gateposts on
+   the ring, hedged beds with small lights in them, benches round the ring, school banners on the hall, students walking */
+function castleGrounds(M) {
+  const R = rng(3931), cx = -212, cz = 296;
+  const hgt = (x, z) => { const r = Math.hypot(x - cx, (z - cz) / .85), P = [[0, 13], [40, 12], [92, 9], [100, 6]]; for (let i = 0; i < P.length - 1; i++) if (r <= P[i + 1][0]) return lerp(P[i][1], P[i + 1][1], (r - P[i][0]) / (P[i + 1][0] - P[i][0])); return 6; };
+  const PX = cx + 2, z0 = 310, z1 = 372, fz = 327;
+  /* the walk: gravel, a stone edge, lamps both sides */
+  M.set({ kind: K.PLAIN, c: hex(0x6a645a), em: 0, layer: 0, id: 3 });
+  for (let z = z0; z < z1; z += 2) { const a = hgt(PX, z) + .1, b = hgt(PX, z + 2) + .1; M.quad([PX - 1.6, a, z], [PX + 1.6, a, z], [PX + 1.6, b, z + 2], [PX - 1.6, b, z + 2]); }
+  for (let z = z0 + 2; z < z1; z += 6) { if (Math.abs(z - fz) < 6) continue; for (const sx of [-1, 1]) { const x = PX + sx * 2.4, y = hgt(x, z); setPlain(M, 0x1e1c24); M.cyl(x, y, z, .08, .06, 2.2, 4, { top: false }); M.set({ kind: K.PLAIN, c: hex(0xffd8a0), em: 240, layer: 0 }); M.box(x, y + 2.2, z, .3, .36, .3, {}); M.set({ em: 0 }); glow(x, y + 2.4, z, 0xffd8a0, 3.4); } }
+  /* the fountain: a round basin, a lit bowl of water, a column and its spill */
+  { const y = hgt(PX, fz); setPlain(M, 0x7a7486); M.cyl(PX, y, fz, 3.4, 3.4, .7, 16, {}); M.set({ kind: K.PLAIN, c: [.55, .85, 1], em: 110, layer: 0 }); M.cyl(PX, y + .55, fz, 3.05, 3.05, .12, 16, {});
+    setPlain(M, 0x7a7486); M.cyl(PX, y, fz, .45, .35, 2.6, 8, {}); M.cyl(PX, y + 2.6, fz, 1.3, .3, .35, 10, {}); M.set({ kind: K.PLAIN, c: [.7, .92, 1], em: 160, layer: 0 }); M.cyl(PX, y + 2.95, fz, 1.1, 1.1, .06, 10, {}); M.set({ em: 0 });
+    glow(PX, y + 1.2, fz, 0x8ad8ff, 9); glow(PX, y + 3.2, fz, 0xc8f0ff, 3.4, 1); pool(PX, fz, 10, 0x8ad8ff, .5); }
+  /* hedged beds round it, small lights in the flowers */
+  for (const [dx, dz] of [[-6.5, -5.5], [6.5, -5.5], [-6.5, 5.5], [6.5, 5.5]]) { const x = PX + dx, z = fz + dz, y = hgt(x, z);
+    setPlain(M, 0x1f4a2e); M.box(x, y, z - 2.1, 7, .9, .7, { topc: 0x2a5a38 }); M.box(x, y, z + 2.1, 7, .9, .7, { topc: 0x2a5a38 }); M.box(x - 3.15, y, z, .7, .9, 3.5, { topc: 0x2a5a38 }); M.box(x + 3.15, y, z, .7, .9, 3.5, { topc: 0x2a5a38 });
+    setPlain(M, 0x24301e); M.box(x, y, z, 5.6, .3, 3.5, {});
+    for (let k = 0; k < 7; k++) { const fx = x + R.range(-2.4, 2.4), fz2 = z + R.range(-1.3, 1.3), c = R.pick([0xff8ac8, 0xffe08a, 0xb08aff, 0xffffff]); M.set({ kind: K.PLAIN, c: hex(c), em: 200, layer: 0 }); M.box(fx, y + .3, fz2, .2, .2, .2, {}); if (k % 3 === 0) glow(fx, y + .5, fz2, c, 1.6, 1); }
+    M.set({ em: 0 }); }
+  /* gateposts where the walk meets the ring, a lantern on each */
+  { const z = cz + 52 * .85; for (const sx of [-1, 1]) { const x = PX + sx * 3.2, y = hgt(x, z); setPlain(M, 0x6a6578); M.box(x, y, z, 1.4, 4.4, 1.4, { topc: 0x5e5a6c }); M.box(x, y + 4.4, z, 1.8, .4, 1.8, {}); M.set({ kind: K.PLAIN, c: hex(0xffd08a), em: 255, layer: 0 }); M.box(x, y + 4.8, z, .6, .8, .6, {}); M.set({ em: 0 }); glow(x, y + 5.2, z, 0xffd08a, 6); } }
+  /* a gazebo on the west lawn, lit inside, lights round its eaves */
+  { const gx = -238, gz = 354, y = hgt(gx, gz); setPlain(M, 0x6a6578); M.cyl(gx, y, gz, 4.2, 4.2, .4, 12, {});
+    setPlain(M, 0xd8d0c0); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; M.cyl(gx + Math.cos(a) * 3.6, y + .4, gz + Math.sin(a) * 3.6, .14, .14, 3.2, 6, {}); }
+    setPlain(M, 0x2e4a40); M.cyl(gx, y + 3.6, gz, 4.6, .2, 2.4, 12, {}); setPlain(M, 0xd8d0c0); M.cyl(gx, y + 3.4, gz, 4.4, 4.4, .25, 12, {});
+    M.set({ kind: K.PLAIN, c: hex(0xffe0a8), em: 255, layer: 0 }); for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; M.box(gx + Math.cos(a) * 4.45, y + 3.35, gz + Math.sin(a) * 4.45, .16, .16, .16, {}); } M.box(gx, y + 2.6, gz, .5, .5, .5, {}); M.set({ em: 0 });
+    setPlain(M, 0x4a3a2a); M.box(gx, y + .4, gz, 1.8, .75, 1.8, {});
+    glow(gx, y + 2.6, gz, 0xffd8a0, 10); pool(gx, gz, 12, 0xffd8a0, .6); }
+  /* benches round the inside of the ring */
+  for (let i = 0; i < 10; i++) { const a = i / 10 * TAU + .3, x = cx + Math.cos(a) * 48.5, z = cz + Math.sin(a) * 48.5 * .85; if (Math.abs(x - PX) < 8 && z > cz) continue; const y = hgt(x, z), ry = Math.atan2(Math.cos(a), Math.sin(a) * .85);
+    M.at(x, y, z, ry, () => { setPlain(M, 0x4a3a2a); M.box(0, .45, 0, 2.2, .1, .55, {}); M.box(0, .55, -.3, 2.2, .5, .08, {}); setPlain(M, 0x1a1a20); for (const s2 of [-1, 1]) M.box(s2 * .95, 0, 0, .1, .45, .5, {}); }); }
+  /* school banners down the hall's south face, green and gold */
+  for (const x of [-244, -232, -220]) { setPlain(M, 0x1a1418); M.box(x, 26.4, 309.4, 2.8, .14, .3, {});
+    M.set({ kind: K.PLAIN, c: hex(0x1f6a3e), em: 40, layer: 0, a: 0 }); M.quad([x - 1.1, 18.4, 309.2], [x + 1.1, 18.4, 309.2], [x + 1.1, 26.4, 309.2], [x - 1.1, 26.4, 309.2]); M.tri([x - 1.1, 18.4, 309.2], [x, 17.2, 309.2], [x + 1.1, 18.4, 309.2]);
+    M.set({ c: hex(0xc9a050), em: 90 }); M.quad([x - .16, 19, 309.25], [x + .16, 19, 309.25], [x + .16, 25.6, 309.25], [x - .16, 25.6, 309.25]); M.quad([x - .8, 23.6, 309.25], [x + .8, 23.6, 309.25], [x + .8, 23.9, 309.25], [x - .8, 23.9, 309.25]); M.set({ em: 0 });
+    glow(x, 22, 311, 0x5be38a, 5); }
+  /* students: round the ring both ways, and up and down the walk */
+  { const ring = d => { const pts = []; for (let i = 0; i <= 36; i++) { const a = (d > 0 ? i : 36 - i) / 36 * TAU; pts.push([cx + Math.cos(a) * (52 + d * .4), 12.12, cz + Math.sin(a) * (52 + d * .4) * .85]); } return pts; };
+    ANI_WALKS.push({ pts: ring(1), n: 5, sp: 1.1 / 300 }); ANI_WALKS.push({ pts: ring(-1), n: 4, sp: 1.1 / 300 });
+    const wk = []; for (let z = z0 + 1; z <= z1; z += 3) wk.push([PX + .7, hgt(PX, z) + .12, z]); if (wk.length > 1) { ANI_WALKS.push({ pts: wk, n: 2, sp: 1.1 / 40 }); ANI_WALKS.push({ pts: wk.slice().reverse().map(p => [p[0] - 1.4, p[1], p[2]]), n: 1, sp: 1.1 / 40 }); } }
+  setPlain(M, 0);
+}
+/* p39: a roof people use, between two towers (x -81..-53, z -15..13, at 48 m). A shack with a lit window and a sign,
+   a garden in planters, a couch round a fire drum, lights strung on poles across it, a water tank, a dish, washing,
+   a bike against the wall, and two people up there (anime) */
+function hideoutRoof(M) {
+  const R = rng(3941), Y = 48.02, x0 = -80, x1 = -54, z0 = -14, z1 = 12;
+  /* parapet */
+  setPlain(M, 0x34303e); M.box((x0 + x1) / 2, Y, z0 - .6, x1 - x0 + 2, 1.1, .4, {}); M.box((x0 + x1) / 2, Y, z1 + .6, x1 - x0 + 2, 1.1, .4, {}); M.box(x0 - .8, Y, (z0 + z1) / 2, .4, 1.1, z1 - z0 + 1.6, {}); M.box(x1 + .8, Y, (z0 + z1) / 2, .4, 1.1, z1 - z0 + 1.6, {});
+  /* deck boards where people sit */
+  setPlain(M, 0x5a4232); M.box(-59, Y, 4, 9, .12, 12, {}); setPlain(M, 0x3a2a20); for (let x = -63.2; x < -54.8; x += 1.1) M.box(x, Y + .12, 4, .04, .02, 12, {});
+  /* the shack: corrugated walls, a lit window and door, a neon sign on the roof edge */
+  { const sx = -75, sz = -11; setPlain(M, 0x2a3440); M.box(sx, Y, sz, 8, 3.4, 5, {}); setPlain(M, 0x1a1e26); M.box(sx, Y + 3.4, sz, 8.8, .25, 5.8, {}); setPlain(M, 0x222a34); for (let x = sx - 3.8; x < sx + 4; x += .5) M.box(x, Y, sz + 2.52, .06, 3.4, .04, {});
+    M.set({ kind: K.PLAIN, c: hex(0xffd08a), em: 230, layer: 0 }); M.box(sx - 1.6, Y + 1.3, sz + 2.56, 2, 1.3, .04, {}); M.set({ c: hex(0xffc070), em: 160 }); M.box(sx + 2, Y, sz + 2.56, 1.1, 2.3, .04, {}); M.set({ em: 0 });
+    setPlain(M, 0x101014); M.box(sx, Y + 3.7, sz + 2.7, 5.4, 1.3, .14, {}); M.set({ kind: K.NEON, c: hex(PAL.magenta), seed: 31 }); M.box(sx - 1.4, Y + 4.2, sz + 2.8, 1.9, .14, .04, {}); M.box(sx + 1.2, Y + 4.2, sz + 2.8, 1.6, .14, .04, {}); M.set({ kind: K.NEON, c: hex(PAL.cyan), seed: 32 }); M.box(sx, Y + 3.85, sz + 2.8, 4.6, .1, .04, {});
+    glow(sx - 1.6, Y + 1.4, sz + 3.5, 0xffd08a, 6); glow(sx, Y + 4.2, sz + 3.1, PAL.magenta, 5); pool(sx, sz + 4.5, 7, 0xffd08a, .5); }
+  /* the water tank on legs, a dish, a vent stack */
+  setPlain(M, 0xd8d4cc); M.cyl(-66, Y + 1.8, -12, 1.1, .2, .4, 10, {}); setPlain(M, 0x2a2830); M.box(-66, Y, -12, .14, 1.8, .14, {}); M.cyl(-79, Y, 10, .5, .5, 3.4, 8, {});
+  /* the garden: planters with greens and a few small trees */
+  for (let i = 0; i < 5; i++) { const x = -79 + i * 3.2, z = 9.6; setPlain(M, 0x6a4a34); M.box(x, Y, z, 2.6, .8, 1.4, {}); for (let k = 0; k < 3; k++) M.blob(x - .8 + k * .8, Y + 1, z, .42, { c: R.pick([0x2f6a3a, 0x3a7a3a, 0x24502e]), r: R }); }
+  for (const [x, z] of [[-79, 1], [-79, 5]]) { setPlain(M, 0x5a3a2a); M.cyl(x, Y, z, .7, .6, .8, 8, {}); setPlain(M, 0x4a3426); M.cyl(x, Y + .8, z, .1, .08, 1.6, 5, {}); M.blob(x, Y + 3, z, 1.3, { c: 0x2a5a34, r: R, sy: 1.15 }); }
+  /* a couch, chairs and a table round a fire drum */
+  { setPlain(M, 0x7a2a3a); M.box(-59, Y + .12, 8.4, 5, .5, 1.6, {}); M.box(-59, Y + .62, 9.1, 5, .8, .3, {}); M.box(-61.4, Y + .62, 8.4, .3, .5, 1.6, {}); M.box(-56.6, Y + .62, 8.4, .3, .5, 1.6, {});
+    setPlain(M, 0x2a6a7a); M.box(-55.6, Y + .12, 3, 1.4, .45, 1.4, {}); M.box(-55, Y + .57, 3, .3, .7, 1.4, {});
+    setPlain(M, 0x3a2a22); M.box(-59, Y + .12, 5.6, 2.2, .45, 1, {}); setPlain(M, 0xe0d8c8); M.box(-59.5, Y + .57, 5.6, .2, .3, .2, {}); M.box(-58.6, Y + .57, 5.5, .18, .22, .18, {});
+    setPlain(M, 0x2a2228); M.cyl(-59.5, Y + .12, 1.4, .5, .45, .9, 10, {}); M.set({ kind: K.PLAIN, c: hex(0xff8a30), em: 255, layer: 0 }); M.cyl(-59.5, Y + .95, 1.4, .42, .3, .2, 8, {}); M.set({ em: 0 });
+    glow(-59.5, Y + 1.5, 1.4, 0xff8a30, 7, 1); pool(-59.5, 1.4, 8, 0xff8a30, .7); }
+  /* lights strung across from poles at the corners and the middle */
+  { const poles = [[-80.4, -14.4], [-53.6, -14.4], [-80.4, 12.4], [-53.6, 12.4], [-61, -4]]; setPlain(M, 0x1e1c24); for (const [x, z] of poles) M.box(x, Y, z, .12, 4.6, .12, {});
+    const line = (a, b) => { const n = Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1.3), pts = []; for (let i = 0; i <= n; i++) { const t = i / n; pts.push([lerp(a[0], b[0], t), Y + 4.5 - Math.sin(t * Math.PI) * 1, lerp(a[1], b[1], t)]); }
+      M.tube(pts, .025, n, 3, { c: 0x0a0a0e }); for (let i = 1; i < n; i++) { const q = pts[i], c = R.pick([0xffd8a0, 0xffd8a0, 0xffb878, 0xff9ad8]); M.set({ kind: K.PLAIN, c: hex(c), em: 255, layer: 0 }); M.box(q[0], q[1] - .12, q[2], .2, .2, .2, {}); if (i % 3 === 0) glow(q[0], q[1] - .1, q[2], c, 2.6); } M.set({ em: 0 }); };
+    for (let i = 0; i < 4; i++) line(poles[i], poles[4]); line(poles[0], poles[1]); line(poles[2], poles[3]); }
+  /* washing on a line by the shack, a bike against the parapet */
+  { setPlain(M, 0x1e1c24); M.box(-79.6, Y, -2, .08, 2.6, .08, {}); M.box(-70, Y, -2, .08, 2.6, .08, {}); M.tube([[-79.6, Y + 2.5, -2], [-74.8, Y + 2.2, -2], [-70, Y + 2.5, -2]], .02, 2, 3, { c: 0x111114 });
+    for (let k = 0; k < 6; k++) { setPlain(M, R.pick([0xe8e0d0, 0x2a6a9a, 0xc84a4a, 0xe0c060, 0x8a6aa8, 0x2a2a30])); M.box(-78.6 + k * 1.5, Y + 1.5, -2, 1, R.range(.7, 1), .04, {}); }
+    setPlain(M, 0x1a1a1e); for (const dx of [-.55, .55]) M.cyl(-55 + dx, Y + .35, -14.1 + .2, .34, .34, .06, 12, {}); M.set({ kind: K.NEON, c: hex(PAL.yellow), seed: 9 }); M.box(-55, Y + .55, -13.9, 1.2, .06, .06, {}); M.box(-55, Y + .7, -13.9, .06, .5, .06, {}); }
+  /* two people up here */
+  ANI_WALKS.push({ pts: [[-78, Y, -1.5], [-63, Y, -1.5]], n: 1, sp: 1 / 30 }); ANI_WALKS.push({ pts: [[-63, Y, -.5], [-78, Y, -.5]], n: 1, sp: 1 / 30 });
+  setPlain(M, 0);
 }
 /* boats moored close in, their lights lie on the water */
 function nearBoats(M, R) {
@@ -6399,6 +6623,9 @@ function trafficSetup() {
     }
     for (const [y, x] of [[33, 4], [52, -4], [76, 4], [33, -4], [52, 4], [76, -4]]) { const r = lane((x > 0 ? [[x, y, 900], [x, y + 2, 60], [x, y, -150]] : [[x, y, -150], [x, y + 2, 60], [x, y, 900]]));
       for (let g = 0; g < 14; g++) { const base = (g + RA() * .6) / 14, n = RA.int(2, 5); for (let i = 0; i < n; i++) streams.push({ row: r, ph: (base + i * .0035) % 1, sp: .016, side: RA.range(-1.4, 1.4), y: RA.range(-1.2, 1.2), sc: 3.2, col: RA.pick([[.85, .76, .58], [.68, .78, .88], [.82, .1, .07]]), ani: 1 }); } }
+    /* p39: two high lanes under the sky bridges, toward the big tower */
+    { const RH = rng(3951); for (const [y, x] of [[126, 5], [138, -5]]) { const r = lane(x > 0 ? [[x, y, 300], [x, y + 3, 40], [x * .6, y + 8, -200]] : [[x * .6, y + 8, -200], [x, y + 3, 40], [x, y, 300]]);
+      for (let g = 0; g < 9; g++) { const base = (g + RH() * .6) / 9, n = RH.int(2, 4); for (let i = 0; i < n; i++) streams.push({ row: r, ph: (base + i * .006) % 1, sp: .02, side: RH.range(-1.2, 1.2), y: RH.range(-1, 1), sc: 3, col: RH.pick([[.85, .76, .58], [.68, .78, .88], [.82, .1, .07]]), ani: 1 }); } } }
     for (const w of ANI_WALKS) { const r = lane(w.pts); for (let i = 0; i < w.n; i++) peds.push({ row: r, ph: (i + RA() * .8) / w.n, sp: w.sp * RA.range(.85, 1.15), side: RA.range(-.4, .4), y: 0, sc: RA.range(.92, 1.06), col: RA.pick(coat), mdl: RA.int(0, 2), ani: 1 }); }
     /* cars on the expressway over the -30 street, gate to gate */
     const RX = rng(3847);
@@ -8344,11 +8571,11 @@ const TOUR_STOPS = [
   ['UNDER THE EXPRESSWAY', 'The city\'s back room. Noodle carts, quiet deals, and a mechanic who fixes anything with wheels.', [8, 5, -27], [-110, 22, -32]],
   ['THE EXPRESSWAY', 'Gate to gate in ninety seconds. Built in a single winter, and it has never closed, not even for snow.', [-20, 44, -30], [-170, 41, -30]],
   ['THE TOWER', 'Orin Tower. The family who built it still lives on the top floor. Nobody has ever seen them leave.', [60, 300, -60], [0, 380, -235]],
-  ['THE HIGH BRIDGES', 'Strung between the towers after the flood year, so the city could keep moving high above the water.', [10, 120, 140], [0, 135, 0]],
-  ['THE ROOFTOPS', 'Where the city goes to be alone. Couriers run these roofs faster than anything on the road.', [-40, 80, 40], [20, 50, -40]],
-  ['THE OLD MARKET', 'The island before the towers. Lanterns, tarps, and traders whose grandparents sold the same things.', [250, 40, 130], [190, 10, 60]],
-  ['THE HARBOUR', 'Everything Arcadia eats or sells comes through here. The barge has been moored so long it has an address.', [-20, 6, 400], [-10, 30, 260]],
-  ['THE CASTLE', 'The oldest stones on the island. Built as a fortress, kept as a school, still standing guard on the point.', [-150, 60, 380], [-212, 30, 296]],
+  ['THE HIGH BRIDGES', 'Strung between the towers after the flood year, so the city could keep moving high above the water.', [6, 138, -30], [0, 160, -170]],
+  ['THE ROOFTOPS', 'Where the city goes to be alone. Someone strings new lights up here every winter, and nobody knows who.', [-44, 61, 24], [-68, 46.5, -3]],
+  ['THE OLD MARKET', 'The island before the towers. Lanterns, tarps, and traders whose grandparents sold the same things.', [262, 6, 58], [160, 3.5, 62]],
+  ['THE HARBOUR', 'Everything Arcadia eats or sells comes through here. The cranes have not stopped since the city was built.', [330, 13, 412], [236, 17, 330]],
+  ['THE CASTLE', 'The oldest stones on the island. Built as a fortress, kept as a school, still standing guard on the point.', [-172, 34, 378], [-214, 14, 310]],
   ['THE ISLAND', 'Small enough to cross in a night. Deep enough that nobody has seen all of it.', [0, 420, 200], [0, 0, -120]],
   ['ARCADIA', 'Home. The lights stay on.'],
 ];
@@ -8360,10 +8587,10 @@ const TOUR_VIA = [
   [[[-6, 8, 110], [0, 9, 20]], [[0, 7, 30], [0, 8, -40]], [[4, 6, 0], [-40, 7, -30]]],
   [[[12, 10, -10], [-60, 15, -25]], [[10, 46, -8], [-100, 40, -30]]],
   [[[-10, 90, -14], [0, 200, -235]]],
-  [[[40, 230, 60], [0, 200, -100]]],
+  [[[14, 190, 20], [0, 150, -120]]],
   [[[0, 100, 75], [10, 60, 0]]],
   [[[60, 200, 90], [200, 20, 90]], [[230, 90, 150], [195, 10, 80]]],
-  [[[240, 40, 320], [100, 20, 380]], [[200, 14, 470], [20, 20, 330]]],
+  [[[300, 45, 200], [260, 20, 300]], [[370, 32, 370], [240, 16, 330]]],
   [[[-90, 25, 420], [-200, 30, 300]]],
   [[[-80, 220, 330], [-60, 0, 100]]],
   [[[10, 200, 330], [-6, 110, -160]]],
@@ -9189,6 +9416,8 @@ function rig() {
     close() { closeSheet(); return new Promise(r => setTimeout(r, 650)).then(() => frame()); },
     cam(p, l, n) { S.mode = 'cam'; S.camP = p; S.camL = l; S.camN = n; applyFov(); return frame(); },
     tour(t) { if (!TOUR) tourStart(); if (TOUR && t !== undefined) { TOUR.play = false; TOUR.t = TOUR.goal = t; TOUR.inT = 0; } return frame(); },
+    hit(x, z) { const rc = new THREE.Raycaster(new THREE.Vector3(x, 900, z), new THREE.Vector3(0, -1, 0)); const h = rc.intersectObjects(SC.city.children.filter(o => o.isMesh && o.visible), false).find(q => q.point.y < 890); return h ? Math.round(h.point.y * 10) / 10 : null; },
+    mkt: () => ({ br: MKT.br, blocks: MKT.map(b => [b.x, b.z, b.w, b.d, b.h].map(v => Math.round(v * 10) / 10)), lane: MKT.lane }),
     tourInfo: () => TOUR ? { t: TOUR.t, goal: TOUR.goal, n: TOUR.n, play: TOUR.play, hold: TOUR.hold, p: CAM.position.toArray().map(v => Math.round(v * 10) / 10) } : null,
     tourEnd() { tourEnd(); return frame(); },
     /* the camera on its own clock, no drawing: for input tests in the rig, which has no frame loop */
