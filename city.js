@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { perf, onPerf } from './perf.js';
 
-export const BUILD = 'p39a';
+export const BUILD = 'p39b';
 if (window.DAYBOOK_BUILD !== BUILD) throw new Error('city.js ' + BUILD + ' does not match index.html ' + window.DAYBOOK_BUILD);
 const APP = window.CityApp;
 
@@ -8338,19 +8338,19 @@ function goPlace(id, card, then) {
    Stop 0 and the last are the city view itself, so it starts and ends where he is ---------- */
 const TOUR_STOPS = [
   ['ARCADIA', 'Swipe up, scroll, or press play to fly through the city.'],
-  ['THE NIGHT MARKET', 'Food stalls where the avenue meets the water.', [-60, 3.5, 246], [-10, 4, 236]],
-  ['THE AVENUE', 'Street level, under the signs and the cables.', [0, 9, 236], [0, 22, 60]],
-  ['THE WALKWAYS', 'Shops stacked in levels above the street.', [-12, 22, 120], [10, 26, 40]],
-  ['UNDER THE EXPRESSWAY', 'The cross street runs in its shadow.', [8, 5, -27], [-110, 22, -32]],
-  ['THE EXPRESSWAY', 'Forty metres up, gate to gate.', [-20, 44, -30], [-170, 41, -30]],
-  ['THE TOWER', 'The tallest thing on the island.', [60, 300, -60], [0, 380, -235]],
-  ['THE HIGH BRIDGES', 'Sky bridges between the tallest towers.', [10, 120, 140], [0, 135, 0]],
-  ['THE ROOFTOPS', 'Looking down into the avenue.', [-40, 80, 40], [20, 50, -40]],
-  ['THE OLD MARKET', 'Low blocks, tarps and lanterns.', [250, 40, 130], [190, 10, 60]],
-  ['THE HARBOUR', 'Boats, the barge and the skyline.', [-20, 6, 400], [60, 30, 280]],
-  ['THE CASTLE', 'School, out on the point.', [-150, 60, 380], [-212, 30, 296]],
-  ['THE ISLAND', 'All of it, from above.', [0, 420, 200], [0, 0, -120]],
-  ['ARCADIA', 'Back to the city.'],
+  ['THE NIGHT MARKET', 'It opens when the last ferry docks. Nobody remembers who lit the first stall, but the soup has never changed.', [-60, 3.5, 246], [-10, 4, 236]],
+  ['THE AVENUE', 'The first street in Arcadia, laid before the towers. Every sign was hung by hand, and none have come down.', [0, 9, 236], [0, 22, 60]],
+  ['THE WALKWAYS', 'Built when the street ran out of room. The rent goes up with every level, and so does the quiet.', [-12, 22, 120], [10, 26, 40]],
+  ['UNDER THE EXPRESSWAY', 'The city\'s back room. Noodle carts, quiet deals, and a mechanic who fixes anything with wheels.', [8, 5, -27], [-110, 22, -32]],
+  ['THE EXPRESSWAY', 'Gate to gate in ninety seconds. Built in a single winter, and it has never closed, not even for snow.', [-20, 44, -30], [-170, 41, -30]],
+  ['THE TOWER', 'Orin Tower. The family who built it still lives on the top floor. Nobody has ever seen them leave.', [60, 300, -60], [0, 380, -235]],
+  ['THE HIGH BRIDGES', 'Strung between the towers after the flood year, so the city could keep moving high above the water.', [10, 120, 140], [0, 135, 0]],
+  ['THE ROOFTOPS', 'Where the city goes to be alone. Couriers run these roofs faster than anything on the road.', [-40, 80, 40], [20, 50, -40]],
+  ['THE OLD MARKET', 'The island before the towers. Lanterns, tarps, and traders whose grandparents sold the same things.', [250, 40, 130], [190, 10, 60]],
+  ['THE HARBOUR', 'Everything Arcadia eats or sells comes through here. The barge has been moored so long it has an address.', [-20, 6, 400], [-10, 30, 260]],
+  ['THE CASTLE', 'The oldest stones on the island. Built as a fortress, kept as a school, still standing guard on the point.', [-150, 60, 380], [-212, 30, 296]],
+  ['THE ISLAND', 'Small enough to cross in a night. Deep enough that nobody has seen all of it.', [0, 420, 200], [0, 0, -120]],
+  ['ARCADIA', 'Home. The lights stay on.'],
 ];
 /* the way between stop i and i+1: [camera, look] points it passes, kept in the open air */
 const TOUR_VIA = [
